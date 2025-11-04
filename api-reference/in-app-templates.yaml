@@ -2,17 +2,17 @@ openapi: 3.0.3
 info:
   title: MoEngage In-app Template API
   version: '1.0'
-  description: API for creating, updating, and searching In-app templates (Self-Handled and HTML) within the MoEngage platform.
+  description: API for creating, updating, and searching In-app templates (Self-Handled and HTML). Use this API to upload templates created outside the MoEngage ecosystem and use them for campaigns.
 tags:
   - name: In-app Templates
-    description: Operations to manage In-app templates.
+    description: Manage In-app templates, including creation, updates, and search.
 servers:
   - url: 'https://api-0{dc}.moengage.com/v1.0'
     description: MoEngage Custom Templates API Server
     variables:
       dc:
         default: '1'
-        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, etc.'
+        description: 'Your account''s MoEngage Data Center (DC), e.g., 1, 2, 3, or 4. Find your specific DC number on the "Data Centers and API endpoint mapping" page.'
         enum:
           - '1'
           - '2'
@@ -27,7 +27,7 @@ paths:
       tags:
         - In-app Templates
       summary: Create In-app Template
-      description: Creates a new In-app template in MoEngage. This API supports `SELF_HANDLED` and `INAPP_HTML` template types.
+      description: Creates a new In-app template in MoEngage. This allows you to upload templates created outside the MoEngage ecosystem (as `SELF_HANDLED` or `INAPP_HTML` types) and use them for campaigns.
       requestBody:
         required: true
         description: The details of the In-app template to be created.
@@ -41,26 +41,26 @@ paths:
                 value:
                   basic_details:
                     payload: "{'jsonKey': 'jsonValue', 'title': 'hello world'}"
-                    inapp_template_type": "SELF_HANDLED"
+                    inapp_template_type: "SELF_HANDLED"
                   meta_info:
-                    created_by": "test@example.com"
-                    template_id": "self_handled_123"
-                    template_name": "My Self-Handled Template"
-                    template_version": "1"
+                    created_by: "test@example.com"
+                    template_id: "self_handled_123"
+                    template_name: "My Self-Handled Template"
+                    template_version: "1"
               html:
                 summary: HTML Template
                 value:
                   basic_details:
-                    payload": "<html><body><h1>Hello World</h1></body></html>"
-                    inapp_template_type": "INAPP_HTML"
+                    payload: "<html><body><h1>Hello World</h1></body></html>"
+                    inapp_template_type: "INAPP_HTML"
                   meta_info:
-                    created_by": "test@example.com"
-                    template_id": "html_promo_456"
-                    template_name": "My HTML Promo"
-                    template_version": "1"
+                    created_by: "test@example.com"
+                    template_id: "html_promo_456"
+                    template_name: "My HTML Promo"
+                    template_version: "1"
       responses:
         '200':
-          description: Template created successfully.
+          description: Template created successfully. Returns the MoEngage-generated `external_template_id` which must be used for future updates or searches.
           content:
             application/json:
               schema:
@@ -69,28 +69,28 @@ paths:
                   external_template_id:
                     type: string
                     format: uuid
-                    description: The unique ID assigned to the newly created template by MoEngage.
+                    description: The unique, MoEngage-generated ID for the template. Use this ID for any future operations (like update or search) targeting this specific template.
                     example: "4a1afbc5-4c31-4f19-8c23-793e27af01aa"
         '400':
-          description: Bad Request. The request is invalid due to missing fields, duplicate `template_id` and `template_version`, or other validation errors.
+          description: Bad Request. Returned for validation errors, missing required fields, or if a template with the same `template_id` and `template_version` already exists.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Authentication Failure.
+          description: Authentication Failure. Check your Basic Auth credentials (Workspace ID and API Key).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '429':
-          description: Rate limit breached (100 RPM) or template quota exceeded.
+          description: Rate Limit Breached. Returned when the 100 RPM limit is exceeded or the total template quota for the account has been reached.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '5XX':
-          description: Internal Server Error.
+          description: Internal Server Error. Contact MoEngage support if the issue persists.
           content:
             application/json:
               schema:
@@ -102,7 +102,7 @@ paths:
       description: Updates an existing In-app template by specifying its `external_template_id`.
       requestBody:
         required: true
-        description: The updated details for the In-app template.
+        description: The updated details for the In-app template. You must provide the `external_template_id` of the template to update.
         content:
           application/json:
             schema:
@@ -114,11 +114,11 @@ paths:
                 payload: "<html><body><h1>Hello Updated World!</h1></body></html>"
                 inapp_template_type: "INAPP_HTML"
               meta_info:
-                template_name": "My Updated HTML Promo"
-                updated_by": "jane.doe@example.com"
+                template_name: "My Updated HTML Promo"
+                updated_by: "jane.doe@example.com"
       responses:
         '200':
-          description: Template updated successfully.
+          description: Template updated successfully. Returns the ID of the template that was updated.
           content:
             application/json:
               schema:
@@ -136,7 +136,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '5XX':
-          description: Internal Server Error.
+          description: Internal Server Error. Contact MoEngage support if the issue persists.
           content:
             application/json:
               schema:
@@ -147,29 +147,29 @@ paths:
       tags:
         - In-app Templates
       summary: Search In-app Templates
-      description: Searches and retrieves a list of In-app templates based on specified filter criteria.
+      description: Searches and retrieves a paginated list of In-app templates based on filter criteria. **Note:** `page` and `entries` parameters will become mandatory after November 15, 2025.
       requestBody:
         required: true
-        description: Search filters for finding In-app templates. An empty body will fetch all templates. Pagination is mandatory after November 15, 2025.
+        description: Search filters for finding In-app templates. An empty request body will fetch all templates. **Note:** Pagination (`page` and `entries`) will become mandatory after November 15, 2025.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SearchInAppTemplateRequest'
             example:
               page: 1
-              entries": 15
-              template_source": ["API"]
-              sort_params":
+              entries: 15
+              template_source: ["API"]
+              sort_params:
                 - template_name: "ASCENDING"
       responses:
         '200':
-          description: Search successful. Returns a list of templates.
+          description: Search successful. Returns a paginated list of templates matching the search criteria.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SearchInAppTemplateResponse'
         '400':
-          description: Bad Request. Invalid field values in the search criteria.
+          description: Bad Request. Invalid field values or formatting in the search criteria.
           content:
             application/json:
               schema:
@@ -181,7 +181,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '5XX':
-          description: Internal Server Error.
+          description: Internal Server Error. Contact MoEngage support if the issue persists.
           content:
             application/json:
               schema:
@@ -192,61 +192,82 @@ components:
     basicAuth:
       type: http
       scheme: basic
-      description: Basic Authentication using Workspace ID as username and the 'Campaign report/Business events/Custom templates' API key as the password.
+      description: Basic Authentication using your MoEngage **Workspace ID** as the username and the **'Campaign report/Business events/Custom templates/Catalog API'** key as the password. Find these in Settings > Account > APIs on the MoEngage dashboard.
 
   schemas:
     ErrorResponse:
       type: object
+      description: Describes a standard API error response. Can be in one of two formats.
       properties:
         error:
           type: object
+          description: The primary error response structure.
           properties:
             code:
               type: string
+              description: The HTTP status code or a brief error code string.
               example: "400 Bad Request"
             message:
               type: string
+              description: A human-readable message explaining the high-level error.
               example: "Duplicate - template_id and template_version"
             details:
               type: array
+              description: An array of objects providing specific details about validation errors.
               items:
                 type: object
                 properties:
-                  code: { type: string, example: "InvalidValue" }
-                  target: { type: string, example: "Duplicate - template_id and template_version" }
-                  message: { type: string, example: "template_id:BasicTemplate1 template_version:1 is already present." }
+                  code:
+                    type: string
+                    description: "A specific error code for the particular field or issue (e.g., 'MissingValue')."
+                    example: "InvalidValue"
+                  target:
+                    type: string
+                    description: "The field or parameter that caused the error (e.g., 'template_id')."
+                    example: "Duplicate - template_id and template_version"
+                  message:
+                    type: string
+                    description: "A detailed message about the specific error."
+                    example: "template_id:BasicTemplate1 template_version:1 is already present."
             request_id:
               type: string
+              description: A unique ID for this API request, useful for support.
               example: "cLCcgLQj"
         title:
           type: string
-          description: An alternative error title format.
+          description: An alternative error title, often used for authentication failures.
           example: "Authentication required"
         description:
           type: string
-          description: An alternative error description format.
+          description: An alternative error description, often used for authentication failures.
           example: "MOE-APPKEY missing in Authentication Header"
 
     CreateInAppTemplateRequest:
       type: object
+      description: The request body for creating a new In-app template.
       required:
         - basic_details
         - meta_info
       properties:
         basic_details:
           type: object
+          description: >
+            An object containing the core content of the template: its `payload` and `inapp_template_type`.
           required:
             - payload
             - inapp_template_type
           properties:
             payload:
               type: string
-              description: A stringified JSON or HTML content for the template.
+              description: "The template payload. This should be a string containing valid HTML for `INAPP_HTML` or stringified JSON for `SELF_HANDLED` templates."
             inapp_template_type:
               type: string
+              description: >
+                The type of In-app template. Must be either `SELF_HANDLED` (for stringified JSON payloads) or `INAPP_HTML` (for HTML string payloads).
               enum: [SELF_HANDLED, INAPP_HTML]
         meta_info:
           type: object
+          description: An object containing metadata for the template, such as its user-defined ID, name, version, and creator.
           required:
             - created_by
             - template_id
@@ -255,19 +276,20 @@ components:
           properties:
             created_by:
               type: string
-              description: Identifier for the creator of the template.
+              description: "The email ID or unique identifier of the user creating this template. E.g., 'john.doe@example.com'."
             template_id:
               type: string
-              description: A unique ID for the template provided by you.
+              description: "A user-defined unique identifier for this template. This ID, combined with `template_version`, must be unique."
             template_name:
               type: string
-              description: The name of the template.
+              description: A user-friendly name for the template, visible on the MoEngage dashboard.
             template_version:
               type: string
-              description: The version of the template.
+              description: "The version identifier for this template. E.g., '1', 'v1.0'."
 
     UpdateInAppTemplateRequest:
       type: object
+      description: The request body for updating an existing In-app template.
       required:
         - external_template_id
         - basic_details
@@ -276,76 +298,86 @@ components:
         external_template_id:
           type: string
           format: uuid
-          description: The unique ID generated by MoEngage during template creation.
+          description: The MoEngage-generated unique ID (UUID) of the template you want to update. This is received from the 'Create Template' API response.
         update_campaigns:
           type: boolean
           default: false
-          description: If true, updates all active campaigns using this template to the new version.
+          description: If set to `true`, all active campaigns currently using this template will be automatically updated to this new version. If `false` (default), the template is updated but existing campaigns are not affected. Use with caution.
         basic_details:
           type: object
+          description: An object containing the new core content of the template.
           required:
             - payload
             - inapp_template_type
           properties:
             payload:
               type: string
-              description: The updated stringified JSON or HTML content.
+              description: "The new template payload. This should be a string containing valid HTML for `INAPP_HTML` or stringified JSON for `SELF_HANDLED` templates."
             inapp_template_type:
               type: string
+              description: The type of In-app template.
               enum: [SELF_HANDLED, INAPP_HTML]
         meta_info:
           type: object
+          description: An object containing metadata for the template update.
           required:
             - template_name
             - updated_by
           properties:
             template_name:
               type: string
-              description: The name of the template being updated.
+              description: The new user-friendly name for the template.
             updated_by:
               type: string
               format: email
-              description: The email ID of the person updating the template.
+              description: The email ID of the person performing the update.
             template_version:
               type: string
-              description: Optional new version for the template. If provided, a new version is created. If omitted, the existing version is updated.
+              description: "Optional: Provide a new version string to create a new version of the template. If omitted, the existing version specified by `external_template_id` is updated."
 
     SearchInAppTemplateRequest:
       type: object
-      description: All fields are optional. An empty request body will fetch all templates.
+      description: All fields are optional. An empty request body will fetch all templates (subject to pagination).
       properties:
         page:
           type: integer
-          description: The page number of the results to fetch. Mandatory after Nov 15, 2025.
+          description: "The page number of the results to fetch (e.g., 1, 2, 3...). Starts at 1. **Note:** This parameter becomes mandatory after November 15, 2025."
         entries:
           type: integer
-          description: The number of templates to return per page. Max 15. Mandatory after Nov 15, 2025.
+          description: "The number of templates to return per page. Maximum value is 15. **Note:** This parameter becomes mandatory after November 15, 2025."
           maximum: 15
         template_name:
           type: string
-          description: The name of the template to search for (partial search supported).
+          description: Filter by template name. This supports partial, case-insensitive matching.
         template_source:
           type: array
+          description: "Filter by a list of template sources. `API` for templates created via this API, `MOENGAGE` for templates created on the dashboard."
           items:
             type: string
             enum: [API, MOENGAGE]
         template_type:
           type: array
+          description: "Filter by a list of template types. `CUSTOM` for user-created templates, `PRE_BUILT` for MoEngage-provided templates."
           items:
             type: string
             enum: [CUSTOM, PRE_BUILT]
         created_by:
           type: array
+          description: Filter by a list of creator email IDs.
           items:
             type: string
             format: email
         updated_by:
           type: array
+          description: Filter by a list of updater email IDs.
           items:
             type: string
             format: email
         sort_params:
           type: array
+          description: >
+            An array of objects to define sorting order. You can sort by `template_name`, `last_modified_date`, or `last_modified_by`.
+            The sort is applied in the order of the array. E.g., `[{"template_name": "ASCENDING"}, {"last_modified_date": "DESCENDING"}]`.
           items:
             type: object
             properties:
@@ -360,59 +392,95 @@ components:
                 enum: [ASCENDING, DESCENDING]
         template_ids:
           type: array
+          description: "Filter by a specific list of template IDs. Each object should contain `external_template_id` and optionally a `version`."
           items:
             type: object
             properties:
               external_template_id:
                 type: string
                 format: uuid
+                description: The MoEngage-generated unique ID (UUID) of the template.
               version:
                 type: integer
+                description: The specific version of the template to filter for.
 
     InAppTemplate:
       type: object
+      description: Represents a single In-app template object returned in the search response.
       properties:
         external_template_id:
           type: string
           format: uuid
+          description: The unique ID for the template, generated by MoEngage.
         version:
           type: integer
+          description: The version number of the template.
         basic_details:
           type: object
           properties:
             payload:
               type: string
+              description: The stringified JSON or HTML content of the template.
             preview_image:
               type: string
               format: uri
+              description: A URL to a preview image for the template. This is auto-generated by MoEngage for `INAPP_HTML` templates.
             inapp_template_type:
               type: string
+              description: The type of In-app template.
               enum: [SELF_HANDLED, INAPP_HTML]
         meta_info:
           type: object
+          description: Metadata associated with the template.
           properties:
-            template_id: { type: string }
-            template_name: { type: string }
-            template_version: { type: string }
-            created_by: { type: string }
-            channel: { type: string, example: "INAPP" }
-            template_source: { type: string, enum: [API, MOENGAGE] }
-            template_type: { type: string, enum: [CUSTOM, PRE_BUILT] }
+            template_id:
+              type: string
+              description: The user-defined unique identifier for this template.
+            template_name:
+              type: string
+              description: The user-friendly name of the template.
+            template_version:
+              type: string
+              description: The user-defined version of the template.
+            created_by:
+              type: string
+              description: Email ID of the user who created the template.
+            channel:
+              type: string
+              description: "The communication channel. Will always be 'INAPP'."
+              example: "INAPP"
+            template_source:
+              type: string
+              description: "Source of the template. `API` (created via API) or `MOENGAGE` (created on dashboard)."
+              enum: [API, MOENGAGE]
+            template_type:
+              type: string
+              description: "Type of template. `CUSTOM` (user-created) or `PRE_BUILT` (MoEngage-provided)."
+              enum: [CUSTOM, PRE_BUILT]
         created_by:
           type: string
+          description: >
+            Email ID of the user who created the template. (Note: Also present in meta_info).
         created_at:
           type: string
           format: date-time
+          description: >
+            The timestamp when the template was created (ISO 08601 format).
         updated_by:
           type: string
+          description: Email ID of the user who last updated the template.
         updated_at:
           type: string
           format: date-time
+          description: >
+            The timestamp when the template was last updated (ISO 08601 format).
 
     SearchInAppTemplateResponse:
       type: object
+      description: The response object for a template search query.
       properties:
         data:
           type: array
+          description: An array of In-app template objects that match the search criteria.
           items:
             $ref: '#/components/schemas/InAppTemplate'
