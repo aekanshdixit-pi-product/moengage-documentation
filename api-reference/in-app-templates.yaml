@@ -41,23 +41,23 @@ paths:
                 value:
                   basic_details:
                     payload: "{'jsonKey': 'jsonValue', 'title': 'hello world'}"
-                    inapp_template_type": "SELF_HANDLED"
+                    inapp_template_type: "SELF_HANDLED"
                   meta_info:
-                    created_by": "test@example.com"
-                    template_id": "self_handled_123"
-                    template_name": "My Self-Handled Template"
-                    template_version": "1"
+                    created_by: "test@example.com"
+                    template_id: "self_handled_123"
+                    template_name: "My Self-Handled Template"
+                    template_version: "1"
               html:
                 summary: HTML Template
                 value:
                   basic_details:
-                    payload": "<html><body><h1>Hello World</h1></body></html>"
-                    inapp_template_type": "INAPP_HTML"
+                    payload: "<html><body><h1>Hello World</h1></body></html>"
+                    inapp_template_type: "INAPP_HTML"
                   meta_info:
-                    created_by": "test@example.com"
-                    template_id": "html_promo_456"
-                    template_name": "My HTML Promo"
-                    template_version": "1"
+                    created_by: "test@example.com"
+                    template_id: "html_promo_456"
+                    template_name: "My HTML Promo"
+                    template_version: "1"
       responses:
         '200':
           description: Template created successfully.
@@ -69,28 +69,28 @@ paths:
                   external_template_id:
                     type: string
                     format: uuid
-                    description: The unique ID assigned to the newly created template by MoEngage.
+                    description: This field contains the unique ID corresponding to a successful custom template creation. This template ID is used as header input for update, search, or any kind of template modifications in later stage.
                     example: "4a1afbc5-4c31-4f19-8c23-793e27af01aa"
         '400':
-          description: Bad Request. The request is invalid due to missing fields, duplicate `template_id` and `template_version`, or other validation errors.
+          description: Bad Request. This response is returned when the required parameters are missing from the request, when the provided parameters are invalid, or when a template already exists with the same version, name, or ID.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Authentication Failure.
+          description: Authorization Failure. This response is returned when the authorization parameters are missing in the HTTP Auth Header.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '429':
-          description: Rate limit breached (100 RPM) or template quota exceeded.
+          description: Rate Limit Breach. This response is returned when the number of requests per minute has exceeded the rate limit, or the number of templates has exceeded the allowed quota per channel.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '5XX':
-          description: Internal Server Error.
+          description: Internal Server Error. This response is returned when the system runs into an unexpected error.
           content:
             application/json:
               schema:
@@ -114,8 +114,8 @@ paths:
                 payload: "<html><body><h1>Hello Updated World!</h1></body></html>"
                 inapp_template_type: "INAPP_HTML"
               meta_info:
-                template_name": "My Updated HTML Promo"
-                updated_by": "jane.doe@example.com"
+                template_name: "My Updated HTML Promo"
+                updated_by: "jane.doe@example.com"
       responses:
         '200':
           description: Template updated successfully.
@@ -127,16 +127,16 @@ paths:
                   external_template_id:
                     type: string
                     format: uuid
-                    description: The unique ID of the updated template.
+                    description: This field contains the unique ID corresponding to a successful custom template update. This template ID is used as header input for updates, searches, or any kind of template modifications in a later stage.
                     example: "4a1afbc5-4c31-4f19-8c23-793e27af01aa"
         '400':
-          description: Bad Request. Invalid `external_template_id` or other request data validation errors.
+          description: Bad Request. This response is returned when the required parameters are missing from the request, when the provided parameters are invalid, or when a template already exists with the same version, name, or ID.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '5XX':
-          description: Internal Server Error.
+          description: Internal Server Error. This response is returned when the system runs into an unexpected error.
           content:
             application/json:
               schema:
@@ -157,31 +157,31 @@ paths:
               $ref: '#/components/schemas/SearchInAppTemplateRequest'
             example:
               page: 1
-              entries": 15
-              template_source": ["API"]
-              sort_params":
+              entries: 15
+              template_source: ["API"]
+              sort_params:
                 - template_name: "ASCENDING"
       responses:
         '200':
-          description: Search successful. Returns a list of templates.
+          description: The template was searched successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SearchInAppTemplateResponse'
         '400':
-          description: Bad Request. Invalid field values in the search criteria.
+          description: Bad Request. This response is returned when the required parameters are missing from the request or when the provided parameters are invalid.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '429':
-          description: Rate limit breached (100 RPM).
+          description: Rate Limit Breach. This response is returned when the number of requests per minute has exceeded the rate limit.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '5XX':
-          description: Internal Server Error.
+          description: Internal Server Error. This response is returned when the system runs into an unexpected error.
           content:
             application/json:
               schema:
@@ -238,13 +238,15 @@ components:
           required:
             - payload
             - inapp_template_type
+          description: This field contains details about the template to be created, including its payload and template type. Payload should be stringified JSON or HTML depending on the type of template. The inapp_template_type field can either be SELF_HANDLED or INAPP_HTML.
           properties:
             payload:
               type: string
-              description: A stringified JSON or HTML content for the template.
+              description: A stringified JSON or HTML content for the template. For the payload structure, refer to the documentation. Payload should be stringify JSON or HTML depending on the type of template.
             inapp_template_type:
               type: string
               enum: [SELF_HANDLED, INAPP_HTML]
+              description: The template type. Can be either SELF_HANDLED or INAPP_HTML.
         meta_info:
           type: object
           required:
@@ -252,6 +254,7 @@ components:
             - template_id
             - template_name
             - template_version
+          description: This field contains information about the template being created, such as its name, version, and ID and the creator's details.
           properties:
             created_by:
               type: string
@@ -276,28 +279,31 @@ components:
         external_template_id:
           type: string
           format: uuid
-          description: The unique ID generated by MoEngage during template creation.
+          description: The external template ID that needs to be updated. This field contains the unique identifier that is generated during the creation of the template.
         update_campaigns:
           type: boolean
           default: false
-          description: If true, updates all active campaigns using this template to the new version.
+          description: This field contains a flag that is used to update all the campaigns that are currently using the template being updated to the newer version (that is being updated in this request). The default value for this flag is false. When the update_campaigns flag is true, all the campaigns running with this template will get updated to the latest version of the template, and when it is false, the new version of the template will be created, but there will be no change made to the template used in the existing campaigns.
         basic_details:
           type: object
           required:
             - payload
             - inapp_template_type
+          description: Details about the template, including its payload and template type. The payload should be stringified JSON or HTML depending on the template type. The inapp_template_type can be either SELF_HANDLED or INAPP_HTML.
           properties:
             payload:
               type: string
-              description: The updated stringified JSON or HTML content.
+              description: Stringified JSON or HTML content. The data type will be a string. No limit restriction on field length.
             inapp_template_type:
               type: string
               enum: [SELF_HANDLED, INAPP_HTML]
+              description: String value, two options possible - SELF_HANDLED or INAPP_HTML.
         meta_info:
           type: object
           required:
             - template_name
             - updated_by
+          description: This field will update template information, such as the name of the template and the update's details. The version of the templates will be increased by 1 after every template update.
           properties:
             template_name:
               type: string
@@ -316,36 +322,41 @@ components:
       properties:
         page:
           type: integer
-          description: The page number of the results to fetch. Mandatory after Nov 15, 2025.
+          description: This field contains the index of the pages to be returned in the search result. Mandatory after November 15, 2025.
         entries:
           type: integer
-          description: The number of templates to return per page. Max 15. Mandatory after Nov 15, 2025.
+          description: This field contains the number of entries per page in the search result. Maximum value is 15. Mandatory after November 15, 2025.
           maximum: 15
         template_name:
           type: string
-          description: The name of the template to search for (partial search supported).
+          description: This field indicates the name of the template. When this value is specified, the template that matches the name specified in this field will be returned. Partial search is supported.
         template_source:
           type: array
+          description: This field indicates the template source that created the template. When specified, the templates whose source matches that specified in this list will be returned.
           items:
             type: string
             enum: [API, MOENGAGE]
         template_type:
           type: array
+          description: This field indicates whether the template is a custom one or a pre-built one. When specified, the templates whose template type matches that specified in this list will be returned. Allowed values: CUSTOM, PRE_BUILT.
           items:
             type: string
             enum: [CUSTOM, PRE_BUILT]
         created_by:
           type: array
+          description: This field indicates the user who created the template. When specified, the templates for which the created_by user information matches that specified in this list will be returned.
           items:
             type: string
             format: email
         updated_by:
           type: array
+          description: This field indicates the user who updated the template. When specified, the templates for which the updated_by user information matches that specified in this list will be returned.
           items:
             type: string
             format: email
         sort_params:
           type: array
+          description: Sort the templates by multiple fields in ASCENDING or DESCENDING order. Supported fields: template_name, last_modified_date, last_modified_by. First, ordering preference will be done according to template_name in the ASC order, followed by last_modified_date in the DESC order.
           items:
             type: object
             properties:
@@ -360,6 +371,7 @@ components:
                 enum: [ASCENDING, DESCENDING]
         template_ids:
           type: array
+          description: Search multiple templates using pairs of external_template_id and version.
           items:
             type: object
             properties:
@@ -414,5 +426,6 @@ components:
       properties:
         data:
           type: array
+          description: This field contains all the details of the template searched, such as the meta info, template ID, template version, payload, date and time the template was created or updated, and the user attribute of the user who created or updated the template.
           items:
             $ref: '#/components/schemas/InAppTemplate'
