@@ -2,7 +2,11 @@ openapi: 3.0.3
 info:
   title: MoEngage On-Site Messaging (OSM) Template API
   version: '1.0'
-  description: API for creating, updating, and searching On-Site Messaging (OSM) templates within the MoEngage platform.
+  description: >-
+    API for creating, updating, and searching On-Site Messaging (OSM)
+    templates within the MoEngage platform. This API helps you upload
+    templates created outside the MoEngage ecosystem to MoEngage and use them
+    for campaign creation.
 tags:
   - name: OSM Templates
     description: Operations to manage On-Site Messaging (OSM) templates.
@@ -20,14 +24,21 @@ servers:
           - '4'
 security:
   - basicAuth: []
-
 paths:
   /custom-templates/osm:
     post:
       tags:
         - OSM Templates
       summary: Create OSM Template
-      description: This API creates a new On-Site Messaging (OSM) template. This API helps you upload templates created outside the MoEngage ecosystem to MoEngage and use them for campaign creation.
+      description: >-
+        This API creates a new On-Site Messaging (OSM) template. This API
+        helps you upload templates created outside the MoEngage ecosystem to
+        MoEngage and use them for campaign creation.
+
+
+        Note: API templates cannot be used in the Drag and Drop Editor in the
+        MoEngage Dashboard. They are only supported for the Custom HTML
+        Editor.
       requestBody:
         required: true
         description: The details of the OSM template to be created.
@@ -37,13 +48,13 @@ paths:
               $ref: '#/components/schemas/CreateOsmTemplateRequest'
             example:
               basic_details:
-                payload: "<html><body><h1>Your HTML Content Here</h1></body></html>"
-                template_type": "BANNER"
+                payload: <html><body><h1>Your HTML Content Here</h1></body></html>
+                template_type: BANNER
               meta_info:
-                created_by": "testuser@moengage.com"
-                template_id": "123123123"
-                template_name": "Test"
-                template_version": "1"
+                created_by: testuser@moengage.com
+                template_id: '123123123'
+                template_name: Test
+                template_version: '1'
       responses:
         '200':
           description: Template created successfully.
@@ -55,10 +66,15 @@ paths:
                   external_template_id:
                     type: string
                     format: uuid
-                    description: The unique ID assigned to the newly created template by MoEngage.
-                    example: "d05a44f0-a7cf-471a-bcb6-63054800a367"
+                    description: >-
+                      The unique ID assigned to the newly created template by
+                      MoEngage.
+                    example: d05a44f0-a7cf-471a-bcb6-63054800a367
         '400':
-          description: Bad Request. The request is invalid due to missing fields, duplicate `template_id` and `template_version`, or other validation errors.
+          description: >-
+            Bad Request. The request is invalid due to missing fields,
+            duplicate `template_id` and `template_version`, or other
+            validation errors.
           content:
             application/json:
               schema:
@@ -70,7 +86,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '429':
-          description: Rate limit breached (100 RPM) or template quota exceeded.
+          description: >-
+            Rate limit breached (100 RPM) or template quota exceeded (maximum
+            allowed templates per channel).
           content:
             application/json:
               schema:
@@ -85,7 +103,9 @@ paths:
       tags:
         - OSM Templates
       summary: Update OSM Template
-      description: Updates an existing On-Site Messaging (OSM) template by specifying its `external_template_id`.
+      description: >-
+        Updates an existing On-Site Messaging (OSM) template by specifying its
+        `external_template_id`.
       requestBody:
         required: true
         description: The updated details for the OSM template.
@@ -94,15 +114,15 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdateOsmTemplateRequest'
             example:
-              external_template_id: "81e1a740-3e57-4c70-8ec7-ffc84d576498"
+              external_template_id: 81e1a740-3e57-4c70-8ec7-ffc84d576498
               update_campaigns: false
               basic_details:
-                payload: "<html><body><h1>Updated HTML Content</h1></body></html>"
+                payload: <html><body><h1>Updated HTML Content</h1></body></html>
               meta_info:
-                template_name: "AD template updated API 1"
-                template_id": "133434477456"
-                template_version": "2"
-                updated_by": "testuser@moengage.com"
+                template_name: AD template updated API 1
+                template_id: '133434477456'
+                template_version: '2'
+                updated_by: testuser@moengage.com
       responses:
         '200':
           description: Template updated successfully.
@@ -115,9 +135,11 @@ paths:
                     type: string
                     format: uuid
                     description: The unique ID of the updated template.
-                    example: "4a1afbc5-4c31-4f19-8c23-793e27af01aa"
+                    example: 4a1afbc5-4c31-4f19-8c23-793e27af01aa
         '400':
-          description: Bad Request. Invalid `external_template_id` or other request data validation errors.
+          description: >-
+            Bad Request. Invalid `external_template_id` or other request
+            data validation errors.
           content:
             application/json:
               schema:
@@ -128,16 +150,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
   /custom-templates/osm/search:
     post:
       tags:
         - OSM Templates
       summary: Search OSM Templates
-      description: Searches and retrieves a list of On-Site Messaging (OSM) templates based on specified filter criteria.
+      description: >-
+        Searches and retrieves a list of On-Site Messaging (OSM) templates
+        based on specified filter criteria.
+
+
+        Note: We are introducing mandatory pagination, effective November 15,
+        2025. All calls to this API must include the `page` and `entries`
+        parameters. API requests submitted without them after this date will
+        result in an error.
       requestBody:
         required: true
-        description: Search filters for finding OSM templates. An empty body will fetch all templates. Pagination is mandatory after November 15, 2025.
+        description: >-
+          Search filters for finding OSM templates. An empty body will fetch
+          all templates. Pagination is mandatory after November 15, 2025.
         content:
           application/json:
             schema:
@@ -145,9 +176,10 @@ paths:
             example:
               page: 1
               entries: 10
-              template_source": ["API"]
-              sort_params":
-                - last_modified_date: "DESCENDING"
+              template_source:
+                - API
+              sort_params:
+                - last_modified_date: DESCENDING
       responses:
         '200':
           description: Search successful. Returns a list of templates.
@@ -173,14 +205,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-      description: Basic Authentication using Workspace ID as username and the 'Campaign report/Business events/Custom templates' API key as the password.
-
+      description: |
+        Basic Authentication using your Workspace ID as the username and the API key as the password.
+        To get these credentials:
+        1. Navigate to Settings > Account > APIs in the MoEngage Dashboard.
+        2. Username: Use the 'Workspace ID' (formerly App ID).
+        3. Password: Use the API key from the 'Campaign report/Business events/Custom templates/Catalog API' tile.
+        4. Create a Base64-encoded string of 'username:password'.
   schemas:
     ErrorResponse:
       type: object
@@ -190,30 +226,37 @@ components:
           properties:
             code:
               type: string
-              example: "400 Bad Request"
+              example: 400 Bad Request
             message:
               type: string
-              example: "Duplicate - template_id and template_version"
+              example: Duplicate - template_id and template_version
             details:
               type: array
               items:
                 type: object
                 properties:
-                  code: { type: string, example: "InvalidValue" }
-                  target: { type: string, example: "Duplicate - template_id and template_version" }
-                  message: { type: string, example: "template_id:BasicTemplate1 template_version:1 is already present." }
+                  code:
+                    type: string
+                    example: InvalidValue
+                  target:
+                    type: string
+                    example: Duplicate - template_id and template_version
+                  message:
+                    type: string
+                    example: >-
+                      template_id:BasicTemplate1 template_version:1 is already
+                      present.
             request_id:
               type: string
-              example: "cLCcgLQj"
+              example: cLCcgLQj
         title:
           type: string
-          description: An alternative error title format.
-          example: "Authentication required"
+          description: An alternative error title format (e.g., for 401 errors).
+          example: Authentication required
         description:
           type: string
-          description: An alternative error description format.
-          example: "MOE-APPKEY missing in Authentication Header"
-
+          description: An alternative error description format (e.g., for 401 errors).
+          example: MOE-APPKEY missing in Authentication Header
     CreateOsmTemplateRequest:
       type: object
       required:
@@ -228,10 +271,15 @@ components:
           properties:
             payload:
               type: string
-              description: HTML content for the template.
+              description: >-
+                HTML content for the template. Payload type must be HTML
+                only. There is no limit restriction on field length.
             template_type:
               type: string
-              enum: [BANNER, POP_UP, NUDGE]
+              enum:
+                - BANNER
+                - POP_UP
+                - NUDGE
         meta_info:
           type: object
           required:
@@ -242,7 +290,9 @@ components:
           properties:
             created_by:
               type: string
-              description: Identifier for the creator of the template.
+              description: >-
+                Identifier for the creator of the template (e.g.,
+                test@ABC.com).
             template_id:
               type: string
               description: A unique ID for the template provided by you.
@@ -252,7 +302,6 @@ components:
             template_version:
               type: string
               description: The version of the template.
-
     UpdateOsmTemplateRequest:
       type: object
       required:
@@ -263,11 +312,17 @@ components:
         external_template_id:
           type: string
           format: uuid
-          description: The unique ID generated by MoEngage during template creation.
+          description: >-
+            The unique ID generated by MoEngage during template creation (e.g.,
+            4a1afbc5-4c31-4f19-8c23-793e27af01aa).
         update_campaigns:
           type: boolean
           default: false
-          description: If true, updates all active campaigns using this template to the new version.
+          description: >-
+            If true, updates all active campaigns using this template to the
+            new version. If false (default), the new version of the
+            template will be created, but no change will be made to the
+            template used in existing campaigns.
         basic_details:
           type: object
           required:
@@ -275,7 +330,7 @@ components:
           properties:
             payload:
               type: string
-              description: The updated HTML content.
+              description: The updated HTML content. Payload type must be HTML only.
         meta_info:
           type: object
           required:
@@ -291,26 +346,35 @@ components:
               description: A unique ID for the template provided by you.
             template_version:
               type: string
-              description: Optional new version for the template.
+              description: >-
+                Optional new version for the template. The version of the
+                templates will be increased by 1 after every template update.
             updated_by:
               type: string
               format: email
               description: The email ID of the person updating the template.
-
     SearchOsmTemplateRequest:
       type: object
-      description: All fields are optional. An empty request body will fetch all templates.
+      description: >-
+        All fields are optional. If the request body is passed empty, all
+        templates will be returned (subject to pagination).
       properties:
         page:
           type: integer
-          description: The page number of the results to fetch. Mandatory after Nov 15, 2025.
+          description: >-
+            The page number of the results to fetch. Mandatory after Nov 15,
+            2025.
         entries:
           type: integer
-          description: The number of templates to return per page. Max 15. Mandatory after Nov 15, 2025.
+          description: >-
+            The number of templates to return per page. Max 15. Mandatory
+            after Nov 15, 2025.
           maximum: 15
         template_name:
           type: string
-          description: The name of the template to search for (partial search supported).
+          description: >-
+            The name of the template to search for (partial search
+            supported).
         template_id:
           type: string
           description: The ID of the template.
@@ -318,22 +382,30 @@ components:
           type: array
           items:
             type: string
-            enum: [API, MOENGAGE]
+            enum:
+              - API
+              - MOENGAGE
+          description: Filter by the source that created the template.
         template_type:
           type: array
           items:
             type: string
-            enum: [CUSTOM, PRE_BUILT]
+            enum:
+              - CUSTOM
+              - PRE_BUILT
+          description: Filter by custom or pre-built templates.
         created_by:
           type: array
           items:
             type: string
             format: email
+          description: Filter by a list of users who created the template.
         updated_by:
           type: array
           items:
             type: string
             format: email
+          description: Filter by a list of users who last updated the template.
         sort_params:
           type: array
           items:
@@ -341,13 +413,23 @@ components:
             properties:
               template_name:
                 type: string
-                enum: [ASCENDING, DESCENDING]
+                enum:
+                  - ASCENDING
+                  - DESCENDING
               last_modified_date:
                 type: string
-                enum: [ASCENDING, DESCENDING]
+                enum:
+                  - ASCENDING
+                  - DESCENDING
               last_modified_by:
                 type: string
-                enum: [ASCENDING, DESCENDING]
+                enum:
+                  - ASCENDING
+                  - DESCENDING
+          description: >-
+            Sort templates by multiple fields. First, ordering preference
+            will be done according to the first item in the array, followed
+            by the next.
         template_ids:
           type: array
           items:
@@ -358,9 +440,13 @@ components:
                 format: uuid
               version:
                 type: integer
-
+          description: >-
+            Search for multiple specific templates using a pair of
+            `external_template_id` and `version`. (Note: The HTML doc
+            refers to this as 'external_template_ids').
     OsmTemplate:
       type: object
+      description: Represents a single On-Site Messaging (OSM) template.
       properties:
         external_template_id:
           type: string
@@ -375,16 +461,33 @@ components:
             preview_image:
               type: string
               format: uri
+              description: >-
+                A preview image URL generated by MoEngage for the HTML
+                template payload.
         meta_info:
           type: object
           properties:
-            template_id: { type: string }
-            template_name: { type: string }
-            template_version: { type: string }
-            created_by: { type: string }
-            channel: { type: string, example: "ON-SITE" }
-            template_source: { type: string, enum: [API, MOENGAGE] }
-            template_type: { type: string, enum: [CUSTOM, PRE_BUILT] }
+            template_id:
+              type: string
+            template_name:
+              type: string
+            template_version:
+              type: string
+            created_by:
+              type: string
+            channel:
+              type: string
+              example: ON-SITE
+            template_source:
+              type: string
+              enum:
+                - API
+                - MOENGAGE
+            template_type:
+              type: string
+              enum:
+                - CUSTOM
+                - PRE_BUILT
         created_by:
           type: string
         created_at:
@@ -395,7 +498,6 @@ components:
         updated_at:
           type: string
           format: date-time
-
     SearchOsmTemplateResponse:
       type: object
       properties:
