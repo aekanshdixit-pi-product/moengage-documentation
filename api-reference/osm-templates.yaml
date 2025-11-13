@@ -1,25 +1,25 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
-  title: OSM Templates API
-  version: v1.0
-  description: >-
-    APIs for creating, updating, and searching On-site Messaging (OSM) templates
-    in MoEngage. This API allows you to manage templates used for campaign
-    creation.
-servers:
-  - url: 'https://api-{dataCenter}.moengage.com/v1.0'
-    description: >-
-      MoEngage API Endpoint. The value of 'dataCenter' depends on your data
-      center (e.g., api-01, api-02).
-    variables:
-      dataCenter:
-        default: '01'
-        description: >-
-          Your MoEngage data center number (e.g., 01, 02, 03). See [Data Centers
-          and API endpoint mapping](https://help.moengage.com/hc/en-us/articles/360057030512).
+  title: MoEngage On-Site Messaging (OSM) Template API
+  version: '1.0'
+  description: API for creating, updating, and searching On-Site Messaging (OSM)
+    templates within the MoEngage platform.
 tags:
   - name: OSM Templates
-    description: Manage On-site Messaging (OSM) templates.
+    description: Operations to manage On-Site Messaging (OSM) templates.
+servers:
+  - url: https://api-0{dc}.moengage.com/v1.0
+    description: MoEngage Custom Templates API Server
+    variables:
+      dc:
+        default: '1'
+        description: |
+          Your MoEngage Data Center (DC), e.g., 1, 2, 3. Each customer is hosted on a different data center. You can find your data center number by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+        enum:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
 security:
   - basicAuth: []
 paths:
@@ -28,10 +28,9 @@ paths:
       tags:
         - OSM Templates
       summary: Create OSM Template
-      description: >-
-        The Create OSM Template API can be used to create an OSM template in
-        MoEngage. This API helps you upload templates created outside the MoEngage
-        ecosystem to MoEngage and use them for campaign creation.
+      description: Creates a new On-Site Messaging (OSM) template. This API helps
+        you upload templates created outside the MoEngage ecosystem to MoEngage
+        and use them for campaign creation.
       x-mint:
         content: |
           ### Information
@@ -39,22 +38,66 @@ paths:
 
           ### Rate Limit
           The rate limit is 100 RPM. You can upload a maximum of 100 templates per minute.
-      operationId: createOsmTemplate
       requestBody:
-        $ref: '#/components/requestBodies/osmCreateBody'
+        required: true
+        description: The details of the OSM template to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOsmTemplateRequest'
+            example:
+              basic_details:
+                payload: <html><body><h1>Your HTML Content Here</h1></body></html>
+                template_type: BANNER
+              meta_info:
+                created_by: testuser@moengage.com
+                template_id: '123123123'
+                template_name: Test
+                template_version: '1'
       responses:
         '200':
-          $ref: '#/components/responses/templateSuccessResponse'
+          description: Template created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  external_template_id:
+                    type: string
+                    format: uuid
+                    description: The unique ID assigned to the newly created template
+                      by MoEngage.
+                    example: d05a44f0-a7cf-471a-bcb6-63054800a367
         '400':
-          $ref: '#/components/responses/errorResponse'
+          description: Bad Request. This response is returned when the required
+            parameters are missing from the request, when the provided parameters
+            are invalid, or when a template already exists with the same version,
+            name, or ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: '#/components/responses/errorResponse'
-        '415':
-          $ref: '#/components/responses/errorResponse'
+          description: Authentication Failure. This response is returned when the
+            authorization parameters are missing in the HTTP Auth Header.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '429':
-          $ref: '#/components/responses/errorResponse'
-        '500':
-          $ref: '#/components/responses/errorResponse'
+          description: Rate limit breached. This response is returned when the
+            number of requests per minute has exceeded the rate limit, or the
+            number of templates has exceeded the allowed quota per channel.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     put:
       tags:
         - OSM Templates
@@ -64,123 +107,221 @@ paths:
         content: |
           ### Rate Limit
           The rate limit is 100 RPM.
-      operationId: updateOsmTemplate
       requestBody:
-        $ref: '#/components/requestBodies/osmUpdateBody'
+        required: true
+        description: The updated details for the OSM template.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOsmTemplateRequest'
+            example:
+              external_template_id: 81e1a740-3e57-4c70-8ec7-ffc84d576498
+              update_campaigns: false
+              basic_details:
+                payload: <html><body><h1>Updated HTML Content</h1></body></html>
+              meta_info:
+                template_name: AD template updated API 1
+                template_id: '133434477456'
+                template_version: '2'
+                updated_by: testuser@moengage.com
       responses:
         '200':
-          $ref: '#/components/responses/templateSuccessResponse'
+          description: Template updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  external_template_id:
+                    type: string
+                    format: uuid
+                    description: The unique ID of the updated template.
+                    example: 4a1afbc5-4c31-4f19-8c23-793e27af01aa
         '400':
-          $ref: '#/components/responses/errorResponse'
-        '500':
-          $ref: '#/components/responses/errorResponse'
+          description: Bad Request. This response is returned when the required
+            parameters are missing from the request, when the provided parameters
+            are invalid, or when a template already exists with the same version,
+            name, or ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /custom-templates/osm/search:
     post:
       tags:
         - OSM Templates
       summary: Search OSM Templates
-      description: >-
-        The Search OSM Template API can be used to look up the OSM templates
+      description: The Search OSM Template API can be used to look up the OSM templates
         created in your MoEngage account.
       x-mint:
         content: |
           ### Note: Mandatory Pagination
           We are introducing mandatory pagination, effective **November 15, 2025**. All calls to this API must include the following two parameters:
-          - `page`: The page number of the results you wish to fetch.
-          - `entries`: The number of templates to return per page, with a maximum value of *15*.
+
+          * `page`: The page number of the results you wish to fetch.
+          * `entries`: The number of templates to return per page, with a maximum value of *15*.
 
           Please update all integrations to include these parameters. API requests submitted without them after the effective date will result in an error and fail to execute.
 
+          ### Information
+          * If the request body is passed empty, then all templates will be returned.
+          * The `preview_image` field in the response will be generated by MoEngage for the HTML template payload.
+
           ### Rate Limit
           The rate limit is 100 RPM.
-      operationId: searchOsmTemplates
       requestBody:
-        $ref: '#/components/requestBodies/osmSearchBody'
+        required: true
+        description: Search filters for finding OSM templates. An empty body will
+          fetch all templates. Pagination is mandatory after November 15, 2025.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchOsmTemplateRequest'
+            example:
+              page: 1
+              entries: 10
+              template_source:
+                - API
+              sort_params:
+                - last_modified_date: DESCENDING
       responses:
         '200':
-          $ref: '#/components/responses/searchSuccessResponse'
+          description: Search successful. Returns a list of templates.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchOsmTemplateResponse'
         '400':
-          $ref: '#/components/responses/errorResponse'
+          description: Bad Request. This response is returned when the required
+            parameters are missing from the request or when the provided parameters
+            are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '429':
-          $ref: '#/components/responses/errorResponse'
-        '500':
-          $ref: '#/components/responses/errorResponse'
+          description: Rate limit breached. This response is returned when the
+            number of requests per minute has exceeded the rate limit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
       description: |
-        The API request will be authenticated through Basic Authentication.
-        Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '.
+        The API request is authenticated through Basic Authentication. This sends a Base64-encoded string containing your username and password with every API request.
 
-        Example: `{"Authorization: "Basic Base64_ENCODED_WORKSPACEID_APIKEY=="}`
+        It encodes a `username:password` string in Base64 and appends the encoded string with `Basic `. This string is included in the authorization header:
+        `{"Authorization: "Basic Base64_ENCODED_WORKSPACEID_APIKEY=="}`
 
-        To obtain the username (Workspace ID) and password (API Key), navigate to:
-        1.  **Settings > Account > APIs** on the MoEngage Dashboard.
-        2.  Username = **Workspace ID**
-        3.  Password = **API Key** (from the "Custom templates" tile)
+        Follow these steps to obtain the username and password from the MoEngage Dashboard:
+        1.  Navigate to **Settings > Account > APIs**.
+        2.  Copy the following details:
+            * **Username:** Under **Workspace ID** (earlier App ID), click the copy icon.
+            * **Password:** In the **API keys** section, click the copy icon in the **Campaign report**/**Business events**/**Custom templates**/**Catalog API** tile.
   schemas:
-    osmCreatePayload:
+    ErrorResponse:
       type: object
-      description: Payload for creating a new OSM template.
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: 400 Bad Request
+            message:
+              type: string
+              example: Duplicate - template_id and template_version
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: InvalidValue
+                  target:
+                    type: string
+                    example: Duplicate - template_id and template_version
+                  message:
+                    type: string
+                    example: template_id:BasicTemplate1 template_version:1 is already present.
+            request_id:
+              type: string
+              example: cLCcgLQj
+        title:
+          type: string
+          description: An alternative error title format.
+          example: Authentication required
+        description:
+          type: string
+          description: An alternative error description format.
+          example: MOE-APPKEY missing in Authentication Header
+    CreateOsmTemplateRequest:
+      type: object
       required:
         - basic_details
         - meta_info
       properties:
         basic_details:
-          $ref: '#/components/schemas/osmCreateBasicDetails'
+          type: object
+          description: Details about the template, including its payload and template
+            type.
+          required:
+            - payload
+            - template_type
+          properties:
+            payload:
+              type: string
+              description: |
+                Payload type must be HTML. The data type is a string.
+                * No limit restriction on field length.
+                * For payload structure examples, see the main endpoint documentation.
+            template_type:
+              type: string
+              enum:
+                - BANNER
+                - POP_UP
+                - NUDGE
         meta_info:
-          $ref: '#/components/schemas/osmCreateMetaInfo'
-    osmCreateBasicDetails:
+          type: object
+          description: This field contains information about the template being
+            created, such as its name, version, ID, and the creator's details.
+          required:
+            - created_by
+            - template_id
+            - template_name
+            - template_version
+          properties:
+            created_by:
+              type: string
+              description: Identifier for the creator of the template.
+            template_id:
+              type: string
+              description: A unique ID for the template provided by you.
+            template_name:
+              type: string
+              description: The name of the template.
+            template_version:
+              type: string
+              description: The version of the template.
+    UpdateOsmTemplateRequest:
       type: object
-      description: Details about the template, including its payload and template type.
-      required:
-        - payload
-        - template_type
-      properties:
-        payload:
-          type: string
-          description: The Custom HTML payload for the template.
-          example: '<html>...</html>'
-        template_type:
-          type: string
-          description: The type of On-site template.
-          enum:
-            - BANNER
-            - POP_UP
-            - NUDGE
-    osmCreateMetaInfo:
-      type: object
-      description: >-
-        Metadata about the template being created, such as its name, version,
-        and creator.
-      required:
-        - template_name
-        - template_id
-        - template_version
-        - created_by
-      properties:
-        template_name:
-          type: string
-          description: The name of the template.
-          example: test
-        template_id:
-          type: string
-          description: A unique identifier for the template.
-          example: '123456'
-        template_version:
-          type: string
-          description: The version of the template.
-          example: '1'
-        created_by:
-          type: string
-          description: Email of the user creating the template.
-          example: test@ABC.com
-          format: email
-    osmUpdatePayload:
-      type: object
-      description: Payload for updating an existing OSM template.
       required:
         - external_template_id
         - basic_details
@@ -188,85 +329,65 @@ components:
       properties:
         external_template_id:
           type: string
-          description: >-
-            The unique identifier generated during the creation of the template.
-          example: d05a44f0-a7cf-471a-bcb6-63054800a367
           format: uuid
+          description: The unique ID generated by MoEngage during template creation.
         update_campaigns:
           type: boolean
-          description: >-
-            Flag used to update all campaigns that are currently using this
-            template to the newer version.
           default: false
+          description: |
+            This flag is used to update all campaigns that are currently using the template being updated to the newer version.
+            * **`true`**: All campaigns running with this template will be updated to the latest version.
+            * **`false`**: A new version of the template will be created, but no change will be made to the template used in existing campaigns.
         basic_details:
-          $ref: '#/components/schemas/osmUpdateBasicDetails'
+          type: object
+          required:
+            - payload
+          properties:
+            payload:
+              type: string
+              description: The updated HTML content.
         meta_info:
-          $ref: '#/components/schemas/osmUpdateMetaInfo'
-    osmUpdateBasicDetails:
+          type: object
+          required:
+            - template_name
+            - template_id
+            - updated_by
+          properties:
+            template_name:
+              type: string
+              description: The name of the template being updated.
+            template_id:
+              type: string
+              description: A unique ID for the template provided by you.
+            template_version:
+              type: string
+              description: Optional new version for the template.
+            updated_by:
+              type: string
+              format: email
+              description: The email ID of the person updating the template.
+    SearchOsmTemplateRequest:
       type: object
-      description: The new HTML payload for the template.
-      required:
-        - payload
-      properties:
-        payload:
-          type: string
-          description: The new Custom HTML payload for the template.
-          example: '<html>...</html>'
-    osmUpdateMetaInfo:
-      type: object
-      description: Metadata about the template being updated.
-      required:
-        - template_name
-        - template_id
-        - template_version
-        - updated_by
-      properties:
-        template_name:
-          type: string
-          description: The name of the template.
-          example: test
-        template_id:
-          type: string
-          description: The unique identifier for the template.
-          example: '123456'
-        template_version:
-          type: string
-          description: The new version of the template.
-          example: '2'
-        updated_by:
-          type: string
-          description: Email of the user updating the template.
-          example: test@ABC.com
-          format: email
-    osmSearchPayload:
-      type: object
-      description: Payload for searching OSM templates.
+      description: All fields are optional. An empty request body will fetch all
+        templates.
       properties:
         page:
           type: integer
-          description: The page number of the results you wish to fetch.
-          example: 1
+          description: The page number of the results to fetch. Mandatory after
+            Nov 15, 2025.
         entries:
           type: integer
-          description: The number of templates to return per page.
-          example: 10
+          description: The number of templates to return per page. Max 15. Mandatory
+            after Nov 15, 2025.
           maximum: 15
         template_name:
           type: string
-          description: Filter by template name.
-          example: test_template
+          description: The name of the template to search for (partial search supported).
         template_id:
           type: string
-          description: Filter by template ID.
-          example: '45367833'
-        external_template_ids:
-          type: array
-          description: Search multiple templates by their external ID and version.
-          items:
-            $ref: '#/components/schemas/osmSearchExternalId'
+          description: The ID of the template.
         template_source:
           type: array
-          description: Filter by template source.
           items:
             type: string
             enum:
@@ -274,7 +395,6 @@ components:
               - MOENGAGE
         template_type:
           type: array
-          description: Filter by template type.
           items:
             type: string
             enum:
@@ -282,242 +402,98 @@ components:
               - PRE_BUILT
         created_by:
           type: array
-          description: Filter by creator email.
           items:
             type: string
             format: email
-            example: user1@moengage.com
         updated_by:
           type: array
-          description: Filter by updater email.
           items:
             type: string
             format: email
-            example: user2@moengage.com
         sort_params:
           type: array
-          description: Sort the templates by multiple fields.
           items:
-            $ref: '#/components/schemas/osmSearchSortParam'
-    osmSearchExternalId:
-      type: object
-      description: An external_template_id and version pair.
-      properties:
-        external_template_id:
-          type: string
-          example: 904c31c4-c532-4d86-a212-963c697a1bbe
-        version:
-          type: integer
-          example: 1
-    osmSearchSortParam:
-      type: object
-      description: Sort the templates by a field in ASCENDING or DESCENDING order.
-      minProperties: 1
-      maxProperties: 1
-      oneOf:
-        - title: Sort by Name
-          properties:
-            template_name:
-              type: string
-              enum: [ASCENDING, DESCENDING]
-        - title: Sort by Date
-          properties:
-            last_modified_date:
-              type: string
-              enum: [ASCENDING, DESCENDING]
-        - title: Sort by Modifier
-          properties:
-            last_modified_by:
-              type: string
-              enum: [ASCENDING, DESCENDING]
-    successResponse:
-      type: object
-      properties:
-        external_template_id:
-          type: string
-          format: uuid
-          description: >-
-            The unique ID corresponding to a successful custom template
-            creation/update.
-          example: d05a44f0-a7cf-471a-bcb6-63054800a367
-    searchSuccessResponse:
-      type: object
-      properties:
-        data:
+            type: object
+            properties:
+              template_name:
+                type: string
+                enum:
+                  - ASCENDING
+                  - DESCENDING
+              last_modified_date:
+                type: string
+                enum:
+                  - ASCENDING
+                  - DESCENDING
+              last_modified_by:
+                type: string
+                enum:
+                  - ASCENDING
+                  - DESCENDING
+        external_template_ids:
           type: array
           items:
-            $ref: '#/components/schemas/osmTemplateData'
-    osmTemplateData:
+            type: object
+            properties:
+              external_template_id:
+                type: string
+                format: uuid
+              version:
+                type: integer
+    OsmTemplate:
       type: object
-      description: Full template object data.
       properties:
-        meta_info:
-          $ref: '#/components/schemas/osmSearchMetaInfo'
         external_template_id:
           type: string
           format: uuid
         version:
           type: integer
         basic_details:
-          $ref: '#/components/schemas/osmSearchBasicDetails'
+          type: object
+          properties:
+            payload:
+              type: string
+            preview_image:
+              type: string
+              format: uri
+        meta_info:
+          type: object
+          properties:
+            template_id:
+              type: string
+            template_name:
+              type: string
+            template_version:
+              type: string
+            created_by:
+              type: string
+            channel:
+              type: string
+              example: ON-SITE
+            template_source:
+              type: string
+              enum:
+                - API
+                - MOENGAGE
+            template_type:
+              type: string
+              enum:
+                - CUSTOM
+                - PRE_BUILT
         created_by:
           type: string
-          format: email
         created_at:
           type: string
           format: date-time
         updated_by:
           type: string
-          format: email
         updated_at:
           type: string
           format: date-time
-    osmSearchMetaInfo:
-      type: object
-      description: Metadata for a searched template.
-      properties:
-        template_id:
-          type: string
-        template_name:
-          type: string
-        template_version:
-          type: string
-        created_by:
-          type: string
-        channel:
-          type: string
-        template_source:
-          type: string
-        template_type:
-          type: string
-    osmSearchBasicDetails:
-      type: object
-      description: Basic details for a searched template.
-      properties:
-        payload:
-          type: string
-        preview_image:
-          type: string
-          format: uri
-    standardError:
-      title: Bad Request / Duplicate
+    SearchOsmTemplateResponse:
       type: object
       properties:
-        error:
-          $ref: '#/components/schemas/errorDetails'
-    errorDetails:
-      type: object
-      properties:
-        code:
-          type: string
-          example: 400 Bad Request
-        message:
-          type: string
-          example: Duplicate - template_id and template_version
-        details:
+        data:
           type: array
           items:
-            $ref: '#/components/schemas/errorDetailItem'
-        request_id:
-          type: string
-          example: xZLmJvUi
-    errorDetailItem:
-      type: object
-      properties:
-        code:
-          type: string
-          example: InvalidValue
-        target:
-          type: string
-          example: Duplicate - template_id and template_version
-        message:
-          type: string
-          example: 'template_id:13343440 template_version:1 is already present.'
-    authError:
-      title: Authentication/Media Error
-      type: object
-      properties:
-        title:
-          type: string
-          example: Authentication required
-        description:
-          type: string
-          example: MOE-APPKEY missing in Authentication Header
-    rateLimitError:
-      title: Rate Limit Error
-      type: object
-      properties:
-        response_id:
-          type: string
-          example: OUkHvcn
-        type:
-          type: string
-          example: custom_template
-        error:
-          $ref: '#/components/schemas/rateLimitErrorDetails'
-    rateLimitErrorDetails:
-      type: object
-      properties:
-        code:
-          type: string
-          example: Too Many Requests
-        message:
-          type: string
-          example: 'API rate limit breached. Current limit: n/m mins'
-    serverError:
-      title: Server Error
-      type: object
-      properties:
-        title:
-          type: string
-          example: Internal Server Error
-        message:
-          type: string
-          example: >-
-            An unexpected error was encountered while processing this request.
-            Please contact MoEngage Team
-  requestBodies:
-    osmCreateBody:
-      description: Request body to create a new OSM template.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/osmCreatePayload'
-    osmUpdateBody:
-      description: Request body to update an existing OSM template.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/osmUpdatePayload'
-    osmSearchBody:
-      description: Request body to search for OSM templates.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/osmSearchPayload'
-  responses:
-    templateSuccessResponse:
-      description: Template created or updated successfully.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/successResponse'
-    searchSuccessResponse:
-      description: Search results returned.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/searchSuccessResponse'
-    errorResponse:
-      description: An error occurred.
-      content:
-        application/json:
-          schema:
-            oneOf:
-              - $ref: '#/components/schemas/standardError'
-              - $ref: '#/components/schemas/authError'
-              - $ref: '#/components/schemas/rateLimitError'
-              - $ref: '#/components/schemas/serverError'
+            $ref: '#/components/schemas/OsmTemplate'
