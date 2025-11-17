@@ -88,64 +88,7 @@ paths:
           | 15 | Vendor Payload Rejection |
           | 16 | Unexpected Error Occurred |
           | 17 | Invalid Origin Source |
-
-          ### Payload Errors Before Accepting the API Request
-
-          The list of the payload errors that can occur before accepting the API request and the equivalent response codes to be shared under HTTP status code **4xx** for different scenarios across each functionality is given below:
-
-          | Payload Errors | Description | Scenarios | Response Codes | Resolution |
-          | :--- | :--- | :--- | :--- | :--- |
-          | **Authorization Failure** | This error occurs when invalid authorization details such as App Key (Workspace ID) or Password are shared. | <ul><li>No Auth values passed.</li><li>Incorrect Auth Values Passed</li><li>Incorrect Password shared.</li><li>No Auth & No Key Passed</li><li>No App key shared / Empty App Key</li><li>Incorrect App Key shared</li></ul> | `{ "message": "Authorization Failed", "err_code": "UNAUTHORIZED" }` | Recheck the authorization details / Check if you passed the Test Alert ID on Live Endpoint. |
-          | **Invalid Alert ID** | This error occurs when an invalid Alert ID or external reference name is shared. | <ul><li>Missing Alert ID</li><li>Alert ID <24 characters</li><li>Alert ID > 24 Characters</li><li>Invalid Alert ID</li></ul> | `{"message": "Invalid Alert ID“, "err_code": "BAD_REQUEST", “status_code”:120002}` | Recheck the Alert ID or external reference name listed on the Info page. |
-          | **Invalid Transaction ID** | This error occurs when the Transaction ID is not shared. | Missing Transaction ID | `{"message": "Invalid Transaction ID“, "err_code": "BAD_REQUEST", “status_code”:120003}` | Share the transaction ID using the key name **transaction_id** as part of the API Call. |
-          | **Long Transaction ID** | This error occurs when the Transaction ID is invalid. | Long Transaction ID | `{"message": "Long Transaction ID“, "err_code": "BAD_REQUEST", “status_code”:120004}` | Reduce the length of the Transaction ID to 50 characters. |
-          | **Duplicate Transaction ID** | This error occurs when the currently shared Transaction ID matches the previous one in the last 5 minutes. | Duplicate Transaction ID | `{"message": "Duplicate Transaction ID“, "err_code": "DUPLICATE_REQUEST_RECEIVED", “status_code”:120105}` | Add a unique Transaction ID. |
-          | **Invalid Payload** | This error occurs when the payload is in incorrect JSON format or when incorrect Channel details are shared. | <ul><li>Invalid JSON / Invalid Class</li><li>Channel Attribute is incorrect / Channel details missing</li></ul> | `{"message": "Invalid Payload“, "err_code": "BAD_REQUEST", “status_code”:120006}` | Recheck the JSON format and the Channel details. |
-          | **Personalisation Attribute Max length** | This error occurs when the Personalization Attribute length is greater than 1500 characters. | | `{"message": "Personalisation attribute limit exceeded - {x}“, "err_code": "BAD_REQUEST", “status_code”:120007}` | Reduce the length of the Personalization Attribute to 1500 characters / payload size of <100 KB |
-          | **Invalid Recipient** | This error occurs when the recipient details like mobile number or email address are invalid. | | `{"message": "Invalid Recipient“, "err_code": "BAD_REQUEST", “status_code”:120012}` | Recheck the recipient details in the API call or the User Profile. |
-          | **Internal Server Error** | This error occurs when MoEngage is not able to resolve the API request. | | `{"message": "Unexpected error occurred“, "err_code": "Internal Server Error", “status_code”:140109}` | Retry using the same API call with a different Transaction ID. |
-          | **Rate Limit** | This error occurs when you cross the Rate Limit. | | `{"message": "Too many requests“, "err_code": "Rate Limit", “status_code”:140110}` | Make API calls within the Rate Limit. |
-
-          ### Payload Errors After Accepting the API Request
-
-          Alerts can be configured for parallel/sequential fallback as described below:
-          * **Parallel**: For parallel requests, the payload information of success/failure requests should be added at each channel level.
-          * **Sequence**: For fallback requests, the payload information of success/failure requests should be added for the first channel, and other channels, info should be shared over streams
-
-          The list of the payload details that can occur after accepting the API request and the equivalent response codes to be shared under HTTP status code **200/429** for different scenarios across each functionality is given below:
-
-          | Payload Errors | Description | Response Codes | Resolution |
-          | :--- | :--- | :--- | :--- |
-          | **Personalisation Failed** | This error occurs when the required Personalization attributes are not shared in the API call or User Profile doesn't have these values. | `{"message": "Successfully Received“, “Request_ID”: 122323, SMS: {"message": "Personalisation Failure - {{attribute name}}“, "err_code": "BAD_REQUEST", “status_code”:120011 / 121011}}` | Either share the valid Personalization attributes in the API call or update the User Profile with the required values. |
-          | **Invalid Recipient details** | This error occurs when the recipient details like mobile number or email address are invalid. | `{"message": "Successfully Received” , “Request_ID”: 122323, SMS: {"message": "Invalid Recipient“, "err_code": "BAD_REQUEST", “status_code”:120012 / 121012}` | Recheck the recipient details in the API call or the User Profile. |
-          | **Internal Errors** | This error occurs when MoEngage is not able to resolve the API request or channel level details. | `{"message": "Successfully Received”, “Request_ID”: 122323, SMS: {"message": "Unexpected error occurred“, "err_code": "Internal Server Error", “status_code”:140109 / 141109}}` | Retry using the same API call with a different Transaction ID. |
-          | **Vendor Errors** (Config) | This error occurs when the vendor configuration is invalid. | `{"message": "Successfully Received”, “Request_ID”: 122323, SMS: {"message": "Invalid Vendor Configuration“, "err_code": "Vendor Error", “status_code”:150013 / 151013}}` | Recheck the vendor configuration in MoEngage for SMS, Push, and Email. |
-          | **Vendor Errors** (Unavailable) | This error occurs when the vendor is not available. | `{"message": "Successfully Received”, “Request_ID”: 122323, SMS: {"message": "Vendor not available“, "err_code": "Vendor Error", “status_code”:150014 / 151014}}` | NA/MoEngage will retry up to 5 times to submit the message to the vendor. |
-          | **Vendor Errors** (Rejection) | This error occurs when the vendor rejects the Payload. | `{"message": "Successfully Received”, “Request_ID”: 122323, SMS: {"message": "Rejected by Vendor with error - {{error from vendor}},“, "err_code": "Vendor Error", “status_code”:150015 / 151015}}` | Resolve the error sent by the vendor and then make the API call. |
-          | **Vendor Errors** (Success) | This is sent as response when vendor accepts the request | `{"message": "Successfully Received”, “Request_ID”: 122323, SMS: {"message": "Successfully sent“, "err_code": "NA", “status_code”:200000}}` | |
-
-          ## Postman Collection
-          We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-dc1af424-ca64-42f3-8722-2dcdbabdc5bc?action=share&creator=20517718) to view it in Postman.
-
-          ## FAQs
-          * **What is the Rate Limit?**
-              The default rate limit is 10K RPM.
-
-          * **How are Duplicate Requests handled?**
-              A request is deemed duplicate in the case following cases:
-              1.  It is received within 5 minutes of a previously successful request containing the same transaction_id
-              2.  It is received within 5 minutes of a previous request which is ‘In Progress’ (being processed) and contains the same transaction_id
-
-              Duplicate requests are dropped and not reprocessed.
-
-          * **What happens when a vendor does not accept requests from MoEngage?**
-              When the vendor does not accept requests from MoEngage, MoEngage retries every request a maximum of five times with 200ms exponential backoff.
-
-          * **Are Alert Logs stored in MoEngage?**
-              Alert logs are stored for up to 30 days for every Alert in MoEngage.
-
-          * **Error - Live Alert Request received on Sandbox API endpoint**
-              This error occurs when you hit the live alert ID at the sandbox endpoint. For every alert, there are 2 IDs: one is live, and another is Test; the same behavior can be seen for alerts created on the test environment of the MoEngage Dashboard as well. Test Alert ID can be picked up by editing the Alert and going to the 3rd page.
+  
       requestBody:
         required: true
         description: The payload containing the alert identifier, transaction details, and recipient information for each channel.
