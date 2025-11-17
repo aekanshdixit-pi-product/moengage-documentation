@@ -93,7 +93,7 @@ paths:
                       recipient: "1234567890"
       responses:
         '200':
-          description: Request has been received and processed.
+          description: Request has been received and processed.The response body contains the status for the overall request and for each individual channel, which may include channel-specific errors.
           content:
             application/json:
               schema:
@@ -134,12 +134,12 @@ components:
     basicAuth:
       type: http
       scheme: basic
-      description: Basic Authentication
+      description: This is the authentication parameter, used for access control, must be passed along with the request.
     moeAppKey:
       type: apiKey
       in: header
       name: MOE-APPKEY
-      description: Your MoEngage Workspace ID (App ID).
+      description: This is the Workspace ID (or App ID) of your MoEngage account and needs to be passed along with the request. You can find your MoEngage APP ID in the MoEngage Dashboard API Settings.
 
   schemas:
     PayloadChannel:
@@ -149,7 +149,7 @@ components:
       properties:
         recipient:
           type: string
-          description: 'Target: mobile number for SMS, email for EMAIL, or push token for PUSH.'
+          description: 'The target for the notification. This should be a mobile number for SMS, an email address for EMAIL, or a push token for PUSH.'
         personalized_attributes:
           type: object
           additionalProperties: true
@@ -158,14 +158,13 @@ components:
           type: array
           items:
             type: string
-          description: List of attributes for sender evaluation.
+          description: A list of API attributes for evaluating which sender to use.
         personalized_attachments:
           type: object
           additionalProperties:
             type: string
             format: byte
-            description: Map of attachment identifiers to Base64 strings.
-
+            description: 'A map where keys are attachment identifiers (defined in the template) and values are Base64-encoded strings of the attachment content.'
     InformRequest:
       type: object
       required:
@@ -174,16 +173,16 @@ components:
       properties:
         alert_id:
           type: string
-          description: Unique Alert ID.
+          description: This field uniquely identifies the Alert to be sent to the user. For the staging endpoint, use the test alert id and for the live endpoint, use the alert id.
         alert_reference_name:
           type: string
-          description: Reference Name (alternative to Alert ID).
+          description: This field is used to identify the Alert using your reference Name and can be used to identify the alert as an alternative to Alert ID.
         user_id:
           type: string
-          description: Unique user identifier (Client ID).
+          description: This is the unique user identifier information you maintain. This information should be passed in the request to facilitate the mapping of the channel events back to the user profile to which this user_id is associated in MoEngage. MoEngage stores this unique identifier as the Client ID in the user profile.
         transaction_id:
           type: string
-          description: Unique transaction ID (max 50 chars). Used for idempotency.
+          description: This is the unique identifier denoting the transaction for which the Alert is being sent to the user. This information is maintained by the brand and is passed in the request. The maximum length allowed for this field is 50 characters. The Inform API supports idempotency using this parameter. If a request contains a transaction_id and is successful and another request with the same transaction ID is received within 5 minutes of the successful request, the new request would be deemed a duplicate one.
         payloads:
           type: object
           description: Channel-level information.
