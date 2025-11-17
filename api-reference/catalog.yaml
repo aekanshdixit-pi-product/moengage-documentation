@@ -5,29 +5,24 @@ info:
     This API allows for the management of product and item catalogs, including **creation**, **attribute definition**, and **item ingestion, updates, and deletion**.
 
     Authentication is handled via **Basic Auth** (using your Workspace ID as username and API Key as password), and all requests additionally require the `MOE-APPKEY` header (Workspace ID).
-
-    <Note>
-      The API has a platform-wide rate limit of **100 requests/minute OR 1000 requests/hour**, with a maximum payload size of **5MB**. 
-      This is a **COMBINED** limit across all the Catalog APIs for a given user.
-    </Note>
+    
+    The API has a platform-wide rate limit of **100 requests/minute OR 1000 requests/hour**, with a maximum payload size of **5MB**.
   version: '1.0'
 servers:
   - url: 'https://api-{dc}.moengage.com/v1'
     variables:
       dc:
         default: '01'
-        description: >
-          The data center number for your account (e.g., 01, 02, 03). 
-          You can find your data center number by checking the MoEngage 
-          data center and API endpoint mapping page.
+        description: 'The data center number for your account (e.g., 01, 02, 03). Refer to the MoEngage documentation for mapping.'
 tags:
   - name: Catalog
     description: Operations related to creating and managing catalog schemas (attributes).
   - name: Items
     description: Operations related to ingesting, updating, and deleting items within a catalog.
 security:
-  - basicAuth: []
-  - AppKeyHeader: []
+  - basicAuth: [] # Basic Auth for API Key/Secret
+  - AppKeyHeader: [] # Header for MOE-APPKEY
+
 paths:
   /catalog:
     post:
@@ -39,21 +34,12 @@ paths:
         Creates a new catalog with a unique name and defines its schema by specifying required and custom attributes along with their data types.
       x-mint:
         content: |
-### Rate Limit
-With the current implementation of a Platform based rate limiter, we support the following:
-
-Request limit - 100/min OR 1000/hr.
-Payload size limit - 5MB only when Content-Length header is provided.
           ### Mandatory Attributes
           Every catalog item must include the following attributes, all with a `string` data type:
           * **id**: Unique ID that represents the item.
           * **title**: Name of the item.
           * **link**: Web link of the item.
           * **image_link**: Image source link of the item.
-
-          <Information>
-           The limit is a COMBINED limit across all the Catalog APIs for a given user.
-          </Information>
 
           The request body accepts a maximum of **50 attributes** in total, including these 4 mandatory attributes.
       requestBody:
@@ -124,8 +110,7 @@ Payload size limit - 5MB only when Content-Length header is provided.
       summary: Add Catalog Attributes
       operationId: addCatalogAttributes
       description: |
-        Adds new attributes to an existing catalog's schema. If any provided attributes already exist, they are ignored and will be listed in the `duplicate-item-attributes` field in the response.
-        
+        Adds new attributes to an existing catalog's schema. If any provided attributes already exist, they are ignored.
         Up to 50 total attributes are allowed per catalog.
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
@@ -276,10 +261,6 @@ Payload size limit - 5MB only when Content-Length header is provided.
           <Note>
             **Prerequisite**: Before updating existing items with new attributes, you must first add the new attribute to the catalog schema using the `PATCH /catalog/{catalog_id}/attributes` API.
           </Note>
-
-          <Note>
-            All MoEngage catalog APIs operate synchronously. This means changes can be seen instantly.
-          </Note>
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -416,27 +397,21 @@ Payload size limit - 5MB only when Content-Length header is provided.
           $ref: '#/components/responses/PayloadTooLarge'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-      description: |
-        Basic Authentication uses the **Workspace ID** (username) and the **Catalog API Key** (password).
-
-        You can obtain these details from the MoEngage Dashboard:
-        1. Navigate to **Settings > Account > APIs**.
-        2. Copy the **Workspace ID** (this is your username).
-        3. In the **API keys** section, copy the key from the **Catalog API** tile (this is your password).
+      description: >
+        Basic Authentication uses the **Workspace ID** (username) and the 
+        **Catalog API Key** (password).
     AppKeyHeader:
       type: apiKey
       in: header
       name: MOE-APPKEY
       description: |
         The Workspace ID (App Key) from your MoEngage dashboard. This header is mandatory for all requests.
-
-        You can find your Workspace ID in the MoEngage Dashboard:
-        **Settings** -> **Account** -> **APIs** -> **Workspace ID**.
   parameters:
     CatalogIdPath:
       name: catalog_id
@@ -454,7 +429,7 @@ components:
       properties:
         name:
           type: string
-          description: "The name of the attribute (e.g., 'color', 'price')."
+          description: The name of the attribute (e.g., 'color', 'price').
         type:
           type: string
           description: The data type of the attribute.
@@ -505,6 +480,7 @@ components:
           type: string
           format: uri
           description: The URL of the primary image for the item.
+        # Allows for all other user-defined attributes based on AttributeDefinition
       additionalProperties: true
       example:
         id: "item-sku-123"
@@ -645,12 +621,12 @@ components:
         x-ratelimit-limit:
           schema:
             type: integer
-            description: The maximum number of requests permitted in the time window (100/min or 1000/hr).
+          description: The maximum number of requests permitted in the time window (100/min or 1000/hr).
         x-ratelimit-remaining:
           schema:
             type: integer
-            description: The number of requests remaining in the current window.
+          description: The number of requests remaining in the current window.
         x-ratelimit-reset:
           schema:
             type: integer
-            description: The UTC epoch seconds at which the current window resets.
+          description: The UTC epoch seconds at which the current window resets.
