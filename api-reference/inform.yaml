@@ -36,7 +36,6 @@ paths:
       tags:
         - Transactional Alerts
       summary: Send Transactional Alert
-      # FIX: Using x-mint to safely render MDX components and Lists
       x-mint:
         content: |
           This API sends a transactional alert to a user on one or more channels using a pre-configured Alert ID or Alert Reference Name.
@@ -93,7 +92,7 @@ paths:
                       recipient: "1234567890"
       responses:
         '200':
-          description: Request has been received and processed.The response body contains the status for the overall request and for each individual channel, which may include channel-specific errors.
+          description: Request has been received and processed. The response body contains the status for the overall request and for each individual channel.
           content:
             application/json:
               schema:
@@ -104,30 +103,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
+              example:
+                message: "Invalid Alert ID"
+                err_code: "BAD_REQUEST"
+                status_code: 120002
         '401':
           description: Unauthorized. Invalid authentication credentials.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
+              # FIX: Specific example for 401
+              example:
+                message: "Invalid App Key or Basic Auth"
+                err_code: "UNAUTHORIZED"
+                status_code: 120001
         '409':
           description: Duplicate Request. A request with the same transaction_id was received recently.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
+              # FIX: Specific example for 409
+              example:
+                message: "Duplicate Transaction ID detected"
+                err_code: "DUPLICATE_REQUEST"
+                status_code: 120009
         '429':
           description: Rate Limit Reached.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
+              # FIX: Specific example for 429
+              example:
+                message: "Too many requests"
+                err_code: "RATE_LIMIT_EXCEEDED"
+                status_code: 120029
         '500':
           description: Internal Server Error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
+              # FIX: Specific example for 500
+              example:
+                message: "Internal Server Error"
+                err_code: "INTERNAL_ERROR"
+                status_code: 120500
 
 components:
   securitySchemes:
@@ -179,10 +202,10 @@ components:
           description: This field is used to identify the Alert using your reference Name and can be used to identify the alert as an alternative to Alert ID.
         user_id:
           type: string
-          description: This is the unique user identifier information you maintain. This information should be passed in the request to facilitate the mapping of the channel events back to the user profile to which this user_id is associated in MoEngage. MoEngage stores this unique identifier as the Client ID in the user profile.
+          description: This is the unique user identifier information you maintain. This information should be passed in the request to facilitate the mapping of the channel events back to the user profile to which this user_id is associated in MoEngage.
         transaction_id:
           type: string
-          description: This is the unique identifier denoting the transaction for which the Alert is being sent to the user. This information is maintained by the brand and is passed in the request. The maximum length allowed for this field is 50 characters. The Inform API supports idempotency using this parameter. If a request contains a transaction_id and is successful and another request with the same transaction ID is received within 5 minutes of the successful request, the new request would be deemed a duplicate one.
+          description: This is the unique identifier denoting the transaction for which the Alert is being sent to the user. This information is maintained by the brand and is passed in the request. The maximum length allowed for this field is 50 characters.
         payloads:
           type: object
           description: Channel-level information.
