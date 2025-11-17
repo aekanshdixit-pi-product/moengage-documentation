@@ -7,6 +7,11 @@ info:
     * Create campaigns (targeting all users or a group of users) to send notifications.
     * Target a single user using a unique user attribute.
     * Personalize payload for each user.
+    
+    ### Important Notes
+    * **Silent Notifications:** The Push API **does not** support silent notifications.
+    * **HTML Support:** The basic template and message body support HTML tags for formatting.
+    * **Rate Limit:** You can create 10,000 requests per minute.
 tags:
   - name: Push
     description: Operations to create and send push notification campaigns.
@@ -35,42 +40,21 @@ paths:
         - Push
       summary: Send Push Notification
       description: >-
-        The MoEngage Push API is used to:
-        Create campaigns (targeting all users or a group of users) to send notifications.
-        Target a single user using a unique user attribute.
-        Personalize payload for each user.
+        The MoEngage Push API is used to create campaigns, target users, and personalize payloads.
       x-mint:
         content: |
-          ### Signature Generation
-          A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key using the SHA 256 method.
+          ### Authentication
+          The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request.
+          
+          It encodes a `username: password` string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+          
+          `{"Authorization":"Basic Base64_ENCODED_APPKEY_APIKEY=="}`
 
-          The signature key is a concatenation of `app_id + '|' + campaign_name + '|' + api_key`.
-
-          <Tabs>
-            <Tab title="Python 3.x">
-              ```python
-              from hashlib import sha256
-              app_id = "YOUR_WORKSPACE_ID_DEBUG"
-              campaign_name = "TEST"
-              api_key = "YOUR_PUSH_API_KEY"
-              signature_key = app_id+'|'+ campaign_name+'|'+ api_key
-              signature = sha256(signature_key.encode('utf-8')).hexdigest()
-              print(signature)
-              ```
-            </Tab>
-            <Tab title="Python 2.x">
-              ```python
-              from hashlib import sha256
-              app_id = "YOUR_WORKSPACE_ID_DEBUG"
-              campaign_name = "TEST"
-              api_key = "YOUR_PUSH_API_KEY"
-              signature_key = app_id+'|'+ campaign_name+'|'+ api_key
-              signature = sha256(signature_key).hexdigest()
-              print(signature)
-              ```
-            </Tab>
-          </Tabs>
-
+          **How to obtain credentials:**
+          1.  On the left navigation menu in the MoEngage dashboard, go to **Settings** > **Account** > **APIs**.
+          2.  **Username**: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+          3.  **Password**: In the **API keys** section, click the copy icon in the **Push** templates tile to copy the API key.
+          
           ---
 
           <Note>
@@ -138,8 +122,7 @@ paths:
           description: >-
             Request processed. The `status` field in the response body will be
             either 'Success' or 'Fail'. If 'Fail', an `Error_Message` field will
-            provide details. See the documentation for a full list of possible
-            error messages.
+            provide details.
           content:
             application/json:
               schema:
@@ -155,11 +138,6 @@ components:
       scheme: basic
       description: |
         The API request is authenticated through Basic Authentication. Use your MoEngage Workspace ID as the **username** and the Push API Key as the **password**.
-
-        1.  In the MoEngage dashboard, go to **Settings** > **Account** > **APIs**.
-        2.  **Username**: Copy the **Workspace ID**.
-        3.  **Password**: In the **API keys** section, copy the API key from the **Push** templates tile.
-        4.  Provide these credentials via Basic Auth (`"Authorization":"Basic Base64_ENCODED(USERNAME:PASSWORD)"`).
     apiKeyAuth:
       type: apiKey
       in: header
@@ -251,7 +229,9 @@ components:
       properties:
         message:
           type: string
-          description: This field denotes the main content or text to be displayed in the notification/message.
+          description: >-
+            This field denotes the main content or text to be displayed in the notification/message. 
+            **Note:** Supports HTML tags.
         title:
           type: string
           description: This field denotes the headline or subject of the notification/message.
@@ -340,7 +320,9 @@ components:
       properties:
         message:
           type: string
-          description: This field denotes the primary text or body of the notification/message.
+          description: >-
+            This field denotes the primary text or body of the notification/message.
+            **Note:** Supports HTML tags.
         title:
           type: string
           description: This field denotes the title or subject line of the notification/message.
@@ -427,6 +409,7 @@ components:
           description: >-
             This field denotes the main text content or notification body
             displayed to users.
+            **Note:** Supports HTML tags.
         title:
           type: string
           description: This field denotes the subject or heading of the notification.
@@ -526,15 +509,38 @@ components:
           type: object
           description: >-
             This field denotes the event attribute filters. It contains `name`,
-            `filter`, `value`, and `type`. See documentation for a full list
-            of supported filter operators.
+            `filter`, `value`, and `type`.
           properties:
             name:
               type: string
               description: Event attribute name. (Mandatory if `attrs` is used)
             filter:
               type: string
-              description: Event attribute filter operator. (Mandatory if `attrs` is used)
+              description: >-
+                Event attribute filter operator. (Mandatory if `attrs` is used). 
+                
+                **String Operators:** `is`, `is not`, `contains`, `does not contain`, `starts with`, `does not start with`, `ends with`, `does not end with`, `in the following`, `not in the following`, `exists`, `does not exist`.
+                
+                **Numeric Operators:** `is equal to`, `is not equal to`, `is between`, `is not between`, `is less than`, `is greater than`, `exists`, `does not exist`.
+              enum:
+                - is
+                - is not
+                - contains
+                - does not contain
+                - starts with
+                - does not start with
+                - ends with
+                - does not end with
+                - in the following
+                - not in the following
+                - exists
+                - does not exist
+                - is equal to
+                - is not equal to
+                - is between
+                - is not between
+                - is less than
+                - is greater than
             value:
               oneOf:
                 - type: string
@@ -542,7 +548,7 @@ components:
                 - type: array
                   items:
                     type: string
-              description: Event attribute filter value.
+              description: Event attribute filter value. Note that for `exists` and `does not exist` filters, this key is not required.
             type:
               type: string
               description: >-
@@ -559,6 +565,7 @@ components:
           description: >-
             Time-to-live duration in minutes. If not delivered, the push
             service will retry until the TTL expires. The default is 36 hours.
+            Send ‘0’ if it is not applicable.
           properties:
             ANDROID:
               type: integer
@@ -576,6 +583,8 @@ components:
           description: >-
             If `ignoreFC` is true, set this to `true` to count this push in the
             frequency cap.
+            * `true`: Only Push campaigns are counted in the frequency cap count.
+            * `false`: Push campaigns are not counted in the frequency cap count.
         notificationPrioritySettings:
           type: object
           description: >-
@@ -594,6 +603,11 @@ components:
                 - 1
                 - 5
                 - 10
+        sendAtHighPriority:
+            type: boolean
+            description: >-
+                Legacy field found in some examples. Equivalent to setting high priority in `notificationPrioritySettings`.
+            deprecated: true
         'pushAmp+':
           type: boolean
           description: >-
@@ -679,10 +693,35 @@ components:
             Example: `“campaignTags“ : [“Transactional“, “Accounts“]`
         signature:
           type: string
-          description: >-
-            A SHA256 hash of `appId|campaignName|apiKey`. See the 'Signature
-            Generation' section in the main guide for details on how to create
-            this.
+          description: |
+            A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key using the SHA 256 method.
+
+            The signature key is a concatenation of `app_id + '|' + campaign_name + '|' + api_key`.
+
+            <Tabs>
+              <Tab title="Python 3.x">
+                ```python
+                from hashlib import sha256
+                app_id = "YOUR_WORKSPACE_ID_DEBUG"
+                campaign_name = "TEST"
+                api_key = "YOUR_PUSH_API_KEY"
+                signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+                signature = sha256(signature_key.encode('utf-8')).hexdigest()
+                print(signature)
+                ```
+              </Tab>
+              <Tab title="Python 2.x">
+                ```python
+                from hashlib import sha256
+                app_id = "YOUR_WORKSPACE_ID_DEBUG"
+                campaign_name = "TEST"
+                api_key = "YOUR_PUSH_API_KEY"
+                signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+                signature = sha256(signature_key).hexdigest()
+                print(signature)
+                ```
+              </Tab>
+            </Tabs>
         requestType:
           type: string
           description: >-
@@ -740,6 +779,7 @@ components:
             This object contains the conversion goals details.
             * You can pass a single conversion goal or multiple conversion goals (max 5).
             * If passing multiple, the first goal in the list is considered the primary conversion goal.
+            * **Note:** Selected Attribution window must be within limits (1 - 36 hours).
           items:
             $ref: '#/components/schemas/ConversionGoal'
         advancedSettings:
@@ -770,8 +810,27 @@ components:
             - Fail
         Error_Message:
           type: string
-          example: Campaign Name not found
           description: A description of the error that occurred.
+          example: Campaign Name not found
+          enum:
+            - Invalid JSON
+            - Invalid Request Type
+            - Invalid appId
+            - appId is not present
+            - Please specify a campaign name of more than or equal to 5 characters
+            - Request limit exceed.
+            - Campaign name is missing
+            - Signature is missing
+            - Signature is not verified
+            - key is Mandatory
+            - "Campaign With this name already exists. For targetAudience type All User or Custom Segment you can't create campaign with same campaign previous name"
+            - key is not of Type List
+            - "value is not a allowed value."
+            - Failed to get all whitelisted event list
+            - "Custom Segment Name: s_name not found in our database.Please verify same on Dashboard"
+            - error or set isCustom to True.
+            - Selected Attribution window is not within limits (1 - 36 hours)
+            - Error parsing parameters
         responseId:
           type: string
           description: This field indicates the response ID.
