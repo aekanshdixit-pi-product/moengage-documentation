@@ -54,21 +54,109 @@ paths:
               $ref: '#/components/schemas/StartLiveActivityRequest'
       responses:
         '200':
-          description: Request was successful.
+          description: Success. The live activity instance was created.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request - Mandatory fields are missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "PayloadError"
+                  message: "Mandatory fields are missing or invalid"
+                  details:
+                    - code: "extra_forbidden"
+                      target: "ios.alert.metrics"
+                      message: "Extra inputs are not permitted"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthorized - Invalid credentials or missing headers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-app-key:
+                  summary: Invalid App Key
+                  value:
+                    error:
+                      code: "AuthError"
+                      message: "Invalid App Key"
+                invalid-data-key:
+                  summary: Invalid Data Key
+                  value:
+                    error:
+                      code: "AuthError"
+                      message: "Invalid Data Key"
+                missing-headers:
+                  summary: Missing Authorization Headers
+                  value:
+                    error:
+                      code: "AuthError"
+                      message: "Authorization header or X-MOE-APPKEY is missing"
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: Forbidden - Operation not allowed due to logic or permission constraints.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                campaign-not-found:
+                  summary: Campaign Not Found
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Campaign not found for <broadcast live activity id>"
+                ios-token-required:
+                  summary: iOS Token Required
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Only IOS token auth is allowed, please upload .p8 file"
+                duplicate-request:
+                  summary: Duplicate Request
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Duplicate Request, please use different instance_id"
+                limit-reached:
+                  summary: Max Instances Limit Reached
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Max Instances Limit Reached"
+        '413':
+          description: Payload Too Large - The payload exceeds the limit (e.g., 5120 bytes for iOS).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "PayloadSizeError"
+                  message: "Payload size exceeded for IOS. Max size is 5120 bytes"
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: Too Many Requests.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+              example: []
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "ServerError"
+                  message: "Internal Server Error, something went wrong"
 
   /live-activity/broadcast/update:
     post:
@@ -92,21 +180,70 @@ paths:
               $ref: '#/components/schemas/UpdateLiveActivityRequest'
       responses:
         '200':
-          description: Request was successful.
+          description: Success. The live activity was updated.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "AuthError"
+                  message: "Invalid App Key"
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                dismissal-passed:
+                  summary: Dismissal Date Passed
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Dismissal date is already passed"
+                invalid-action:
+                  summary: Invalid Action
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Invalid Action"
+        '413':
+          description: Payload Too Large.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "PayloadSizeError"
+                  message: "Payload size exceeded for IOS. Max size is 5120 bytes"
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: Too Many Requests.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+              example: []
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /live-activity/broadcast/end:
     post:
@@ -130,21 +267,47 @@ paths:
               $ref: '#/components/schemas/EndLiveActivityRequest'
       responses:
         '200':
-          description: Request was successful.
+          description: Success. The live activity was ended.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "OperationNotAllowed"
+                  message: "Dismissal date is already passed"
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: Too Many Requests.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+              example: []
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   securitySchemes:
@@ -294,35 +457,3 @@ components:
           description: Optional unique identifier for this specific broadcast instance.
         ios:
           $ref: '#/components/schemas/IOSUpdatePayload'
-
-  responses:
-    BadRequest:
-      description: Bad Request. The request body is malformed or missing required fields.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    Unauthorized:
-      description: Unauthorized. Authentication credentials are missing or invalid.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    Forbidden:
-      description: Forbidden. The feature might not be enabled for your account, or the operation is not allowed.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    TooManyRequests:
-      description: Too Many Requests. You have exceeded the rate limit.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    InternalServerError:
-      description: Internal Server Error. An unexpected error occurred on the server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
