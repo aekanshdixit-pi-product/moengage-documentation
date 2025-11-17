@@ -36,20 +36,22 @@ paths:
       tags:
         - Transactional Alerts
       summary: Send Transactional Alert
-      description: |
-        This API sends a transactional alert to a user on one or more channels using a pre-configured Alert ID or Alert Reference Name. 
-        
-        <Note>Use the Live endpoint for production and the Test/Sandbox endpoint for testing.</Note>
+      # FIX: Using x-mint to safely render MDX components and Lists
+      x-mint:
+        content: |
+          This API sends a transactional alert to a user on one or more channels using a pre-configured Alert ID or Alert Reference Name.
 
-        ### Supported Scenarios
-        Transactional Alerts are designed for critical user communications, including:
+          <Note>Use the Live endpoint for production and the Test/Sandbox endpoint for testing.</Note>
 
-        * Order/Booking/Purchase confirmations
-        * Shipping/Delivery confirmations and updates
-        * Security and account alerts
-        * Password resets
-        * OTP (one-time password)
-        * User invitations and shares
+          ### Supported Scenarios
+          Transactional Alerts are designed for critical user communications, including:
+          * Order/Booking/Purchase confirmations
+          * Shipping/Delivery confirmations and updates
+          * Security and account alerts
+          * Password resets
+          * OTP (one-time password)
+          * User invitations and shares
+      description: "Sends a transactional alert to a user."
       security:
         - basicAuth: []
           moeAppKey: []
@@ -91,22 +93,142 @@ paths:
                       recipient: "1234567890"
       responses:
         '200':
-          description: Request has been received and processed. The response body contains the status for the overall request and for each individual channel, which may include channel-specific errors.
+          description: Request has been received and processed.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformSuccessResponse'
         '400':
-          description: Bad Request. Invalid payload format, incorrect JSON, invalid or missing Alert ID, or invalid channel configuration.
+          description: Bad Request. Invalid payload format, incorrect JSON, or invalid Alert ID.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
         '401':
-          description: Unauthorized. Invalid authentication credentials (App Key, Basic Auth, or API Secret).
+          description: Unauthorized. Invalid authentication credentials.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
         '409':
-          description: Duplicate Request. A request with the
+          description: Duplicate Request. A request with the same transaction_id was received recently.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformErrorResponse'
+        '429':
+          description: Rate Limit Reached.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformErrorResponse'
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformErrorResponse'
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Basic Authentication
+    moeAppKey:
+      type: apiKey
+      in: header
+      name: MOE-APPKEY
+      description: Your MoEngage Workspace ID (App ID).
+
+  schemas:
+    PayloadChannel:
+      type: object
+      required:
+        - recipient
+      properties:
+        recipient:
+          type: string
+          description: 'Target: mobile number for SMS, email for EMAIL, or push token for PUSH.'
+        personalized_attributes:
+          type: object
+          additionalProperties: true
+          description: Key-value map for personalization.
+        sender_attributes:
+          type: array
+          items:
+            type: string
+          description: List of attributes for sender evaluation.
+        personalized_attachments:
+          type: object
+          additionalProperties:
+            type: string
+            format: byte
+            description: Map of attachment identifiers to Base64 strings.
+
+    InformRequest:
+      type: object
+      required:
+        - transaction_id
+        - payloads
+      properties:
+        alert_id:
+          type: string
+          description: Unique Alert ID.
+        alert_reference_name:
+          type: string
+          description: Reference Name (alternative to Alert ID).
+        user_id:
+          type: string
+          description: Unique user identifier (Client ID).
+        transaction_id:
+          type: string
+          description: Unique transaction ID (max 50 chars). Used for idempotency.
+        payloads:
+          type: object
+          description: Channel-level information.
+          properties:
+            SMS:
+              $ref: '#/components/schemas/PayloadChannel'
+            EMAIL:
+              $ref: '#/components/schemas/PayloadChannel'
+            PUSH:
+              $ref: '#/components/schemas/PayloadChannel'
+
+    ChannelStatus:
+      type: object
+      properties:
+        message:
+          type: string
+        err_code:
+          type: string
+        status_code:
+          type: integer
+
+    InformSuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Successfully Received"
+        request_id:
+          type: string
+        SMS:
+          $ref: '#/components/schemas/ChannelStatus'
+        EMAIL:
+          $ref: '#/components/schemas/ChannelStatus'
+        PUSH:
+          $ref: '#/components/schemas/ChannelStatus'
+
+    InformErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Invalid Alert ID"
+        err_code:
+          type: string
+          example: "BAD_REQUEST"
+        status_code:
+          type: integer
+          example: 120002
