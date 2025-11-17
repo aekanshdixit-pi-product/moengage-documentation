@@ -1,27 +1,112 @@
+openapi: 3.0.3
+info:
+  title: MoEngage Inform API
+  version: '1.0'
+  description: |-
+    API for MoEngage Inform, a unified messaging infrastructure for building and managing transactional alerts across multiple channels like SMS, Email, and Push.
+tags:
+  - name: Transactional Alerts
+    description: Send transactional alerts using pre-configured templates.
+servers:
+  - url: 'https://api-0{dc}.moengage.com/v1.0'
+    description: Live Alerts Endpoint
+    variables:
+      dc:
+        default: '1'
+        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, etc.'
+        enum:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+  - url: 'https://sandbox-api-0{dc}.moengage.com/v1.0'
+    description: Test/Sandbox Alerts Endpoint
+    variables:
+      dc:
+        default: '1'
+        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, etc.'
+        enum:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
 paths:
   /alerts/send:
     post:
       tags:
         - Transactional Alerts
       summary: Send Transactional Alert
-      # This extension injects the text ABOVE the endpoint in Mintlify
-      x-mint:
-        content: |
-          This API sends a transactional alert to a user on one or more channels using a pre-configured Alert ID or Alert Reference Name.
+      description: |
+        This API sends a transactional alert to a user on one or more channels using a pre-configured Alert ID or Alert Reference Name. 
+        
+        <Note>Use the Live endpoint for production and the Test/Sandbox endpoint for testing.</Note>
 
-          ### Supported Scenarios
-          Transactional Alerts are designed for critical user communications, including:
-          * Order/Booking/Purchase confirmations
-          * Shipping/Delivery confirmations and updates
-          * Security and account alerts
-          * Password resets
-          * OTP (one-time password)
-          * User invitations and shares
+        ### Supported Scenarios
+        Transactional Alerts are designed for critical user communications, including:
 
-          <Note>Use the Live endpoint for production and the Test/Sandbox endpoint for testing.</Note>
-      description: ""  # Keep this empty or short since we used x-mint: content
+        * Order/Booking/Purchase confirmations
+        * Shipping/Delivery confirmations and updates
+        * Security and account alerts
+        * Password resets
+        * OTP (one-time password)
+        * User invitations and shares
       security:
         - basicAuth: []
           moeAppKey: []
       requestBody:
-        # ... (rest of your file remains the same)
+        required: true
+        description: The payload containing the alert identifier, transaction details, and recipient information for each channel.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InformRequest'
+            examples:
+              multiChannelWithPersonalization:
+                summary: Multi-Channel with Personalization
+                value:
+                  alert_id: "636b77e6e2cf83277195fb60"
+                  alert_reference_name: "Demo_ID"
+                  user_id: "USER_12345"
+                  transaction_id: "TXN_987654321"
+                  payloads:
+                    PUSH:
+                      recipient: "<push-token>"
+                      personalized_attributes:
+                        firstname: "John"
+                        orderid: "ORD_554433"
+                    EMAIL:
+                      recipient: "john.doe@moengage.com"
+                      personalized_attributes:
+                        firstname: "John"
+                        orderid: "ORD_554433"
+              singleChannelNoPersonalization:
+                summary: Single Channel (SMS) without Personalization
+                value:
+                  alert_id: "636b77e6e2cf83277195fb60"
+                  alert_reference_name: "Demo_ID"
+                  user_id: "USER_12345"
+                  transaction_id: "TXN_ABCDEF123"
+                  payloads:
+                    SMS:
+                      recipient: "1234567890"
+      responses:
+        '200':
+          description: Request has been received and processed. The response body contains the status for the overall request and for each individual channel, which may include channel-specific errors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformSuccessResponse'
+        '400':
+          description: Bad Request. Invalid payload format, incorrect JSON, invalid or missing Alert ID, or invalid channel configuration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformErrorResponse'
+        '401':
+          description: Unauthorized. Invalid authentication credentials (App Key, Basic Auth, or API Secret).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformErrorResponse'
+        '409':
+          description: Duplicate Request. A request with the
