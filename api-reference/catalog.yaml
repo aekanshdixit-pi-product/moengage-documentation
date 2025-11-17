@@ -2,18 +2,24 @@ openapi: 3.0.3
 info:
   title: MoEngage Catalog API
   description: |
-    This API allows for the management of product and item catalogs, including **creation**, **attribute definition**, and **item ingestion, updates, and deletion**.
+    This API allows for the management of product and item catalogs, including **creation**, 
+    **attribute definition**, and **item ingestion, updates, and deletion**.
 
-    Authentication is handled via **Basic Auth** (using your Workspace ID as username and API Key as password), and all requests additionally require the `MOE-APPKEY` header (Workspace ID).
+    Authentication is handled via **Basic Auth** (using your Workspace ID as username and API Key as password), 
+    and all requests additionally require the `MOE-APPKEY` header (Workspace ID).
     
     The API has a platform-wide rate limit of **100 requests/minute OR 1000 requests/hour**, with a maximum payload size of **5MB**.
   version: '1.0'
 servers:
+  # Updated based on reference documentation URL structure: https://api-0X.moengage.com/v1
   - url: 'https://api-{dc}.moengage.com/v1'
     variables:
       dc:
         default: '01'
-        description: 'The data center number for your account (e.g., 01, 02, 03). Refer to the MoEngage documentation for mapping.'
+        description: >
+          The data center number for your account (e.g., 01, 02, 03). 
+          Refer to the MoEngage documentation for mapping. The variable is 
+          represented as '0X' in the base URL in the documentation.
 tags:
   - name: Catalog
     description: Operations related to creating and managing catalog schemas (attributes).
@@ -31,8 +37,10 @@ paths:
       summary: Create a New Catalog
       operationId: createCatalog
       description: |
-        Creates a new catalog with a unique name and defines its schema by specifying required and custom attributes along with their data types.
+        This API allows you to create a new catalog with a unique name and specify the necessary attributes along with their respective data types.
+        The name provided for the catalog must be **unique** within your workspace.
       x-mint:
+        # Extracted Mandatory Attributes content from the reference docs
         content: |
           ### Mandatory Attributes
           Every catalog item must include the following attributes, all with a `string` data type:
@@ -42,6 +50,10 @@ paths:
           * **image_link**: Image source link of the item.
 
           The request body accepts a maximum of **50 attributes** in total, including these 4 mandatory attributes.
+
+          <Note>
+            Your request could fail if the mandatory attributes are absent from your payload.
+          </Note>
       requestBody:
         required: true
         content:
@@ -111,7 +123,13 @@ paths:
       operationId: addCatalogAttributes
       description: |
         Adds new attributes to an existing catalog's schema. If any provided attributes already exist, they are ignored.
-        Up to 50 total attributes are allowed per catalog.
+        Up to 50 total attributes are allowed per catalog, including the mandatory attributes (id, title, link, image_link).
+      x-mint:
+        content: |
+          <Note>
+            The maximum limit of 50 attributes per catalog includes the 4 mandatory attributes (id, title, link, image_link).
+            The datatype of an attribute cannot be changed once defined.
+          </Note>
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -183,7 +201,8 @@ paths:
       x-mint:
         content: |
           <Note>
-            All MoEngage catalog APIs operate synchronously. This means changes can be seen instantly.
+            All MoEngage catalog APIs operate **synchronously**. This means changes can be seen instantly.
+            The maximum number of items that can be sent in a single request is 50.
           </Note>
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
@@ -260,6 +279,7 @@ paths:
         content: |
           <Note>
             **Prerequisite**: Before updating existing items with new attributes, you must first add the new attribute to the catalog schema using the `PATCH /catalog/{catalog_id}/attributes` API.
+            All MoEngage catalog APIs operate **synchronously**.
           </Note>
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
@@ -329,11 +349,13 @@ paths:
         - Items
       summary: Bulk Delete Catalog Items (Max 50)
       operationId: deleteCatalogItems
-      description: Deletes up to 50 existing items from a catalog in a single request.
+      description: >
+        Deletes up to 50 existing items from a catalog in a single request.
       x-mint:
         content: |
           <Note>
             If the request contains items that are not found in the catalog, the request will still be processed successfully, and those item IDs will be marked as invalid in the response message.
+            The maximum number of items that can be deleted in a single request is 50.
           </Note>
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
