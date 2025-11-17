@@ -36,10 +36,116 @@ paths:
       tags:
         - Transactional Alerts
       summary: Send Transactional Alert
-      description: Inform facilitates a unified messaging infrastructure across multiple channels with a single API for building and managing transactional alerts. 
+      description: This API sends a transactional alert to a user on one or more channels using a pre-configured Alert ID or Alert Reference Name. Use the Live endpoint for production and the Test/Sandbox endpoint for testing.
       security:
         - basicAuth: []
-          moeAppKey: []
+        - moeAppKey: []
+      x-mint:
+        content: |
+          ## How Does Inform API Work & Respond?
+
+          <Note>
+            Reach out to your Customer Success Manager to enable sending the channel level details as part of your API response.
+          </Note>
+
+          Inform API works in two steps as described below:
+
+          1.  A check is performed to verify if the API request received for Inform is valid.
+          2.  If valid, the second process is to resolve the content and send a message using the partner.
+
+          The response codes are shared in **wxyzab** format as described below:
+          * **w** - Status (failures are indicated with 1 and success is indicated with 2)
+          * **x** - Category of the error
+          * **y** - Request is considered for parallel request (parallel requests is indicated with 0 and fallback requests are indicated with 1)
+          * **z** - Can this request be retried by you (0 indicates it cannot be retried with same details)
+          * **ab** - Reason details for the error
+
+          Below are the Category details:
+
+          | Category Code | Details |
+          | :--- | :--- |
+          | 1 | Unauthorized |
+          | 2 | Bad Request |
+          | 4 | Internal Server Error / Ratelimit |
+
+          The Reason details are given below with each Reason Code holding specific meanings:
+
+          | Reason Code | Details |
+          | :--- | :--- |
+          | 1 | Invalid Credentials |
+          | 2 | Invalid Alert ID |
+          | 3 | Missing Transaction ID |
+          | 4 | Duplicate Transaction ID |
+          | 5 | Long Transaction ID |
+          | 6 | Invalid Payload |
+          | 7 | Personalisation Attribute |
+          | 9 | Internal Server Error |
+          | 10 | Rate Limit |
+          | 11 | Personalisation Failed |
+          | 12 | Invalid Recipient details |
+          | 13 | Vendor configuration errors |
+          | 14 | Vendor not available |
+          | 15 | Vendor Payload Rejection |
+          | 16 | Unexpected Error Occurred |
+          | 17 | Invalid Origin Source |
+
+          ### Payload Errors Before Accepting the API Request
+
+          The list of the payload errors that can occur before accepting the API request and the equivalent response codes to be shared under HTTP status code **4xx** for different scenarios across each functionality is given below:
+
+          | Payload Errors | Description | Scenarios | Response Codes | Resolution |
+          | :--- | :--- | :--- | :--- | :--- |
+          | **Authorization Failure** | This error occurs when invalid authorization details such as App Key (Workspace ID) or Password are shared. | <ul><li>No Auth values passed.</li><li>Incorrect Auth Values Passed</li><li>Incorrect Password shared.</li><li>No Auth & No Key Passed</li><li>No App key shared / Empty App Key</li><li>Incorrect App Key shared</li></ul> | `{ "message": "Authorization Failed", "err_code": "UNAUTHORIZED" }` | Recheck the authorization details / Check if you passed the Test Alert ID on Live Endpoint. |
+          | **Invalid Alert ID** | This error occurs when an invalid Alert ID or external reference name is shared. | <ul><li>Missing Alert ID</li><li>Alert ID <24 characters</li><li>Alert ID > 24 Characters</li><li>Invalid Alert ID</li></ul> | `{"message": "Invalid Alert ID“, "err_code": "BAD_REQUEST", “status_code”:120002}` | Recheck the Alert ID or external reference name listed on the Info page. |
+          | **Invalid Transaction ID** | This error occurs when the Transaction ID is not shared. | Missing Transaction ID | `{"message": "Invalid Transaction ID“, "err_code": "BAD_REQUEST", “status_code”:120003}` | Share the transaction ID using the key name **transaction_id** as part of the API Call. |
+          | **Long Transaction ID** | This error occurs when the Transaction ID is invalid. | Long Transaction ID | `{"message": "Long Transaction ID“, "err_code": "BAD_REQUEST", “status_code”:120004}` | Reduce the length of the Transaction ID to 50 characters. |
+          | **Duplicate Transaction ID** | This error occurs when the currently shared Transaction ID matches the previous one in the last 5 minutes. | Duplicate Transaction ID | `{"message": "Duplicate Transaction ID“, "err_code": "DUPLICATE_REQUEST_RECEIVED", “status_code”:120105}` | Add a unique Transaction ID. |
+          | **Invalid Payload** | This error occurs when the payload is in incorrect JSON format or when incorrect Channel details are shared. | <ul><li>Invalid JSON / Invalid Class</li><li>Channel Attribute is incorrect / Channel details missing</li></ul> | `{"message": "Invalid Payload“, "err_code": "BAD_REQUEST", “status_code”:120006}` | Recheck the JSON format and the Channel details. |
+          | **Personalisation Attribute Max length** | This error occurs when the Personalization Attribute length is greater than 1500 characters. | | `{"message": "Personalisation attribute limit exceeded - {x}“, "err_code": "BAD_REQUEST", “status_code”:120007}` | Reduce the length of the Personalization Attribute to 1500 characters / payload size of <100 KB |
+          | **Invalid Recipient** | This error occurs when the recipient details like mobile number or email address are invalid. | | `{"message": "Invalid Recipient“, "err_code": "BAD_REQUEST", “status_code”:120012}` | Recheck the recipient details in the API call or the User Profile. |
+          | **Internal Server Error** | This error occurs when MoEngage is not able to resolve the API request. | | `{"message": "Unexpected error occurred“, "err_code": "Internal Server Error", “status_code”:140109}` | Retry using the same API call with a different Transaction ID. |
+          | **Rate Limit** | This error occurs when you cross the Rate Limit. | | `{"message": "Too many requests“, "err_code": "Rate Limit", “status_code”:140110}` | Make API calls within the Rate Limit. |
+
+          ### Payload Errors After Accepting the API Request
+
+          Alerts can be configured for parallel/sequential fallback as described below:
+          * **Parallel**: For parallel requests, the payload information of success/failure requests should be added at each channel level.
+          * **Sequence**: For fallback requests, the payload information of success/failure requests should be added for the first channel, and other channels, info should be shared over streams
+
+          The list of the payload details that can occur after accepting the API request and the equivalent response codes to be shared under HTTP status code **200/429** for different scenarios across each functionality is given below:
+
+          | Payload Errors | Description | Response Codes | Resolution |
+          | :--- | :--- | :--- | :--- |
+          | **Personalisation Failed** | This error occurs when the required Personalization attributes are not shared in the API call or User Profile doesn't have these values. | `{"message": "Successfully Received“, “Request_ID”: 122323, SMS: {"message": "Personalisation Failure - {{attribute name}}“, "err_code": "BAD_REQUEST", “status_code”:120011 / 121011}}` | Either share the valid Personalization attributes in the API call or update the User Profile with the required values. |
+          | **Invalid Recipient details** | This error occurs when the recipient details like mobile number or email address are invalid. | `{"message": "Successfully Received” , “Request_ID”: 122323, SMS: {"message": "Invalid Recipient“, "err_code": "BAD_REQUEST", “status_code”:120012 / 121012}` | Recheck the recipient details in the API call or the User Profile. |
+          | **Internal Errors** | This error occurs when MoEngage is not able to resolve the API request or channel level details. | `{"message": "Successfully Received”, “Request_ID”: 122323, SMS: {"message": "Unexpected error occurred“, "err_code": "Internal Server Error", “status_code”:140109 / 141109}}` | Retry using the same API call with a different Transaction ID. |
+          | **Vendor Errors** (Config) | This error occurs when the vendor configuration is invalid. | `{"message": "Successfully Received”, “Request_ID”: 122323, SMS: {"message": "Invalid Vendor Configuration“, "err_code": "Vendor Error", “status_code”:150013 / 151013}}` | Recheck the vendor configuration in MoEngage for SMS, Push, and Email. |
+          | **Vendor Errors** (Unavailable) | This error occurs when the vendor is not available. | `{"message": "Successfully Received”, “Request_ID”: 122323, SMS: {"message": "Vendor not available“, "err_code": "Vendor Error", “status_code”:150014 / 151014}}` | NA/MoEngage will retry up to 5 times to submit the message to the vendor. |
+          | **Vendor Errors** (Rejection) | This error occurs when the vendor rejects the Payload. | `{"message": "Successfully Received”, “Request_ID”: 122323, SMS: {"message": "Rejected by Vendor with error - {{error from vendor}},“, "err_code": "Vendor Error", “status_code”:150015 / 151015}}` | Resolve the error sent by the vendor and then make the API call. |
+          | **Vendor Errors** (Success) | This is sent as response when vendor accepts the request | `{"message": "Successfully Received”, “Request_ID”: 122323, SMS: {"message": "Successfully sent“, "err_code": "NA", “status_code”:200000}}` | |
+
+          ## Postman Collection
+          We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-dc1af424-ca64-42f3-8722-2dcdbabdc5bc?action=share&creator=20517718) to view it in Postman.
+
+          ## FAQs
+          * **What is the Rate Limit?**
+              The default rate limit is 10K RPM.
+
+          * **How are Duplicate Requests handled?**
+              A request is deemed duplicate in the case following cases:
+              1.  It is received within 5 minutes of a previously successful request containing the same transaction_id
+              2.  It is received within 5 minutes of a previous request which is ‘In Progress’ (being processed) and contains the same transaction_id
+
+              Duplicate requests are dropped and not reprocessed.
+
+          * **What happens when a vendor does not accept requests from MoEngage?**
+              When the vendor does not accept requests from MoEngage, MoEngage retries every request a maximum of five times with 200ms exponential backoff.
+
+          * **Are Alert Logs stored in MoEngage?**
+              Alert logs are stored for up to 30 days for every Alert in MoEngage.
+
+          * **Error - Live Alert Request received on Sandbox API endpoint**
+              This error occurs when you hit the live alert ID at the sandbox endpoint. For every alert, there are 2 IDs: one is live, and another is Test; the same behavior can be seen for alerts created on the test environment of the MoEngage Dashboard as well. Test Alert ID can be picked up by editing the Alert and going to the 3rd page.
       requestBody:
         required: true
         description: The payload containing the alert identifier, transaction details, and recipient information for each channel.
@@ -51,81 +157,115 @@ paths:
               multiChannelWithPersonalization:
                 summary: Multi-Channel with Personalization
                 value:
-                  alert_id": "636b77e6e2cf83277195fb60"
-                  alert_reference_name": "Demo_ID"
-                  user_id": "USER_12345"
-                  transaction_id": "TXN_987654321"
-                  payloads":
-                    PUSH":
-                      recipient": "<push-token>"
-                      personalized_attributes":
-                        firstname": "John"
-                        orderid": "ORD_554433"
-                    EMAIL":
-                      recipient": "john.doe@moengage.com"
-                      personalized_attributes":
-                        firstname": "John"
-                        orderid": "ORD_554433"
+                  {
+                    "alert_id": "636b77e6e2cf83277195fb60",
+                    "alert_reference_name": "Demo_ID",
+                    "user_id": "USER_12345",
+                    "transaction_id": "TXN_987654321",
+                    "payloads": {
+                      "PUSH": {
+                        "recipient": "<push-token>",
+                        "personalized_attributes": {
+                          "firstname": "John",
+                          "orderid": "ORD_554433"
+                        }
+                      },
+                      "EMAIL": {
+                        "recipient": "john.doe@moengage.com",
+                        "personalized_attributes": {
+                          "firstname": "John",
+                          "orderid": "ORD_554433"
+                        }
+                      }
+                    }
+                  }
               singleChannelNoPersonalization:
                 summary: Single Channel (SMS) without Personalization
                 value:
-                  alert_id": "636b77e6e2cf83277195fb60"
-                  alert_reference_name": "Demo_ID"
-                  user_id": "USER_12345"
-                  transaction_id": "TXN_ABCDEF123"
-                  payloads":
-                    SMS":
-                      recipient": "1234567890"
+                  {
+                    "alert_id": "636b77e6e2cf83277195fb60",
+                    "alert_reference_name": "Demo_ID",
+                    "user_id": "USER_12345",
+                    "transaction_id": "TXN_ABCDEF123",
+                    "payloads": {
+                      "SMS": {
+                        "recipient": "1234567890"
+                      }
+                    }
+                  }
       responses:
         '200':
-          description: Request has been received and processed. The response body contains the status for the overall request and for each individual channel, which may include channel-specific errors.
+          description: |
+            This response is returned when the request is submitted to MoEngage and the channel-level details are present in the API Response Details.
+            **Note**: For errors in the channel-level payload, the error information is present in the logs on the dashboard.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformSuccessResponse'
         '400':
-          description: Bad Request. Invalid payload format, incorrect JSON, invalid or missing Alert ID, or invalid channel configuration.
+          description: |
+            Bad Request. This response is returned in the following cases:
+            * When the payload is empty or invalid
+            * Invalid Alert ID (alert) being sent
+            * Incorrect Channel in the Payload (When the Payload contains information about channels that are not configured in the Alert).
+            * When the transaction_id exceeds the allowed limit
+            * When the Alert ID of a paused or stopped or archived Alert is used in the request.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
         '401':
-          description: Unauthorized. Invalid authentication credentials (App Key, Basic Auth, or API Secret).
+          description: |
+            Unauthorized. This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
         '409':
-          description: Duplicate Request. A request with the same `transaction_id` was received within the last 5 minutes.
+          description: |
+            Duplicate Request. This response is returned when a request is sent with the same transaction_id value as a previously successful or in-progress request.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
         '429':
-          description: Rate Limit Reached. The number of requests per minute has exceeded the allowed limit.
+          description: |
+            Rate Limit Reached. This response is returned when the number of requests per minute has exceeded the rate limit.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
         '500':
-          description: Internal Server Error. An unexpected error occurred.
+          description: |
+            Internal Server Error. This response is returned when the system runs into an unexpected error. You can try for a maximum of 3 times with exponential backoff.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
-
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-      description: Basic Authentication using Workspace ID as username and Inform API Key as password.
+      description: |
+        The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '.
+
+        You can obtain the username and password details from the MoEngage Dashboard:
+        1.  Navigate to **Settings** -> **Account** -> **APIs**.
+        2.  Copy the following details:
+            * **Username**: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+            * **Password**: In the **API keys** section, click the copy icon in the **Inform** tile to copy the API key.
+        3.  Use these details to authenticate the API requests.
+
+        <Note>
+        Please **DO NOT** regenerate the key unless there is a security breach. Once you generate a different API SECRET KEY and save it, API calls using the older SECRET KEY won't work.
+        </Note>
     moeAppKey:
       type: apiKey
       in: header
       name: MOE-APPKEY
-      description: Your MoEngage Workspace ID.
-
+      description: >
+        This is the Workspace ID (or App ID) of your MoEngage account and needs to be passed along with the request. You can find your MoEngage APP ID in the MoEngage Dashboard API Settings.
   schemas:
     PayloadChannel:
       type: object
@@ -134,22 +274,36 @@ components:
       properties:
         recipient:
           type: string
-          description: 'The target for the notification. This should be a mobile number for SMS, an email address for EMAIL, or a push token for PUSH.'
+          description: |
+            The target for the notification. This should be:
+            * **SMS Channel**: <mobile number>
+            * **Email Channel**: <email id>
+            * **Push Channel**: <push token>
         personalized_attributes:
           type: object
           additionalProperties: true
-          description: A key-value map of attributes for personalizing the message template.
+          description: >
+            A key-value map of attributes for personalizing the message template. This information is passed by the brand when invoking the Inform API Service.
         sender_attributes:
           type: array
           items:
             type: string
-          description: A list of API attributes for evaluating which sender to use.
+          description: >
+            A list of the API attributes used for evaluating the sender to be selected. If not passed, the alert will not be sent out.
         personalized_attachments:
           type: object
           additionalProperties:
             type: string
             format: byte
-            description: 'A map where keys are attachment identifiers (defined in the template) and values are Base64-encoded strings of the attachment content.'
+          description: |
+            This field contains the personalized attachments for the email channel and should be sent as a base64-encoded string. If email attachments are specified to be **Uploaded via API** during Alert creation, this field should be added to the payload and the attachment should be passed using the attachment key specified during Alert creation.
+
+            For example, if the attachment key is specified as `sample_attachment_key` during Alert creation for an attachment, it should be passed in the request as follows:
+            ```json
+            "personalized_attachments": {
+              "sample_attachment_key": "data:{extension_type};base64, + YOUR_sample_base64_attachment_key_VAL_HERE"
+            }
+            ```
 
     InformRequest:
       type: object
@@ -159,20 +313,30 @@ components:
       properties:
         alert_id:
           type: string
-          description: The unique ID of the Live or Test Alert. Either this or `alert_reference_name` is mandatory.
+          description: >
+            This field uniquely identifies the Alert to be sent to the user. For the staging endpoint, use the test alert id and for the live endpoint, use the alert id. Either this or `alert_reference_name` is mandatory.
         alert_reference_name:
           type: string
-          description: The reference name for the Alert. Can be used as an alternative to `alert_id`.
+          description: >
+            This field is used to identify the Alert using your reference Name and can be used to identify the alert as an alternative to `alert_id`.
         user_id:
           type: string
-          description: Optional unique user identifier to map channel events back to a user profile in MoEngage.
+          description: >
+            This is the unique user identifier information you maintain. This information should be passed in the request to facilitate the mapping of the channel events back to the user profile to which this `user_id` is associated in MoEngage. MoEngage stores this unique identifier as the Client ID in the user profile.
         transaction_id:
           type: string
           maxLength: 50
-          description: A unique identifier for the transaction to support idempotency. Duplicate requests with the same ID within 5 minutes will be rejected.
+          description: >
+            This is the unique identifier denoting the transaction for which the Alert is being sent to the user. This information is maintained by the brand and is passed in the request. The maximum length allowed for this field is 50 characters. The Inform API supports idempotency using this parameter. If a request contains a `transaction_id` and is successful and another request with the same `transaction_id` is received within 5 minutes of the successful request, the new request would be deemed a duplicate one.
         payloads:
           type: object
-          description: An object where keys are the channel names (SMS, EMAIL, PUSH) and values contain the recipient and personalization data. At least one channel is required.
+          description: |
+            A JSON object where keys are the channel names (e.g., SMS, EMAIL, PUSH) and values are the channel-specific payload objects. At least one channel is required.
+            <Note>
+            1.  At least one channel is mandatory in the API request and only a maximum of two channels can be configured for an Alert and a maximum payload size of 100KB is allowed for personalised attributes.
+            2.  If multiple channels are configured in the Alert, and the payload contains information for only some channels, MoEngage will send the Alerts to the channels for which information is present and ignore the channels for which information is not available in the payload.
+            3.  The total size of the attachments should be less than 4 MB. You can attach up to 5 files.
+            </Note>
           properties:
             SMS:
               $ref: '#/components/schemas/PayloadChannel'
@@ -180,7 +344,6 @@ components:
               $ref: '#/components/schemas/PayloadChannel'
             PUSH:
               $ref: '#/components/schemas/PayloadChannel'
-
     ChannelStatus:
       type: object
       properties:
@@ -190,7 +353,6 @@ components:
           type: string
         status_code:
           type: integer
-
     InformSuccessResponse:
       type: object
       properties:
@@ -205,7 +367,6 @@ components:
           $ref: '#/components/schemas/ChannelStatus'
         PUSH:
           $ref: '#/components/schemas/ChannelStatus'
-
     InformErrorResponse:
       type: object
       properties:
