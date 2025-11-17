@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: MoEngage Business Events API
-  description: API for creating, triggering, and searching business events in MoEngage.
+  description: The MoEngage Business Events API allows you to programmatically create, trigger, and search for custom events. These events are essential for automating customer journeys and campaign triggers in the MoEngage platform.
   version: '1.0'
 servers:
   - url: 'https://api-0{X}.moengage.com/v1.0'
@@ -9,10 +9,12 @@ servers:
     variables:
       X:
         default: '1'
-        description: 'Your MoEngage Data Center (DC) number. Refer to MoEngage docs for your correct DC.'
+        description: >
+          Your MoEngage Data Center (DC) number. 
+          Refer to MoEngage documentation to find your correct DC number (usually 1, 2, or 3).
 tags:
   - name: Business Events
-    description: Manage and trigger business events.
+    description: Manage and trigger custom business events for campaign orchestration.
 security:
   - basicAuth: []
 paths:
@@ -20,11 +22,24 @@ paths:
     post:
       tags:
         - Business Events
-      summary: Create Business Event
-      description: This API allows you to create business events in MoEngage. You can use these events to trigger campaigns whenever they occur.
+      summary: Create a New Business Event Definition
+      description: >
+        This API endpoint is used to define a new type of business event within MoEngage. 
+        Once created, this event can be used to trigger customer campaigns based on event occurrences.
       operationId: createBusinessEvent
+      x-mint:
+        content: |
+          ### Rate Limits
+          The rate limits are at the workspace level. You can create a maximum of **50 business events** for each workspace.
+
+          ### Prerequisites
+          <Note>
+          The Authorization header uses Basic authentication with a Base64-encoded Workspace ID and API Key.
+          </Note>
+        metadata:
+          title: Create Event Schema
       requestBody:
-        description: Business event definition.
+        description: The full definition of the new business event, including its name and a list of structured attributes.
         required: true
         content:
           application/json:
@@ -37,7 +52,7 @@ paths:
               properties:
                 event_name:
                   type: string
-                  description: This field contains the name of the business event.
+                  description: This field contains the name of the business event. **Business event names must be unique.**
                   example: NameOfOTTSeries
                 event_attributes:
                   type: array
@@ -65,7 +80,7 @@ paths:
               created_by: john.doe@example.com
       responses:
         '200':
-          description: The business event has been created.
+          description: The business event definition has been successfully created.
           content:
             application/json:
               schema:
@@ -73,13 +88,16 @@ paths:
                 properties:
                   message:
                     type: string
+                    description: Information about whether the request was successful.
                     example: The business event has been created
                   event_id:
                     type: string
-                    description: Unique identifier for the created business event.
+                    description: >
+                      The unique identifier for the created business event. 
+                      MoEngage generates this ID upon successful creation. You must store and use this value for future lookups (e.g., Search API).
                     example: 64a40cff5547a6b2c5b14404
         '400':
-          description: Bad Request (e.g., missing parameters, invalid values).
+          description: Bad Request (e.g., missing mandatory fields, invalid data types, or event name already exists).
           content:
             application/json:
               schema:
@@ -97,7 +115,7 @@ paths:
                           message: 'created_by - Field is required but value is None : None'
                       request_id: 64a54b0f633fda13b6681259
                 invalidDataType:
-                  summary: Incorrect data type
+                  summary: Incorrect data type for attribute
                   value:
                     error:
                       code: 400 Bad Request
@@ -108,7 +126,7 @@ paths:
                           message: "['brand'] - Wrong Attribute data type is passed : 'String'"
                       request_id: 64a54b6c633fda13b668125e
         '401':
-          description: Authorization Failure.
+          description: Authorization Failure. Returned when the authorization parameters are missing or incorrect in the HTTP Auth Header.
           content:
             application/json:
               schema:
@@ -143,7 +161,7 @@ paths:
                               message: Invalid APP_ID is provided.
                       request_id: 64a54bfa633fda13b6681262
         '500':
-          description: Internal Server Error.
+          description: Internal Server Error. Returned when the system runs into an unexpected error.
           content:
             application/json:
               schema:
@@ -155,15 +173,27 @@ paths:
                   message:
                     type: string
                     example: An unexpected error was encountered while processing this request. Please contact MoEngage Team
+
   /business_event/trigger:
     post:
       tags:
         - Business Events
-      summary: Trigger Business Event
-      description: This API allows you to trigger a business event in MoEngage. You can set up campaigns to be executed when these events are triggered.
+      summary: Trigger a Business Event Occurrence
+      description: >
+        This API is used to send an instance of a defined business event to MoEngage. 
+        Triggering an event will execute any active campaigns associated with it.
       operationId: triggerBusinessEvent
+      x-mint:
+        content: |
+          ### Rate Limits
+          You can send **200 triggers in a day**, and **50 in each hour**.
+
+          ### Best Practices
+          <Note>
+          It is not required to pass the value for all event attributes while triggering the business event.
+          </Note>
       requestBody:
-        description: Event to trigger.
+        description: The event name and the specific attributes/values for this event occurrence.
         required: true
         content:
           application/json:
@@ -179,7 +209,7 @@ paths:
                   example: Series_Name
                 event_attributes:
                   type: object
-                  description: A JSON object containing the attributes and their values for the event.
+                  description: A JSON object containing the values for the defined event attributes.
                   additionalProperties: true
                   example:
                     season: Season 1
@@ -191,7 +221,7 @@ paths:
                 triggered_by:
                   type: string
                   format: email
-                  description: Information about who triggered the business event.
+                  description: Optional. Information about who triggered the business event.
                   example: john.doe@example.com
             example:
               event_name: Series_Name
@@ -205,7 +235,7 @@ paths:
               triggered_by: john.doe@example.com
       responses:
         '200':
-          description: The business event has been triggered.
+          description: The business event has been successfully triggered and processed.
           content:
             application/json:
               schema:
@@ -213,9 +243,10 @@ paths:
                 properties:
                   message:
                     type: string
+                    description: Information about whether the request was successful.
                     example: The business event has been triggered
         '400':
-          description: Bad Request (e.g., event does not exist, no active campaign).
+          description: Bad Request (e.g., event does not exist, wrong attributes sent, or no active campaign found).
           content:
             application/json:
               schema:
@@ -245,24 +276,8 @@ paths:
                       request_id: 64a54dbf633fda13b668142d
         '401':
           description: Authorization Failure.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: 401 Authentication error
-                  message: Authentication required
-                  details:
-                    - code: InvalidValue
-                      target: Authorization
-                      message:
-                        code: MissingValue
-                        target: Authorization
-                        message: APP_ID and APP_SECRET_KEY is missing in Authorization Header.
-                  request_id: 64a54e0e633fda13b6681430
         '429':
-          description: Rate Limit Breach.
+          description: Rate Limit Breach. The request rate limit has been exceeded.
           content:
             application/json:
               schema:
@@ -275,22 +290,20 @@ paths:
                   description: Exceeded rate limit for this app
         '500':
           description: Internal Server Error.
-          content:
-            application/json:
-              schema:
-                type: object
-              example:
-                title: Internal Server Error
-                message: An unexpected error was encountered while processing this request. Please contact MoEngage Team
+
   /business_event/search:
     post:
       tags:
         - Business Events
-      summary: Search Business Events
-      description: This API allows you to search for business events by specifying their event IDs or names.
+      summary: Search for Business Event Definitions
+      description: This API allows you to retrieve the definitions of business events using a list of event IDs or event names.
       operationId: searchBusinessEvents
+      x-mint:
+        content: |
+          ### Rate Limits
+          The rate limit is **100 RPM** (Requests Per Minute).
       requestBody:
-        description: Search criteria. At least one of event_ids or event_names should be provided.
+        description: Search criteria. At least one of `event_ids` or `event_names` should be provided.
         content:
           application/json:
             schema:
@@ -315,7 +328,7 @@ paths:
                 - 6447b078712cd8c650074840
       responses:
         '200':
-          description: A list of found business events.
+          description: A list of found business event definitions and their full metadata.
           content:
             application/json:
               schema:
@@ -323,6 +336,7 @@ paths:
                 properties:
                   data:
                     type: array
+                    description: An array containing the full object definition for each matching business event.
                     items:
                       $ref: '#/components/schemas/BusinessEvent'
               example:
@@ -343,80 +357,34 @@ paths:
                     last_received_time: '2023-05-30T06:28:06.498000'
                     _id: 64a54500633fda13b6681163
         '400':
-          description: Bad Request (e.g., additional fields).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: 400 Bad Request
-                  message: 'Additional fields are not allowed document schema for class BusinessEventSearchRequest:event_name'
-                  details:
-                    - code: InvalidValue
-                      target: event_name
-                      message: 'Additional fields are not allowed document schema for class BusinessEventSearchRequest:event_name'
-                  request_id: 64a54e62633fda13b6681431
+          description: Bad Request (e.g., additional fields provided in the search request).
         '401':
           description: Authorization Failure.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: 401 Authentication error
-                  message: Authentication required
-                  details:
-                    - code: InvalidValue
-                      target: Authorization
-                      message:
-                        code: MissingValue
-                        target: Authorization
-                        message: APP_ID and APP_SECRET_KEY is missing in Authorization Header.
-                  request_id: 64a54e0e633fda13b6681430
         '429':
           description: Rate Limit Breach.
-          content:
-            application/json:
-              schema:
-                type: object
-              example:
-                status: error
-                data:
-                  code: 429
-                  title: rate limiter exception
-                  description: Exceeded rate limit for this app
         '500':
           description: Internal Server Error.
-          content:
-            application/json:
-              schema:
-                type: object
-              example:
-                title: Internal Server Error
-                message: An unexpected error was encountered while processing this request. Please contact MoEngage Team
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-      description: 'Basic Authentication using Workspace ID (username) and API Key (password) from MoEngage Dashboard > Settings > Account > APIs.'
+      description: 'Basic Authentication using Base64-encoded Workspace ID (username) and API Key (password) from MoEngage Dashboard.'
   schemas:
     EventAttributeDefinition:
       type: object
-      description: Definition of an attribute for a business event.
+      description: The name and data type definition for a specific attribute within a business event.
       required:
         - attribute_name
         - attribute_data_type
       properties:
         attribute_name:
           type: string
-          description: The name of the attribute.
+          description: The name of the attribute (e.g., season, movie_name).
           example: season
         attribute_data_type:
           type: string
-          description: The data type of the attribute.
+          description: The data type of the attribute value. **Allowed Values:** string, int, float, array, date.
           enum:
             - string
             - int
@@ -426,11 +394,11 @@ components:
           example: string
     BusinessEvent:
       type: object
-      description: A full business event object.
+      description: A complete business event definition object, including metadata and attributes.
       properties:
         db_name:
           type: string
-          description: Name of the database.
+          description: Name of the application database (e.g., Sample_App).
           example: Sample_App
         event_id:
           type: string
@@ -447,21 +415,21 @@ components:
         created_at:
           type: string
           format: date-time
-          description: Timestamp of when the event was created.
+          description: Timestamp indicating when the event was initially created.
         last_updated:
           type: string
           format: date-time
-          description: Timestamp of when the event was last updated.
+          description: Timestamp of the last time the event definition was updated.
         total_trigger:
           type: integer
-          description: Number of times the event has been triggered.
+          description: The total number of times this event has been triggered.
           example: 0
         total_sent_message:
           type: integer
-          description: Number of campaign messages sent for this event.
+          description: The total number of campaign messages sent as a result of this event.
         users_in_segment:
           type: integer
-          description: Number of users in the segment (from example).
+          description: Number of users in the segment (if applicable).
           example: 0
         usage_count:
           type: integer
@@ -474,14 +442,14 @@ components:
         last_received_time:
           type: string
           format: date-time
-          description: Timestamp of when the event was last triggered.
+          description: Timestamp of when the event was last received/triggered.
         _id:
           type: string
           description: Internal database ID.
           example: 64a54500633fda13b6681163
     ErrorResponse:
       type: object
-      description: Standard error response for 4xx errors.
+      description: Standard error response structure for 4xx errors.
       properties:
         error:
           type: object
