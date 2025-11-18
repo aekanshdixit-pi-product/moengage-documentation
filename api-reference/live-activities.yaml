@@ -168,7 +168,10 @@ paths:
         - name: X-Broadcast-Live-Activity-Id
           in: header
           required: true
-          description: This is the workspace ID (earlier APP ID) of your MoEngage workspace. The X-MOE-APPKEY must be passed in the request. You can find your MoEngage Workspace ID in the MoEngage UI:**Settings** > **Account** > **APIs** -> **Workspace ID** (earlier app id)The unique identifier for the broadcast Live Activity campaign being updated.
+          description: |
+             The unique identifier for the broadcast Live Activity campaign being updated.
+             
+             This is the workspace ID (earlier APP ID) of your MoEngage workspace. The X-MOE-APPKEY must be passed in the request. You can find your MoEngage Workspace ID in the MoEngage UI: **Settings** > **Account** > **APIs** -> **Workspace ID** (earlier app id).
           schema:
             type: string
       requestBody:
@@ -186,40 +189,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
         '400':
-          description: Bad Request.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized.
+          description: Bad Request - Mandatory fields are missing or invalid.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error:
-                  code: "AuthError"
-                  message: "Invalid App Key"
-        '403':
-          description: Forbidden.
+                  code: "PayloadError"
+                  message: "Mandatory fields are missing or invalid"
+                  details:
+                    - code: "extra_forbidden"
+                      target: "ios.alert.metrics"
+                      message: "Extra inputs are not permitted"
+        '401':
+          description: Unauthorized - Invalid credentials or missing headers.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                dismissal-passed:
-                  summary: Dismissal Date Passed
+                invalid-app-key:
+                  summary: Invalid App Key
+                  value:
+                    error:
+                      code: "AuthError"
+                      message: "Invalid App Key"
+                invalid-data-key:
+                  summary: Invalid Data Key
+                  value:
+                    error:
+                      code: "AuthError"
+                      message: "Invalid Data Key"
+                missing-headers:
+                  summary: Missing Authorization Headers
+                  value:
+                    error:
+                      code: "AuthError"
+                      message: "Authorization header or X-MOE-APPKEY is missing"
+        '403':
+          description: Forbidden - Operation not allowed due to logic or permission constraints.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                campaign-not-found:
+                  summary: Campaign Not Found
                   value:
                     error:
                       code: "OperationNotAllowed"
-                      message: "Dismissal date is already passed"
+                      message: "Campaign not found for <broadcast live activity id>"
+                ios-token-required:
+                  summary: iOS Token Required
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Only IOS token auth is allowed, please upload .p8 file"
                 invalid-action:
                   summary: Invalid Action
                   value:
                     error:
                       code: "OperationNotAllowed"
                       message: "Invalid Action"
+                dismissal-passed:
+                  summary: Dismissal Date Passed
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Dismissal date is already passed"
         '413':
           description: Payload Too Large.
           content:
@@ -244,6 +282,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "ServerError"
+                  message: "Internal Server Error, something went wrong"
 
   /live-activity/broadcast/end:
     post:
@@ -255,7 +297,10 @@ paths:
         - name: X-Broadcast-Live-Activity-Id
           in: header
           required: true
-          description: This is the workspace ID (earlier APP ID) of your MoEngage workspace. The X-MOE-APPKEY must be passed in the request. You can find your MoEngage Workspace ID in the MoEngage UI:Settings > Account > APIs -> Workspace ID (earlier app id)The unique identifier for the broadcast Live Activity campaign being ended.
+          description: |
+             The unique identifier for the broadcast Live Activity campaign being ended.
+             
+             This is the workspace ID (earlier APP ID) of your MoEngage workspace. The X-MOE-APPKEY must be passed in the request. You can find your MoEngage Workspace ID in the MoEngage UI: **Settings** > **Account** > **APIs** -> **Workspace ID** (earlier app id).
           schema:
             type: string
       requestBody:
@@ -273,27 +318,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
         '400':
-          description: Bad Request.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Forbidden.
+          description: Bad Request - Mandatory fields are missing or invalid.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error:
-                  code: "OperationNotAllowed"
-                  message: "Dismissal date is already passed"
+                  code: "PayloadError"
+                  message: "Mandatory fields are missing or invalid"
+                  details:
+                    - code: "extra_forbidden"
+                      target: "ios.alert.metrics"
+                      message: "Extra inputs are not permitted"
+        '401':
+          description: Unauthorized - Invalid credentials or missing headers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-app-key:
+                  summary: Invalid App Key
+                  value:
+                    error:
+                      code: "AuthError"
+                      message: "Invalid App Key"
+                invalid-data-key:
+                  summary: Invalid Data Key
+                  value:
+                    error:
+                      code: "AuthError"
+                      message: "Invalid Data Key"
+                missing-headers:
+                  summary: Missing Authorization Headers
+                  value:
+                    error:
+                      code: "AuthError"
+                      message: "Authorization header or X-MOE-APPKEY is missing"
+        '403':
+          description: Forbidden - Operation not allowed due to logic or permission constraints.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                campaign-not-found:
+                  summary: Campaign Not Found
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Campaign not found for <broadcast live activity id>"
+                ios-token-required:
+                  summary: iOS Token Required
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Only IOS token auth is allowed, please upload .p8 file"
+                invalid-action:
+                  summary: Invalid Action
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Invalid Action"
+                dismissal-passed:
+                  summary: Dismissal Date Passed
+                  value:
+                    error:
+                      code: "OperationNotAllowed"
+                      message: "Dismissal date is already passed"
         '429':
           description: Too Many Requests.
           content:
@@ -308,6 +401,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "ServerError"
+                  message: "Internal Server Error, something went wrong"
 
 components:
   securitySchemes:
@@ -377,6 +474,7 @@ components:
         sound:
           type: string
           description: This field denotes the name of the sound file in your app's main bundle or in the Library/Sounds folder of your app's container directory. Specify the string as "default" to play the system sound.
+    
     IOSStartPayload:
       type: object
       required: [attribute_type, attribute_info, content_state, alert]
