@@ -22,11 +22,109 @@ servers:
           - '05'
 tags:
   - name: Custom Segments - File
-    description: Manage segments created from user files (CSVs).
+    description: |
+      If you need to create segments by importing a large number of users, we recommend utilising the File segment API. This API allows you to easily generate a file segment by initiating a call to the file segment API endpoint. To proceed, you will need to compile a CSV file containing the relevant users (ensuring that the users are already present in MoEngage). It is essential to provide the public path of the file, which allows for downloading and identification of users in order to successfully create the file segment.
+      
+      Use the Custom File Segment API to:
+      * Create a new Custom File Segment
+      * Add Users to an existing Custom Segment
+      * Remove Users from an existing Custom Segment
+      * Replace Users from an existing Custom Segment
+    x-mint:
+      content: |
+        ## Request Headers
+        Request headers are applicable to create, update, archive, or unarchive the custom segment.
+        
+        | Header | Type | Description |
+        | :--- | :--- | :--- |
+        | `Content-Type` | String | Set the Content-Type header to any of the specified types. Accepted types: "text/csv", "application/csv", "application/vnd.ms-excel", "text/plain", "application/octet-stream", "binary/octet-stream". |
+        | `Database` | MOE-DBNAME | Set the database from which the data is available. |
+        | `Authorization` | String | Basic authentication is used for access control. Example: `{"Authorization": "Basic Base64_ENCODED_WORKSPACEID_APIKEY="}` |
+        
+        <Note>Any other Content Types besides the ones listed above will be rejected.</Note>
+        
+        ## Authentication
+        Authentication is performed using Basic Auth.
+        
+        If your file is private, you should whitelist [these IPs](https://help.moengage.com/hc/en-us/articles/35329024618772-A-Guide-to-MoEngage-IP-Whitelisting-Mechanism#h_01JNGJNR5F141E7KRK89YW1X8H) to provide access only to MoEngage for the file.
+        
+        Check the data center and API endpoint [mapping page here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+        
+        ## Response Codes
+        
+        | HTTP Status Code | Response Reason |
+        | :--- | :--- |
+        | 200 - OK | Everything worked as expected. |
+        | 202 - Accepted | Request accepted for the required operation. |
+        | 400 - Bad Request | Request not accepted due to missing a required parameter. The reason is passed in the description field. |
+        | 401 - Unauthorized | Signature is not valid. |
+        | 404 - Entity not found | The custom segment mentioned in the request does not exist. |
+        | 409 - Conflict | The request conflicts with another request. |
+        | 429 - Too Many Requests | The number of requests or the rate of requests exceeds the allowed limit. |
+        | 500, 502, 503, 504 | Server Errors. Something went wrong on MoEngage. |
+        
+        ## Limits
+        
+        <Note>The limit of 1000 custom file segments is calculated only for the file segments that are active. Most of our customers utilize only 30-40% of this limit at any given point.</Note>
+        
+        | Rate Limit Name | Rate Limit |
+        | :--- | :--- |
+        | total active segment | The limit of the total number of active custom segments at a time for a client is 1000. |
+        | file_segment ops per hour | The total number of file segment operations (create/add/remove) per hour per client allowed is 10. |
+        | file_segment ops per day | The total number of file segment operations (create/add/remove) per day per client allowed is 100. |
+        | file_segment users per day | The total number of users uploaded via the File segment is limited to 2 million per day. (This limit is customizable, please get in touch with support) |
+        | file_size_limit | The size of the file from which the segment is created/updated. For each request, the file size limit is 150 MB. |
+        
+        <Note>
+          * Breaching the limits will reject the request.
+          * Per hour and per day limits will consider the calculation based on the last hour and last 24 hrs respectively.
+        </Note>
   - name: Custom Segments - Lifecycle
-    description: Archive and unarchive custom segments.
+    description: |
+      Archiving and unarchiving through APIs makes it easy to retrieve and reuse custom segments whenever required for purposes such as A/B testing, maintaining regulatory compliance, and improving system performance.
+      
+      You can access the archived segments and utilize them to analyze and market campaigns without the need to recreate them from scratch.
+    x-mint:
+      content: |
+        
+        
+        <Warning>
+          Archived segments will not be shown beyond 180 days.
+        </Warning>
   - name: Custom Segments - Filters
-    description: Create, read, update, and list filter-based custom segments.
+    description: |
+      If you need to create a segment based on the events or actions performed by your users on your application or website, the recommended approach is to use the filter segment API. With this API, you can create a custom segment by specifying the desired filter conditions.
+      
+      The filter segment API supports various operations, including create, update, get, and list, allowing you to effectively manage your segments based on specific criteria.
+    x-mint:
+      content: |
+        ## Authentication
+        Authentication is performed using Basic Auth. You must also provide the `MOE-APPKEY` header.
+        
+        ## Request Headers
+        
+        | Key | Required | Description |
+        | :--- | :--- | :--- |
+        | `Content-Type` | Yes | Set to `application/json`. |
+        | `Authorization` | Yes | Basic Auth. `{"Authorization": "Basic Base64_ENCODED_WORKSPACEID_APIKEY="}` |
+        | `MOE-APPKEY` | Yes | Your MoEngage App ID. Found in Settings -> Account -> APIs -> App ID. |
+        
+        ## FAQs
+        
+        <AccordionGroup>
+          <Accordion title="How can I generate the payload for custom segment creation?">
+            You can simply generate the payload from the MoEngage dashboard. Log in to the MoEngage dashboard and navigate to the **Test & Debug** -> **Segment Payload section**. Choose your filters and click on **Generate Payload**.
+          </Accordion>
+          <Accordion title="How do I get the id of a custom segment I created earlier but didn't save?">
+            You can use the LIST Custom Segment API with the name query param filter to get the id of the custom segment.
+          </Accordion>
+          <Accordion title="Why am I getting 409 Conflict even with a different name?">
+             Both the name and the definition of a custom segment are unique. If the definition of the custom segment in the request matches an existing segment, we return a conflict 409 error.
+          </Accordion>
+          <Accordion title="How do I know which existing segment is conflicting?">
+            In the case of 409 Conflict, we return a conflicting name/id in the response payload. You can check the payload to get the existing custom segment with the same definition.
+          </Accordion>
+        </AccordionGroup>
 security:
   - basicAuth: []
 paths:
@@ -48,6 +146,12 @@ paths:
             * File should not have empty rows or columns.
             * A user attribute value must uniquely identify a single user.
             * [Sample File Link](https://app-cdn.moengage.com/assets/Sample_GAIDs.csv)
+          </Note>
+          
+          <Note>
+            **Segment Processing & Availability**
+          
+            As soon as the request is received at the MoEngage system, MoEngage creates a custom segment with zero users. After this, the file is processed and users are added to the custom segment. If the created custom segment is queried in between the file processing, it will show zero or partial user count.
           </Note>
       requestBody:
         description: Configuration for the new file segment.
@@ -202,11 +306,6 @@ paths:
       summary: Archive Custom Segment
       description: Archives an existing custom segment (File or Filter).
       operationId: archiveCustomSegment
-      x-mint:
-        content: |
-          <Warning>
-            Archived segments will not be shown beyond 180 days.
-          </Warning>
       requestBody:
         description: The name of the custom segment to be archived.
         required: true
@@ -227,8 +326,8 @@ paths:
                 success:
                   value:
                     message: "Successfully archived the custom segment"
-                    success": true
-                    cs_name": "custom_segment_unique_name"
+                    success: true
+                    cs_name: "custom_segment_unique_name"
         '400':
           $ref: '#/components/responses/400_FileSegmentError'
         '401':
@@ -264,8 +363,8 @@ paths:
                 success:
                   value:
                     message: "Successfully unarchived the custom segment"
-                    success": true
-                    cs_name": "custom_segment_unique_name"
+                    success: true
+                    cs_name: "custom_segment_unique_name"
         '400':
           $ref: '#/components/responses/400_FileSegmentError'
         '401':
@@ -281,7 +380,18 @@ paths:
       summary: List Custom Segments
       description: Lists all custom segments. Can optionally filter by an exact name match.
       operationId: listCustomSegments
+      x-mint:
+        content: |
+          **Rate Limit**
+          The rate limit is 50 request/minute, 200 requests/hour, and 1000 requests/day.
       parameters:
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example: application/json
+          description: Set the Content-Type header to application/json.
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/SegmentNameQuery'
       responses:
@@ -304,10 +414,20 @@ paths:
       operationId: createFilterSegment
       x-mint:
         content: |
-          <Note>
-            To simplify request generation, you can specify filters in the MoEngage dashboard and generate the payload.
-            Navigate to **Test & Debug** -> **Segment Payload** to build your filter query and get the JSON payload.
-          </Note>
+          ## Generate Request from Dashboard
+          
+          
+          
+          To simplify the request generation, MoEngage has added an option in the dashboard where you can specify filters as per your requirement and generate the payload.
+          
+          1. Login to the MoEngage dashboard.
+          2. Click on **Test & Debug** at the bottom left in the side panel.
+          3. Click on **Segment Payload**.
+          4. Specify the name for your segment payload and provide the required filters.
+          5. Click on the **Generate payload** button.
+          
+          **Rate Limit**
+          The rate limit is 50 request/minute, 200 requests/hour, and 1000 requests/day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
       requestBody:
@@ -319,13 +439,13 @@ paths:
               $ref: '#/components/schemas/FilterSegmentRequestV3'
             example:
               name: "segment_example_name"
-              included_filters":
+              included_filters:
                 filter_operator: "and"
-                filters":
-                  - filter_type": "user_attributes"
+                filters:
+                  - filter_type: "user_attributes"
                     name: "Name"
-                    data_type": "string"
-                    operator": "in"
+                    data_type: "string"
+                    operator: "in"
                     value": ["Chandan", "Kumar"]
                     negate": false
                     case_sensitive": false
@@ -351,7 +471,18 @@ paths:
       summary: Get Custom Segment by ID
       description: Fetches a specific custom segment (File or Filter) by its ID.
       operationId: getCustomSegment
+      x-mint:
+        content: |
+          **Rate Limit**
+          The rate limit is 100 requests/minute, 1000 requests/hour, and 4000 requests/day.
       parameters:
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example: application/json
+          description: Set the Content-Type header to application/json.
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/SegmentIdPath'
       responses:
@@ -383,13 +514,13 @@ paths:
               $ref: '#/components/schemas/FilterSegmentUpdateRequestV3'
             example:
               name: "segment_example_name_updated"
-              included_filters":
+              included_filters:
                 filter_operator: "and"
-                filters":
-                  - filter_type": "user_attributes"
+                filters:
+                  - filter_type: "user_attributes"
                     name: "Name"
-                    data_type": "string"
-                    operator": "in"
+                    data_type: "string"
+                    operator: "in"
                     value": ["chandan"]
                     negate": false
                     case_sensitive": false
@@ -549,7 +680,14 @@ components:
         - $ref: '#/components/schemas/ActionFilterV3'
     AttributeFilterV3:
       type: object
-      description: A filter based on a user or event attribute.
+      description: |
+        A filter based on a user or event attribute.
+        
+        **Allowed Operators per Data Type:**
+        * **bool:** is, exists
+        * **double:** in, between, lessThan, greaterThan, exists
+        * **string:** in, contains, containsInTheFollowing, startWithInTheFollowing, endsWithInTheFollowing, exists, is
+        * **datetime:** inTheLast, on, between, before, after, inTheNext, exists, today
       properties:
         filter_type:
           type: string
@@ -564,7 +702,7 @@ components:
           enum: [string, double, datetime, bool]
         operator:
           type: string
-          description: The comparison operator.
+          description: The comparison operator. Allowed values depend on `data_type`.
           enum: [is, exists, in, between, lessThan, greaterThan, contains, containsInTheFollowing, startWithInTheFollowing, endsWithInTheFollowing, inTheLast, on, before, after, inTheNext, today]
         value:
           description: The value to compare against. Type depends on `data_type` and `operator`. For 'in' operator, this should be an array.
@@ -605,7 +743,7 @@ components:
           enum: [actions]
         action_name:
           type: string
-          description: The internal name of the event.
+          description: The internal name of the event/action.
         attributes:
           $ref: '#/components/schemas/FilterGroupV3'
           description: Additional filters to apply to the event's attributes.
@@ -617,6 +755,7 @@ components:
           properties:
             type:
               type: string
+              description: The type of comparison for the execution count.
               enum: [atleast, exactly, atmost, firstTime, lastTime]
             count:
               type: integer
@@ -809,17 +948,17 @@ components:
               value:
                 message: "File-segment user-add request accepted"
                 success: true
-                cs_name": "custom_segment_unique_name"
+                cs_name: "custom_segment_unique_name"
             remove:
               value:
                 message: "File-segment user-remove request accepted"
                 success: true
-                cs_name": "custom_segment_unique_name"
+                cs_name: "custom_segment_unique_name"
             replace:
               value:
                 message: "File-segment user-replace request accepted"
                 success: true
-                cs_name": "custom_segment_unique_name"
+                cs_name: "custom_segment_unique_name"
     '400_FileSegmentError':
       description: Bad Request. Invalid payload format.
       content:
@@ -837,7 +976,7 @@ components:
             $ref: '#/components/schemas/ApiErrorV2'
           example:
             title: "Authentication required"
-            description": "<message>"
+            description: "<message>"
     '404_FileSegmentNotFound':
       description: Entity Not Found. The custom segment name does not exist.
       content:
@@ -864,7 +1003,7 @@ components:
             $ref: '#/components/schemas/ApiErrorV2'
           example:
             title: "Too Many Requests"
-            description": "<appropriate message>"
+            description: "<appropriate message>"
     '5XX_FileSegmentError':
       description: Server Errors. Something went wrong on MoEngage's end.
       content:
@@ -888,7 +1027,7 @@ components:
                 created_time": "2022-12-01T13:17:46.409000"
                 type: "ELASTIC_SEARCH"
                 source: "API"
-            response_id": "WYanfieM"
+            response_id: "WYanfieM"
             type: "custom_segment"
     '200_SegmentUpdatedV3':
       description: Custom segment updated successfully.
@@ -1090,7 +1229,7 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Too Many Requests"
-                  message": "API rate limit breached. Current limit: n/m mins"
+                  message: "API rate limit breached. Current limit: n/m mins"
             activeSegmentLimit:
               summary: Active Segment Limit Breached
               value:
@@ -1098,7 +1237,7 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Too Many Requests"
-                  message": "Total active segments limit breached. Request rejected!"
+                  message: "Total active segments limit breached. Request rejected!"
                   actual_count": 1001
                   limit": 1000
     '500_FilterSegmentError':
@@ -1132,20 +1271,20 @@ components:
                     summary: Success Callback
                     value:
                       db_name: "test_db"
-                      segment_name": "test_segment_name"
-                      request_id": "d5a263c4ef1198ae3d8496c0460f570f"
-                      values_found": 80
-                      values_processed": 70
-                      user_count": 60
-                      status": 201
+                      segment_name: "test_segment_name"
+                      request_id: "d5a263c4ef1198ae3d8496c0460f570f"
+                      values_found: 80
+                      values_processed: 70
+                      user_count: 60
+                      status: 201
                   failure_file_size:
                     summary: Failure (File Size Limit)
                     value:
                       db_name: "test_db"
-                      segment_name": "test_segment_name"
-                      request_id": "d5a263c4ef1198ae3d8496c0460f570f"
-                      status": 400
-                      error_message": "File size cannot be greater than 150MB. Created custom_segment contains 0 users."
+                      segment_name: "test_segment_name"
+                      request_id: "d5a263c4ef1198ae3d8496c0460f570f"
+                      status: 400
+                      error_message: "File size cannot be greater than 150MB. Created custom_segment contains 0 users."
           responses:
             '200':
               description: OK. Acknowledges receipt of the callback. Your endpoint should return this.
