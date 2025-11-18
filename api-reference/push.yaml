@@ -13,7 +13,7 @@ servers:
     variables:
       dc:
         default: '1'
-        description: "Your MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL."
+        description: "Your MoEngage Data Center (DC). Replace 'X' in the URL with your DC number (1, 2, 3, etc.)."
         enum:
           - '1'
           - '2'
@@ -44,11 +44,12 @@ paths:
         ### API Endpoint
         The endpoint URL follows the format: `https://pushapi-0X.moengage.com/v2/transaction/sendpush`.
         
-        The **'X'** in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+        The **'X'** in the URL refers to your MoEngage Data Center (DC). You must replace 'X' with your specific DC number (e.g., 01, 02, 03).
 
         ### Authentication
-        The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username: password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+        The API uses **Basic Authentication**. You must send a Base64-encoded string containing your `Workspace ID` (username) and `API Key` (password).
 
+        **Header Format:**
         `{"Authorization":"Basic Base64_ENCODED_APPKEY_APIKEY=="}`
 
         <Info>
@@ -78,11 +79,289 @@ paths:
             schema:
               $ref: '#/components/schemas/PushRequest'
             examples:
-              TargetSingleUser:
-                summary: Target Single User
+              # --- Example 1: Platform Specific Snippets (Wrapped in full request for validity) ---
+              Ex1_AndroidApp:
+                summary: "Ex 1: Android App"
                 value:
-                  appId: "ABC123_DEBUG"
-                  campaignName: "Test_Campaign_Single_User"
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test_Campaign"
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["ANDROID"]
+                  targetAudience: "All Users"
+                  payload:
+                    ANDROID:
+                      message: "Message"
+                      title: "Title"
+                      channel_id: "ChannelId"
+                      richContent:
+                        - type: "image"
+                          value: "https://images.iimg.in/c"
+                        - type: "coupon"
+                          value: "free"
+                        - type: "sound"
+                          value: "tring"
+                      defaultAction:
+                        type: "richlanding"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                        kvPairs:
+                          key1: "value1"
+                          Key2: "value2"
+                      additionalActions:
+                        - type: "call"
+                          value: "12345678"
+                          name: "Call button"
+                          iconURL: "abc"
+                        - type: "copy"
+                          value: "12345678"
+                          name: "Copy button"
+                          iconURL: "abc"
+                      fallback: {}
+                  campaignDelivery: { type: "soon" }
+              Ex1_IOSApp:
+                summary: "Ex 1: iOS App"
+                value:
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test_Campaign"
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["IOS"]
+                  targetAudience: "All Users"
+                  payload:
+                    IOS:
+                      message: "Message"
+                      title: "Title"
+                      subtitle: "Subtitle"
+                      enableIosBadge: true
+                      richContent:
+                        - type: "sound"
+                          value: "custSound4.wav"
+                        - type: "coupon"
+                          value: "free"
+                        - type: "image"
+                          value: "xyz.jpg"
+                      additionalActions:
+                        - category: "INVITE_CATEGORY"
+                      defaultAction:
+                        type: "navigation"
+                        value: ""
+                        kvPairs:
+                          key1: "value1"
+                          Key2: "value2"
+                      fallback:
+                        message: "fallback ios"
+                        title: "title"
+                        richContent:
+                          - type: "coupon"
+                            value: "iOS"
+                        additionalActions:
+                          - category: "INVITE_CATEGORY"
+                  campaignDelivery: { type: "soon" }
+              Ex1_WebChrome:
+                summary: "Ex 1: Web (Chrome Push)"
+                value:
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test_Campaign"
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["WEB"]
+                  targetAudience: "All Users"
+                  payload:
+                    WEB:
+                      message: "Message"
+                      title: "Title"
+                      redirectURL: "https://www.google.com"
+                      iconURL: "https://app.moengage.com/v3/images/favicon.ico"
+                      imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
+                      fallback: {}
+                  campaignDelivery: { type: "soon" }
+
+              # --- Example 2: Full Payloads ---
+              Ex2_AndroidFull:
+                summary: "Ex 2: Android App Full"
+                value:
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push"
+                  campaignTags: ["Transactional"]
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["ANDROID"]
+                  targetAudience: "All Users"
+                  payload:
+                    ANDROID:
+                      message: "Android Message"
+                      title: "Android Message Title"
+                      summary: "Android Summary"
+                      richContent:
+                        - type: "image"
+                          value: "https://images.iimg.in/c"
+                        - type: "coupon"
+                          value: "free"
+                        - type: "sound"
+                          value: "tring"
+                      defaultAction:
+                        type: "richlanding"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                      additionalActions:
+                        - type: "call"
+                          value: "12345678"
+                          name: "Call button"
+                          iconURL: "abc"
+                        - type: "copy"
+                          value: "12345678"
+                          name: "Copy button"
+                          iconURL: "abc"
+                  campaignDelivery:
+                    type: "soon"
+                  conversionGoals:
+                    - name: "amount 1"
+                      eventName: "AddedTocart"
+                      attrs:
+                        filter: "is between"
+                        name: "amount"
+                        value: "10,100"
+                        type: "numeric"
+                  advancedSettings:
+                    ttl:
+                      ANDROID: 12
+                    ignoreFC: false
+                    sendAtHighPriority: true
+                    inboxExpiry: 360
+              Ex2_IOSFull:
+                summary: "Ex 2: iOS App Full"
+                value:
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push"
+                  campaignTags: ["Promotional"]
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["IOS"]
+                  targetAudience: "All Users"
+                  payload:
+                    IOS:
+                      message: "iOS Message"
+                      title: "iOS Message Title"
+                      richContent:
+                        - type: "sound"
+                          value: "custSound4.wav"
+                      additionalActions:
+                        - category: "INVITE_CATEGORY"
+                  campaignDelivery:
+                    type: "soon"
+                  conversionGoals:
+                    - name: "amount 1"
+                      eventName: "AddedTocart"
+                      attrs:
+                        filter: "is between"
+                        name: "amount"
+                        value: "10,100"
+                        type: "numeric"
+                  advancedSettings:
+                    ignoreFC: false
+                    inboxExpiry: 360
+              Ex2_WebFull:
+                summary: "Ex 2: Web Full"
+                value:
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push"
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["WEB"]
+                  targetAudience: "All Users"
+                  payload:
+                    WEB:
+                      message: "Web Message"
+                      title: "Web Message Title"
+                      redirectURL: "https://www.google.com"
+                      iconURL: "sbc.jpeg"
+                      imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
+                      fallback: {}
+                  campaignDelivery:
+                    type: "soon"
+                  conversionGoals:
+                    - name: "amount 1"
+                      eventName: "AddedTocart"
+                      attrs:
+                        filter: "is between"
+                        name: "amount"
+                        value: "10,100"
+                        type: "numeric"
+                  advancedSettings:
+                    ttl:
+                      WEB: 24
+                    ignoreFC: false
+                    sendAtHighPriority: true
+              Ex2_AcrossAllPlatforms:
+                summary: "Ex 2: Across All Platforms"
+                value:
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push"
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["ANDROID", "IOS", "WEB"]
+                  targetAudience: "All Users"
+                  payload:
+                    ANDROID:
+                      message: "Android Message"
+                      title: "Android Message Title"
+                      summary: "summary"
+                      richContent:
+                        - type: "image"
+                          value: "https://images.iimg.in/c"
+                        - type: "coupon"
+                          value: "free"
+                        - type: "sound"
+                          value: "tring"
+                      defaultAction:
+                        type: "richlanding"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                      additionalActions:
+                        - type: "call"
+                          value: "12345678"
+                          name: "Call button"
+                          iconURL: "abc"
+                        - type: "copy"
+                          value: "12345678"
+                          name: "Copy button"
+                          iconURL: "abc"
+                    IOS:
+                      message: "iOS Message"
+                      title: "iOS Message Tittle"
+                      richContent:
+                        - type: "sound"
+                          value: "custSound4.wav"
+                      additionalActions:
+                        - category: "INVITE_CATEGORY"
+                    WEB:
+                      message: "Web Message"
+                      title: "Web Message Title"
+                      redirectURL: "https://www.google.com"
+                      iconURL: "sbc.jpeg"
+                      imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
+                      fallback: {}
+                  campaignDelivery:
+                    type: "soon"
+                  conversionGoals:
+                    - name: "amount 1"
+                      eventName: "AddedTocart"
+                      attrs:
+                        filter: "is between"
+                        name: "amount"
+                        value: "10,100"
+                        type: "numeric"
+                  advancedSettings:
+                    ttl:
+                      ANDROID: 12
+                      WEB: 24
+                    ignoreFC: false
+                    sendAtHighPriority: true
+
+              # --- Example 3: Segmentation ---
+              Ex3_TargetSingleUser:
+                summary: "Ex 3: Target Single User"
+                value:
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push"
                   signature: "{{Signature}}"
                   requestType: "push"
                   targetPlatform: ["ANDROID"]
@@ -93,93 +372,240 @@ paths:
                     attributeValue: "abc@example.com"
                   payload:
                     ANDROID:
-                      groupKey: "promo_group"
-                      collapseReplaceKey: "promo_update"
-                      message: "Welcome to our platform!"
-                      title: "Welcome"
-                      summary: "Welcome Message"
+                      message: "Android Message"
+                      title: "Android Message Title"
+                      summary: "Android Summary"
                       richContent:
                         - type: "image"
-                          value: "https://images.example.com/welcome.png"
+                          value: "https://images.iimg.in/c"
+                        - type: "coupon"
+                          value: "free"
+                        - type: "sound"
+                          value: "tring"
                       defaultAction:
                         type: "richlanding"
-                        value: "https://www.moengage.com"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                      additionalActions:
+                        - type: "call"
+                          value: "12345678"
+                          name: "Call button"
+                          iconURL: "abc"
+                        - type: "copy"
+                          value: "12345678"
+                          name: "Copy button"
+                          iconURL: "abc"
                   campaignDelivery:
                     type: "soon"
                   conversionGoals:
-                    - name: "Purchase"
-                      eventName: "PurchaseSuccess"
+                    - name: "amount 1"
+                      eventName: "AddedTocart"
                       attrs:
-                        name: "price"
-                        filter: "is greater than"
-                        value: "100"
+                        filter: "is between"
+                        name: "amount"
+                        value: "10,100"
                         type: "numeric"
                   advancedSettings:
                     ttl:
                       ANDROID: 12
                     ignoreFC: false
                     sendAtHighPriority: true
-              TargetAllUsers:
-                summary: Target All Users (Multi-platform)
+                    inboxExpiry: 360
+              Ex3_TargetCustomSegment:
+                summary: "Ex 3: Target Custom Segment"
                 value:
-                  appId: "ABC123_DEBUG"
-                  campaignName: "Global_Announcement"
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push"
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["ANDROID", "IOS", "WEB"]
+                  targetAudience: "Custom Segment"
+                  customSegmentName: "Android_TranV2"
+                  payload:
+                    ANDROID:
+                      message: "testing txn v2"
+                      title: "testing txn v2"
+                      summary: "summary"
+                      richContent:
+                        - type: "image"
+                          value: "https://images.iimg.in/c"
+                        - type: "coupon"
+                          value: "free"
+                        - type: "sound"
+                          value: "tring"
+                      defaultAction:
+                        type: "richlanding"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                      additionalActions:
+                        - type: "call"
+                          value: "12345678"
+                          name: "Call button"
+                          iconURL: "abc"
+                        - type: "copy"
+                          value: "12345678"
+                          name: "Copy button"
+                          iconURL: "abc"
+                    IOS:
+                      message: "7th"
+                      title: "Test Case custom segment5"
+                      richContent:
+                        - type: "sound"
+                          value: "custSound4.wav"
+                      additionalActions:
+                        - category: "INVITE_CATEGORY"
+                    WEB:
+                      message: "Test Case WEB"
+                      title: "Test Case WEB"
+                      redirectURL: "https://www.google.com"
+                      iconURL: "sbc.jpeg"
+                      imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
+                      fallback: {}
+                  campaignDelivery:
+                    type: "soon"
+                  conversionGoals:
+                    - name: "amount 1"
+                      eventName: "AddedTocart"
+                      attrs:
+                        filter: "is between"
+                        name: "amount"
+                        value: "10,100"
+                        type: "numeric"
+                  advancedSettings:
+                    ttl:
+                      ANDROID: 12
+                      WEB: 24
+                    ignoreFC: false
+                    sendAtHighPriority: true
+                    inboxExpiry: 360
+              Ex3_CustomAttribute:
+                summary: "Ex 3: Custom Attribute"
+                value:
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push"
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["ANDROID"]
+                  targetAudience: "User"
+                  targetUserAttributes:
+                    attribute: "user"
+                    comparisonParameter: "is"
+                    attributeValue: "user"
+                    isCustom: true
+                  payload:
+                    ANDROID:
+                      message: "Android Message"
+                      title: "Android Message Title"
+                      summary: "Android Summary"
+                      richContent:
+                        - type: "image"
+                          value: "https://images.iimg.in/c"
+                        - type: "coupon"
+                          value: "free"
+                        - type: "sound"
+                          value: "tring"
+                      defaultAction:
+                        type: "richlanding"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                      additionalActions:
+                        - type: "call"
+                          value: "12345678"
+                          name: "Call button"
+                          iconURL: "abc"
+                        - type: "copy"
+                          value: "12345678"
+                          name: "Copy button"
+                          iconURL: "abc"
+                  campaignDelivery:
+                    type: "soon"
+                  conversionGoals:
+                    - name: "amount 1"
+                      eventName: "AddedTocart"
+                      attrs:
+                        filter: "is between"
+                        name: "amount"
+                        value: "10,100"
+                        type: "numeric"
+                  advancedSettings:
+                    ttl:
+                      ANDROID: 12
+                    ignoreFC: false
+                    sendAtHighPriority: true
+                    inboxExpiry: 360
+              Ex3_TargetAllUsers:
+                summary: "Ex 3: Target All Users"
+                value:
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push"
                   signature: "{{Signature}}"
                   requestType: "push"
                   targetPlatform: ["ANDROID", "IOS", "WEB"]
                   targetAudience: "All Users"
                   payload:
                     ANDROID:
-                      message: "Big Sale Starts Now!"
-                      title: "Flash Sale"
+                      message: "gp 7th nov"
+                      title: "7th nov"
+                      richContent:
+                        - type: "image"
+                          value: "https://images.iimg.in/c"
+                        - type: "coupon"
+                          value: "free"
+                        - type: "sound"
+                          value: "tring"
                       defaultAction:
                         type: "richlanding"
-                        value: "https://www.example.com/sale"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                      additionalActions:
+                        - type: "call"
+                          value: "12345678"
+                          name: "Call button"
+                          iconURL: "abc"
+                        - type: "copy"
+                          value: "12345678"
+                          name: "Copy button"
+                          iconURL: "abc"
                     IOS:
-                      message: "Big Sale Starts Now!"
-                      title: "Flash Sale"
+                      message: "7th"
+                      title: "Test Case custom segment5"
                       richContent:
                         - type: "sound"
-                          value: "default"
+                          value: "custSound4.wav"
+                      additionalActions:
+                        - category: "INVITE_CATEGORY"
                     WEB:
-                      message: "Big Sale Starts Now!"
-                      title: "Flash Sale"
-                      redirectURL: "https://www.example.com/sale"
-                      iconURL: "https://www.example.com/icon.png"
+                      message: "Test Case WEB"
+                      title: "Test Case WEB"
+                      redirectURL: "https://www.google.com"
+                      iconURL: "sbc.jpeg"
+                      imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
+                      fallback: {}
                   campaignDelivery:
                     type: "soon"
-              TargetCustomSegment:
-                summary: Target Custom Segment
-                value:
-                  appId: "ABC123_DEBUG"
-                  campaignName: "Re-engagement Campaign"
-                  signature: "{{Signature}}"
-                  requestType: "push"
-                  targetPlatform: ["ANDROID"]
-                  targetAudience: "Custom Segment"
-                  customSegmentName: "Inactive_Users_30_Days"
-                  payload:
-                    ANDROID:
-                      message: "We miss you! Come back for 20% off."
-                      title: "We miss you"
-                      defaultAction:
-                        type: "richlanding"
-                        value: "https://www.example.com/comeback"
-                  campaignDelivery:
-                    type: "soon"
+                  conversionGoals:
+                    - name: "amount 1"
+                      eventName: "AddedTocart"
+                      attrs:
+                        filter: "is between"
+                        name: "amount"
+                        value: "10,100"
+                        type: "numeric"
+                  advancedSettings:
+                    ttl:
+                      ANDROID: 12
+                      WEB: 24
+                    ignoreFC: false
+                    sendAtHighPriority: true
+                    inboxExpiry: 360
 
       responses:
         '200':
           description: |
-            This response is returned when the request is processed successfully.
+            The request was received. The status in the body indicates whether it was successfully processed or failed.
             
-            **Common Error Responses:**
-            * `Invalid JSON`: Returned when an incorrect JSON format is passed.
-            * `Invalid Request Type`: Returned when an invalid request type is passed (other than *push*).
-            * `Invalid appId`: Returned when no dashboard exists for the given app ID.
-            * `appId is not present`: Returned when appID is missing in the request.
-            * `Campaign name is missing`: Returned when the campaign name is missing in the request.
-            * `Signature is not verified`: Returned when the signature is incorrect.
+            **Common Error Messages:**
+            * `Invalid JSON`
+            * `Invalid Request Type`
+            * `Invalid appId`
+            * `Campaign name is missing`
+            * `Signature is not verified`
           content:
             application/json:
               schema:
@@ -190,17 +616,17 @@ paths:
                 success:
                   summary: Success Response
                   value:
-                    requestId: "06418699-2534-4f53-b297-8c1489948382"
-                    responseId: "5f7c3b2a-1e4d-4a9c-8b2e-7d1f6a5c9e3d"
-                    cid: "29384756"
                     status: "Success"
+                    responseId: "{response ID}"
+                    requestId: ""
+                    cid: "{cid}"
                 failure:
                   summary: Failure Response
                   value:
-                    responseId: "5f7c3b2a-1e4d-4a9c-8b2e-7d1f6a5c9e3d"
-                    Error_Message: "Campaign Name not found"
                     status: "Fail"
-                    Payload error: "Campaign Name not found"
+                    Error_Message: "Campaign Name not found"
+                    responseId: "{response ID}"
+                    requestId: ""
         '401':
           description: Unauthorized. Invalid authentication credentials.
 
@@ -214,8 +640,7 @@ components:
       type: apiKey
       in: header
       name: MOE-APPKEY
-      description: |
-        This is the workspace ID (earlier APP ID) of your MoEngage workspace. The MOE-APPKEY must be passed in the request. You can find your MoEngage Workspace ID in the MoEngage dashboard: **Settings > Account > APIs -> Workspace ID (earlier app id)**.
+      description: Your MoEngage Workspace ID.
 
   schemas:
     # --- Main Request Schema ---
