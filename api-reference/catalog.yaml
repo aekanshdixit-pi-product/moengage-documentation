@@ -562,7 +562,7 @@ components:
         price_currency:
           type: string
           description: The ISO 4217 currency code for prices in the catalog.
-          enum: [USD, CAD, EUR, AED, AFN, ALL, AMD, AOA, ARS, AUD, AZN, BAM, BDT, BGN, BHD, BIF, BND, BOB, BRL, BWP, BYR, BZD, CDF, CHF, CLP, CNY, COP, CRC, CVE, CZK, DJF, DKK, DOP, DZD, EEK, EGP, ERN, ETB, GBP, GEL, GHS, GNF, GTQ, HKD, HNL, HRK, HUF, IDR, ILS, INR, IQD, IRR, ISK, JMD, JOD, JPY, KES, KHR, KMF, KRW, KWD, KZT, LBP, LKR, LTL, LVL, LYD, MAD, MDL, MGA, MKD, MMK, MOP, MUR, MXN, MYR, MZN, NAD, NGN, NIO, NOK, NPR, NZD, OMR, PAB, PEN, PHP, PKR, PLN, PYG, QAR, RON, RSD, RUB, RWF, SAR, SDG, SEK, SGD, SOS, SYP, THB, TND, TOP, TRY, TTD, TWE, TZS, UAH, UGX, UYU, UZS, VEF, VND, XAF, XOF, YER, ZAR, ZMK]
+          enum: [USD, CAD, EUR, AED, AFN, ALL, AMD, AOA, ARS, AUD, AZN, BAM, BDT, BGN, BHD, BIF, BND, BOB, BRL, BWP, BYR, BZD, CDF, CHF, CLP, CNY, COP, CRC, CVE, CZK, DJF, DKK, DOP, DZD, EEK, EGP, ERN, ETB, GBP, GEL, GHS, GNF, GTQ, HKD, HNL, HRK, HUF, IDR, ILS, INR, IQD, IRR, ISK, JMD, JOD, JPY, KES, KHR, KMF, KRW, KWD, KZT, LBP, LKR, LTL, LVL, LYD, MAD, MDL, MGA, MKD, MMK, MOP, MUR, MXN, MYR, MZN, NAD, NGN, NIO, NOK, NPR, NZD, OMR, PAB, PEN, PHP, PKR, PLN, PYG, QAR, RON, RSD, RUB, RWF, SAR, SDG, SEK, SGD, SOS, SYP, THB, TND, TOP, TRY, TTD, TWD, TZS, UAH, UGX, UYU, UZS, VEF, VND, XAF, XOF, YER, ZAR, ZMK]
         attributes:
           type: array
           maxItems: 50
@@ -589,3 +589,158 @@ components:
         link:
           type: string
           format: uri
+          description: The deep link or URL to the item's page.
+        image_link:
+          type: string
+          format: uri
+          description: The URL of the primary image for the item.
+      # Allows for all other user-defined attributes based on AttributeDefinition
+      additionalProperties: true
+      example:
+        id: "item-sku-123"
+        title: "Classic T-Shirt"
+        link: "https://example.com/products/item-123"
+        image_link: "https://example.com/images/item-123.jpg"
+        brand_attribute: "Super Tech"
+        in_stock: true
+        price: 19.99
+    ItemUpdate:
+      type: object
+      required:
+        - id
+        - attributes
+      properties:
+        id:
+          type: string
+          description: The unique ID of the item to update.
+        attributes:
+          type: object
+          description: |
+            A key-value map of attributes to update for the item. The keys
+            must match existing attributes in the catalog schema, and values
+            must match the defined data types.
+          additionalProperties: true
+          example:
+            price: 24.99
+            in_stock: false
+    Error:
+      type: object
+      properties:
+        error-code:
+          type: string
+          description: A machine-readable error code.
+        message:
+          type: string
+          description: A human-readable description of the error.
+    IngestUpdateResponse:
+      type: object
+      properties:
+        message:
+          type: object
+          properties:
+            valid:
+              type: object
+              properties:
+                count:
+                  type: integer
+                  description: The number of items successfully processed.
+            invalid:
+              type: object
+              properties:
+                count:
+                  type: integer
+                  description: The number of items that failed processing.
+                details:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      error-id:
+                        type: string
+                        description: A unique ID indicating the type of ingestion/update failure.
+                        example: "duplicate-item-ids"
+                      message:
+                        type: string
+                        description: The reason for the failure.
+                        example: "Item ids within a catalog must be unique."
+                      count:
+                        type: integer
+                        description: The number of items that failed due to this specific error.
+                        example: 1
+                      document_ids:
+                        type: array
+                        items:
+                          type: string
+                        description: The IDs of the items that failed.
+                        example: ["item_id_xyz"]
+  responses:
+    BadRequest:
+      description: Bad Request - The request is improperly formatted, or contains missing/invalid parameters.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            invalid-datatype:
+              value:
+                error-code: "invalid-request"
+                message: "The data type provided for some of the attributes is invalid."
+            invalid-json:
+              value:
+                error-code: "invalid-request"
+                message: "The request body is not a valid JSON. Please provide a valid JSON request body."
+            limit-exceeded:
+              value:
+                error-code: "invalid-request"
+                message: "items size should be greater than 0 and less than or equal to 50"
+    Unauthorized:
+      description: Unauthorized - The request does not have valid authentication credentials.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error-code: "request-unauthenticated"
+            message: "Your request is unauthorized. Please verify your credentials and try again."
+    Forbidden:
+      description: Forbidden - The client does not have access rights to the Catalog APIs.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error-code: "request-denied"
+            message: "Your account does not have access to the Catalog APIs."
+    NotFound:
+      description: Not Found - The specified resource (catalog) could not be found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error-code: "catalog-not-found"
+            message: "We could not find any API based catalog for the provided catalog id."
+    PayloadTooLarge:
+      description: Payload Too Large - The request payload exceeds the 5MB limit.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error-code: "payload-size-exceeded"
+            message: "Your payload size exceeds the 5MB limit. Please reduce the payload size and try again."
+    TooManyRequests:
+      description: Too Many Requests - The rate limit for the API has been exceeded. No response body is returned.
+      headers:
+        x-ratelimit-limit:
+          schema:
+            type: integer
+            description: The maximum number of requests that the consumer is permitted to make in a given time window (100/min or 1000/hr).
+        x-ratelimit-remaining:
+          schema:
+            type: integer
+            description: The number of requests remaining in the current rate limit window.
+        x-ratelimit-reset:
+          schema:
+            type: integer
+            description: The time at which the current rate limit window resets in UTC epoch seconds.
