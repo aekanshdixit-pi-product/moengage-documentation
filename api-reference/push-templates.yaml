@@ -28,10 +28,6 @@ info:
     url: "https://images.g2crowd.com/uploads/product/image/social_landscape/social_landscape_4cb13a53c5240c218206532439a2f15a/moengage.png"
     altText: "MoEngage Logo"
 
-externalDocs:
-  description: Postman Collection
-  url: https://www.postman.com/moengage-dev/api-docs/collection/acmujor/moengage-transaction-push-api?action=share&source=copy-link&creator=5883765
-
 servers:
   - url: https://pushapi-0{data_center}.moengage.com/v2
     description: MoEngage API Server
@@ -63,14 +59,12 @@ components:
         3. Use these details to authenticate the API requests.
 
   schemas:
-    # --- Helper Schemas ---
     KeyValue:
       type: object
       additionalProperties:
         type: string
       description: Key-value pairs for extra data.
 
-    # --- Action Schemas ---
     DefaultAction:
       type: object
       properties:
@@ -111,7 +105,6 @@ components:
         * Copy
         * Share
 
-    # --- Rich Content Schemas ---
     RichContent:
       type: object
       properties:
@@ -123,7 +116,6 @@ components:
           type: string
           description: URL or resource name.
 
-    # --- Platform Payloads ---
     AndroidPayload:
       type: object
       required:
@@ -267,7 +259,6 @@ components:
           type: object
           description: This JSON object contains the fallback values for the values mentioned above.
 
-    # --- Main Request Components ---
     TargetUserAttributes:
       type: object
       properties:
@@ -515,7 +506,6 @@ components:
           type: boolean
           description: This field specifies whether to deliver the notification immediately, bypassing device restrictions such as battery optimizations or low-power modes.
 
-    # --- Main Payload ---
     SendPushRequest:
       type: object
       required:
@@ -631,7 +621,42 @@ paths:
       tags:
         - Transactions
       summary: Send Push Notification
-      description: Send a transactional, scheduled, or periodic push notification to Android, iOS, or Web users.
+      description: |
+        Send a transactional, scheduled, or periodic push notification to Android, iOS, or Web users.
+        
+        ### Sample cURL Request
+        ```bash
+        curl --location '[https://pushapi-01.moengage.com/v2/transaction/sendpush](https://pushapi-01.moengage.com/v2/transaction/sendpush)' \
+        --header 'Content-Type: application/json' \
+        --header 'MOE-APPKEY: {{Workspace_ID}}' \
+        --header 'Authorization: Basic {{Authorization_Key}}' \
+        --data '{
+          "appId": "ABC123",
+          "campaignName": "Test_Campaign",
+          "signature": "{{Signature}}",
+          "requestType": "push",
+          "targetPlatform": ["ANDROID"],
+          "targetAudience": "User",
+          "targetUserAttributes": {
+            "attribute": "USER_ATTRIBUTE_USER_EMAIL",
+            "comparisonParameter": "is",
+            "attributeValue": "abc@example.com"
+          },
+          "payload": {
+            "ANDROID": {
+              "message": "this is message",
+              "title": "this is title",
+              "defaultAction": {
+                "type": "richlanding",
+                "value": "[https://www.moengage.com](https://www.moengage.com)"
+              }
+            }
+          },
+          "campaignDelivery": {
+            "type": "soon"
+          }
+        }'
+        ```
       operationId: sendPush
       parameters:
         - in: header
@@ -648,7 +673,7 @@ paths:
             schema:
               $ref: '#/components/schemas/SendPushRequest'
             examples:
-              0_Generic_Sample:
+              01_Generic_Sample_Request:
                 summary: Generic Sample Request
                 value:
                   appId: "ABC123"
@@ -715,7 +740,7 @@ paths:
                     ignoreFC: false
                     sendAtHighPriority: true
                     inboxExpiry: 360
-              1_Ex1_Android_Payload_Only:
+              02_Ex1_Android_App:
                 summary: Ex 1 - Android App
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -754,7 +779,7 @@ paths:
                       fallback: {}
                   campaignDelivery:
                     type: "soon"
-              2_Ex1_iOS_Payload_Only:
+              03_Ex1_iOS_App:
                 summary: Ex 1 - iOS App
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -794,7 +819,7 @@ paths:
                           - category: "INVITE_CATEGORY"
                   campaignDelivery:
                     type: "soon"
-              3_Ex1_Web_Payload_Only:
+              04_Ex1_Web_Chrome_Push:
                 summary: Ex 1 - Web (Chrome Push)
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -813,7 +838,7 @@ paths:
                       fallback: {}
                   campaignDelivery:
                     type: "soon"
-              4_Ex2_Android_Full:
+              05_Ex2_Android_App:
                 summary: Ex 2 - Android App
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -863,7 +888,7 @@ paths:
                     ignoreFC: "false"
                     sendAtHighPriority: "true"
                     inboxExpiry: 360
-              5_Ex2_iOS_Full:
+              06_Ex2_iOS_App:
                 summary: Ex 2 - iOS App
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -895,7 +920,7 @@ paths:
                   advancedSettings:
                     ignoreFC: "false"
                   inboxExpiry: 360
-              6_Ex2_Web_Full:
+              07_Ex2_Web_Chrome_Push:
                 summary: Ex 2 - Web (Chrome Push)
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -927,7 +952,7 @@ paths:
                       WEB: 24
                     ignoreFC: "false"
                     sendAtHighPriority: "true"
-              7_Ex2_All_Platforms_Full:
+              08_Ex2_Across_all_platforms:
                 summary: Ex 2 - Across all platforms
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -992,7 +1017,7 @@ paths:
                     ignoreFC: "false"
                     sendAtHighPriority: "true"
                     inboxExpiry: 360
-              8_Ex3_Target_Single_User:
+              09_Ex3_Target_Single_User:
                 summary: Ex 3 - Target Single User
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -1008,7 +1033,7 @@ paths:
                   payload:
                     ANDROID:
                       message: "Android Message"
-                      title: "Android Title"
+                      title: "Android Message Title"
                       Summary: "Android Summary"
                       richContent:
                         - type: "image"
@@ -1045,7 +1070,7 @@ paths:
                     ignoreFC: "false"
                     sendAtHighPriority: "true"
                     inboxExpiry: 360
-              9_Ex3_Target_Custom_Segment:
+              10_Ex3_Target_Custom_Segment:
                 summary: Ex 3 - Target Custom Segment
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -1111,7 +1136,7 @@ paths:
                     ignoreFC: "false"
                     sendAtHighPriority: "true"
                     inboxExpiry: 360
-              10_Ex3_Custom_Attribute:
+              11_Ex3_Custom_Attribute:
                 summary: Ex 3 - Custom Attribute
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -1165,7 +1190,7 @@ paths:
                     ignoreFC: "false"
                     sendAtHighPriority: "true"
                     inboxExpiry: 360
-              11_Ex3_Target_All_Users:
+              12_Ex3_Target_All_Users:
                 summary: Ex 3 - Target All Users
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
@@ -1279,6 +1304,9 @@ paths:
                   Error_Message:
                     type: string
                     description: Reason for failure if status is Fail.
+                  Payload_error:
+                    type: string
+                    description: Detailed error message if payload is invalid.
               examples:
                 Success:
                   summary: Request Processed Successfully
