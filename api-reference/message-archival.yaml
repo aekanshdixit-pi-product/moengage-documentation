@@ -1,9 +1,7 @@
 openapi: 3.0.3
 info:
   title: MoEngage Message Archival API
-  description: |
-    This API allows you to store and access any communication sent to customers for later access.
-    For more information, refer to [Message Archival](https://help.moengage.com/hc/en-us/articles/16229242010900-Message-Archival).
+  description: You can use this API to store any communication sent to customers for later access. 
   version: '1.0'
 servers:
   - url: 'https://api-0{X}.moengage.com/v1'
@@ -14,7 +12,7 @@ servers:
         description: 'Your MoEngage Data Center (DC) number.'
 tags:
   - name: Message Archival
-    description: Retrieve archived message content.
+    description: You can use this API to store any communication sent to customers for later access.
 security:
   - basicAuth: []
 paths:
@@ -29,6 +27,8 @@ paths:
           title: View Archived Message
           description: Use this API to store any communication sent to customers for later access.
         content: |
+          You can use this API to store any communication sent to customers for later access. For more information, refer to [Message Archival](https://help.moengage.com/hc/en-us/articles/16229242010900-Message-Archival).
+
           ## API Endpoint
           
           `POST https://api-0X.moengage.com/v1/archival/view`
@@ -51,7 +51,7 @@ paths:
 
           ## Rate Limit
           
-          The rate limit is **1000 RPM**.
+          The rate limit is 1000 RPM.
 
           ## Sample cURL Request
 
@@ -195,7 +195,11 @@ paths:
             type: string
           description: |
             This is the workspace ID (earlier APP ID) of your MoEngage workspace.
-            Found in **Settings -> Account -> APIs -> Workspace ID**.
+            The MOE-APPKEY has to be passed in the request. You can find your MoEngage Workspace ID in the MoEngage Dashboard:
+            
+            **Settings -> Account -> APIs -> Workspace ID (earlier app id)**
+            
+            For more information, refer to [Authentication](#authentication).
           example: 'YOUR_WORKSPACE_ID_XXXX'
       requestBody:
         description: Request payload to identify the message to be retrieved.
@@ -223,8 +227,7 @@ components:
       type: http
       scheme: basic
       description: |
-        Basic Authentication using Workspace ID (username) and Data API Key (password).
-        Obtain from **MoEngage Dashboard > Settings > Account > APIs**.
+        Basic Authentication using Workspace ID (username) and Data API Key (password) from MoEngage Dashboard > Settings > Account > APIs.
   schemas:
     ArchivalRequest:
       type: object
@@ -240,18 +243,19 @@ components:
       properties:
         user_id:
           type: string
-          description: Unique identifier of the user.
+          description: This field denotes the unique identifier of the user.
         delivery_type:
           type: string
           description: |
-            Delivery type of the channel. Supported values:
-            * `ONE_TIME`
-            * `PERIODIC`
-            * `EVENT_TRIGGERED`
-            * `LOCATION_TRIGGERED`
-            * `DEVICE_TRIGGERED`
-            * `API_TRIGGERED`
-            * `BUSINESS_EVENT_TRIGGERED`
+            This field denotes the delivery type of the channel. Supported values are:
+            * ONE_TIME
+            * PERIODIC
+            * EVENT_TRIGGERED
+            * LOCATION_TRIGGERED
+            * DEVICE_TRIGGERED
+            * API_TRIGGERED
+            * BUSINESS_EVENT_TRIGGERED
+            * API_TRIGGERED
           enum:
             - ONE_TIME
             - PERIODIC
@@ -263,23 +267,27 @@ components:
         campaign_type:
           type: string
           description: |
-            The campaign type.
+            This field denotes the campaign type. Supported values are:
+            
             **Push:**
-            * General Push Campaign
-            * Autotrigger Campaign
-            * Geo-fencing Campaign
-            * Business Event Trigger Push Campaign
+            * General Push Campaign (General Push)
+            * Autotrigger Campaign (Event Triggered Push)
+            * Geo-fencing Campaign (Location Triggered Push)
+            * Business Event Trigger Push Campaign (Business Event Triggered Push)
+            
             **SMS:**
-            * sms
-            * Business Event Trigger SMS Campaign
+            * sms (all SMS campaigns except Business Event Triggered campaign)
+            * Business Event Trigger SMS Campaign (Business Event Triggered campaign)
+            
             **Email:**
-            * Email Campaign
-            * Email Triggers
-            * Business Event Trigger Email Campaign
+            * Email Campaign (all Email campaigns except Event triggered and Business Event Triggered campaigns)
+            * Email Triggers (Event triggered campaigns)
+            * Business Event Trigger Email Campaign (Business Event Triggered campaigns)
+            
             **Alerts/Inform:**
-            * Inform Email
-            * Inform SMS
-            * Inform Push
+            * Inform Email (for Email Campaign)
+            * Inform SMS (for SMS Campaign)
+            * Inform Push (for Push Campaign)
           enum:
             - General Push Campaign
             - Autotrigger Campaign
@@ -295,7 +303,12 @@ components:
             - Inform Push
         campaign_channel:
           type: string
-          description: The campaign channel.
+          description: |
+            This field denotes the campaign channel. Supported values are:
+            * EMAIL
+            * SMS
+            * PUSH
+            * FLOWS
           enum:
             - EMAIL
             - SMS
@@ -304,15 +317,15 @@ components:
         sent_epoch_time:
           type: integer
           format: int64
-          description: The sent time of the campaign as a Unix epoch timestamp.
+          description: This field denotes the sent time of the campaign.
           example: 1716972486
         campaign_id:
           type: string
-          description: The campaign ID.
+          description: This field denotes the campaign ID.
         event_name:
           type: string
           description: |
-            The name of the event. Supported values:
+            This field denotes the name of the event. Supported event names are:
             * Email Sent
             * SMS Sent
             * Notification Sent iOS
@@ -326,7 +339,14 @@ components:
             - Notification Received Web
         platform:
           type: string
-          description: The target platform of the campaign.
+          description: |
+            This field denotes the target platform of the campaign. Supported values are:
+            * IOS
+            * ANDROID
+            * WEB
+            * EMAIL
+            * SMS
+            * MWEB
           enum:
             - IOS
             - ANDROID
@@ -337,9 +357,10 @@ components:
         event_id:
           type: string
           description: |
-            The event ID. **Required for event-triggered campaigns.**
+            This field denotes the event ID.
+            This field is required for event-triggered campaigns.
             * You must pass `moe_event_id` if any event attribute is present for campaigns.
-            * You must pass `moe_transaction_id` for alerts.
+            * You must pass `moe_transaction_id` for alerts, which is mandatory.
     ArchivalResponseSuccess:
       type: object
       properties:
@@ -416,7 +437,7 @@ components:
           nullable: true
         message:
           type: string
-          description: A brief description of the request status in case of success.
+          description: This field contains a brief description of the request status in the case of success.
         related_urls:
           type: array
           items:
@@ -463,31 +484,39 @@ components:
           example: 'BiaFuAzn-aefa0b0e-2c88-4106-8d07-0f0c53513e48'
   responses:
     Success200:
-      description: Success. The message content is returned.
+      description: |
+        Success.
+        The server successfully processed the request, but is not returning any content.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ArchivalResponseSuccess'
     Error400:
       description: |
-        Bad Request. Required parameters are missing, invalid, or unsupported.
+        Bad Request.
+        This response is returned when the required parameters are missing from the request, or when the provided parameters are invalid, or when a template already exists with the same version, name, or id.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse400'
     Error401:
-      description: Authentication Failure. Invalid data key.
+      description: |
+        Authentication Failure.
+        This response is returned when the authorization parameters are missing in the HTTP Auth Header.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse401'
     Error429:
-      description: Too Many Requests. Rate limit breached (1000 RPM).
+      description: |
+        Too Many Requests.
+        A number of headers are returned in case of a rate-limit breach.
     Error500:
-      description: Internal Server Error.
+      description: |
+        Internal Server Error.
+        This response is returned when the system runs into an unexpected error.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse500'
     Error502:
-      description: Server Error. Something went wrong on MoEngage.
