@@ -2,10 +2,17 @@ openapi: 3.0.3
 info:
   title: Push API
   description: |
+    ### Overview
     Push API is used to:
     * Create campaigns (targeting all users or a group of users) to send notifications.
     * Target a single user using a unique user attribute.
     * Personalize payload for each user.
+
+    ### API Endpoint
+    The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+    ### Postman Collection
+    We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/acmujor/moengage-transaction-push-api?action=share&source=copy-link&creator=5883765) to view it in Postman.
 
     ### FAQs
     **Does the Push API support silent notifications?**
@@ -24,8 +31,7 @@ externalDocs:
 
 servers:
   - url: https://pushapi-0{data_center}.moengage.com/v2
-    description: |
-      MoEngage API Server. The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping here.
+    description: MoEngage API Server
     variables:
       data_center:
         default: '1'
@@ -538,7 +544,7 @@ components:
             
             Python code to generate the signature for your test account, use the app_id that is appropriate for your account.
             
-            
+            [Image of Python signature generation code]
             
             **Python 3.x Code:**
             ```python
@@ -839,6 +845,10 @@ paths:
       responses:
         '200':
           description: |
+            Request Processed.
+            
+            **Note**: A 200 OK status does *not* always mean success. Check the `status` field in the response body.
+            
             This response is returned when the request is processed successfully.
             
             **Common Reasons for Failure (Status: Fail):**
@@ -848,49 +858,4 @@ paths:
             * **appId is not present**: This response is returned when appID is missing in the request.
             * **Please specify a campaign name of more than or equal to 5 characters**: This response is returned when the campaign name is less than 5 characters.
             * **Request limit exceed.**: This response is returned when the dashboard is blocked for push API.
-            * **Campaign name is missing**: This response is returned when the campaign name is missing in the request.
-            * **Signature is missing**: This response is returned when the signature is missing in the request for Push API.
-            * **Signature is not verified**: This response is returned when the signature is incorrect. Verify the app key and campaign name while generating signature.
-            * **key is Mandatory**: This response is returned when the key is missing from the payload.
-            * **Campaign With this name already exists. For targetAudience type All User or Custom Segment you can't create campaign with same campaign previous name**: This response is returned when the campaign name already exists. Try a new campaign name.
-            * **key is not of Type List**: This response is returned when the key contains a value that is not supported.
-            * **value is not a allowed value. Allowed values for this field are : example**: This response is returned when the key contains a value that is not supported.
-            * **Failed to get all whitelisted event list**: This response is returned when failed to get all whitelisted action from the data-team management team.
-            * **Custom Segment Name: s_name not found in our database.Please verify same on Dashboard**: This response is returned when the defined custom segment is not found in the MoEngage database.
-            * **error or set isCustom to True.**: This response is returned when the defined user attribute is not among the allowed types when the is_custom is set to false.
-            * **Selected Attribution window is not within limits (1 - 36 hours)**: This response is returned when the Selected attribution window is not within limits (1 - 36 hours).
-            * **Error parsing parameters**: This response is returned when some value in the payload fails in parsing.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  requestId:
-                    type: string
-                    description: This field indicates the request ID.
-                  responseId:
-                    type: string
-                    description: This field indicates the response ID.
-                  cid:
-                    type: string
-                    description: This field indicates the campaign ID.
-                  status:
-                    type: string
-                    example: "Success"
-                    description: This field indicates the campaign status.
-                  Error_Message:
-                    type: string
-                    description: Reason for failure if status is Fail.
-              examples:
-                Success:
-                  value:
-                    requestId: "req_123"
-                    responseId: "res_456"
-                    cid: "cid_789"
-                    status: "Success"
-                Fail:
-                  value:
-                    responseId: "res_000"
-                    Error_Message: "Campaign Name not found"
-                    status: "Fail"
-                    requestId: ""
+            * **Campaign name is missing**:
