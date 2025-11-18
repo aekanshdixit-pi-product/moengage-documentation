@@ -127,8 +127,29 @@ paths:
           description: This response is returned when the required parameters are missing from the request, attributes are not found, and incorrect values are passed.
           content:
             application/json:
+              # FIX: Inline schema definition to customize the description for 400
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        # CUSTOM DESCRIPTION FOR 400
+                        description: 'The type or category of the error ("MissingAttributeError").'
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+                      attribute:
+                        type: string
+                        description: "The attribute in the payload that caused the error."
               examples:
                 missing_customer_id:
                   summary: Customer ID is missing in the payload
@@ -161,9 +182,29 @@ paths:
           description: This response is returned when the request does not have valid authentication credentials.
           content:
             application/json:
+              # FIX: Inline schema definition to customize the description for 401
               schema:
-                $ref: '#/components/schemas/GenericError'
-              # FIX: Added multiple examples for 401 as requested
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        # CUSTOM DESCRIPTION FOR 401
+                        description: 'The type or category of the error (e.g., Authentication required).'
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+                      attribute:
+                        type: string
+                        description: "The attribute in the payload that caused the error."
               examples:
                 auth_error:
                   summary: Authorization errors
@@ -733,8 +774,7 @@ components:
               description: "A descriptive error message explaining why the request failed."
             type:
               type: string
-              # FIX: Updated description per request
-              description: "The type or category of the error (e.g., Authentication required)."
+              description: "The type or category of the error (e.g., MissingAttributeError)."
             request_id:
               type: string
               description: "A unique identifier for the request, useful for debugging."
