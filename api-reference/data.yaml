@@ -127,7 +127,6 @@ paths:
           description: This response is returned when the required parameters are missing from the request, attributes are not found, and incorrect values are passed.
           content:
             application/json:
-              # FIX: Inline schema for 400 to customize descriptions
               schema:
                 type: object
                 properties:
@@ -181,7 +180,6 @@ paths:
           description: This response is returned when the request does not have valid authentication credentials.
           content:
             application/json:
-              # FIX: Inline schema for 401 to customize descriptions
               schema:
                 type: object
                 properties:
@@ -196,7 +194,6 @@ paths:
                         description: "A descriptive error message explaining why the request failed."
                       type:
                         type: string
-                        # CUSTOM DESCRIPTION FOR 401
                         description: 'The type or category of the error (e.g., Authentication required).'
                       request_id:
                         type: string
@@ -272,14 +269,36 @@ paths:
           description: This response is returned when the payload size exceeds 128 KB.
           content:
             application/json:
+              # FIX: Inline schema for 413 to customize descriptions
               schema:
-                $ref: '#/components/schemas/GenericError'
-              example:
-                status: "fail"
-                error:
-                  message: "Payload size exceeds 128 KB"
-                  type: "PayloadTooLarge"
-                  request_id: "PLSize123"
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        # CUSTOM 413 TYPE DESCRIPTION
+                        description: "The type or category of the error (e.g., Payload too large)."
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              # FIX: Added dropdown example for 413
+              examples:
+                payload_exceeded:
+                  summary: Payloads exceeding the size limit
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Payload size exceeds 128 KB"
+                      type: "PayloadTooLarge"
+                      request_id: "PLSize123"
         '415':
           description: This response is returned when the content type is not supported.
           content:
