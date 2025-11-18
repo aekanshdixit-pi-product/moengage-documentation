@@ -5,6 +5,7 @@ info:
   description: |-
     This is a comprehensive OpenAPI specification for MoEngage's Data APIs, including User, Event, and Device management.
     It's designed to power an interactive API playground on your new documentation site.
+# FIX: Reordered tags to match the Sidebar hierarchy (User > Event > Device > Tracking > Utilities > File Import > Bulk > Webhooks)
 tags:
   - name: User
     description: Operations for creating, updating, retrieving, and managing user profiles.
@@ -12,14 +13,14 @@ tags:
     description: Operations for tracking user events.
   - name: Device
     description: Operations for managing user devices.
-  - name: Bulk
-    description: Operations for importing users and events in bulk.
-  - name: File Import
-    description: Operations for managing asynchronous file imports.
   - name: Tracking
     description: Endpoints for tracking attribution and installs.
   - name: Utilities
     description: Utility endpoints for testing connections.
+  - name: File Import
+    description: Operations for managing asynchronous file imports.
+  - name: Bulk
+    description: Operations for importing users and events in bulk.
   - name: Webhooks
     description: Incoming webhook specifications from MoEngage.
 servers:
@@ -49,18 +50,22 @@ security:
   - basicAuth: []
 
 paths:
+  # SECTION 1: USER
   /customer/{Workspace_ID}:
     post:
       tags:
         - User
       summary: Create or Update User
-     description: |
-        User API helps add or update users and user properties in MoEngage.
-        
-        **Use cases:**
-        * Create a new user
-        * Create new user property
-        * Update existing user properties of users
+      # FIX: Added x-mint content for Rich Text and Lists
+      x-mint:
+        content: |
+          User API helps add or update users and user properties in MoEngage.
+          
+          **Use cases:**
+          * Create a new user
+          * Create new user property
+          * Update existing user properties of users
+      description: "Adds new users or updates properties of existing users in MoEngage."
       parameters:
         - name: Workspace_ID
           in: path
@@ -79,26 +84,26 @@ paths:
               simple:
                 summary: Simple User Update
                 value:
-                  type: customer
-                  customer_id: john@example.com
+                  type: "customer"
+                  customer_id: "john@example.com"
                   attributes:
-                    name: John
+                    name: "John"
                     platforms:
-                      - platform: ANDROID
+                      - platform: "ANDROID"
                         active: "true"
               full:
                 summary: Full User Update with Custom Attributes
                 value:
-                  type: customer
-                  customer_id: john@example.com
+                  type: "customer"
+                  customer_id: "john@example.com"
                   update_existing_only: true
                   attributes:
                     points: 20
-                    expiry_date: '2020-05-31T03:47:35Z'
+                    expiry_date: "2020-05-31T03:47:35Z"
                     super_user: true
-                    user_persona: browsers
+                    user_persona: "browsers"
                     platforms:
-                      - platform: ANDROID
+                      - platform: "ANDROID"
                         active: "true"
       responses:
         '200':
@@ -230,6 +235,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenericError'
 
+  # SECTION 2: EVENT
   /event/{Workspace_ID}:
     post:
       tags:
@@ -270,6 +276,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenericError'
 
+  # SECTION 3: DEVICE
   /device/{appId}:
     post:
       tags:
@@ -348,6 +355,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenericError'
 
+  # SECTION 4: TRACKING
   /installInfo:
     get:
       tags:
@@ -399,6 +407,7 @@ paths:
         '400':
           description: Bad request, missing required parameters.
 
+  # SECTION 5: UTILITIES
   /integrations/authentication:
     post:
       tags:
@@ -432,6 +441,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenericError'
 
+  # SECTION 6: FILE IMPORT
   /fileimports/trigger/{import_id}:
     post:
       tags:
@@ -497,6 +507,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenericError'
 
+  # SECTION 7: BULK
   /transition/{Workspace_ID}:
     post:
       tags:
@@ -536,6 +547,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenericError'
 
+  # SECTION 8: WEBHOOKS
   /webhooks/moengage-streams:
     post:
       tags:
