@@ -1,7 +1,9 @@
 openapi: 3.0.3
 info:
   title: Personalize APIs
-  description: APIs for fetching and reporting on personalization experiences.
+  description: |
+    Personalize APIs constitute a set of endpoints that can be accessed from your platform's code.
+    These APIs offer personalization capabilities and must be invoked from your codebase for MoEngage to provide relevant data. After receiving the data, you can use the same within your platform's code to personalize the content for your users.
   version: 1.0.0
 servers:
   - url: https://sdk-{dc}.moengage.com/v1
@@ -11,7 +13,8 @@ servers:
         default: "01"
         description: >-
           The MoEngage Data Center (DC) your account is hosted on (e.g., 01,
-          02, 03).
+          02, 03). You can find your DC number by referring to the DC and API endpoint
+          mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage).
 security:
   - basicAuth: []
 tags:
@@ -27,8 +30,29 @@ paths:
       summary: Fetch Experience
       description: >-
         Use the Fetch endpoint to receive data on active personalization
-        experiences. MoEngage will evaluate targeting rules and in-session
-        attributes automatically and return the correct variation for the user.
+        experiences. You can fetch data for one or more server-side experiences
+        by using the experience-key field. MoEngage will evaluate targeting rules
+        and in-session attributes automatically and return the correct variation
+        for the user. Typically, you would make this call as part of your larger
+        page and content rendering pipeline.
+      x-mint:
+        content: |
+          ### Authentication
+
+          The API request is authenticated through **Basic Authentication**. This method sends a Base64-encoded string containing your username and password with every API request.
+
+          It encodes a `username:password` string in Base64 and prepends the encoded string with `Basic `.
+
+          **To get your credentials:**
+          1.  Navigate to **Settings** -> **Account** -> **APIs** in the MoEngage Dashboard.
+          2.  Click the **Copy** icon in the **Personalize** tile in the **API Keys** section to copy the API Key.
+          3.  Use your **Workspace ID** as the `username` and the **Personalize API Key** as the `password` to generate the Basic Auth header.
+
+          <Note type="warning">
+            **Regenerating API Secret**
+
+            You can regenerate the API SECRET in the MoEngage Dashboard. Please **DO NOT** regenerate the key unless there is a security breach. Once you generate a different API SECRET KEY and save it, API calls using the older SECRET KEY won't work.
+          </Note>
       parameters:
         - in: header
           name: MOE-APPKEY
@@ -37,7 +61,8 @@ paths:
             type: string
           description: >-
             This is the Workspace ID of your MoEngage account and needs to be
-            passed along with the request.
+            passed along with the request. You can find your MoEngage Workspace
+            ID in the MoEngage Dashboard API Settings.
       requestBody:
         description: Body to fetch experiences for a user.
         required: true
@@ -109,6 +134,11 @@ paths:
       description: >-
         The Metadata API is used to fetch a list of currently Active,
         Scheduled and Paused experiences within a workspace.
+      x-mint:
+        content: |
+          <Note>
+          Authentication uses the same Basic Auth (Workspace ID & Personalize API Key) as the Fetch Experience endpoint.
+          </Note>
       parameters:
         - in: header
           name: MOE-APPKEY
@@ -117,7 +147,8 @@ paths:
             type: string
           description: >-
             This is the Workspace ID of your MoEngage account and needs to be
-            passed along with the request.
+            passed along with the request. You can find your MoEngage Workspace
+            ID in the MoEngage Dashboard API Settings.
         - in: query
           name: status
           required: false
@@ -159,8 +190,14 @@ paths:
       summary: Report Experience Events
       description: >-
         Use this endpoint to report experience events, such as
-        'MOE_PERSONALIZATION_MESSAGE_SHOWN' and
-        'MOE_PERSONALIZATION_MESSAGE_CLICKED'.
+        'MOE_PERSONALIZATION_MESSAGE_SHOWN' (impression) and
+        'MOE_PERSONALIZATION_MESSAGE_CLICKED' (click). This is the recommended
+        method for reporting analytics for all platforms (website, mobile, TV, etc.).
+      x-mint:
+        content: |
+          <Note>
+          Authentication uses the same Basic Auth (Workspace ID & Personalize API Key) as the Fetch Experience endpoint.
+          </Note>
       parameters:
         - in: header
           name: MOE-APPKEY
@@ -169,7 +206,8 @@ paths:
             type: string
           description: >-
             This is the Workspace ID of your MoEngage account and needs to be
-            passed along with the request.
+            passed along with the request. You can find your MoEngage Workspace
+            ID in the MoEngage Dashboard API Settings.
       requestBody:
         description: An array of event elements to report.
         required: true
@@ -239,7 +277,8 @@ components:
       scheme: basic
       description: >-
         Basic Authentication using your Workspace ID as the username and the
-        Personalize API Key as the password.
+        Personalize API Key as the password. Generate these from the MoEngage
+        Dashboard > Settings > Account > APIs.
   schemas:
     ExperienceFetchRequest:
       type: object
@@ -250,11 +289,18 @@ components:
           properties:
             customer_id:
               type: string
-              description: Unique identifier for the user mapped with ID field.
+              description: >-
+                Unique identifier for the user (e.g., email, phone, or any
+                unique ID). Essential for fetching experiences based on user
+                attributes or behavior. If not provided, user_identifiers will
+                be used as a fallback (if Identity Resolution is enabled).
               example: "john.doe@example.com"
             user_identifiers:
               type: object
-              description: Additional user identifiers like email or mobile.
+              description: >-
+                Additional user identifiers (e.g., email, mobile) used as a
+                fallback if customer_id is not present and Identity Resolution
+                is enabled.
               properties:
                 u_em:
                   type: string
@@ -270,8 +316,8 @@ components:
           items:
             type: string
           description: >-
-            A list of experience keys to fetch. If empty, all experiences
-            for the user are returned.
+            A list of experience keys to fetch. If this field is omitted or
+            empty, the API will return all experiences matching the user.
           example:
             - "experience-1"
             - "experience-2"
@@ -284,20 +330,20 @@ components:
         DAY_OF_THE_WEEK:
           type: string
           description: >-
-            This field must contain the day of the week for evaluating
-            IN-session attribute-based experiences.
+            This field must contain the day of the week (e.g., "Sunday") for
+            evaluating IN-session attribute-based experiences.
           example: "Sunday"
         TIME_OF_THE_DAY:
           type: string
           description: >-
-            This field must contain the time of the day (00-23) for
-            evaluating IN-session attribute-based experiences.
+            This field must contain the time of the day in 24-hour format (00-23)
+            for evaluating IN-session attribute-based experiences.
           example: "19"
         USER_IP_ADDRESS:
           type: string
           description: >-
             This field must contain the user’s IP address to fetch
-            experiences for audiences segmented basis geo-location.
+            experiences for audiences segmented based on geo-location.
           example: "192.168.1.1"
         USER_AGENT:
           type: string
@@ -311,7 +357,7 @@ components:
       properties:
         experiences:
           type: object
-          description: An object where each key is an experience_key.
+          description: An object where each key is an experience_key returned for the user.
           additionalProperties:
             $ref: "#/components/schemas/ExperiencePayload"
     ExperiencePayload:
@@ -337,8 +383,8 @@ components:
         experience_context:
           type: object
           description: >-
-            A JSON object to be used for reporting pageviews/impressions
-            and/or tracking clicks.
+            A JSON object that **must** be passed back to the Report Experience
+            Events API for tracking impressions and clicks.
           properties:
             cid:
               type: string
@@ -391,13 +437,15 @@ components:
         customer_id:
           type: string
           description: >-
-            Your brand provides this field... This is essential for event
-            mapping back to the user.
+            The unique user identifier (e.g., email, phone). This is
+            essential for event mapping back to the user. If the customer_id
+            does not exist, a new user profile will be created.
         user_attributes:
           type: object
           description: >-
-            This field is used to update the details of a user... If the
-            customer_id does not exist, a new user will be created...
+            This field is used to update the details of a user. If the
+            customer_id does not exist, a new user will be created with these
+            details.
           additionalProperties: true
           example:
             name: "John Doe"
@@ -405,14 +453,14 @@ components:
         user_timezone_offset:
           type: integer
           description: >-
-            The difference in time between UTC and the local system time...
+            The difference in time between UTC and the local system time
             in seconds. Example: 19800 for IST (UTC+0530).
           example: 19800
         actions:
           type: array
           description: >-
             Multiple actions or events performed by a user can be grouped
-            together.
+            together in a single API call.
           items:
             $ref: "#/components/schemas/EventAction"
     EventAction:
@@ -433,7 +481,7 @@ components:
         moe_event_uuid:
           type: string
           format: uuid
-          description: Unique identifier to be sent for each event to prevent duplication.
+          description: Unique identifier (UUID) to be sent for each event to prevent duplication.
           example: "aa886712-4537-47c1-b126-2686efda2e26"
         event_time:
           oneOf:
@@ -448,7 +496,7 @@ components:
           type: string
           description: >-
             The platform on which the user is shown the personalization
-            event.
+            event. If the value is missing, 'Unknown' will be used.
           enum:
             - Android
             - IOS
@@ -458,8 +506,8 @@ components:
         attributes:
           type: object
           description: >-
-            This field is the 'experience_context' sent as part of the
-            response to the Experience Fetch API request.
+            This field is the **'experience_context'** object sent as part of the
+            response from the 'Fetch Experience' API.
           properties:
             cid:
               type: string
@@ -479,6 +527,6 @@ components:
               type: string
               description: >-
                 This field can be used to uniquely identify click tracking
-                events on multiple elements on a page.
+                events on multiple elements on a page (e.g., "Add to Cart").
               example: "Add to Cart"
           additionalProperties: true
