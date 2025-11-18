@@ -2,7 +2,13 @@ openapi: 3.0.3
 info:
   title: MoEngage Push API
   version: '2.0'
-  description: API for sending transactional and targeted push notifications to users across Android, iOS, and Web platforms.
+  description: |
+    API for sending transactional and targeted push notifications to users across Android, iOS, and Web platforms.
+    
+    **Overview**
+    * Create campaigns (targeting all users or a group of users).
+    * Target a single user using a unique user attribute.
+    * Personalize payload for each user.
 tags:
   - name: Push
     description: Operations to create and send push notification campaigns.
@@ -29,66 +35,180 @@ paths:
         - Push
       summary: Send Push Notification
       description: |-
-        Creates and sends a push notification campaign. Can target all users, a pre-defined custom segment, or specific users based on their attributes.
+        Creates and sends a push notification campaign.
+        
+        **Authentication**
+        The API request is authenticated via Basic Authentication (`Authorization: Basic Base64_ENCODED_APPKEY_APIKEY==`) and requires the `MOE-APPKEY` header.
+      x-mint:
+        content: |
+          <Note>
+            **Rate Limit**: You can create up to **10,000 requests per minute**.
+          </Note>
       requestBody:
         required: true
-        description: The complete configuration for the push campaign, including targeting, platform-specific payloads, and delivery options.
+        description: The complete configuration for the push campaign.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PushRequest'
             examples:
-              targetSingleUser:
-                summary: Target a Single User
+              Example2_TargetAllUsers:
+                summary: Target All Users (Android, iOS, Web)
                 value:
-                  appId: "YOUR_WORKSPACE_ID"
-                  campaignName: "Welcome_Push_To_User_123"
-                  signature: "GENERATED_SHA256_SIGNATURE"
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push"
+                  campaignTags: ["Transactional"]
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["ANDROID", "IOS", "WEB"]
+                  targetAudience: "All Users"
+                  payload:
+                    ANDROID:
+                      message: "Android Message"
+                      title: "Android Message Title"
+                      summary: "Android Summary"
+                      richContent:
+                        - type: "image"
+                          value: "https://images.iimg.in/c"
+                        - type: "coupon"
+                          value: "free"
+                        - type: "sound"
+                          value: "tring"
+                      defaultAction:
+                        type: "richlanding"
+                        value: "https://www.google.co.in"
+                      additionalActions:
+                        - type: "call"
+                          value: "12345678"
+                          name: "Call button"
+                          iconURL: "abc"
+                        - type: "copy"
+                          value: "12345678"
+                          name: "Copy button"
+                          iconURL: "abc"
+                    IOS:
+                      message: "iOS Message"
+                      title: "iOS Message Title"
+                      richContent:
+                        - type: "sound"
+                          value: "custSound4.wav"
+                      additionalActions:
+                        - category: "INVITE_CATEGORY"
+                    WEB:
+                      message: "Web Message"
+                      title: "Web Message Title"
+                      redirectURL: "https://www.google.com"
+                      iconURL: "sbc.jpeg"
+                      imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
+                      fallback: {}
+                  campaignDelivery:
+                    type: "soon"
+                  conversionGoals:
+                    - name: "amount 1"
+                      eventName: "AddedTocart"
+                      attrs:
+                        filter: "is between"
+                        name: "amount"
+                        value: "10,100"
+                        type: "numeric"
+                  advancedSettings:
+                    ttl:
+                      ANDROID: 12
+                      WEB: 24
+                    ignoreFC: false
+                    sendAtHighPriority: true
+                    inboxExpiry: 360
+              Example3_TargetSingleUser:
+                summary: Target Single User
+                value:
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push User"
+                  signature: "{{Signature}}"
+                  requestType: "push"
                   targetPlatform: ["ANDROID"]
                   targetAudience: "User"
                   targetUserAttributes:
                     attribute: "USER_ATTRIBUTE_USER_EMAIL"
                     comparisonParameter: "is"
-                    attributeValue: "test@example.com"
+                    attributeValue: "abc@example.com"
                   payload:
                     ANDROID:
-                      title: "Welcome to our App!"
-                      message: "Thanks for signing up. Here is a special offer for you."
+                      message: "Android Message"
+                      title: "Android Message Title"
+                      summary: "Android Summary"
+                      richContent:
+                        - type: "image"
+                          value: "https://images.iimg.in/c"
+                      defaultAction:
+                        type: "richlanding"
+                        value: "https://www.google.co.in"
                   campaignDelivery:
                     type: "soon"
-                  advancedSettings:
-                    ignoreFC: true
-              targetAllUsers:
-                summary: Target All Users
+              Example3_TargetCustomSegment:
+                summary: Target Custom Segment
                 value:
-                  appId: "YOUR_WORKSPACE_ID"
-                  campaignName: "Holiday_Sale_Announcement"
-                  signature: "GENERATED_SHA256_SIGNATURE"
+                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
+                  campaignName: "Test Push Segment"
+                  signature: "{{Signature}}"
+                  requestType: "push"
                   targetPlatform: ["ANDROID", "IOS", "WEB"]
-                  targetAudience: "All Users"
+                  targetAudience: "Custom Segment"
+                  customSegmentName: "Android_TranV2"
                   payload:
                     ANDROID:
-                      title: "Holiday Sale is LIVE!"
-                      message: "Get up to 50% off on all items. Shop now!"
+                      message: "testing txn v2"
+                      title: "testing txn v2"
+                      summary: "summary"
+                      richContent:
+                        - type: "image"
+                          value: "https://images.iimg.in/c"
                     IOS:
-                      title: "Holiday Sale is LIVE!"
-                      message: "Get up to 50% off on all items. Shop now!"
+                      message: "7th"
+                      title: "Test Case custom segment5"
+                      richContent:
+                        - type: "sound"
+                          value: "custSound4.wav"
                     WEB:
-                      title: "Holiday Sale is LIVE!"
-                      message: "Get up to 50% off on all items. Shop now!"
-                      redirectURL: "https://example.com/sale"
-                      iconURL: "https://example.com/icon.png"
+                      message: "Test Case WEB"
+                      title: "Test Case WEB"
+                      redirectURL: "https://www.google.com"
+                      iconURL: "sbc.jpeg"
+                      imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
                   campaignDelivery:
                     type: "soon"
       responses:
         '200':
-          description: Request received. The status in the response body indicates whether it was successfully processed or failed.
+          description: |
+            The request was received. The body indicates if the processing was a Success or Fail.
+            
+            **Common Error Messages:**
+            * `Invalid JSON`
+            * `Invalid Request Type`
+            * `Invalid appId`
+            * `Campaign name is missing`
+            * `Signature is not verified`
+            * `Campaign With this name already exists.`
           content:
             application/json:
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/PushSuccessResponse'
                   - $ref: '#/components/schemas/PushFailureResponse'
+              examples:
+                success:
+                  summary: Success Response
+                  value:
+                    requestId: "06418699-2534-4f53-b297-8c1489948382"
+                    responseId: "5f7c3b2a-1e4d-4a9c-8b2e-7d1f6a5c9e3d"
+                    cid: "29384756"
+                    status: "Success"
+                failure:
+                  summary: Failure Response
+                  value:
+                    responseId: "5f7c3b2a-1e4d-4a9c-8b2e-7d1f6a5c9e3d"
+                    Error_Message: "Campaign Name not found"
+                    status: "Fail"
+                    Payload error: "Campaign Name not found"
         '401':
           description: Unauthorized. Invalid authentication credentials.
 
@@ -154,9 +274,15 @@ components:
         message: { type: string }
         title: { type: string }
         summary: { type: string }
-        groupKey: { type: string }
-        collapseReplaceKey: { type: string }
-        channel_id: { type: string }
+        groupKey: 
+          type: string
+          description: "Max 45 characters. ASCII only. Used to group notifications."
+        collapseReplaceKey: 
+          type: string
+          description: "Update key used to identify and update related push notifications."
+        channel_id: 
+          type: string
+          description: "Channel identifier for the campaign."
         richContent:
           type: array
           items:
@@ -185,9 +311,15 @@ components:
         message: { type: string }
         title: { type: string }
         subtitle: { type: string }
-        groupKey: { type: string }
-        collapseReplaceKey: { type: string }
-        enableIosBadge: { type: boolean }
+        groupKey: 
+          type: string
+          description: "Max 45 characters. ASCII only. Used to group notifications."
+        collapseReplaceKey: 
+          type: string
+          description: "Update key used to identify and update related push notifications."
+        enableIosBadge: 
+          type: boolean
+          description: "Specifies whether a notification should automatically update the iOS app’s badge count."
         richContent:
           type: array
           items:
@@ -214,7 +346,9 @@ components:
         redirectURL: { type: string, format: uri }
         iconURL: { type: string, format: uri }
         imageURL: { type: string, format: uri }
-        autoDismiss: { type: boolean }
+        autoDismiss: 
+          type: boolean
+          description: "Specifies whether to dismiss the notification automatically after 8 seconds."
         fallback: { type: object }
 
     Payload:
@@ -261,7 +395,9 @@ components:
           type: object
           properties:
             name: { type: string }
-            filter: { type: string }
+            filter: 
+              type: string
+              description: "Operators: is, is not, contains, starts with, ends with, is greater than, is between, exists, etc."
             value: { oneOf: [{ type: string }, { type: number }, { type: array, items: { type: string } }] }
             type: { type: string, enum: [string, numeric] }
 
@@ -270,9 +406,10 @@ components:
       properties:
         ttl:
           type: object
+          description: "TTL in minutes. Default 36 hours (2160 mins). Send 0 if not applicable."
           properties:
-            ANDROID: { type: integer, description: "TTL in minutes for Android." }
-            WEB: { type: integer, description: "TTL in minutes for Web." }
+            ANDROID: { type: integer }
+            WEB: { type: integer }
         ignoreFC:
           type: boolean
           description: "Set to true to bypass frequency capping."
@@ -293,12 +430,13 @@ components:
           description: "Enable Push Amplification Plus."
         preCacheSegment:
           type: boolean
+          description: "Pre-caches segmentation for scheduled campaigns."
         campaignThrottleTime:
           type: integer
-          description: "Time in minutes to spread out the campaign delivery."
+          description: "Time in minutes (1-360) to spread out delivery."
         campaignThrottleRpm:
           type: integer
-          description: "Requests per minute for throttling. Overrides campaignThrottleTime."
+          description: "Requests per minute for throttling. Max 250k for personalized."
         useJinjaPersonalization:
           type: boolean
           description: "Set to true to enable Jinja personalization in payloads."
@@ -313,8 +451,10 @@ components:
           enum: [apns_device_default_push, apns_device_provisional_push, apns_device_non_provisional_push]
         deliverWhenActive:
           type: boolean
+          description: "Deliver only when device is in active state."
         bypassDND:
           type: boolean
+          description: "Bypass device restrictions like battery optimization."
 
     PushRequest:
       type: object
@@ -330,7 +470,21 @@ components:
         appId: { type: string }
         campaignName: { type: string, minLength: 5 }
         campaignTags: { type: array, items: { type: string } }
-        signature: { type: string, description: "SHA256 hash of appId|campaignName|apiKey" }
+        signature: 
+          type: string
+          description: |
+            SHA256 hash of `appId|campaignName|apiKey`.
+            
+            **Python 3.x Generation:**
+            ```python
+            from hashlib import sha256
+            app_id = "XXXXXXXXXXXXXXXXXXXXXX_DEBUG"
+            campaign_name = "TEST"
+            api_key = "XXXXXXXXXXXX"
+            signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+            signature = sha256(signature_key.encode('utf-8')).hexdigest()
+            print(signature)
+            ```
         requestType: { type: string, default: "push" }
         targetPlatform:
           type: array
@@ -374,5 +528,6 @@ components:
           type: string
           enum: [Fail]
         Error_Message: { type: string, example: "Campaign Name not found" }
+        "Payload error": { type: string, example: "Campaign Name not found" }
         responseId: { type: string }
         requestId: { type: string }
