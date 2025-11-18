@@ -123,7 +123,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericSuccess'
-              # FIX: Converted 200 response to use 'examples' for dropdown
               examples:
                 success_response:
                   summary: Success Response
@@ -276,6 +275,7 @@ paths:
           description: This response is returned when the payload size exceeds 128 KB.
           content:
             application/json:
+              # FIX: Inline schema for 413 to customize descriptions
               schema:
                 type: object
                 properties:
@@ -307,14 +307,36 @@ paths:
           description: This response is returned when the content type is not supported.
           content:
             application/json:
+              # FIX: Inline schema for 415 to customize descriptions
               schema:
-                $ref: '#/components/schemas/GenericError'
-              example:
-                status: "fail"
-                error:
-                  message: "Unsupported Media Type"
-                  type: "MediaTypeError"
-                  request_id: "MedType123"
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        # CUSTOM DESCRIPTION FOR 415
+                        description: "The type or category of the error (e.g., Unsupported media type)."
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              # FIX: Converted to 'examples' for dropdown capability
+              examples:
+                unsupported_media_type:
+                  summary: Unsupported media type
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Unsupported Media Type"
+                      type: "MediaTypeError"
+                      request_id: "MedType123"
         '429':
           description: This response is returned when the number of requests has exceeded the rate limit.
           content:
