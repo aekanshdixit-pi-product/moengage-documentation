@@ -4,11 +4,6 @@ info:
   version: '2.0'
   description: |
     API for sending transactional and targeted push notifications to users across Android, iOS, and Web platforms.
-    
-    **Overview**
-    * Create campaigns (targeting all users or a group of users).
-    * Target a single user using a unique user attribute.
-    * Personalize payload for each user.
 tags:
   - name: Push
     description: Operations to create and send push notification campaigns.
@@ -18,7 +13,7 @@ servers:
     variables:
       dc:
         default: '1'
-        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, 4, etc.'
+        description: "Your MoEngage Data Center (DC). Replace 'X' in the URL with your DC number (1, 2, 3, etc.)."
         enum:
           - '1'
           - '2'
@@ -34,95 +29,59 @@ paths:
       tags:
         - Push
       summary: Send Push Notification
-      description: |-
-        Creates and sends a push notification campaign.
+      operationId: sendPushNotification
+      description: |
+        # Overview
+        The Push API is used to:
+        * Create campaigns (targeting all users or a group of users) to send notifications.
+        * Target a single user using a unique user attribute.
+        * Personalize payload for each user.
+
+        <Note>
+          **Rate Limit**: You can create up to **10,000 requests per minute**.
+        </Note>
+
+        ## API Endpoint
+        The endpoint URL follows the format: `https://pushapi-0X.moengage.com/v2/transaction/sendpush`.
         
-        **Authentication**
-        The API request is authenticated via Basic Authentication (`Authorization: Basic Base64_ENCODED_APPKEY_APIKEY==`) and requires the `MOE-APPKEY` header.
-      x-mint:
-        content: |
-          <Note>
-            **Rate Limit**: You can create up to **10,000 requests per minute**.
-          </Note>
+        The **'X'** in the URL refers to your MoEngage Data Center (DC). You must replace 'X' with your specific DC number (e.g., 01, 02, 03).
+
+        ## Authentication
+        The API uses **Basic Authentication**. You must send a Base64-encoded string containing your `Workspace ID` (username) and `API Key` (password).
+
+        **Header Format:**
+        `{"Authorization":"Basic Base64_ENCODED_APPKEY_APIKEY=="}`
+
+        <Info>
+        **How to obtain credentials:**
+        1. Go to **Settings > Account > APIs** in the MoEngage Dashboard.
+        2. **Username**: Copy the **Workspace ID**.
+        3. **Password**: Copy the Key from the **Push templates** tile in the API Keys section.
+        </Info>
+
+        ## FAQs
+        <AccordionGroup>
+          <Accordion title="Does the Push API support silent notifications?">
+            No, MoEngage Push API doesn't support silent notifications.
+          </Accordion>
+          <Accordion title="Can I use HTML to format notification text?">
+            Yes, the basic template supports HTML tags.
+          </Accordion>
+        </AccordionGroup>
+
       requestBody:
         required: true
-        description: The complete configuration for the push campaign.
+        description: The configuration for the push campaign.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PushRequest'
             examples:
-              Example2_TargetAllUsers:
-                summary: Target All Users (Android, iOS, Web)
-                value:
-                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
-                  campaignName: "Test Push"
-                  campaignTags: ["Transactional"]
-                  signature: "{{Signature}}"
-                  requestType: "push"
-                  targetPlatform: ["ANDROID", "IOS", "WEB"]
-                  targetAudience: "All Users"
-                  payload:
-                    ANDROID:
-                      message: "Android Message"
-                      title: "Android Message Title"
-                      summary: "Android Summary"
-                      richContent:
-                        - type: "image"
-                          value: "https://images.iimg.in/c"
-                        - type: "coupon"
-                          value: "free"
-                        - type: "sound"
-                          value: "tring"
-                      defaultAction:
-                        type: "richlanding"
-                        value: "https://www.google.co.in"
-                      additionalActions:
-                        - type: "call"
-                          value: "12345678"
-                          name: "Call button"
-                          iconURL: "abc"
-                        - type: "copy"
-                          value: "12345678"
-                          name: "Copy button"
-                          iconURL: "abc"
-                    IOS:
-                      message: "iOS Message"
-                      title: "iOS Message Title"
-                      richContent:
-                        - type: "sound"
-                          value: "custSound4.wav"
-                      additionalActions:
-                        - category: "INVITE_CATEGORY"
-                    WEB:
-                      message: "Web Message"
-                      title: "Web Message Title"
-                      redirectURL: "https://www.google.com"
-                      iconURL: "sbc.jpeg"
-                      imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
-                      fallback: {}
-                  campaignDelivery:
-                    type: "soon"
-                  conversionGoals:
-                    - name: "amount 1"
-                      eventName: "AddedTocart"
-                      attrs:
-                        filter: "is between"
-                        name: "amount"
-                        value: "10,100"
-                        type: "numeric"
-                  advancedSettings:
-                    ttl:
-                      ANDROID: 12
-                      WEB: 24
-                    ignoreFC: false
-                    sendAtHighPriority: true
-                    inboxExpiry: 360
-              Example3_TargetSingleUser:
+              TargetSingleUser:
                 summary: Target Single User
                 value:
-                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
-                  campaignName: "Test Push User"
+                  appId: "ABC123_DEBUG"
+                  campaignName: "Test_Campaign_Single_User"
                   signature: "{{Signature}}"
                   requestType: "push"
                   targetPlatform: ["ANDROID"]
@@ -133,53 +92,85 @@ paths:
                     attributeValue: "abc@example.com"
                   payload:
                     ANDROID:
-                      message: "Android Message"
-                      title: "Android Message Title"
-                      summary: "Android Summary"
+                      groupKey: "promo_group"
+                      collapseReplaceKey: "promo_update"
+                      message: "Welcome to our platform!"
+                      title: "Welcome"
+                      summary: "Welcome Message"
                       richContent:
                         - type: "image"
-                          value: "https://images.iimg.in/c"
+                          value: "https://images.example.com/welcome.png"
                       defaultAction:
                         type: "richlanding"
-                        value: "https://www.google.co.in"
+                        value: "https://www.moengage.com"
                   campaignDelivery:
                     type: "soon"
-              Example3_TargetCustomSegment:
-                summary: Target Custom Segment
+                  conversionGoals:
+                    - name: "Purchase"
+                      eventName: "PurchaseSuccess"
+                      attrs:
+                        name: "price"
+                        filter: "is greater than"
+                        value: "100"
+                        type: "numeric"
+                  advancedSettings:
+                    ttl:
+                      ANDROID: 12
+                    ignoreFC: false
+                    sendAtHighPriority: true
+              TargetAllUsers:
+                summary: Target All Users (Multi-platform)
                 value:
-                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
-                  campaignName: "Test Push Segment"
+                  appId: "ABC123_DEBUG"
+                  campaignName: "Global_Announcement"
                   signature: "{{Signature}}"
                   requestType: "push"
                   targetPlatform: ["ANDROID", "IOS", "WEB"]
-                  targetAudience: "Custom Segment"
-                  customSegmentName: "Android_TranV2"
+                  targetAudience: "All Users"
                   payload:
                     ANDROID:
-                      message: "testing txn v2"
-                      title: "testing txn v2"
-                      summary: "summary"
-                      richContent:
-                        - type: "image"
-                          value: "https://images.iimg.in/c"
+                      message: "Big Sale Starts Now!"
+                      title: "Flash Sale"
+                      defaultAction:
+                        type: "richlanding"
+                        value: "https://www.example.com/sale"
                     IOS:
-                      message: "7th"
-                      title: "Test Case custom segment5"
+                      message: "Big Sale Starts Now!"
+                      title: "Flash Sale"
                       richContent:
                         - type: "sound"
-                          value: "custSound4.wav"
+                          value: "default"
                     WEB:
-                      message: "Test Case WEB"
-                      title: "Test Case WEB"
-                      redirectURL: "https://www.google.com"
-                      iconURL: "sbc.jpeg"
-                      imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
+                      message: "Big Sale Starts Now!"
+                      title: "Flash Sale"
+                      redirectURL: "https://www.example.com/sale"
+                      iconURL: "https://www.example.com/icon.png"
                   campaignDelivery:
                     type: "soon"
+              TargetCustomSegment:
+                summary: Target Custom Segment
+                value:
+                  appId: "ABC123_DEBUG"
+                  campaignName: "Re-engagement Campaign"
+                  signature: "{{Signature}}"
+                  requestType: "push"
+                  targetPlatform: ["ANDROID"]
+                  targetAudience: "Custom Segment"
+                  customSegmentName: "Inactive_Users_30_Days"
+                  payload:
+                    ANDROID:
+                      message: "We miss you! Come back for 20% off."
+                      title: "We miss you"
+                      defaultAction:
+                        type: "richlanding"
+                        value: "https://www.example.com/comeback"
+                  campaignDelivery:
+                    type: "soon"
+
       responses:
         '200':
           description: |
-            The request was received. The body indicates if the processing was a Success or Fail.
+            The request was received. The status in the body indicates whether it was successfully processed or failed.
             
             **Common Error Messages:**
             * `Invalid JSON`
@@ -187,7 +178,6 @@ paths:
             * `Invalid appId`
             * `Campaign name is missing`
             * `Signature is not verified`
-            * `Campaign With this name already exists.`
           content:
             application/json:
               schema:
@@ -225,6 +215,112 @@ components:
       description: Your MoEngage Workspace ID.
 
   schemas:
+    # --- Main Request Schema ---
+    PushRequest:
+      type: object
+      required:
+        - appId
+        - campaignName
+        - signature
+        - targetPlatform
+        - targetAudience
+        - payload
+        - campaignDelivery
+      properties:
+        appId: 
+          type: string
+          description: "The App ID / Workspace ID. (Suffixed with `_DEBUG` for test accounts)."
+        campaignName: 
+          type: string
+          minLength: 5
+          description: |
+            Unique name for the campaign.
+            * API automatically creates a campaign with this name.
+            * For `User` target audience, reuse this name to club requests into the same campaign.
+        campaignTags: 
+          type: array
+          description: "Tags to add context (e.g., Transactional, Accounts)."
+          items: { type: string }
+        signature: 
+          type: string
+          description: |
+            SHA256 hash of `appId|campaignName|apiKey`.
+            
+            **Python 3.x Generation:**
+            ```python
+            from hashlib import sha256
+            app_id = "XXXXXXXXXXXXXXXXXXXXXX_DEBUG"
+            campaign_name = "TEST"
+            api_key = "XXXXXXXXXXXX"
+            signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+            signature = sha256(signature_key.encode('utf-8')).hexdigest()
+            print(signature)
+            ```
+        requestType: 
+          type: string
+          default: "push"
+          description: "Indicates the intention of the API request. Default: `push`."
+        targetPlatform:
+          type: array
+          description: "List of platforms to target."
+          items:
+            type: string
+            enum: [ANDROID, IOS, WEB]
+        targetAudience:
+          type: string
+          description: |
+            * `All Users`: Target all users.
+            * `Custom Segment`: Target pre-created segments.
+            * `User`: Target a specific user attribute.
+          enum: ["All Users", "Custom Segment", "User"]
+        customSegmentName:
+          type: string
+          description: "Required if `targetAudience` is **Custom Segment**."
+        targetUserAttributes:
+          $ref: '#/components/schemas/TargetUserAttributes'
+        payload:
+          $ref: '#/components/schemas/Payload'
+        campaignDelivery:
+          $ref: '#/components/schemas/CampaignDelivery'
+        conversionGoals:
+          type: array
+          maxItems: 5
+          description: "Supports a maximum of 5 conversion goals. The first goal is primary."
+          items:
+            $ref: '#/components/schemas/ConversionGoal'
+        advancedSettings:
+          $ref: '#/components/schemas/AdvancedSettings'
+
+    # --- Main Response Schemas ---
+    PushSuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [Success]
+          description: "Indicates the campaign status."
+        requestId: 
+          type: string
+          description: "The request ID."
+        responseId: 
+          type: string
+          description: "The response ID."
+        cid: 
+          type: string
+          description: "The campaign ID."
+
+    PushFailureResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [Fail]
+        Error_Message: { type: string, example: "Campaign Name not found" }
+        "Payload error": { type: string, example: "Campaign Name not found" }
+        responseId: { type: string }
+        requestId: { type: string }
+
+    # --- Support Schemas ---
     TargetUserAttributes:
       type: object
       required:
@@ -234,11 +330,23 @@ components:
       properties:
         attribute:
           type: string
-          description: The user attribute to target.
+          description: |
+            The unique identifier or characteristic used to specify target users. Required when `targetAudience` is **User**.
+            
+            **Supported Values:**
+            * `USER_ATTRIBUTE_UNIQUE_ID`
+            * `USER_ATTRIBUTE_USER_EMAIL`
+            * `USER_ATTRIBUTE_USER_MOBILE`
+            * `MOE_GAID` (Google Advertising ID)
+            * `ADVERTISING_IDENTIFIER` (iOS IDFA)
+            * `PUSH_ID` (Device push token)
           enum: [USER_ATTRIBUTE_UNIQUE_ID, USER_ATTRIBUTE_USER_EMAIL, USER_ATTRIBUTE_USER_MOBILE, MOE_GAID, ADVERTISING_IDENTIFIER, PUSH_ID]
         comparisonParameter:
           type: string
-          description: The comparison operator.
+          description: |
+            The condition or operator that compares attributes against the value. Required when `targetAudience` is **User**.
+            
+            **Note**: The "in" operator supports a maximum of 50 parameters.
           enum: [is, in]
         attributeValue:
           oneOf:
@@ -246,45 +354,56 @@ components:
             - type: array
               items:
                 type: string
-          description: The value(s) to match. Use an array for the 'in' operator.
+          description: "The actual value assigned to the attribute for comparison. Required when `targetAudience` is **User**."
         isCustom:
           type: boolean
-          description: Set to true if targeting a custom user attribute.
+          description: "Set to `true` if targeting a custom user attribute. Default is `false`."
           default: false
 
     DefaultAction:
       type: object
+      description: "Defines the default action triggered when the user interacts with the notification."
       properties:
         type:
           type: string
+          description: "Supported values: `richlanding`, `navigation`, `deeplinking`."
           enum: [richlanding, navigation, deeplinking]
         value:
           type: string
-          description: The URL or deep link path.
+          description: "The URL or deep link path."
         kvPairs:
           type: object
           additionalProperties:
             type: string
-          description: Additional key-value pairs to pass with the action.
+          description: "Additional key-value pairs to pass with the action."
 
     AndroidPayload:
       type: object
       required: [message, title]
       properties:
-        message: { type: string }
-        title: { type: string }
-        summary: { type: string }
         groupKey: 
           type: string
-          description: "Max 45 characters. ASCII only. Used to group notifications."
+          description: |
+            Used to identify and categorize related push notifications.
+            * **Note:** MoEngage automatically modifies this key to ensure it does not exceed 45 ASCII characters (removing non-Latin scripts/spaces).
         collapseReplaceKey: 
           type: string
           description: "Update key used to identify and update related push notifications."
-        channel_id: 
+        channel_id:
           type: string
-          description: "Channel identifier for the campaign."
+          description: "The channel identifier for the campaign."
+        message: 
+          type: string
+          description: "The main content or text to be displayed in the notification body."
+        title: 
+          type: string
+          description: "The headline or subject of the notification."
+        summary: 
+          type: string
+          description: "Brief summary or condensed version of the content (typically for collapsed views)."
         richContent:
           type: array
+          description: "List of rich media objects. Supported types: `coupon`, `image`, `sound`."
           items:
             type: object
             properties:
@@ -294,6 +413,7 @@ components:
           $ref: '#/components/schemas/DefaultAction'
         additionalActions:
           type: array
+          description: "List of extra action buttons (Max 2). Supported types: `call`, `snooze`, `copy`, `share`."
           maxItems: 2
           items:
             type: object
@@ -302,26 +422,39 @@ components:
               value: { type: string }
               name: { type: string }
               iconURL: { type: string }
-        fallback: { type: object }
+        fallback: 
+          type: object
+          description: "JSON object containing fallback values if personalization fails."
 
     IOSPayload:
       type: object
       required: [message, title]
       properties:
-        message: { type: string }
-        title: { type: string }
-        subtitle: { type: string }
         groupKey: 
           type: string
-          description: "Max 45 characters. ASCII only. Used to group notifications."
+          description: |
+            Used to identify and categorize related push notifications.
+            * **Note:** MoEngage automatically modifies this key to ensure it does not exceed 45 ASCII characters.
         collapseReplaceKey: 
           type: string
           description: "Update key used to identify and update related push notifications."
+        message: 
+          type: string
+          description: "The primary text or body of the notification."
+        title: 
+          type: string
+          description: "The title or subject line of the notification."
+        subtitle: 
+          type: string
+          description: "The subtitle of the notification."
         enableIosBadge: 
           type: boolean
-          description: "Specifies whether a notification should automatically update the iOS app’s badge count."
+          description: "Specifies whether the notification should automatically update the iOS app’s badge count. Values: `true`, `false`."
         richContent:
           type: array
+          description: |
+            Multimedia attachments. Supported: `gif`, `coupon`, `sound`, `image`, `audio`, `video`.
+            * **Note:** Image, video, and audio cannot be used together.
           items:
             type: object
             properties:
@@ -331,25 +464,43 @@ components:
           $ref: '#/components/schemas/DefaultAction'
         additionalActions:
           type: array
+          description: "Supplementary action buttons. You can add only one category."
           items:
             type: object
             properties:
               category: { type: string }
-        fallback: { type: object }
+        fallback: 
+          type: object
+          description: "JSON object containing fallback values if personalization fails."
 
     WebPayload:
       type: object
       required: [message, title, redirectURL, iconURL]
       properties:
-        message: { type: string }
-        title: { type: string }
-        redirectURL: { type: string, format: uri }
-        iconURL: { type: string, format: uri }
-        imageURL: { type: string, format: uri }
+        message: 
+          type: string
+          description: "The main text content or notification body."
+        title: 
+          type: string
+          description: "The subject or heading of the notification."
+        redirectURL: 
+          type: string
+          format: uri
+          description: "URL to redirect the user to upon interaction."
+        iconURL: 
+          type: string
+          format: uri
+          description: "URL of the icon image displayed alongside the title/message."
+        imageURL: 
+          type: string
+          format: uri
+          description: "URL of an additional image to be shown in the notification."
         autoDismiss: 
           type: boolean
           description: "Specifies whether to dismiss the notification automatically after 8 seconds."
-        fallback: { type: object }
+        fallback: 
+          type: object
+          description: "JSON object containing fallback values if personalization fails."
 
     Payload:
       type: object
@@ -368,22 +519,23 @@ components:
       properties:
         type:
           type: string
+          description: "Decides when the campaign should be sent."
           enum: [soon, later, periodic]
         date:
           type: string
-          description: "Required for 'later' type. Format: MM/DD/YYYY"
+          description: "Required for 'later' type. Format: `MM/DD/YYYY`"
         time:
           type: string
-          description: "Required for 'later' and 'periodic' types. Format: HH:MM AM/PM"
+          description: "Required for 'later' and 'periodic' types. Format: `HH:MM AM/PM`"
         endDate:
           type: string
-          description: "Required for 'periodic' type. Format: MM/DD/YYYY"
+          description: "Required for 'periodic' type. Format: `MM/DD/YYYY`"
         repeatAfter:
           type: string
           description: "Repeat interval in days for 'periodic' type."
         timezone:
           type: string
-          description: "Timezone for scheduling, e.g., 'Asia/Kolkata'. Defaults to IST if not provided."
+          description: "Timezone for scheduling (e.g., 'Asia/Kolkata'). Defaults to IST if not provided."
 
     ConversionGoal:
       type: object
@@ -393,31 +545,46 @@ components:
         eventName: { type: string, description: "The raw event name to track." }
         attrs:
           type: object
+          description: "Event attribute filters."
           properties:
-            name: { type: string }
+            name: 
+              type: string
+              description: "Event attribute name."
             filter: 
               type: string
-              description: "Operators: is, is not, contains, starts with, ends with, is greater than, is between, exists, etc."
-            value: { oneOf: [{ type: string }, { type: number }, { type: array, items: { type: string } }] }
-            type: { type: string, enum: [string, numeric] }
+              description: "Operators: `is`, `is not`, `contains`, `starts with`, `is equal to`, `is greater than`, `exists`, etc."
+            value: 
+              oneOf: [{ type: string }, { type: number }, { type: array, items: { type: string } }]
+              description: "Event attribute filter value."
+            type: 
+              type: string
+              enum: [string, numeric]
+              description: "Event attribute data type."
 
     AdvancedSettings:
       type: object
       properties:
         ttl:
           type: object
-          description: "TTL in minutes. Default 36 hours (2160 mins). Send 0 if not applicable."
+          description: "Duration (in minutes) to keep the message before discarding. Default: 36 hours (2160 mins). Send 0 if not applicable."
           properties:
             ANDROID: { type: integer }
             WEB: { type: integer }
         ignoreFC:
           type: boolean
-          description: "Set to true to bypass frequency capping."
+          description: |
+            Enable to bypass frequency capping.
+            * `true`: Bypasses frequency capping.
+            * `false`: Applies frequency capping.
         countFC:
           type: boolean
-          description: "If ignoreFC is true, set this to true to count this push in the frequency cap."
+          description: |
+            Controls whether this push counts towards the frequency cap.
+            * `true`: Counts towards the cap.
+            * `false`: Does not count.
         notificationPrioritySettings:
           type: object
+          description: "Configures notification priority."
           properties:
             Android:
               type: string
@@ -430,104 +597,29 @@ components:
           description: "Enable Push Amplification Plus."
         preCacheSegment:
           type: boolean
-          description: "Pre-caches segmentation for scheduled campaigns."
+          description: "Pre-caches segmentation for scheduled campaigns. Recommended to create 2 hours before schedule."
         campaignThrottleTime:
           type: integer
           description: "Time in minutes (1-360) to spread out delivery."
         campaignThrottleRpm:
           type: integer
-          description: "Requests per minute for throttling. Max 250k for personalized."
+          description: "Requests per minute for throttling. Max 250k for personalized campaigns."
         useJinjaPersonalization:
           type: boolean
-          description: "Set to true to enable Jinja personalization in payloads."
+          description: "Set to `true` to enable Jinja personalization in payloads (e.g., `{{UserAttribute['userName']}}`)."
         ignoreMinimumDelay:
           type: boolean
           default: true
+          description: "If `true`, ignores client-level minimum delay settings."
         inboxExpiry:
           type: integer
-          description: "Expiry for the push notification in the App Inbox, in hours."
+          description: "Expiry for the push notification in the App Inbox (in hours)."
         iOSTargetDevice:
           type: string
           enum: [apns_device_default_push, apns_device_provisional_push, apns_device_non_provisional_push]
         deliverWhenActive:
           type: boolean
-          description: "Deliver only when device is in active state."
+          description: "If `true`, delivers only when the device is in an active state."
         bypassDND:
           type: boolean
-          description: "Bypass device restrictions like battery optimization."
-
-    PushRequest:
-      type: object
-      required:
-        - appId
-        - campaignName
-        - signature
-        - targetPlatform
-        - targetAudience
-        - payload
-        - campaignDelivery
-      properties:
-        appId: { type: string }
-        campaignName: { type: string, minLength: 5 }
-        campaignTags: { type: array, items: { type: string } }
-        signature: 
-          type: string
-          description: |
-            SHA256 hash of `appId|campaignName|apiKey`.
-            
-            **Python 3.x Generation:**
-            ```python
-            from hashlib import sha256
-            app_id = "XXXXXXXXXXXXXXXXXXXXXX_DEBUG"
-            campaign_name = "TEST"
-            api_key = "XXXXXXXXXXXX"
-            signature_key = app_id+'|'+ campaign_name+'|'+ api_key
-            signature = sha256(signature_key.encode('utf-8')).hexdigest()
-            print(signature)
-            ```
-        requestType: { type: string, default: "push" }
-        targetPlatform:
-          type: array
-          items:
-            type: string
-            enum: [ANDROID, IOS, WEB]
-        targetAudience:
-          type: string
-          enum: ["All Users", "Custom Segment", "User"]
-        customSegmentName:
-          type: string
-          description: "Required if targetAudience is 'Custom Segment'."
-        targetUserAttributes:
-          $ref: '#/components/schemas/TargetUserAttributes'
-        payload:
-          $ref: '#/components/schemas/Payload'
-        campaignDelivery:
-          $ref: '#/components/schemas/CampaignDelivery'
-        conversionGoals:
-          type: array
-          maxItems: 5
-          items:
-            $ref: '#/components/schemas/ConversionGoal'
-        advancedSettings:
-          $ref: '#/components/schemas/AdvancedSettings'
-
-    PushSuccessResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          enum: [Success]
-        requestId: { type: string }
-        responseId: { type: string }
-        cid: { type: string }
-
-    PushFailureResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          enum: [Fail]
-        Error_Message: { type: string, example: "Campaign Name not found" }
-        "Payload error": { type: string, example: "Campaign Name not found" }
-        responseId: { type: string }
-        requestId: { type: string }
+          description: "If `true`, bypasses device restrictions like battery optimization or low-power modes."
