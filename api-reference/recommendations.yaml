@@ -22,8 +22,18 @@ paths:
       summary: Fetch Recommendation Metadata
       operationId: fetchRecommendationMetadata
       description: |
-        Retrieves the metadata associated with a specific recommendation setup using its unique ID.
-        This includes details like name, type, status, associated catalog, configuration settings, and timestamps.
+        Retrieves the metadata associated with a specific recommendation setup using its unique ID. 
+        The metadata can include the recommendation name, model type, status, creation and update time, and so on.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+
+            The response keys may vary depending on the filters used in the recommendation.
+          </Note>
+
+          ## Rate Limit
+          You can fetch 1,000 recommendations per minute.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/RecommendationIdPath'
@@ -35,11 +45,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecommendationMetadata'
         '400':
-          $ref: '#/components/responses/BadRequest' # General bad request
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Recommendation Not Found. The specified recommendation ID does not exist or is archived.
+          description: Recommendation Not Found. The specified recommendation ID does not exist or archived. Please check recommendation_id.
           content:
             application/json:
               schema:
@@ -48,12 +58,11 @@ paths:
                 error-code: "recommendation does not exist"
                 message: "Recommendation does not exist or archived. Please check recommendation_id."
         '413':
-          $ref: '#/components/responses/PayloadTooLarge' # Unlikely for GET but listed
+          $ref: '#/components/responses/PayloadTooLarge'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /recommendations/{recommendations_id}/items:
     post:
       tags:
@@ -61,22 +70,28 @@ paths:
       summary: Fetch Recommendation Results
       operationId: fetchRecommendationResults
       description: |
-        Retrieves the recommended items for a specific user based on a given recommendation setup.
-        Requires user ID and, for certain recommendation types, an anchor item ID.
-        Allows specifying which item attributes to include in the response.
+        This API lets you fetch/retrieve the metadata results of any recommendations for a user based on their user ID and item ID.
+      x-mint:
+        content: |
+          ## Rate Limit
+          You can fetch 10,000 recommendations per minute.
+
+          <Note>
+            The maximum size of the payload is 1 MB.
+          </Note>
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/RecommendationIdPath'
         - name: RECOMMENDATION-TYPE
           in: header
           required: true
-          description: The type of recommendation strategy being used.
+          description: It represents the type of recommendations from which the results are fetched.
           schema:
             type: string
             enum:
               - user_action
               - item_attribute
-              - catalog_alert # Note: This was listed but might be internal? Confirm if needed.
+              - catalog_alert
               - similar_item
               - frequently_viewed_together
               - frequently_bought_together
@@ -109,40 +124,54 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
-           description: Recommendation Not Found. The specified recommendation ID does not exist or is archived.
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/ErrorResponse'
+          description: Recommendation Not Found. The specified recommendation ID does not exist or is archived.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-      description: 'Uses **Workspace ID** as username and **API Key** (from Campaign/Business Events/Custom Templates/Catalog API tile) as password.'
+      description: |
+        The API request will be authenticated through Basic Authentication. 
+        
+        It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the `Authorization` header.
+
+        You can obtain the username and password details from the MoEngage Dashboard:
+        1.  Navigate to **Settings > Account > APIs**.
+        2.  **Username**: Under **Workspace ID**, copy your username.
+        3.  **Password**: In the **API keys** section, copy the API key from the **Campaign report** / **Business events** / **Custom templates** / **Catalog API** tile.
   parameters:
     AppKeyHeader:
       name: MOE-APPKEY
       in: header
       required: true
-      description: Your MoEngage Workspace ID.
+      description: |
+        This is the workspace ID (earlier APP ID) of your MoEngage workspace. The MOE-APPKEY has to be passed in the request.
+        
+        You can find your MoEngage Workspace ID in the MoEngage Dashboard:
+        **Settings** > **Account** > **APIs** > **Workspace ID** (earlier app id)
       schema:
         type: string
     RecommendationIdPath:
       name: recommendations_id
       in: path
       required: true
-      description: The unique identifier for the recommendation setup.
+      description: |
+        This parameter indicates the unique identifier associated with the recommendation created in the recommendation module.
+        
+        You can obtain the `recommendation_id` from the recommendation you created on the recommendation page.
       schema:
         type: string
-        example: "a1b2c3d4e5f6a7b8c9d0e1f2"
+      example: "a1b2c3d4e5f6a7b8c9d0e1f2"
   schemas:
     Filter:
       type: object
@@ -175,55 +204,75 @@ components:
         param: { type: string, example: "price" }
         direction: { type: string, enum: ["1", "-1"], description: "1 for ascending, -1 for descending" }
     TrendSettings:
-       type: object
-       # Specific properties for trend type and duration would go here based on API details
-       description: "Defines the trend type and duration (Specific fields depend on implementation)."
-       example: { trend_type: "most_viewed", duration_days: 7 }
+      type: object
+      description: "Defines the trend type and duration (Specific fields depend on implementation)."
+      properties: {}
+      example: { trend_type: "most_viewed", duration_days: 7 }
     CustomSettings:
-       type: object
-       properties:
-         item_filters:
-            type: object
-            # Further structure depends on possible filters like user_actions, item_attributes etc.
-            properties:
-               user_actions:
-                 type: object # Placeholder
-       description: "Defines custom filters applied to recommendations."
+      type: object
+      properties:
+        item_filters:
+          type: object
+          properties:
+            user_actions:
+              type: object
+      description: "Defines custom filters applied to recommendations."
     RecommendationMetadata:
       type: object
       properties:
-        id: { type: string, description: "Unique recommendation ID." }
-        db_name: { type: string, description: "Workspace name." }
+        id: { type: string, description: "It is the unique recommendation ID." }
+        db_name: { type: string, description: "This is your workspace name." }
         recommendation_type:
           type: string
           enum: [user_action, item_attribute, similar_item, frequently_viewed_together, frequently_bought_together, trending_item, user_personalization]
-          description: "Type of recommendation strategy."
-        name: { type: string, description: "Name of the recommendation." }
-        description: { type: string, nullable: true, description: "Description provided during creation." }
-        catalog: { type: string, description: "ID of the associated catalog." }
-        catalog_name: { type: string, description: "Name of the associated catalog." } # Added based on example
-        status: { type: string, enum: [Active, Archived], description: "Current status." } # Assuming Archived is the opposite of Active
-        created_time: { type: string, format: date-time, description: "Timestamp of creation." }
-        updated_time: { type: string, format: date-time, description: "Timestamp of last modification." }
+          description: |
+            It represents the type of recommendations from which the results will be fetched.
+            The supported values are:
+            - `user_action`
+            - `item_attribute`
+            - `similar_item`
+            - `frequently_viewed_together`
+            - `frequently_bought_together`
+            - `trending_item`
+            - `user_personalization`
+        name: { type: string, description: "This field represents the name of the recommendation for which you want to fetch the details." }
+        description: { type: string, nullable: true, description: "This field describes the recommendation given at the time of its creation." }
+        catalog: { type: string, description: "This is the unique identifier of the catalog assigned to the requested recommendation." }
+        catalog_name: { type: string, description: "Name of the associated catalog." }
+        status: { type: string, enum: [Active, Archived], description: "The recommendation's status indicates whether it is active or archived." }
+        created_time: { type: string, format: date-time, description: "This field shows the timestamp when a recommendation was created." }
+        updated_time: { type: string, format: date-time, description: "This field shows the timestamp when a recommendation setting was last modified." }
         all_user_actions:
           type: boolean
-          description: "Whether all user actions are considered for anchor item context (specific types only)."
+          description: |
+            This key represents whether all user actions are being considered to find the most recently interacted item. If this is true, the most recently interacted ID from any of the user action set-ups will be considered to find the related items as per the recommendation type.
+            
+            **Note**: This key is available with the `similar_item`, `frequently_viewed_together`, and `frequently_bought_together` recommendation types.
           nullable: true
-        include_filters: # Added based on example
-           $ref: '#/components/schemas/IncludeExcludeFilters'
-           nullable: true
-        exclude_filters: # Assuming exclude might also exist
-           $ref: '#/components/schemas/IncludeExcludeFilters'
-           nullable: true
+        include_filters:
+          $ref: '#/components/schemas/IncludeExcludeFilters'
+          nullable: true
+        exclude_filters:
+          $ref: '#/components/schemas/IncludeExcludeFilters'
+          nullable: true
         custom_settings:
-           $ref: '#/components/schemas/CustomSettings'
-           nullable: true
+          $ref: '#/components/schemas/CustomSettings'
+          nullable: true
+          description: "This key defines the customization applied to the recommendation results as per the recommendation setup. Currently, you can apply the user action and item attribute filters over recommendations."
         sort:
-           $ref: '#/components/schemas/SortCriteria'
-           nullable: true
+          $ref: '#/components/schemas/SortCriteria'
+          nullable: true
+          description: |
+            This key defines the sorting logic based on which recommendation results will be ordered. This object's value provides the attributes' details and sorting order.
+            
+            **Note**: This key is available with the `user_action` and `item_attribute` recommendation types.
         trends:
-           $ref: '#/components/schemas/TrendSettings'
-           nullable: true
+          $ref: '#/components/schemas/TrendSettings'
+          nullable: true
+          description: |
+            This key defines the trend type for `trending_item` recommendations and the duration of trend computation.
+            
+            **Note**: This key is available with the `trending_item` recommendation type.
     FetchResultsRequest:
       type: object
       required:
@@ -231,28 +280,37 @@ components:
       properties:
         user_id:
           type: string
-          description: Unique identifier for the user.
+          description: >
+            A user ID is a unique identifier that represents a user. You can obtain the user_id from the user info page.
         item_id:
           type: string
-          description: Anchor item ID, required for similar_item, frequently_viewed_together, frequently_bought_together.
+          description: |
+            An `item_id` is a unique identifier assigned to each item in the catalog.
+
+            If the `RECOMMENDATION-TYPE` is any of the `similar_item`, `frequently_viewed_together`, or `frequently_bought_together`, you must provide the `item_id`.
+            
+            This `item_id` acts as the anchor to serve recommended items based on the `RECOMMENDATION-TYPE`.
+            
+            We expect the user's most recently interacted `item_id` to serve contextually recommended items.
           nullable: true
         include_fields:
           type: array
           items:
             type: string
-          description: List of item attributes to include in the response. If omitted, all attributes are returned.
+          description: |
+            You can define the attributes of items you require from the catalog in the recommendation response. For example, `title`, `price`, `link`, `image_link`, and so on.
+
+            If the attributes above are not defined, all item attributes in the catalog will be included in the response. The response size may increase depending on the number of attributes in the catalog. Therefore, it is recommended that only the necessary attributes be specified.
           nullable: true
           example: ["title", "price", "image_link"]
     RecommendationResultItem:
       type: object
-      description: Represents a recommended item with requested attributes. Structure depends on catalog schema.
+      description: The items JSON object contains the key-value pairs of all the requested attributes.
       properties:
-        # Common mandatory fields based on catalog definition
-        item_id: { type: string } # Assuming 'item_id' instead of 'product_id' based on request body
-        title: { type: string }
-        link: { type: string, format: uri }
-        image_link: { type: string, format: uri }
-        # Other potential fields shown in example
+        item_id: { type: string, description: "This field shows the ID of the item." }
+        title: { type: string, description: "This field shows the title of the item." }
+        link: { type: string, format: uri, description: "This field shows a link to the item." }
+        image_link: { type: string, format: uri, description: "This field shows a link to the image." }
         catalog_id: { type: string }
         feed_id: { type: string }
         description: { type: string }
@@ -260,8 +318,8 @@ components:
         creation_date: { type: string, format: date-time }
         last_updated: { type: string, format: date-time }
         price: { type: number, format: double }
-        date: { type: string, format: date } # Example had 'date' field
-      additionalProperties: true # Allows for any other catalog attributes
+        date: { type: string, format: date }
+      additionalProperties: true
       example:
         item_id: "prod_xyz"
         title": "Stylish Red Scarf"
@@ -279,7 +337,7 @@ components:
           description: Human-readable error message.
   responses:
     BadRequest:
-      description: Bad Request. Invalid input, missing fields, invalid IDs or format.
+      description: Bad Request. Possible issues include a recommendation, the user does not exist, or the wrong format provided.
       content:
         application/json:
           schema:
@@ -288,7 +346,7 @@ components:
             error-code: "invalid-request-format"
             message": "Invalid format provided for recommendation_id."
     Unauthorized:
-      description: Unauthorized. Invalid authentication credentials.
+      description: Unauthorized. Your request is unauthorized. Verify your credentials and try again.
       content:
         application/json:
           schema:
@@ -297,7 +355,7 @@ components:
             error-code: "request-unauthenticated"
             message: "Your request is unauthorized. Please verify your credentials and try again."
     PayloadTooLarge:
-      description: Request Entity Too Large. Payload size exceeds limit (1MB for POST).
+      description: Request Entity Too Large. The request body can be large in terms of size (bytes) or length of items (1MB limit for POST).
       content:
         application/json:
           schema:
@@ -325,7 +383,7 @@ components:
             error-code: "too-many-requests"
             message: "Rate limit exceeded."
     InternalServerError:
-      description: Internal Server Error. Unexpected system error.
+      description: Internal Server Error. This response is returned when the system runs into an unexpected error.
       content:
         application/json:
           schema:
