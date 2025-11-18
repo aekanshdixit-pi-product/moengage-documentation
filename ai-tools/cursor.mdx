@@ -418,3 +418,210 @@ description: "Concise description explaining page purpose and value"
 - Use **ParamField** for API parameters, **ResponseField** for API responses
 - Use **Expandable** for nested object properties or hierarchical information
 ````
+
+# --------------------------------------------------
+# 1. General Principles & File Structure
+# --------------------------------------------------
+
+# - Version: Use OpenAPI 3.0.2.
+openapi: 3.0.2
+
+# - Naming Conventions:
+#   - operationId: Use snake_case (e.g., `get_campaigns`).
+#   - Component Schemas: Use PascalCase (e.g., `CampaignResponseObject`).
+#   - Tags: Use Title Case (e.g., "Campaigns").
+#   - Endpoint Paths: Use lowercase and hyphens for separators (e.g., /api/send-jobs).
+
+# - Descriptions: Use Markdown for rich formatting (bold, italics, lists, links). Include important notes on rate limits or functionality.
+
+# --------------------------------------------------
+# 2. Top-Level 'info' Object
+# --------------------------------------------------
+
+# - Structure: Populate the `info` object with MoEngage's details, following this format.
+info:
+  title: MoEngage API
+  version: '2025-11-15' # Use a consistent, future-dated version.
+  description: The MoEngage REST API. For more details, visit https://developers.moengage.com.
+  contact:
+    name: MoEngage Developer Team
+    email: support@moengage.com
+    url: https://developers.moengage.com
+
+# --------------------------------------------------
+# 3. 'servers' Object
+# --------------------------------------------------
+
+# - Structure: Define the base URL(s) for the MoEngage API. This is critical for the interactive playground.
+servers:
+  - url: https://api-0X.moengage.com/v1 # Use the correct base URL from the MoEngage docs.
+    description: Production Server
+
+# --------------------------------------------------
+# 4. Authentication ('securitySchemes' and 'security')
+# --------------------------------------------------
+
+# - Definition: Define the authentication method under `components.securitySchemes`. MoEngage uses Basic Auth.
+# - Application: Apply it globally using the root-level `security` key.
+components:
+  securitySchemes:
+    BasicAuth: # Name for the scheme
+      type: http
+      scheme: basic
+      description: "Authentication is done via Basic Auth. The username is your API ID and the password is your API Secret. The value is a base64 encoding of 'username:password'."
+
+security:
+  - BasicAuth: [] # Applies BasicAuth to all endpoints by default.
+
+# --------------------------------------------------
+# 5. 'paths' and Operations (The Core of the API)
+# --------------------------------------------------
+
+paths:
+  /api/campaigns:
+    post:
+      # - operationId: Unique, snake_case, `verb_resource` pattern.
+      operationId: create_campaign
+      
+      # - summary: A short, human-readable title for the endpoint.
+      summary: Create Campaign
+      
+      # - description: Detailed explanation. Use Markdown.
+      description: |-
+        Creates a new push campaign with specified content, audience, and delivery settings.
+        <br><br>*Rate limits*: 5/min, 25/hour, 100/day.
+
+      # - tags: Group related endpoints.
+      tags:
+        - Campaigns
+        
+      # - requestBody: Define the payload for POST/PATCH/PUT.
+      requestBody:
+        description: A JSON object containing all the details for the new campaign.
+        required: true
+        content:
+          application/json:
+            schema:
+              # - Use $ref to point to a reusable schema.
+              $ref: '#/components/schemas/CampaignCreateQuery'
+
+      # - responses: Document all possible HTTP responses.
+      responses:
+        '201':
+          description: Campaign created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCampaignSuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest' # Reusable error response
+        '401':
+          $ref: '#/components/responses/Unauthorized' # Reusable error response
+
+# --------------------------------------------------
+# 6. Advanced Schema Design ('components/schemas')
+# --------------------------------------------------
+
+components:
+  schemas:
+    # - Schema Naming: PascalCase, descriptive.
+    CampaignCreateQuery:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: A unique ID for the request.
+        # ... other top-level properties from MoEngage docs ...
+        scheduling_details:
+          $ref: '#/components/schemas/SchedulingDetails'
+
+    # - Use `oneOf` for Polymorphism: When a field can be one of multiple types.
+    #   Give each option a `title` to create tabs in Mintlify.
+    SchedulingDetails:
+      type: object
+      properties:
+        delivery_type:
+          description: The type of delivery schedule for the campaign.
+          oneOf:
+            - title: At a Fixed Time
+              type: object
+              properties:
+                delivery_type:
+                  type: string
+                  enum: [AT_FIXED_TIME]
+                start_time:
+                  type: string
+                  format: date-time
+            - title: Send in User Timezone
+              type: object
+              properties:
+                delivery_type:
+                  type: string
+                  enum: [SEND_IN_USER_TIMEZONE]
+                # ... other properties for this type ...
+      
+    # - Use `allOf` for Composition/Inheritance: To combine multiple schemas.
+    #   This is good for extending a base model.
+    BaseResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: 'success'
+          
+    CreateCampaignSuccessResponse:
+      allOf: # Combines BaseResponse with specific properties
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            campaign_id:
+              type: string
+              description: The unique ID of the newly created campaign.
+
+    # - Multiple Examples for Responses: Use the `examples` keyword to show different
+    #   response variations for the same status code.
+    GetUserResponse:
+      type: object
+      properties:
+        countryCode:
+          type: string
+        # ... other properties
+      examples:
+        us:
+          summary: Response for United States
+          value:
+            countryCode: "US"
+            currencyCode: "USD"
+        gb:
+          summary: Response for United Kingdom
+          value:
+            countryCode: "GB"
+            currencyCode: "GBP"
+
+# --------------------------------------------------
+# 7. Mintlify Customization ('x-mint' Extension)
+# --------------------------------------------------
+
+# - Use the `x-mint` extension inside any operation (get, post, etc.) to add
+#   custom content and metadata to the generated documentation page.
+
+paths:
+  /api/some-endpoint:
+    get:
+      summary: An Important Endpoint
+      x-mint:
+        # - metadata: Overrides the page's title and description.
+        metadata:
+          title: "Get Important Data"
+          description: "This is a custom description that is more detailed than the summary."
+        
+        # - content: Injects Markdown content at the top of the endpoint page.
+        #   Perfect for adding warnings, prerequisites, or extra context.
+        content: |
+          <Note>
+            This endpoint is in beta. Please be aware of potential changes.
+          </Note>
+
+          ## Prerequisites
+          
+          Before using this endpoint, ensure you have configured your account settings properly.
