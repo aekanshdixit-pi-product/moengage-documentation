@@ -1,541 +1,789 @@
 openapi: 3.0.3
+
 info:
+
   title: MoEngage Message Archival API
-  description: You can use this API to store any communication sent to customers for later access. For more information, refer to [Message Archival](https://help.moengage.com/hc/en-us/articles/16229242010900-Message-Archival).
+
+  description: This API allows you to store and access any communication sent to customers for later access.
+
   version: '1.0'
+
 servers:
+
   - url: 'https://api-0{X}.moengage.com/v1'
+
     description: MoEngage API Server
+
     variables:
+
       X:
+
         default: '1'
-        description: 'Your MoEngage Data Center (DC) number.'
+
+        description: 'Your MoEngage Data Center (DC) number. Refer to MoEngage docs for your correct DC.'
+
 tags:
+
   - name: Message Archival
+
     description: Retrieve archived message content.
+
 security:
+
   - basicAuth: []
+
 paths:
+
   /archival/view:
+
     post:
+
       tags:
+
         - Message Archival
+
       summary: View Archived Message
+
       operationId: viewArchivedMessage
-      x-mint:
-        metadata:
-          title: View Archived Message
-          description: You can use this API to store any communication sent to customers for later access. For more information, refer to [Message Archival](https://help.moengage.com/hc/en-us/articles/16229242010900-Message-Archival).
-        content: |
-          Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
 
-          ## Authentication
+      description: You can use this API to store any communication sent to customers for later access. For more information, refer to Message Archival.
 
-          The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
-
-          `{"Authorization":"Basic Base64_ENCODED_APPKEY_APIKEY=="}`
-
-          The username and password details can be obtained from the MoEngage Dashboard. We've revamped the settings UI in the Dashboard. If you're using the API for the first time, follow these steps:
-
-          1. Navigate to Settings -> Account -> APIs.
-          2. Copy the following details:
-
-             a. Username: Under Workspace ID (earlier app id), click the copy icon to copy the username.
-
-             b. Password: In the API keys section, click the copy icon in the Data tile to copy the API key.
-          3. Use these details to authenticate the API requests.
-
-          ## Request Headers
-
-          | Key | Required | Sample Values | Description |
-          | :--- | :--- | :--- | :--- |
-          | Content-Type | Required | `{"Content-Type": "application/json"}` | Set the Content-Type header to application/json. |
-          | Authorization | Required | `{"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="}` | This authentication parameter, used for access control, must be passed in the request. To generate the authentication header, refer to [Authentication](#authentication). |
-          | MOE-APPKEY | Required | `{"MOE-APPKEY": "Workspace ID"}` | This is the workspace ID (earlier APP ID) of your MoEngage workspace. The MOE-APPKEY has to be passed in the request. You can find your MoEngage Workspace ID in the MoEngage Dashboard: **Settings -> Account -> APIs -> Workspace ID (earlier app id)**. For more information, refer to [Authentication](#authentication). |
-
-          ## Response
-
-          | Key | Data Type | Description |
-          | :--- | :--- | :--- |
-          | message | String | This field contains a brief description of the request status in the case of success. |
-          | error | JSON Object | This field contains the reason for the request's failure.<br><br>**Structure:**<br>`{ "status": false, "error_message": "<error_message>" }`<br><br>The error object contains the following fields:<br> **status** - This field is of String type and denotes the status of the request.<br> **message** - This field is of String type and describes why the request has failed. |
-
-          ## Sample cURL Request
-
-          <CodeGroup>
-          ```bash SMS
-          curl --location '[https://api-0X.moengage.com/v1/archival/view](https://api-0X.moengage.com/v1/archival/view)' \
-          --header 'accept: application/json' \
-          --header 'Content-Type: application/json' \
-          --header 'MOE-APPKEY: {{Workspace_ID or APP_ID}}' \
-          --header 'Authorization: Basic {{Authorization_Key}}' \
-          --data '{
-              "user_id": "{{User_ID}}",
-              "delivery_type": "ONE_TIME",
-              "campaign_type": "SMS",
-              "campaign_channel": "SMS",
-              "sent_epoch_time": 1716972486,
-              "campaign_id": "{{Campaign_ID}}",
-              "event_name": "SMS Sent",
-              "platform": "SMS",
-              "event_id": "{{Event_ID}}"
-          }'
-          ```
-
-          ```bash Email
-          curl --location '[https://api-0X.moengage.com/v1/archival/view](https://api-0X.moengage.com/v1/archival/view)' \
-          --header 'accept: application/json' \
-          --header 'Content-Type: application/json' \
-          --header 'MOE-APPKEY: {{Workspace_ID or APP_ID}}' \
-          --header 'Authorization: Basic {{Authorization_Key}}' \
-          --data '{
-              "user_id": "{{User_ID}}",
-              "delivery_type": "ONE_TIME",
-              "campaign_type": "Email Campaign",
-              "campaign_channel": "EMAIL",
-              "sent_epoch_time": 1717150294,
-              "campaign_id": "{{Campaign_ID}}",
-              "event_name": "Email Sent",
-              "platform": "EMAIL"
-          }'
-          ```
-
-          ```bash Push
-          # Android
-          curl --location '[https://api-0X.moengage.com/v1/archival/view](https://api-0X.moengage.com/v1/archival/view)' \
-          --header 'accept: application/json' \
-          --header 'Content-Type: application/json' \
-          --header 'MOE-APPKEY: {{Workspace_ID or APP_ID}}' \
-          --header 'Authorization: Basic {{Authorization_Key}}' \
-          --data '{
-              "user_id": "{{User_ID}}",
-              "delivery_type": "ONE_TIME",
-              "campaign_type": "General Push Campaign",
-              "campaign_channel": "PUSH",
-              "sent_epoch_time": 1716915262,
-              "campaign_id": "{{Campaign_ID}}",
-              "event_name": "Notification Received Android",
-              "platform": "ANDROID"
-          }'
-          ```
-          </CodeGroup>
-
-          ## Sample Response
-
-          <CodeGroup>
-          ```json 200
-          {
-              "status": true,
-              "data": {
-                  "message_details": {
-                      "message_type": "campaign",
-                      "message_id": "66560c2d2880326031c474a6",
-                      "channel": "push",
-                      "platform": "android",
-                      "delivery_type": "ONE_TIME",
-                      "sent_time": "Tue, 28 May 2024 22:24:22 IST",
-                      "message_to": "cZug38RqRd2-cF30bd2vda:APA91bGEG-OHMiWV3eHd_ohLs8V-yTgDJuQXNV32jO13or-R118OAC65MXdSx5ozYsIiL-RFan_iflQ62XVX7T2BiNqqQQfKd3FitlpbLR7nVBdkFF1yv_s8pqZux-HfThn-ojhpBIWd",
-                      "moe_event_id": null,
-                      "service": {
-                          "type": "FCM"
-                      },
-                      "template_info": {
-                          "type": "Native",
-                          "version": null,
-                          "id": "stylizedbasic"
-                      }
-                  },
-                  "message_content": {
-                      "title": "expiry in 1 hour",
-                      "summary": "expiry in 1 hour",
-                      "message": "expiry in 1 hour",
-                      "related_urls": [
-                          "[https://image-staging-ap1.moengage.com/checkfcsgainmoengage/20240527083246095196HE4ELHScreenshotofUploadyourAppDiawiDevelopmentandInhouseAppsWirelessInstallationjpgcheckfcsgainmoengage.jpg](https://image-staging-ap1.moengage.com/checkfcsgainmoengage/20240527083246095196HE4ELHScreenshotofUploadyourAppDiawiDevelopmentandInhouseAppsWirelessInstallationjpgcheckfcsgainmoengage.jpg)"
-                      ]
-                  },
-                  "backup_content": {
-                      "title": "Stylized Android Template",
-                      "summary": null,
-                      "message": "Sample Stylized Android Template",
-                      "related_urls": []
-                  },
-                  "file_info": {
-                      "version": "v2",
-                      "file_name": "66560c2d2880326031c474a6_pramodseg_1716915262_push_android.json"
-                  }
-              }
-          }
-          ```
-
-          ```json 400
-          {
-              "status": false,
-              "error_message": "This event is unsupported to view message copy. The supported events are ['Email Sent', 'SMS Sent', 'Notification Sent iOS', 'Notification Received Android', 'Notification Received Web']"
-          }
-          ```
-
-          ```json 401
-          {
-              "status": false,
-              "error": "Invalid data key"
-          }
-          ```
-
-          ```json 500
-          {
-              "title": "Server Error",
-              "description": "An unexpected error was encountered while processing this request. Please contact MoEngage Team",
-              "code": "BiaFuAzn-aefa0b0e-2c88-4106-8d07-0f0c53513e48"
-          }
-          ```
-          </CodeGroup>
-
-          ## Rate Limit
-          
-          The rate limit is 1000 RPM.
-
-          ## Postman Collections
-          We have made it easy for you to test the APIs. Click [here](https://moengage-dev.postman.co/workspace/New-Team-Workspace~02fb2ecf-217a-466f-9e1a-25bfb761e352/collection/9707451-eb26aac6-94f9-48e2-ad7f-c2b930964895?action=share&creator=9707451) to view it in Postman.
-      description: |
-        Use this API to store any communication sent to customers for later access.
       parameters:
+
         - name: MOE-APPKEY
+
           in: header
+
           required: true
+
           schema:
+
             type: string
-          description: |
-            This is the workspace ID (earlier APP ID) of your MoEngage workspace.
-            The MOE-APPKEY has to be passed in the request. You can find your MoEngage Workspace ID in the MoEngage Dashboard:
-            
-            **Settings -> Account -> APIs -> Workspace ID (earlier app id)**
+
+          description: 'This is the workspace ID (earlier APP ID) of your MoEngage workspace. Found in Settings -> Account -> APIs -> Workspace ID.'
+
           example: 'YOUR_WORKSPACE_ID_XXXX'
+
       requestBody:
+
         description: Request payload to identify the message to be retrieved.
+
         required: true
+
         content:
+
           application/json:
+
             schema:
+
               $ref: '#/components/schemas/ArchivalRequest'
+
+            examples:
+
+              smsExample:
+
+                summary: SMS Archival Request
+
+                value:
+
+                  user_id: 'USER_ID_123'
+
+                  delivery_type: ONE_TIME
+
+                  campaign_type: SMS
+
+                  campaign_channel: SMS
+
+                  sent_epoch_time: 1716972486
+
+                  campaign_id: 'CAMPAIGN_ID_XYZ'
+
+                  event_name: SMS Sent
+
+                  platform: SMS
+
+                  event_id: 'EVENT_ID_ABC'
+
+              emailExample:
+
+                summary: Email Archival Request
+
+                value:
+
+                  user_id: 'USER_ID_123'
+
+                  delivery_type: ONE_TIME
+
+                  campaign_type: Email Campaign
+
+                  campaign_channel: EMAIL
+
+                  sent_epoch_time: 1717150294
+
+                  campaign_id: 'CAMPAIGN_ID_XYZ'
+
+                  event_name: Email Sent
+
+                  platform: EMAIL
+
+              pushAndroidExample:
+
+                summary: Push (Android) Archival Request
+
+                value:
+
+                  user_id: 'USER_ID_123'
+
+                  delivery_type: ONE_TIME
+
+                  campaign_type: General Push Campaign
+
+                  campaign_channel: PUSH
+
+                  sent_epoch_time: 1716915262
+
+                  campaign_id: 'CAMPAIGN_ID_XYZ'
+
+                  event_name: Notification Received Android
+
+                  platform: ANDROID
+
+              pushIosExample:
+
+                summary: Push (iOS) Archival Request
+
+                value:
+
+                  user_id: 'USER_ID_123'
+
+                  delivery_type: ONE_TIME
+
+                  campaign_type: General Push Campaign
+
+                  campaign_channel: PUSH
+
+                  sent_epoch_time: 1717060428
+
+                  campaign_id: 'CAMPAIGN_ID_XYZ'
+
+                  event_name: Notification Sent iOS
+
+                  platform: IOS
+
+              pushWebExample:
+
+                summary: Push (Web) Archival Request
+
+                value:
+
+                  user_id: 'USER_ID_123'
+
+                  delivery_type: ONE_TIME
+
+                  campaign_type: General Push Campaign
+
+                  campaign_channel: PUSH
+
+                  sent_epoch_time: 1717056071
+
+                  campaign_id: 'CAMPAIGN_ID_XYZ'
+
+                  event_name: Notification Received Web
+
+                  platform: WEB
+
       responses:
+
         '200':
+
           $ref: '#/components/responses/Success200'
+
         '400':
+
           $ref: '#/components/responses/Error400'
+
         '401':
+
           $ref: '#/components/responses/Error401'
+
         '429':
+
           $ref: '#/components/responses/Error429'
+
         '500':
+
           $ref: '#/components/responses/Error500'
+
         '502':
+
           $ref: '#/components/responses/Error502'
+
 components:
+
   securitySchemes:
+
     basicAuth:
+
       type: http
+
       scheme: basic
+
       description: |
+
         The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
         {"Authorization":"Basic Base64_ENCODED_APPKEY_APIKEY=="}
+
         The username and password details can be obtained from the MoEngage Dashboard. We've revamped the settings UI in the Dashboard. If you're using the API for the first time, follow these steps:
-        1. Navigate to Settings -> Account -> APIs.
-        2. Copy the following details:
-           a. Username: Under Workspace ID (earlier app id), click the copy icon to copy the username.
-           b. Password: In the API keys section, click the copy icon in the Data tile to copy the API key.
-        3. Use these details to authenticate the API requests.
+
+        Navigate to Settings -> Account -> APIs.
+
+        Copy the following details:Username: Under Workspace ID (earlier app id), click the copy icon to copy the username.
+
+        Password: In the API keys section, click the copy icon in the Data tile to copy the API key.
+
+        Use these details to authenticate the API requests.
+
   schemas:
+
     ArchivalRequest:
+
       type: object
+
       required:
+
         - user_id
+
         - delivery_type
+
         - campaign_type
+
         - campaign_channel
+
         - sent_epoch_time
+
         - campaign_id
+
         - event_name
+
         - platform
+
       properties:
+
         user_id:
+
           type: string
-          description: This field denotes the unique identifier of the user.
+
+          description: Unique identifier of the user.
+
         delivery_type:
+
           type: string
-          description: |
-            This field denotes the delivery type of the channel. Supported values are:
-            * ONE_TIME
-            * PERIODIC
-            * EVENT_TRIGGERED
-            * LOCATION_TRIGGERED
-            * DEVICE_TRIGGERED
-            * API_TRIGGERED
-            * BUSINESS_EVENT_TRIGGERED
-            * API_TRIGGERED
+
+          description: Delivery type of the channel.
+
           enum:
+
             - ONE_TIME
+
             - PERIODIC
+
             - EVENT_TRIGGERED
+
             - LOCATION_TRIGGERED
+
             - DEVICE_TRIGGERED
+
             - API_TRIGGERED
+
             - BUSINESS_EVENT_TRIGGERED
+
         campaign_type:
+
           type: string
-          description: |
-            This field denotes the campaign type. Supported values are:
-            
-            **Push:**
-            * General Push Campaign (General Push)
-            * Autotrigger Campaign (Event Triggered Push)
-            * Geo-fencing Campaign (Location Triggered Push)
-            * Business Event Trigger Push Campaign (Business Event Triggered Push)
-            
-            **SMS:**
-            * sms (all SMS campaigns except Business Event Triggered campaign)
-            * Business Event Trigger SMS Campaign (Business Event Triggered campaign)
-            
-            **Email:**
-            * Email Campaign (all Email campaigns except Event triggered and Business Event Triggered campaigns)
-            * Email Triggers (Event triggered campaigns)
-            * Business Event Trigger Email Campaign (Business Event Triggered campaigns)
-            
-            **Alerts/Inform:**
-            * Inform Email (for Email Campaign)
-            * Inform SMS (for SMS Campaign)
-            * Inform Push (for Push Campaign)
+
+          description: The campaign type.
+
           enum:
+
             - General Push Campaign
+
             - Autotrigger Campaign
+
             - Geo-fencing Campaign
+
             - Business Event Trigger Push Campaign
+
             - sms
+
             - Business Event Trigger SMS Campaign
+
             - Email Campaign
+
             - Email Triggers
+
             - Business Event Trigger Email Campaign
+
             - Inform Email
+
             - Inform SMS
+
             - Inform Push
+
         campaign_channel:
+
           type: string
-          description: |
-            This field denotes the campaign channel. Supported values are:
-            * EMAIL
-            * SMS
-            * PUSH
-            * FLOWS
+
+          description: The campaign channel.
+
           enum:
+
             - EMAIL
+
             - SMS
+
             - PUSH
+
             - FLOWS
+
         sent_epoch_time:
+
           type: integer
+
           format: int64
-          description: This field denotes the sent time of the campaign.
+
+          description: The sent time of the campaign as a Unix epoch timestamp.
+
           example: 1716972486
+
         campaign_id:
+
           type: string
-          description: This field denotes the campaign ID.
+
+          description: The campaign ID.
+
         event_name:
+
           type: string
-          description: |
-            This field denotes the name of the event. Supported event names are:
-            * Email Sent
-            * SMS Sent
-            * Notification Sent iOS
-            * Notification Received Android
-            * Notification Received Web
+
+          description: The name of the event.
+
           enum:
+
             - Email Sent
+
             - SMS Sent
+
             - Notification Sent iOS
+
             - Notification Received Android
+
             - Notification Received Web
+
         platform:
+
           type: string
-          description: |
-            This field denotes the target platform of the campaign. Supported values are:
-            * IOS
-            * ANDROID
-            * WEB
-            * EMAIL
-            * SMS
-            * MWEB
+
+          description: The target platform of the campaign.
+
           enum:
+
             - IOS
+
             - ANDROID
+
             - WEB
+
             - EMAIL
+
             - SMS
+
             - MWEB
+
         event_id:
+
           type: string
-          description: |
-            This field denotes the event ID.
-            This field is required for event-triggered campaigns.
-            * You must pass `moe_event_id` if any event attribute is present for campaigns.
-            * You must pass `moe_transaction_id` for alerts, which is mandatory.
+
+          description: 'The event ID. Required for event-triggered campaigns (moe_event_id or moe_transaction_id for alerts).'
+
     ArchivalResponseSuccess:
+
       type: object
+
       properties:
+
         status:
+
           type: boolean
+
           example: true
+
         data:
+
           $ref: '#/components/schemas/ArchivalData'
+
     ArchivalData:
+
       type: object
+
       properties:
+
         message_details:
+
           $ref: '#/components/schemas/MessageDetails'
+
         message_content:
+
           $ref: '#/components/schemas/MessageContent'
+
         backup_content:
+
           $ref: '#/components/schemas/MessageContent'
+
         file_info:
+
           $ref: '#/components/schemas/FileInfo'
+
     MessageDetails:
+
       type: object
+
       properties:
+
         message_type:
+
           type: string
+
           example: campaign
+
         message_id:
+
           type: string
+
           example: 66560c2d2880326031c474a6
+
         channel:
+
           type: string
+
           example: push
+
         platform:
+
           type: string
+
           example: android
+
         delivery_type:
+
           type: string
+
           example: ONE_TIME
+
         sent_time:
+
           type: string
+
           example: 'Tue, 28 May 2024 22:24:22 IST'
+
         message_to:
+
           type: string
+
           example: 'cZug38RqRd2-cF30bd2vda:APA91bGEG-OHMiWV3eHd_ohLs8V-yTgDJuQXNV32jO13or-R118OAC65MXdSx5ozYsIiL-RFan_iflQ62XVX7T2BiNqqQQfKd3FitlpbLR7nVBdkFF1yv_s8pqZux-HfThn-ojhpBIWd'
+
         moe_event_id:
+
           type: string
+
           nullable: true
+
           example: null
+
         service:
+
           type: object
+
           properties:
+
             type:
+
               type: string
+
               example: FCM
+
         template_info:
+
           type: object
+
           properties:
+
             type:
+
               type: string
+
               example: Native
+
             version:
+
               type: string
+
               nullable: true
+
               example: null
+
             id:
+
               type: string
+
               example: stylizedbasic
+
     MessageContent:
+
       type: object
+
       properties:
+
         title:
+
           type: string
+
         summary:
+
           type: string
+
           nullable: true
+
         message:
+
           type: string
-          description: This field contains a brief description of the request status in the case of success.
+
         related_urls:
+
           type: array
+
           items:
+
             type: string
+
             format: uri
+
     FileInfo:
+
       type: object
+
       properties:
+
         version:
+
           type: string
+
           example: v2
+
         file_name:
+
           type: string
+
           example: '66560c2d2880326031c474a6_pramodseg_1716915262_push_android.json'
+
     ErrorResponse400:
+
       type: object
+
       properties:
+
         status:
+
           type: boolean
+
           example: false
+
         error_message:
+
           type: string
+
           example: 'This event is unsupported to view message copy. The supported events are [...]'
+
     ErrorResponse401:
+
       type: object
+
       properties:
+
         status:
+
           type: boolean
+
           example: false
+
         error:
+
           type: string
+
           example: Invalid data key
+
     ErrorResponse500:
+
       type: object
+
       properties:
+
         title:
+
           type: string
+
           example: Server Error
+
         description:
+
           type: string
+
           example: An unexpected error was encountered while processing this request. Please contact MoEngage Team
+
         code:
+
           type: string
+
           example: 'BiaFuAzn-aefa0b0e-2c88-4106-8d07-0f0c53513e48'
+
   responses:
+
     Success200:
-      description: |
-        Success.
-        The server successfully processed the request, but is not returning any content.
+
+      description: Success. The message content is returned.
+
       content:
+
         application/json:
+
           schema:
+
             $ref: '#/components/schemas/ArchivalResponseSuccess'
+
+          example:
+
+            status: true
+
+            data:
+
+              message_details:
+
+                message_type: campaign
+
+                message_id: 66560c2d2880326031c474a6
+
+                channel: push
+
+                platform: android
+
+                delivery_type: ONE_TIME
+
+                sent_time: 'Tue, 28 May 2024 22:24:22 IST'
+
+                message_to: 'cZug38RqRd2-cF30bd2vda:APA91bGEG-OHMiWV3eHd_ohLs8V-yTgDJuQXNV32jO13or-R118OAC65MXdSx5ozYsIiL-RFan_iflQ62XVX7T2BiNqqQQfKd3FitlpbLR7nVBdkFF1yv_s8pqZux-HfThn-ojhpBIWd'
+
+                moe_event_id: null
+
+                service:
+
+                  type: FCM
+
+                template_info:
+
+                  type: Native
+
+                  version: null
+
+                  id: stylizedbasic
+
+              message_content:
+
+                title: expiry in 1 hour
+
+                summary: expiry in 1 hour
+
+                message: expiry in 1 hour
+
+                related_urls:
+
+                  - 'https://image-staging-ap1.moengage.com/checkfcsgainmoengage/20240527083246095196HE4ELHScreenshotofUploadyourAppDiawiDevelopmentandInhouseAppsWirelessInstallationjpgcheckfcsgainmoengage.jpg'
+
+              backup_content:
+
+                title: Stylized Android Template
+
+                summary: null
+
+                message: Sample Stylized Android Template
+
+                related_urls: []
+
+              file_info:
+
+                version: v2
+
+                file_name: '66560c2d2880326031c474a6_pramodseg_1716915262_push_android.json'
+
     Error400:
-      description: |
-        Bad Request.
-        This response is returned when the required parameters are missing from the request, or when the provided parameters are invalid, or when a template already exists with the same version, name, or id.
+
+      description: 'Bad Request. Required parameters missing, invalid, or unsupported event.'
+
       content:
+
         application/json:
+
           schema:
+
             $ref: '#/components/schemas/ErrorResponse400'
+
+          example:
+
+            status: false
+
+            error_message: "This event is unsupported to view message copy. The supported events are ['Email Sent', 'SMS Sent', 'Notification Sent iOS', 'Notification Received Android', 'Notification Received Web']"
+
     Error401:
-      description: |
-        Authentication Failure.
-        This response is returned when the authorization parameters are missing in the HTTP Auth Header.
+
+      description: Authentication Failure. Invalid data key.
+
       content:
+
         application/json:
+
           schema:
+
             $ref: '#/components/schemas/ErrorResponse401'
+
+          example:
+
+            status: false
+
+            error: Invalid data key
+
     Error429:
-      description: |
-        Too Many Requests.
-        A number of headers are returned in case of a rate-limit breach.
+
+      description: Too Many Requests. Rate limit breached (1000 RPM).
+
     Error500:
-      description: |
-        Internal Server Error.
-        This response is returned when the system runs into an unexpected error.
+
+      description: Internal Server Error.
+
       content:
+
         application/json:
+
           schema:
+
             $ref: '#/components/schemas/ErrorResponse500'
+
+          example:
+
+            title: Server Error
+
+            description: An unexpected error was encountered while processing this request. Please contact MoEngage Team
+
+            code: 'BiaFuAzn-aefa0b0e-2c88-4106-8d07-0f0c53513e48'
+
     Error502:
-      description: |
-        Server Error.
-        Something went wrong on MoEngage.
+
+      description: Server Error. Something went wrong on MoEngage.
