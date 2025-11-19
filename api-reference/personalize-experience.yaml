@@ -34,6 +34,30 @@ paths:
         
         MoEngage will evaluate targeting rules and in-session attributes automatically and return the correct variation for the user. Typically, you would make this call as part of your larger page and content rendering pipeline.
       x-mint:
+        codeSamples:
+          - lang: cURL
+            label: Fetch Experience Example
+            source: |
+              curl --location 'https://sdk-0X.moengage.com/v1/experiences/fetch' \
+              --header 'Accept: */*' \
+              --header 'Content-Type: application/json' \
+              --header 'Authorization: Basic <Authorisation>' \
+              --header 'MOE-APPKEY: <Your Workspace ID>' \
+              --data '{
+              "identifiers": {
+              "customer_id": "user@example.com",
+              "user_identifiers": {
+              "u_em": "user@example.com",
+              "u_mb": "+1234567890"
+              }
+              },
+              "experience_key": ["homepage-banner", "promo-widget"],
+              "Custom_attribute":"utm_medium:email",
+              "DAY_OF_THE_WEEK": "Sunday",
+              "TIME_OF_THE_DAY": "19",
+              "USER_IP_ADDRESS": "127.0.0.1",
+              "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ..."
+              }'
         content: |
           ### Authentication
           The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request.
@@ -229,6 +253,68 @@ paths:
         1. **Impression (Shown):** `MOE_PERSONALIZATION_MESSAGE_SHOWN`
         2. **Click:** `MOE_PERSONALIZATION_MESSAGE_CLICKED`
       x-mint:
+        codeSamples:
+          - lang: cURL
+            label: Report Impression (Existing User)
+            source: |
+              curl --location --request POST 'https://sdk-0X.moengage.com/v1/experiences/events' \
+              --header 'Accept: */*' \
+              --header 'Content-Type: application/json' \
+              --header 'Authorization: Basic <Authorisation>' \
+              --header 'MOE-APPKEY: <Your APP Key>' \
+              --data-raw '{
+                  "elements": [
+                      {
+                          "customer_id": "john@example.com",
+                          "user_timezone_offset": 19800,
+                          "actions": [
+                              {
+                                  "action": "MOE_PERSONALIZATION_MESSAGE_SHOWN",
+                                  "moe_event_uuid": "aa886712-4537-47c1-b126-2686efda2e26",
+                                  "event_time": 1725258666,
+                                  "platform": "web",
+                                  "attributes": {
+                                      "cid": "66d55ae445921e4d35ae4368_F_T_WP_AB_2_P_0_AU_5A",
+                                      "experience": "Test Server side experience",
+                                      "moe_variation_id": "2",
+                                      "type": "Web Personalization"
+                                  }
+                              }
+                          ]
+                      }
+                  ]
+              }'
+          - lang: cURL
+            label: Report Click (Existing User)
+            source: |
+              curl --location --request POST 'https://sdk-0X.moengage.com/v1/experiences/events' \
+              --header 'Accept: */*' \
+              --header 'Content-Type: application/json' \
+              --header 'Authorization: Basic <Authorisation>' \
+              --header 'MOE-APPKEY: <Your APP Key>' \
+              --data-raw '{
+                  "elements": [
+                      {
+                          "customer_id": "john@example.com",
+                          "user_timezone_offset": 19800,
+                          "actions": [
+                              {
+                                  "action": "MOE_PERSONALIZATION_MESSAGE_CLICKED",
+                                  "moe_event_uuid": "bb997812-4537-47c1-b126-2686efda2e27",
+                                  "event_time": 1725258670,
+                                  "platform": "web",
+                                  "attributes": {
+                                      "cid": "66d55ae445921e4d35ae4368_F_T_WP_AB_2_P_0_AU_5A",
+                                      "experience": "Test Server side experience",
+                                      "moe_variation_id": "2",
+                                      "b_id": "Add to Cart",
+                                      "type": "Web Personalization"
+                                  }
+                              }
+                          ]
+                      }
+                  ]
+              }'
         content: |
           ### SDK Usage: Experience Shown (Impression)
           * **Web SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/39084350090772-Personalize-API-Experience-events-tracking#h_01JXWHX5488QT9XMEN0R5WPX6P) article.
@@ -339,7 +425,8 @@ components:
                 
                 This is essential for fetching experiences configured for audiences segmented based on user attributes/behavior.
                 
-                **Fallback Logic:** If the `customer_id` is not part of the request **OR** is inaccurate **OR** is not present in MoEngage, `user_identifiers` will be used to uniquely identify the user.               example: "john.doe@example.com"
+                **Fallback Logic:** If the `customer_id` is not part of the request **OR** is inaccurate **OR** is not present in MoEngage, `user_identifiers` will be used to uniquely identify the user. 
+              example: "john.doe@example.com"
             user_identifiers:
               type: object
               description: |
