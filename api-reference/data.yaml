@@ -484,7 +484,6 @@ paths:
                                 last_name: Doe
                                 customer_id: john_doe
                                 id: 62e79fb15ada55x123g987bu
-              # FIX: Added examples block to create the dropdown label
               examples:
                 success_response:
                   summary: success_response
@@ -503,13 +502,96 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        description: 'The type or category of the error ("MissingAttributeError").'
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+                      attribute:
+                        type: string
+                        description: "The attribute in the payload that caused the error."
+              examples:
+                missing_customer_id:
+                  summary: Customer ID is missing in the payload
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "customer_id"
+                      message: "customer_id is not found in the payload"
+                      type: "MissingAttributeError"
+                      request_id: "ZbPXtKFL"
+                empty_customer_id:
+                  summary: Customer ID is empty
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "customer_id"
+                      message: "customer_id can not be empty Unicode String"
+                      type: "MissingAttributeError"
+                      request_id: "VgjtLxTu"
+                array_field_error:
+                  summary: Array field error
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "addValueToArrayField"
+                      message: "Cannot add and remove 'first_name' at the same time"
+                      type: "ArrayFieldError"
+                      request_id: "WPDAbugh"
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        description: 'The type or category of the error (e.g., Authentication required).'
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+                      attribute:
+                        type: string
+                        description: "The attribute in the payload that caused the error."
+              examples:
+                auth_error:
+                  summary: Authorization errors
+                  value:
+                    status: "fail"
+                    error:
+                      message: "App Secret key mismatch. Please login to the dashboard to verify key"
+                      type: "Authentication required"
+                      request_id: "PVUDFisO"
+                missing_header:
+                  summary: Missing authentication header
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Authentication Header Required"
+                      type: "Authentication required"
+                      request_id: "PisPjGQQ"
 
   /customer/merge:
     post:
@@ -1356,24 +1438,24 @@ components:
           type: integer
           example: 1
         data:
-          type: array
-          items:
-            type: object
-            properties:
-              id: { type: string }
-              file_name: { type: string }
-              scheduled_at: { type: string, format: date-time }
-              completed_at: { type: string, format: date-time }
-              type: { type: string, enum: [USERS, EVENTS, AUX_DATA] }
-              file_size: { type: string }
-              file_status: { type: string }
-              total_rows: { type: integer }
-              updated_rows: { type: integer }
-              failed_rows: { type: integer }
-        offset:
-          type: integer
-        more_files:
-          type: boolean
+          type: object
+          properties:
+            users_not_found:
+              type: array
+              items:
+                $ref: '#/components/schemas/IdentifierObject'
+            users:
+              type: array
+              items:
+                type: object
+                properties:
+                  user_attributes:
+                    type: object
+                    additionalProperties: true
+                    example:
+                      last_name: Doe
+                      customer_id: john_doe
+                      id: 62e79fb15ada55x123g987bu
 
     BulkImportRequest:
       type: object
