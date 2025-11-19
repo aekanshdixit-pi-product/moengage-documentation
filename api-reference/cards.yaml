@@ -12,7 +12,7 @@ servers:
     variables:
       dc:
         default: '01'
-        description: 'The data center number for your account (e.g., 01, 02, 03).'
+        description: The data center number for your account (e.g., 01, 02, 03).
 tags:
   - name: Cards
     description: Operations related to fetching and deleting user cards.
@@ -60,18 +60,30 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /cards/delete: # Reverted to DELETE and original path
-    delete:      # Reverted to DELETE
+  /cards/delete:
+    delete:
       tags:
         - Cards
       summary: Delete Cards for User
       operationId: deleteCards
       description: |
-        Deletes specific card campaigns for a user, identified by `uid` or `unique_id`. Can target specific platforms.
+        The Delete Cards API can be used to delete cards for a specified user (using
+        the unique_id or uid) from the MoEngage Cards database. This option allows
+        you to delete cards for a user without any assistance.
         **Note:** This operation uses a request body with the `DELETE` method, which is non-standard.
+      x-mint:
+        metadata:
+          title: Delete Cards for User
+          description: Delete specific card campaigns for a user by uid or unique_id from the MoEngage Cards database.
+        content: |
+          ### Rate Limit
+          The rate limit is **50K RPM** (Requests Per Minute) and is applicable at the DB (App) level.
+          
+          ### Unique ID vs. UID
+          The *unique_id* is the unique value that identifies the user to whom the cards need to be deleted. It is a platform-specific device identifier. The *uid* is the unique MoEngage Standard ID (Email ID, Mobile Number, or other mapped identifier) that identifies the user.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
-      requestBody: # Kept requestBody under DELETE
+      requestBody:
         required: true
         content:
           application/json:
@@ -155,7 +167,7 @@ components:
           description: List of card IDs from the previous sync. Used with `last_updated_time` to fetch only updated/new cards.
         last_updated_time:
           type: integer
-          format: int64 # Assuming Unix timestamp in seconds or milliseconds
+          format: int64
           description: Unix epoch timestamp of the last sync. Used with `prev_sync_card_ids`.
       oneOf:
         - required: [uid]
@@ -176,13 +188,19 @@ components:
           type: array
           items:
             type: string
-          description: List of campaign IDs whose cards should be deleted for the user.
+          description: |
+            List of campaign IDs whose cards should be deleted for the user.
+            In the case of a periodic campaign, if the campaign ID of the parent campaign is specified,
+            the cards will get deleted for the child campaigns as well.
         platforms:
           type: array
           items:
             type: string
-            enum: [ANDROID, IOS, WEB, android, ios, web] # Allow both cases based on example/docs
-          description: Specify platforms to delete cards from. If omitted, deletes from all associated platforms.
+            enum: [ANDROID, IOS, WEB, android, ios, web]
+          description: |
+            Specify platforms to delete cards from. If omitted, the cards specified for deletion
+            will be deleted from all the platforms they are associated with.
+            Allowed Values: ANDROID, IOS, WEB
       oneOf:
         - required: [uid]
         - required: [unique_id]
@@ -224,7 +242,7 @@ components:
           items:
             $ref: '#/components/schemas/CardAction'
           description: Actions associated with this widget (typically for buttons).
-          nullable: true # Only buttons have actions directly in example
+          nullable: true
     CardContainer:
       type: object
       properties:
@@ -241,7 +259,7 @@ components:
             bgColor:
               type: string
               description: Background color hex code (e.g., "#4e3db0").
-          additionalProperties: true # Allow other style properties
+          additionalProperties: true
         widgets:
           type: array
           items:
@@ -276,7 +294,7 @@ components:
           description: Name of the Card campaign.
         moe_delivery_type:
           type: string
-          enum: ["One Time", "Event Triggered"] # Based on description
+          enum: ["One Time", "Event Triggered"]
           description: Delivery type of the campaign.
         moe_campaign_id:
           type: string
@@ -289,11 +307,11 @@ components:
           description: Whether the user has clicked this card.
         first_seen:
           type: integer
-          format: int64 # Assuming Unix timestamp
+          format: int64
           description: Epoch timestamp when the card was first seen by the user.
         first_delivered:
           type: integer
-          format: int64 # Assuming Unix timestamp
+          format: int64
           description: Epoch timestamp when the card was first delivered to the user.
         show_count:
           type: object
@@ -306,17 +324,17 @@ components:
         max_times_to_show:
           type: integer
           description: Maximum number of times the card can be shown.
-          nullable: true # Might not always be set
-        expire_at: # Assuming actual expiry timestamp, not just duration string
+          nullable: true
+        expire_at:
           type: integer
-          format: int64 # Assuming Unix timestamp
+          format: int64
           description: Epoch timestamp when the card expires.
           nullable: true
-        expire_after_delivered: # Keeping original field name too
-           type: integer # Or string representing duration? Docs unclear. Assuming timestamp.
-           format: int64
-           description: Timestamp of card expiry (alternative key name?).
-           nullable: true
+        expire_after_delivered:
+            type: integer
+            format: int64
+            description: Timestamp of card expiry (alternative key name?).
+            nullable: true
         is_pin:
           type: boolean
           description: Whether the card should be pinned to the top.
@@ -328,14 +346,14 @@ components:
           description: Unique identifier for the card instance, including platform.
         platform:
           type: string
-          enum: [android, ios, web] # Response uses lowercase
+          enum: [android, ios, web]
         created_at:
           type: integer
-          format: int64 # Assuming Unix timestamp
+          format: int64
           description: Epoch timestamp when the card was created for the user.
         updated_at:
           type: integer
-          format: int64 # Assuming Unix timestamp
+          format: int64
           description: Epoch timestamp when the card was last updated for the user.
         meta_data:
           $ref: '#/components/schemas/CardMetaData'
@@ -366,30 +384,29 @@ components:
       properties:
         status:
           type: boolean
-          description: Indicates if the request was successful.
+          description: Indicates if the request was successful (`true`) or unsuccessful (`false`).
         request_id:
           type: string
           description: Unique identifier for this API request.
         data:
           $ref: '#/components/schemas/FetchCardsResponseData'
-          nullable: true # Might be absent on error
-        # Error fields for unsuccessful requests (alternative schema)
+          nullable: true
         error:
-           type: string
-           description: Error message if status is false.
-           nullable: true
+            type: string
+            description: Error message if status is false.
+            nullable: true
         title:
-           type: string
-           description: Error title if status is false.
-           nullable: true
+            type: string
+            description: Error title if status is false.
+            nullable: true
         description:
-           type: string
-           description: Error description if status is false.
-           nullable: true
+            type: string
+            description: Error description if status is false.
+            nullable: true
         code:
-           type: string
-           description: Error code if status is false.
-           nullable: true
+            type: string
+            description: Error code if status is false.
+            nullable: true
     DeleteCardsPlatformResult:
       type: object
       properties:
@@ -397,17 +414,17 @@ components:
           type: array
           items:
             type: string
-          description: List of campaign IDs successfully deleted for this platform.
+          description: List of campaign IDs for which cards have been successfully deleted.
         failed:
           type: array
           items:
             type: string
-          description: List of campaign IDs that failed to delete for this platform.
+          description: List of campaign IDs for which the cards could not be deleted.
         invalid:
           type: array
           items:
             type: string
-          description: List of campaign IDs that do not exist for this platform for the user.
+          description: List of campaign IDs for which cards do not exist for the specified platform for the user.
     DeleteCardsResponseData:
       type: object
       properties:
@@ -417,7 +434,7 @@ components:
         ios:
           $ref: '#/components/schemas/DeleteCardsPlatformResult'
           nullable: true
-        web: # Assuming web is also possible though not in example
+        web:
           $ref: '#/components/schemas/DeleteCardsPlatformResult'
           nullable: true
     DeleteCardsResponse:
@@ -425,31 +442,32 @@ components:
       properties:
         status:
           type: boolean
-          description: Indicates if the request processing started successfully (individual deletions might still fail).
+          description: This field represents whether the request was successful and contains `true` when the request was successful and `false` otherwise.
         request_id:
           type: string
-          description: Unique identifier for this API request.
+          description: Unique identifier that denotes the request.
         data:
           $ref: '#/components/schemas/DeleteCardsResponseData'
-          nullable: true # Might be absent on error
-        # Error fields for unsuccessful requests (alternative schema)
-        error:
-           type: string
-           description: Error message if status is false.
-           nullable: true
+          description: |
+            This field contains the platform-specific results of the delete operation.
+          nullable: true
         title:
-           type: string
-           description: Error title if status is false.
-           nullable: true
+          type: string
+          description: This field is present in the response body only when the request is unsuccessful and contains the error type.
+          nullable: true
         description:
-           type: string
-           description: Error description if status is false.
-           nullable: true
+          type: string
+          description: This field is present in the response body only when the request is unsuccessful and contains the error description.
+          nullable: true
         code:
-           type: string
-           description: Error code if status is false.
-           nullable: true
-    ErrorResponse: # General structure for 4xx/5xx errors
+          type: string
+          description: This field is present in the response body only when the request is unsuccessful and contains the error code.
+          nullable: true
+        error:
+            type: string
+            description: Error message if status is false.
+            nullable: true
+    ErrorResponse:
       type: object
       properties:
         status:
@@ -469,10 +487,12 @@ components:
           nullable: true
         request_id:
           type: string
-          nullable: true # Not always present in error examples
+          nullable: true
   responses:
     BadRequest:
-      description: Bad Request. Required parameters missing/invalid, user not found, etc.
+      description: |
+        Bad Request. This response is returned when the required parameters are missing
+        from the request, when the provided parameters are invalid, or when the user is not found.
       content:
         application/json:
           schema:
@@ -483,28 +503,32 @@ components:
               value:
                 status: false
                 error: "Required field missing. Please include either 'uid' or 'unique_id'"
-                request_id": "64f6a59ed1e36d0d57a790c1"
+                request_id: "64f6a59ed1e36d0d57a790c1"
             user_not_found:
-               summary: User Not Found
-               value:
-                 status: false
-                 error: "User not found for this uid/ unique_id"
-                 request_id": "64f6a59ed1e36d0d57a790c1"
+              summary: User Not Found
+              value:
+                status: false
+                error: "User not found for this uid/ unique_id"
+                request_id: "64f6a59ed1e36d0d57a790c1"
     Unauthorized:
-      description: Authorization Failure. Invalid credentials or missing header.
+      description: |
+        Authorization Failure. This response is returned when the authorization parameters
+        are missing or invalid (e.g., Invalid credentials or missing header).
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           examples:
-             auth_failure:
-                summary: Auth Failure
-                value:
-                  title: "Authentication Failure"
-                  description": "Invalid APP_SECRET_KEY is provided" # Example uses APP_SECRET, Auth section uses API Key
-                  code": "OjueJWoh"
+            auth_failure:
+              summary: Auth Failure
+              value:
+                title: "Authentication Failure"
+                description: "Invalid APP_SECRET_KEY is provided"
+                code: "OjueJWoh"
     TooManyRequests:
-      description: Rate Limit Breach. Too many requests.
+      description: |
+        Rate Limit Breach. This response is returned when the number of requests per minute
+        has exceeded the rate limit.
       headers:
         x-ratelimit-limit:
           schema: { type: integer }
@@ -518,17 +542,18 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             title: "Request limit reached"
-            description": "This API call has exceeded the rate limit"
-            code": "KMxkunyz"
+            description: "This API call has exceeded the rate limit"
+            code: "KMxkunyz"
     InternalServerError:
-      description: Internal Server Error. Unexpected system error.
+      description: |
+        Internal Server Error. This response is returned when the system runs into an unexpected error.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
-             title: "Internal Server Error"
-             message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+            title: "Internal Server Error"
+            message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
 
 security:
   - basicAuth: []
