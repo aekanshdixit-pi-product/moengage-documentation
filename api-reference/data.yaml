@@ -130,7 +130,8 @@ paths:
                     status: "success"
                     message: "Your request has been accepted and will be processed soon."
         '400':
-          description: This response is returned when the required parameters are missing from the request, attributes are not found, and incorrect values are passed.
+          # UPDATED TOP-LEVEL DESCRIPTION
+          description: "This response is returned when the required parameters APP KEY, user_id, and so on are missing from the request or when the provided params are invalid."
           content:
             application/json:
               schema:
@@ -147,7 +148,8 @@ paths:
                         description: "A descriptive error message explaining why the request failed."
                       type:
                         type: string
-                        description: 'The type or category of the error ("MissingAttributeError").'
+                        # UPDATED error.type description
+                        description: "The type or category of the error (\"MissingAttributeError, Malformed JSON, LimitBreached\")."
                       request_id:
                         type: string
                         description: "A unique identifier for the request, useful for debugging."
@@ -155,33 +157,42 @@ paths:
                         type: string
                         description: "The attribute in the payload that caused the error."
               examples:
-                missing_customer_id:
-                  summary: Customer ID is missing in the payload
+                missing_identifiers:
+                  summary: Identifiers are missing in the request
                   value:
                     status: "fail"
                     error:
-                      attribute: "customer_id"
-                      message: "customer_id is not found in the payload"
+                      attribute: "identifiers"
+                      message: "Required parameter 'identifiers' missing in payload"
                       type: "MissingAttributeError"
-                      request_id: "ZbPXtKFL"
-                empty_customer_id:
-                  summary: Customer ID is empty
+                      request_id: "MIssingID1"
+                data_missing:
+                  summary: Data is missing in the request
                   value:
                     status: "fail"
                     error:
-                      attribute: "customer_id"
-                      message: "customer_id can not be empty Unicode String"
+                      attribute: "data"
+                      message: "Data field is required and cannot be null"
                       type: "MissingAttributeError"
-                      request_id: "VgjtLxTu"
-                array_field_error:
-                  summary: Array field error
+                      request_id: "DataMiss2"
+                incorrect_json:
+                  summary: JSON is incorrect in the request
                   value:
                     status: "fail"
                     error:
-                      attribute: "addValueToArrayField"
-                      message: "Cannot add and remove 'first_name' at the same time"
-                      type: "ArrayFieldError"
-                      request_id: "WPDAbugh"
+                      attribute: "payload"
+                      message: "Malformed JSON payload: unexpected character"
+                      type: "Malformed JSON"
+                      request_id: "BadJson3"
+                limit_exceeded:
+                  summary: The number of users exceeds the allowed limit in the request
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "users"
+                      message: "Number of entities exceeds the maximum allowed limit (100)"
+                      type: "LimitBreached"
+                      request_id: "LimitX4"
         '401':
           description: This response is returned when the request does not have valid authentication credentials.
           content:
@@ -498,7 +509,7 @@ paths:
                           customer_id: john_doe
                           id: 62e79fb15ada55x123g987bu
         '400':
-          description: Bad Request.
+          description: "This response is returned when the required parameters APP KEY, user_id, and so on are missing from the request or when the provided params are invalid."
           content:
             application/json:
               schema:
@@ -515,7 +526,7 @@ paths:
                         description: "A descriptive error message explaining why the request failed."
                       type:
                         type: string
-                        description: 'The type or category of the error ("MissingAttributeError").'
+                        description: "The type or category of the error (\"MissingAttributeError, Malformed JSON, LimitBreached\")."
                       request_id:
                         type: string
                         description: "A unique identifier for the request, useful for debugging."
@@ -523,33 +534,42 @@ paths:
                         type: string
                         description: "The attribute in the payload that caused the error."
               examples:
-                missing_customer_id:
-                  summary: Customer ID is missing in the payload
+                missing_identifiers:
+                  summary: Identifiers are missing in the request
                   value:
                     status: "fail"
                     error:
-                      attribute: "customer_id"
-                      message: "customer_id is not found in the payload"
+                      attribute: "identifiers"
+                      message: "Required parameter 'identifiers' missing in payload"
                       type: "MissingAttributeError"
-                      request_id: "ZbPXtKFL"
-                empty_customer_id:
-                  summary: Customer ID is empty
+                      request_id: "MIssingID1"
+                data_missing:
+                  summary: Data is missing in the request
                   value:
                     status: "fail"
                     error:
-                      attribute: "customer_id"
-                      message: "customer_id can not be empty Unicode String"
+                      attribute: "data"
+                      message: "Data field is required and cannot be null"
                       type: "MissingAttributeError"
-                      request_id: "VgjtLxTu"
-                array_field_error:
-                  summary: Array field error
+                      request_id: "DataMiss2"
+                incorrect_json:
+                  summary: JSON is incorrect in the request
                   value:
                     status: "fail"
                     error:
-                      attribute: "addValueToArrayField"
-                      message: "Cannot add and remove 'first_name' at the same time"
-                      type: "ArrayFieldError"
-                      request_id: "WPDAbugh"
+                      attribute: "payload"
+                      message: "Malformed JSON payload: unexpected character"
+                      type: "Malformed JSON"
+                      request_id: "BadJson3"
+                limit_exceeded:
+                  summary: The number of users exceeds the allowed limit in the request
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "users"
+                      message: "Number of entities exceeds the maximum allowed limit (100)"
+                      type: "LimitBreached"
+                      request_id: "LimitX4"
         '401':
           description: Unauthorized.
           content:
@@ -1438,24 +1458,24 @@ components:
           type: integer
           example: 1
         data:
-          type: object
-          properties:
-            users_not_found:
-              type: array
-              items:
-                $ref: '#/components/schemas/IdentifierObject'
-            users:
-              type: array
-              items:
-                type: object
-                properties:
-                  user_attributes:
-                    type: object
-                    additionalProperties: true
-                    example:
-                      last_name: Doe
-                      customer_id: john_doe
-                      id: 62e79fb15ada55x123g987bu
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              file_name: { type: string }
+              scheduled_at: { type: string, format: date-time }
+              completed_at: { type: string, format: date-time }
+              type: { type: string, enum: [USERS, EVENTS, AUX_DATA] }
+              file_size: { type: string }
+              file_status: { type: string }
+              total_rows: { type: integer }
+              updated_rows: { type: integer }
+              failed_rows: { type: integer }
+        offset:
+          type: integer
+        more_files:
+          type: boolean
 
     BulkImportRequest:
       type: object
