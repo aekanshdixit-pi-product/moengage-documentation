@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Personalize APIs
   description: |
-    Personalize APIs constitute a set of endpoints that can be accessed from your platform's code. 
+    Personalize APIs constitute a set of endpoints that can be accessed from your platform's code.
     
     These APIs offer personalization capabilities and must be invoked from your codebase for MoEngage to provide relevant data. After receiving the data, you can use the same within your platform's code to personalize the content for your users.
   version: 1.0.0
@@ -30,24 +30,26 @@ paths:
         - Experiences
       summary: Fetch Experience
       description: |
-        Use the **Fetch** endpoint to receive data on active personalization experiences. You can fetch data for one or more server-side experiences by using the `experience-key` field. 
+        Use the **Fetch** endpoint to receive data on active personalization experiences. You can fetch data for one or more server-side experiences by using the `experience-key` field.
         
         MoEngage will evaluate targeting rules and in-session attributes automatically and return the correct variation for the user. Typically, you would make this call as part of your larger page and content rendering pipeline.
+        
+        
       x-mint:
         content: |
           ### Authentication
           The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request.
-          
+
           It encodes a `username:password` string in Base64 and appends the encoded string with `Basic `. This string is included in the authorization header.
 
-          **Obtaining Credentials:**
+          **How to obtain credentials:**
           1. Navigate to **Settings** -> **Account** -> **APIs**.
           2. Click the **Copy** icon in the **Personalize** tile in the **API Keys** section to copy the API Key.
-          3. Use the **Workspace ID** as the `username` and the **Personalize API Key** as the `password`.
+          3. Use the **Workspace ID** as the `username` and the **Personalize API Key** as the `password` to generate the authentication header.
 
           <Note type="warning">
-            **Regenerate API SECRET**
-
+            **Regenerating API SECRET**
+            
             The API SECRET can be regenerated on the MoEngage Dashboard. Please **DO NOT** regenerate the key unless there is a security breach. Once you generate a different API SECRET KEY and save it, API calls using the older SECRET KEY won't work.
           </Note>
       parameters:
@@ -83,7 +85,10 @@ paths:
                   USER_AGENT: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ..."
       responses:
         "200":
-          description: Success. This response is returned when the request is submitted to MoEngage.
+          description: |
+            **Success**
+            
+            This response is returned when the request is submitted to MoEngage.
           content:
             application/json:
               schema:
@@ -107,11 +112,20 @@ paths:
                       audience_id: "<id>"
                       type: "Web Personalization"
         "400":
-          description: Bad Request. This response is returned in case the payload is empty or invalid.
+          description: |
+            **Bad Request**
+            
+            This response is returned in case the payload is empty or invalid.
         "401":
-          description: Authorization Failed. This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header.
+          description: |
+            **Authorization Failed**
+            
+            This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header.
         "500":
-          description: Internal Server error. This response is returned when the system runs into an unexpected error.
+          description: |
+            **Internal Server error**
+            
+            This response is returned when the system runs into an unexpected error.
   /experiences/metadata:
     post:
       tags:
@@ -139,9 +153,11 @@ paths:
           schema:
             type: string
           description: |
-            Filter experiences by status. You can fetch experiences that are in a specific state (e.g., Only Active or Active + Paused).
+            Filter experiences by status. Comma-separated list.
             
             **Accepted Values:** `Active`, `Paused`, `Scheduled`.
+            
+            If omitted, all statuses are returned.
           example: "Active,Paused"
       responses:
         "200":
@@ -174,9 +190,9 @@ paths:
       summary: Report Experience Events
       description: |
         Use this endpoint to report experience events. This is the recommended method for reporting analytics for all platforms (website, mobile, TV, etc.).
-
+        
         You can report two types of events:
-        1. **Shown (Impression):** `MOE_PERSONALIZATION_MESSAGE_SHOWN`
+        1. **Impression (Shown):** `MOE_PERSONALIZATION_MESSAGE_SHOWN`
         2. **Click:** `MOE_PERSONALIZATION_MESSAGE_CLICKED`
       x-mint:
         content: |
@@ -254,9 +270,7 @@ components:
       type: http
       scheme: basic
       description: |
-        Basic Authentication using your **Workspace ID** as the username and the **Personalize API Key** as the password. 
-        
-        Generate these from the MoEngage Dashboard > **Settings** > **Account** > **APIs**.
+        Basic Authentication using your **Workspace ID** as the username and the **Personalize API Key** as the password.
   schemas:
     ExperienceFetchRequest:
       type: object
@@ -268,16 +282,16 @@ components:
             customer_id:
               type: string
               description: |
-                Your brand provides this field, which should be pasted in the request. Generally, this is the phone number, email ID, or any other unique ID used to uniquely identify the user in MoEngage.
+                Your brand provides this field. Generally, this is the phone number, email ID, or any other unique ID used to uniquely identify the user in MoEngage.
                 
-                This is essential for fetching experiences that are configured for audiences segmented based on user attributes/user behavior/user affinity/custom segments.
+                This is essential for fetching experiences configured for audiences segmented based on user attributes/behavior.
                 
-                If the `customer_id` is not part of the request **OR** is inaccurate **OR** is not present in MoEngage, `user_identifiers` will be used to uniquely identify the user.
+                **Fallback Logic:** If the `customer_id` is not part of the request **OR** is inaccurate **OR** is not present in MoEngage, `user_identifiers` will be used to uniquely identify the user.
               example: "john.doe@example.com"
             user_identifiers:
               type: object
               description: |
-                If you have **Identity Resolution** enabled for your account, you can use different attributes such as customer ID OR email ID OR mobile number to uniquely identify a user.
+                Additional identifiers used if **Identity Resolution** is enabled.
                 
                 If `user_identifiers` is not part of the request **OR** the `user_identifier` is not present in MoEngage, the API will return experiences configured for **All users**.
               properties:
@@ -295,7 +309,7 @@ components:
           items:
             type: string
           description: |
-            This field uniquely identifies each server-side experience created using MoEngage Personalize. You can pass multiple values in a single request.
+            A list of experience keys to fetch. 
             
             If no `experience_key` is specified, the API will return:
             * All experiences for the specified `customer_id`, **OR**
@@ -318,9 +332,7 @@ components:
         TIME_OF_THE_DAY:
           type: string
           description: |
-            This field must contain the time of the day for evaluating IN-session attribute-based experiences.
-            
-            Example: For a time interval between 7 PM - 8 PM, the input should be `"19"`.
+            This field must contain the time of the day (00-23) for evaluating IN-session attribute-based experiences.
           example: "19"
         USER_IP_ADDRESS:
           type: string
@@ -330,14 +342,14 @@ components:
         USER_AGENT:
           type: string
           description: |
-            This field must contain the `USER-AGENT` HTTP header. This is useful for delivering experiences personalized based on in-session attributes like Device Type.
+            This field must contain the `USER-AGENT` HTTP header. Useful for delivering experiences based on in-session attributes like Device Type.
           example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ..."
     ExperienceFetchResponse:
       type: object
       properties:
         experiences:
           type: object
-          description: An object where each key is an experience_key returned for the user.
+          description: An object where each key is an experience_key.
           additionalProperties:
             $ref: "#/components/schemas/ExperiencePayload"
     ExperiencePayload:
@@ -358,7 +370,7 @@ components:
         experience_context:
           type: object
           description: |
-            This field returns a JSON object that is to be used for reporting pageviews/impressions and/or tracking clicks within the personalized experience.
+            A JSON object to be used for reporting pageviews/impressions and/or tracking clicks via the Events API.
           properties:
             cid:
               type: string
@@ -417,7 +429,7 @@ components:
         user_attributes:
           type: object
           description: |
-            This field is used to update the details of a user identified by `customer_id`. If the `customer_id` does not exist, a new user will be created with the details present here.
+            This field is used to update the details of a user identified by `customer_id`. If the `customer_id` does not exist, a new user will be created with the details present in `user_attributes`.
           additionalProperties: true
           example:
             name: "John Doe"
@@ -426,6 +438,7 @@ components:
           type: integer
           description: |
             The difference in time between UTC and the local system time in seconds.
+            
             Example: `19800` for IST (UTC+0530).
           example: 19800
         actions:
@@ -475,7 +488,7 @@ components:
         attributes:
           type: object
           description: |
-            This field is the `experience_context` object sent as part of the response from the **Fetch Experience** API.
+            This field is the `experience_context` sent as part of the response to the Experience Fetch API request.
           properties:
             cid:
               type: string
