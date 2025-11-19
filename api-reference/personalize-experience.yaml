@@ -33,8 +33,6 @@ paths:
         Use the **Fetch** endpoint to receive data on active personalization experiences. You can fetch data for one or more server-side experiences by using the `experience-key` field.
         
         MoEngage will evaluate targeting rules and in-session attributes automatically and return the correct variation for the user. Typically, you would make this call as part of your larger page and content rendering pipeline.
-        
-        
       x-mint:
         content: |
           ### Authentication
@@ -135,6 +133,29 @@ paths:
         The Metadata API is used to fetch a list of currently Active, Scheduled and Paused experiences within a workspace.
       x-mint:
         content: |
+          ### Request Body
+          The Metadata API request body is typically empty, as all filtering is handled via the `status` query parameter.
+
+          ### Sample Requests
+          #### Fetching All Experiences
+          ```cURL
+          curl --location '[https://sdk-0X.moengage.com/v1/experiences/metadata](https://sdk-0X.moengage.com/v1/experiences/metadata)' \
+          --header 'Accept: */*' \
+          --header 'Content-Type: application/json' \
+          --header 'Authorization: Basic <Authorisation>' \
+          --header 'MOE-APPKEY: <Your Workspace ID>'
+          ```
+          #### Filtering by Status
+          ```cURL
+          curl --location '[https://sdk-0X.moengage.com/v1/experiences/metadata?status=Active,Paused](https://sdk-0X.moengage.com/v1/experiences/metadata?status=Active,Paused)' \
+          --header 'Accept: */*' \
+          --header 'Content-Type: application/json' \
+          --header 'Authorization: Basic <Authorisation>' \
+          --header 'MOE-APPKEY: <Your Workspace ID>'
+          ```
+          ### SDK Usage
+          For more detailed guidance on retrieving metadata via SDKs, refer to the documentation links below.
+          
           <Note>
             **Authentication**
             
@@ -159,6 +180,14 @@ paths:
             
             If omitted, all statuses are returned.
           example: "Active,Paused"
+      requestBody:
+        description: Request body is empty for metadata fetch.
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Empty request body for GET/filter operations.
       responses:
         "200":
           description: Successful retrieval of metadata.
@@ -196,6 +225,16 @@ paths:
         2. **Click:** `MOE_PERSONALIZATION_MESSAGE_CLICKED`
       x-mint:
         content: |
+          ### SDK Usage: Experience Shown (Impression)
+          * **Web SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/39084350090772-Personalize-API-Experience-events-tracking#h_01JXWHX5488QT9XMEN0R5WPX6P) article.
+          * **Android SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/38474488247444-Personalize-Experience-Events-Tracking#h_01JXWHX5488QT9XMEN0R5WPX6P) article.
+          * **iOS SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/38532362954004-Personalize-Experience-Events-tracking#h_01JY0XF2DW9VKRF3S7G5FNR4XR) article.
+          
+          ### SDK Usage: Experience Click
+          * **Web SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/39084350090772/live_preview/01JZMXHTZJCMVA9BX0A67XD6VM#h_01JY0TEW61D02S5VMX4FV4PGZN) article.
+          * **Android SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/38474488247444-Personalize-Experience-Events-Tracking#h_01JY0TEW61D02S5VMX4FV4PGZN) article.
+          * **iOS SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/38532362954004-Personalize-Experience-Events-tracking#h_01JY0XF2DW05P2706PP5Y5PWS3) article.
+          
           <Note>
             **Authentication**
             
@@ -286,7 +325,7 @@ components:
                 
                 This is essential for fetching experiences configured for audiences segmented based on user attributes/behavior.
                 
-                **Fallback Logic:** If the `customer_id` is not part of the request **OR** is inaccurate **OR** is not present in MoEngage, `user_identifiers` will be used to uniquely identify the user.
+                **Fallback Logic:** If the `customer_id` is not part of the request **OR** is inaccurate **OR** is not present in MoEngage, `user_identifiers` will be used to uniquely identify the user. 
               example: "john.doe@example.com"
             user_identifiers:
               type: object
@@ -309,7 +348,7 @@ components:
           items:
             type: string
           description: |
-            A list of experience keys to fetch. 
+            A list of experience keys to fetch.
             
             If no `experience_key` is specified, the API will return:
             * All experiences for the specified `customer_id`, **OR**
