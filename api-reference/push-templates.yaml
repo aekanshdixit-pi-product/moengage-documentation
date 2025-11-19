@@ -1,13 +1,26 @@
 openapi: 3.0.3
 info:
   title: Push Templates API
-  description: An API for creating, updating, and searching for push notification templates for Android and iOS platforms.
+  description: |
+    An API for creating, updating, and searching for push notification templates for Android and iOS platforms.
+
+    ## External Links
+    * [Postman Collection](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-7980d47d-248a-4060-96d2-a7d9ebc3e22d?action=share&creator=3182294&ctx=documentation)
+    * [MoEngage Help Center](https://help.moengage.com/hc/en-us/articles/4415622460948-Push-Templates)
+
+    ## FAQs
+    * **Can I create a template that is supported only on iOS?**
+      Yes, you can send only the iOS payload if you want to create a template for iOS.
+    * **What are the different types of image, video, and audio files supported?**
+      * Audio/Video: All formats supported by standard FCM/APNS.
+      * Images: png, jpeg, jpg, gif.
+    * **Can I create multiple templates with the same name?**
+      Yes, provided they have different versions.
   version: "1.0"
   x-logo:
     url: "https://images.g2crowd.com/uploads/product/image/social_landscape/social_landscape_4cb13a53c5240c218206532439a2f15a/moengage.png"
     altText: "MoEngage Logo"
 
-# The x-tagGroups extension is used by some documentation tools to organize tags.
 x-tagGroups:
   - name: Push Templates
     tags:
@@ -15,13 +28,12 @@ x-tagGroups:
 
 servers:
   - url: https://api-0{data_center}.moengage.com/v1.0
-    description: MoEngage API Server. The `data_center` value (e.g., 1, 2, 3) depends on your account's location.
+    description: MoEngage API Server.
     variables:
       data_center:
         default: '1'
         description: 'Your account''s data center number (e.g., 1 for US, 2 for EU, 3 for India).'
 
-# Defines the security scheme used by the API (HTTP Basic Auth)
 components:
   securitySchemes:
     BasicAuth:
@@ -30,7 +42,7 @@ components:
       description: "HTTP Basic Authentication using your Workspace ID as the username and API Key as the password."
 
   schemas:
-    # Reusable component for Key-Value pairs
+    # --- Shared Components ---
     KeyValue:
       type: object
       properties:
@@ -44,7 +56,7 @@ components:
         - key
         - value
 
-    # Reusable component for Android action buttons
+    # --- Android Components ---
     AndroidButton:
       type: object
       properties:
@@ -53,7 +65,8 @@ components:
           description: The name/label of the button.
         click_action_type:
           type: string
-          description: The type of action to perform when the button is clicked.
+          description: |
+            The type of action to perform when the button is clicked.
           enum:
             - NAVIGATE_TO_A_SCREEN
             - DEEPLINKING
@@ -81,17 +94,9 @@ components:
         - click_action_type
         - click_action_value
 
-    # Reusable component for iOS action buttons
-    IosButton:
-      type: object
-      properties:
-        button_category:
-          type: string
-          description: The category of the button, which corresponds to an actionable notification category implemented in the app.
-
-    # Reusable component for Android payload
     AndroidPayload:
       type: object
+      description: Definition of the template for the Android platform.
       properties:
         basic_details:
           type: object
@@ -101,18 +106,47 @@ components:
             - default_click_action
             - default_click_action_value
           properties:
-            title: { type: string, description: "The title of the notification." }
-            message: { type: string, description: "The main content of the notification message." }
-            summary: { type: string, description: "A brief summary line for the notification." }
-            app_name_color_code: { type: string, description: "Hexadecimal color code for the app name.", example: "#5450ea" }
-            notification_control_color: { type: string, enum: [Light, Dark], description: "Color theme for notification controls." }
-            background_color_code: { type: string, description: "Hexadecimal color code for the notification background.", example: "#f5e6cd" }
-            apply_background_color: { type: boolean, description: "If true, applies the background color to text fields like title and message." }
-            image_url: { type: string, format: uri, description: "URL for a rich media image. Supports jpg, jpeg, png, gif." }
-            input_gif_url: { type: string, format: uri, description: "URL for a GIF, supported only for Android Basic Template." }
-            default_click_action: { type: string, enum: [NAVIGATE_TO_A_SCREEN, DEEPLINKING, RICH_LANDING] }
-            default_click_action_value: { type: string, description: "The value for the click action (e.g., a URL or screen name)." }
-            key_value_pairs: { type: array, items: { $ref: '#/components/schemas/KeyValue' } }
+            title: 
+              type: string
+              description: "The title of the message."
+            message: 
+              type: string
+              description: "The message content."
+            summary: 
+              type: string
+              description: "A brief description of the message content."
+            app_name_color_code: 
+              type: string
+              description: "Hexadecimal color code for the app name (e.g., #5450ea). Not available for Basic Notification template."
+            notification_control_color: 
+              type: string
+              enum: [Light, Dark]
+              description: "Color theme for notification controls. Not available for Basic Notification template."
+            background_color_code: 
+              type: string
+              description: "Hexadecimal color code for the notification background (e.g., #f5e6cd). Not available for Basic Notification template."
+            apply_background_color: 
+              type: boolean
+              description: "If true, applies the background color to text fields (Title, Message, Summary). Recommended for lighter font colors. Not available for Basic Notification template."
+            image_url: 
+              type: string
+              format: uri
+              description: "URL for the image to be added. Allowed formats: jpg, jpeg, png, gif."
+            input_gif_url: 
+              type: string
+              format: uri
+              description: "URL for a GIF. Supported only for Android Basic Template."
+            default_click_action: 
+              type: string
+              enum: [NAVIGATE_TO_A_SCREEN, DEEPLINKING, RICH_LANDING]
+              description: "Default action when user clicks the notification."
+            default_click_action_value: 
+              type: string
+              description: "The value for the click action (e.g., screen name, URL, or Rich Landing URL)."
+            key_value_pairs: 
+              type: array
+              items: 
+                $ref: '#/components/schemas/KeyValue'
         buttons:
           type: array
           items:
@@ -120,23 +154,46 @@ components:
         advanced:
           type: object
           properties:
-            coupon_code: { type: string }
-            icon_type_in_notification: { type: string, enum: [appicon, upload, url] }
-            large_icon_url: { type: string, format: uri }
-            auto_dismiss_notification: { type: boolean }
-            dismissal_time_multiplier: { type: string, enum: [DAYS, HOURS, MINUTES] }
-            dismissal_time_value: { type: integer }
-            make_notification_sticky: { type: boolean }
-            dismiss_button_text: { type: string }
-            group_key: { type: string, description: "Key to group related notifications together." }
-            collapse_replace_key: { type: string, description: "Key to identify notifications that should be replaced by newer ones." }
+            coupon_code: 
+              type: string
+              description: "Coupon code to be sent with the notification."
+            icon_type_in_notification: 
+              type: string
+              enum: [appicon, upload, url]
+              description: "Type of icon to be used."
+            large_icon_url: 
+              type: string
+              format: uri
+              description: "URL for the large icon."
+            auto_dismiss_notification: 
+              type: boolean
+              description: "Whether notification should be auto-dismissed."
+            dismissal_time_multiplier: 
+              type: string
+              enum: [DAYS, HOURS, MINUTES]
+              description: "Unit of time for auto-dismissal."
+            dismissal_time_value: 
+              type: integer
+              description: "Value of time for auto-dismissal."
+            make_notification_sticky: 
+              type: boolean
+              description: "If true, notification cannot be dismissed by swiping. Not available for Basic Notification template."
+            dismiss_button_text: 
+              type: string
+              description: "Text for the dismiss button (required if sticky)."
+            group_key: 
+              type: string
+              description: "Key to group related notifications. Max 45 chars (ASCII only)."
+            collapse_replace_key: 
+              type: string
+              description: "Key to identify notifications that should be replaced by newer ones."
         template_backup:
           type: object
-          description: "A fallback notification definition for older Android SDK versions."
+          description: "Fallback for Android SDK versions below 10.3.00. Applicable only to Stylized Basic template."
           properties:
-            title: { type: string, description: "The title of the backup notification." }
-            message: { type: string, description: "The message of the backup notification." }
-            summary: { type: string, description: "The summary of the backup notification." }
+            title: { type: string, description: "Title of the backup message." }
+            message: { type: string, description: "Content of the backup message." }
+            summary: { type: string, description: "Summary of the backup message." }
             image_url: { type: string, format: uri }
             default_click_action: { type: string, enum: [NAVIGATE_TO_A_SCREEN, DEEPLINKING, RICH_LANDING] }
             default_click_action_value: { type: string }
@@ -146,10 +203,18 @@ components:
             - message
             - default_click_action
             - default_click_action_value
-    
-    # Reusable component for iOS payload
+
+    # --- iOS Components ---
+    IosButton:
+      type: object
+      properties:
+        button_category:
+          type: string
+          description: The category of the button, which corresponds to an actionable notification category implemented in the app.
+
     IosPayload:
       type: object
+      description: Definition of the template for the iOS platform.
       properties:
         basic_details:
           type: object
@@ -158,17 +223,17 @@ components:
             - message
             - default_click_action_value
           properties:
-            title: { type: string, description: "The title of the notification." }
-            subtitle: { type: string, description: "The subtitle of the notification." }
-            message: { type: string, description: "The main content of the notification message." }
-            background_color_code: { type: string, description: "Hexadecimal color code for the notification background.", example: "#f5e6cd" }
-            apply_background_color: { type: boolean, description: "If true, applies background color to text fields." }
-            default_click_action: { type: string, enum: [NAVIGATE_TO_A_SCREEN, DEEPLINKING, RICH_LANDING] }
-            default_click_action_value: { type: string, description: "The value for the click action." }
+            title: { type: string, description: "The title of the message." }
+            subtitle: { type: string, description: "The subtitle of the message." }
+            message: { type: string, description: "The message content." }
+            background_color_code: { type: string, example: "#f5e6cd", description: "Hex background color. Not available for Basic Notification template." }
+            apply_background_color: { type: boolean, description: "Apply background color to text fields. Not available for Basic Notification template." }
+            default_click_action: { type: string, enum: [NAVIGATE_TO_A_SCREEN, DEEPLINKING, RICH_LANDING], description: "Default action on click." }
+            default_click_action_value: { type: string, description: "Screen name, deep-link URI, or rich landing URL." }
             key_value_pairs: { type: array, items: { $ref: '#/components/schemas/KeyValue' } }
-            rich_media_type: { type: string, enum: [IMAGE, AUDIO, VIDEO, GIF] }
-            rich_media_value: { type: string, format: uri, description: "URL of the rich media content." }
-            allow_bg_refresh: { type: boolean, description: "Indicates whether the app should be allowed to refresh in the background." }
+            rich_media_type: { type: string, enum: [IMAGE, AUDIO, VIDEO, GIF], description: "Type of rich media. Not available for Stylized Basic template." }
+            rich_media_value: { type: string, format: uri, description: "URL of the rich media." }
+            allow_bg_refresh: { type: boolean, description: "Allow app background refresh." }
         buttons:
           type: array
           items:
@@ -177,13 +242,13 @@ components:
           type: object
           properties:
             coupon_code: { type: string }
-            sound_file: { type: string, description: "Name of the sound file to play upon receiving the notification." }
-            enable_ios_badge: { type: boolean, description: "Whether to show a badge count on the app icon." }
-            group_key: { type: string, description: "Key to group related notifications together (thread-id)." }
-            collapse_replace_key: { type: string, description: "Key to identify notifications that should be replaced by newer ones (collapse-id)." }
+            sound_file: { type: string, description: "Name of the sound file to play." }
+            enable_ios_badge: { type: boolean, description: "Show badge count on app icon." }
+            group_key: { type: string, description: "Group key (thread-id)." }
+            collapse_replace_key: { type: string, description: "Update key (collapse-id)." }
         template_backup:
           type: object
-          description: "A fallback notification definition for older iOS SDK versions."
+          description: "Fallback for iOS SDK versions below 6.2.0. Applicable only to Stylized Basic template."
           properties:
             title: { type: string }
             subtitle: { type: string }
@@ -200,7 +265,71 @@ components:
             - default_click_action
             - default_click_action_value
 
-    # General Error Response Schema
+    # --- Meta Info ---
+    MetaInfoCreate:
+      type: object
+      description: Metadata associated with the template creation.
+      required:
+        - platform
+        - template_style
+        - template_id
+        - template_name
+        - template_version
+        - created_by
+      properties:
+        platform:
+          type: array
+          items:
+            type: string
+            enum: [ANDROID, IOS]
+          description: List of platforms (ANDROID, IOS).
+        template_style:
+          type: string
+          enum: [BASIC, STYLIZED]
+          description: Style of the template.
+        template_id:
+          type: string
+          description: "Unique ID generated by you."
+        template_name:
+          type: string
+          description: "Name of the template."
+        template_version:
+          type: string
+          description: "Version of the template."
+        created_by:
+          type: string
+          description: "Identifier of the creator (e.g., email)."
+
+    MetaInfoUpdate:
+      type: object
+      description: Metadata associated with the template update.
+      required:
+        - platform
+        - template_style
+        - updated_by
+        - template_name
+      properties:
+        platform:
+          type: array
+          items:
+            type: string
+            enum: [ANDROID, IOS]
+        template_style:
+          type: string
+          enum: [BASIC, STYLIZED]
+        updated_by:
+          type: string
+          description: "Identifier of the user updating the template."
+        template_name:
+          type: string
+        template_version:
+          type: string
+          description: "The new version identifier."
+        vendor_template_id:
+          type: string
+          description: "Your internal unique ID for the template (Optional)."
+
+    # --- Error Responses ---
     ErrorResponse:
       type: object
       properties:
@@ -224,6 +353,7 @@ components:
             request_id:
               type: string
               example: "jUxStmFn"
+    
     SimpleErrorResponse:
       type: object
       properties:
@@ -234,7 +364,6 @@ components:
           type: string
           example: "MOE-APPKEY missing in Authentication Header"
 
-# Global security setting: applies BasicAuth to all endpoints
 security:
   - BasicAuth: []
 
@@ -244,10 +373,13 @@ paths:
       tags:
         - Templates
       summary: Create Push Template
-      description: Creates a new push notification template for one or more platforms (Android, iOS).
+      description: |
+        Creates a new push notification template. You can specify payloads for ANDROID, IOS, or both.
+        
+        **Rate Limit:** 100 RPM (Requests Per Minute).
       operationId: createPushTemplate
       requestBody:
-        description: A JSON object containing the template definitions for desired platforms and metadata.
+        description: A JSON object containing the template definitions.
         required: true
         content:
           application/json:
@@ -259,24 +391,262 @@ paths:
                 IOS:
                   $ref: '#/components/schemas/IosPayload'
                 meta_info:
-                  type: object
-                  description: Metadata associated with the template.
-                  required:
-                    - platform
-                    - template_style
-                    - template_id
-                    - template_name
-                    - template_version
-                    - created_by
-                  properties:
-                    platform: { type: array, items: { type: string, enum: [ANDROID, IOS] } }
-                    template_style: { type: string, enum: [BASIC, STYLIZED] }
-                    template_id: { type: string, description: "A unique ID for the template, generated by you." }
-                    template_name: { type: string }
-                    template_version: { type: string }
-                    created_by: { type: string, description: "Identifier of the user creating the template (e.g., email)." }
+                  $ref: '#/components/schemas/MetaInfoCreate'
               required:
                 - meta_info
+            examples:
+              # --- Stylized Examples ---
+              Stylized_Android_iOS:
+                summary: 1. Stylized (Android & iOS)
+                value:
+                  ANDROID:
+                    basic_details:
+                      app_name_color_code: "APP_NAME_COLOR_CODE"
+                      notification_control_color: "Light/Dark"
+                      background_color_code: "BG_COLOR_CODE"
+                      title: "TITLE_OF_ANDROID_TEMPLATE"
+                      message: "MESSAGE_OF_ANDROID_TEMPLATE"
+                      summary: "SUMMARY"
+                      image_url: "IMAGE_URL"
+                      default_click_action: "DEEPLINKING"
+                      default_click_action_value: "CLICK_ACTION_URL_HERE"
+                      key_value_pairs: [{ "key": "KEY", "value": " VALUE" }]
+                    buttons:
+                      - btn_name: "NAME_OF_THE_BUTTON"
+                        click_action_type: "NAVIGATE_TO_A_SCREEN"
+                        click_action_name: "VALID_CLICK_ACTION_NAME_HERE"
+                        click_action_value: "CLICK_ACTION_URL_HERE"
+                    advanced:
+                      coupon_code: "COUPON_CODE"
+                      icon_type_in_notification: "appicon"
+                      auto_dismiss_notification: true
+                      dismissal_time_multiplier: "hours"
+                      dismissal_time_value: 1
+                      make_notification_sticky: true
+                      dismiss_button_text: "DISMISS_BUTTON_TEXT_HERE"
+                    template_backup:
+                      title: "TITLE_OF_ANDROID_BACKUP_TEMPLATE"
+                      message: "MESSAGE_OF_ANDROID_BACKUP_TEMPLATE"
+                      summary: "SUMMARY"
+                      image_url: "IMAGE_URL"
+                      default_click_action: "DEEPLINKING"
+                      default_click_action_value: "CLICK_ACTION_URL_HERE"
+                      key_value_pairs: [{ "key": "KEY", "value": " VALUE" }]
+                  IOS:
+                    basic_details:
+                      background_color_code: "BG_COLOR_CODE"
+                      title: "TITLE_OF_IOS_TEMPLATE"
+                      subtitle: "SUBTITLE_OF_IOS_TEMPLATE"
+                      message: "MESSAGE_OF_IOS_TEMPLATE"
+                      rich_media_value: "RICH_MEDIA_URL_HERE"
+                      default_click_action: "DEEPLINKING"
+                      default_click_action_value: "CLICK_ACTION_URL_HERE"
+                      allow_bg_refresh: true
+                    buttons:
+                      - button_category: "CATEGORY_OF_BUTTON"
+                    advanced:
+                      coupon_code: "COUPON_CODE"
+                      sound_file: "SOUND_FILE"
+                      enable_ios_badge: true
+                    template_backup:
+                      title: "TITLE_OF_IOS_TEMPLATE"
+                      subtitle: "SUBTITLE_OF_IOS_TEMPLATE"
+                      message: "MESSAGE_OF_IOS_TEMPLATE"
+                      rich_media_value: "RICH_MEDIA_URL_HERE"
+                      default_click_action: "DEEPLINKING"
+                      default_click_action_value: "CLICK_ACTION_URL_HERE"
+                      allow_bg_refresh: true
+                  meta_info:
+                    platform: ["ANDROID", "IOS"]
+                    template_style: "STYLIZED"
+                    template_id: "1234567890"
+                    template_name: "NAME_OF_THE_TEMPLATE"
+                    template_version: "VERSION_OF_THE_TEMPLATE"
+                    created_by: "USER_CREATED"
+
+              Stylized_Android_Only:
+                summary: 2. Stylized (Android Only)
+                value:
+                  ANDROID:
+                    basic_details:
+                      app_name_color_code: "#ffffff"
+                      notification_control_color: "Light"
+                      background_color_code: "#ffffff"
+                      title: "TITLE_OF_ANDROID_TEMPLATE"
+                      message: "MESSAGE_OF_ANDROID_TEMPLATE"
+                      summary: "SUMMARY"
+                      image_url: "https://images.pexels.com/photos/248797/pexels-photo-248797.jpeg"
+                      default_click_action: "NAVIGATE_TO_A_SCREEN"
+                      default_click_action_value: "com.moengage.sampleapp.info.InfoActivity"
+                      key_value_pairs: [{ "key": "page", "value": " 28" }]
+                    buttons:
+                      - btn_name: "button1"
+                        click_action_type: "DEEPLINKING"
+                        click_action_name: "click"
+                        click_action_value: "https://www.google.com"
+                    advanced:
+                      coupon_code: "COUPON_CODE"
+                      icon_type_in_notification: "appicon"
+                      auto_dismiss_notification: true
+                      dismissal_time_multiplier: "minutes"
+                      dismissal_time_value: 1
+                      make_notification_sticky: true
+                      dismiss_button_text: "DISMISS"
+                    template_backup:
+                      title: "TITLE_OF_ANDROID_BACKUP_TEMPLATE"
+                      message: "MESSAGE_OF_ANDROID_BACKUP_TEMPLATE"
+                      summary: "SUMMARY"
+                      image_url: "https://images.pexels.com/photos/248797/pexels-photo-248797.jpeg"
+                      default_click_action: "NAVIGATE_TO_A_SCREEN"
+                      default_click_action_value: "com.moengage.sampleapp.info.InfoActivity"
+                      key_value_pairs: [{ "key": "KEY", "value": " VALUE" }]
+                  meta_info:
+                    platform: ["ANDROID"]
+                    template_style: "STYLIZED"
+                    template_id: "12340"
+                    template_name: "BT1"
+                    template_version: "1"
+                    created_by: "User"
+
+              Stylized_iOS_Only:
+                summary: 3. Stylized (iOS Only)
+                value:
+                  IOS:
+                    basic_details:
+                      background_color_code: "#ffffff"
+                      title: "TITLE_OF_IOS_TEMPLATE"
+                      subtitle: "SUBTITLE_OF_IOS_TEMPLATE"
+                      message: "MESSAGE_OF_IOS_TEMPLATE"
+                      rich_media_value: "RICH_MEDIA_URL_HERE"
+                      default_click_action: "RICH_LANDING"
+                      default_click_action_value: "https://www.google.com"
+                      allow_bg_refresh: true
+                    buttons:
+                      - button_category: "CATEGORY_OF_BUTTON"
+                    advanced:
+                      coupon_code: "COUPON_CODE"
+                      sound_file: "SOUND_FILE"
+                      enable_ios_badge: true
+                    template_backup:
+                      title: "TITLE_OF_IOS_TEMPLATE"
+                      subtitle: "SUBTITLE_OF_IOS_TEMPLATE"
+                      message: "MESSAGE_OF_IOS_TEMPLATE"
+                      rich_media_value: "RICH_MEDIA_URL_HERE"
+                      default_click_action: "DEEPLINKING"
+                      default_click_action_value: "https://www.google.com"
+                      allow_bg_refresh: true
+                  meta_info:
+                    platform: ["IOS"]
+                    template_style: "STYLIZED"
+                    template_id: "123404"
+                    template_name: "only IOS"
+                    template_version: "2"
+                    created_by: "User"
+
+              # --- Basic Examples ---
+              Basic_Android_iOS:
+                summary: 4. Basic (Android & iOS)
+                value:
+                  ANDROID:
+                    basic_details:
+                      title: "TITLE_OF_ANDROID_TEMPLATE"
+                      message: "MESSAGE_OF_ANDROID_TEMPLATE"
+                      summary: "SUMMARY"
+                      image_url: "https://images.pexels.com/photos/248797/pexels-photo-248797.jpeg"
+                      default_click_action: "DEEPLINKING"
+                      default_click_action_value: "https://www.google.com"
+                      key_value_pairs: [{ "key": "KEY", "value": " VALUE" }]
+                    buttons:
+                      - btn_name: "NAME_OF_THE_BUTTON"
+                        click_action_type: "DEEPLINKING"
+                        click_action_name: "Bhuvan"
+                        click_action_value: "https://www.google.com"
+                    advanced:
+                      coupon_code: "COUPON_CODE"
+                      icon_type_in_notification: "appicon"
+                      auto_dismiss_notification: true
+                      dismissal_time_multiplier: "minutes"
+                      dismissal_time_value: 1
+                  IOS:
+                    basic_details:
+                      title: "TITLE_OF_IOS_TEMPLATE"
+                      subtitle: "SUBTITLE_OF_IOS_TEMPLATE"
+                      message: "MESSAGE_OF_IOS_TEMPLATE"
+                      rich_media_value: "RICH_MEDIA_URL_HERE"
+                      default_click_action: "DEEPLINKING"
+                      default_click_action_value: "https://www.google.com"
+                      allow_bg_refresh: true
+                    buttons:
+                      - button_category: "CATEGORY_OF_BUTTON"
+                    advanced:
+                      coupon_code: "COUPON_CODE"
+                      sound_file: "SOUND_FILE"
+                      enable_ios_badge: true
+                  meta_info:
+                    platform: ["ANDROID", "IOS"]
+                    template_style: "BASIC"
+                    template_id: "12345"
+                    template_name: "Basic template - Android and IOS"
+                    template_version: "1"
+                    created_by: "User1"
+
+              Basic_Android_Only:
+                summary: 5. Basic (Android Only)
+                value:
+                  ANDROID:
+                    basic_details:
+                      title: "TITLE_OF_ANDROID_TEMPLATE"
+                      message: "MESSAGE_OF_ANDROID_TEMPLATE"
+                      summary: "SUMMARY"
+                      image_url: "https://images.pexels.com/photos/248797/pexels-photo-248797.jpeg"
+                      default_click_action: "DEEPLINKING"
+                      default_click_action_value: "https:wwww.google.com"
+                      key_value_pairs: [{ "key": "KEY", "value": " VALUE" }]
+                    buttons:
+                      - btn_name: "NAME_OF_THE_BUTTON"
+                        click_action_type: "DEEPLINKING"
+                        click_action_name: "Bhuvan"
+                        click_action_value: "https:wwww.google.com"
+                    advanced:
+                      coupon_code: "COUPON_CODE"
+                      icon_type_in_notification: "appicon"
+                      auto_dismiss_notification: true
+                      dismissal_time_multiplier: "minutes"
+                      dismissal_time_value: 1
+                  meta_info:
+                    platform: ["ANDROID"]
+                    template_style: "BASIC"
+                    template_id: "12345642"
+                    template_name: "Basic_template-Only Android"
+                    template_version: "1"
+                    created_by: "User11"
+
+              Basic_iOS_Only:
+                summary: 6. Basic (iOS Only)
+                value:
+                  IOS:
+                    basic_details:
+                      title: "TITLE_OF_IOS_TEMPLATE"
+                      subtitle: "SUBTITLE_OF_IOS_TEMPLATE"
+                      message: "MESSAGE_OF_IOS_TEMPLATE"
+                      rich_media_value: "RICH_MEDIA_URL_HERE"
+                      default_click_action: "DEEPLINKING"
+                      default_click_action_value: "https://www.google.com"
+                      allow_bg_refresh: true
+                    buttons:
+                      - button_category: "CATEGORY_OF_BUTTON"
+                    advanced:
+                      coupon_code: "COUPON_CODE"
+                      sound_file: "SOUND_FILE"
+                      enable_ios_badge: true
+                  meta_info:
+                    platform: ["IOS"]
+                    template_style: "BASIC"
+                    template_id: "1234567"
+                    template_name: "Basic template - Only IOS"
+                    template_version: "1"
+                    created_by: "User1"
+
       responses:
         '200':
           description: Template created successfully.
@@ -291,34 +661,82 @@ paths:
                     description: A unique system-generated ID for the created template.
                     example: "d05a44f0-a7cf-471a-bcb6-63054800a367"
         '400':
-          description: Bad Request. The request is malformed, contains invalid data, or violates a business rule (e.g., duplicate template).
+          description: Bad Request (Invalid Data or Duplicate).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ValidationFailure:
+                  summary: Validation Failure
+                  value:
+                    error:
+                      code: "400 Bad Request"
+                      message: "Validation failed because of invalid request data"
+                      details:
+                        - code: "MissingValue"
+                          target: "template_name"
+                          message: "template_name value is required but value is passed empty."
+                      request_id: "jUxStmFn"
+                DuplicateTemplate:
+                  summary: Duplicate Template
+                  value:
+                    error:
+                      code: "400 Bad Request"
+                      message: "Duplicate - template_id and template_version"
+                      details:
+                        - code: "InvalidValue"
+                          target: "Duplicate - template_id and template_version"
+                          message: "template_id:basicios12 template_version:12 is already present."
+                      request_id: "cLCcgLQj"
         '401':
-          description: Authorization Failure. The provided credentials are missing or invalid.
+          description: Authorization Failure.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimpleErrorResponse'
+              example:
+                title: "Authentication required"
+                description: "MOE-APPKEY missing in Authentication Header"
         '415':
-          description: Unsupported Media Type. The `Content-Type` header is not `application/json`.
+          description: Unsupported Media Type.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimpleErrorResponse'
+              example:
+                title: "Unsupported media type"
+                description: "Content type is not supported"
         '429':
-          description: Rate Limit Breach. The number of requests has exceeded the allowed limit (100 RPM).
+          description: Rate Limit Breach.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                response_id: "OUUkHvcn"
+                type: "custom_template"
+                error:
+                  code: "Too Many Requests"
+                  message: "API rate limit breached. Current limit: n/m mins"
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleErrorResponse'
+              example:
+                title: "Internal Server Error"
+                message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+
     put:
       tags:
         - Templates
       summary: Update Push Template
-      description: Updates an existing push notification template by creating a new version.
+      description: |
+        Updates an existing push notification template by creating a new version.
+        
+        **Rate Limit:** 100 RPM (Requests Per Minute).
       operationId: updatePushTemplate
       requestBody:
         description: A JSON object containing the template ID to update, the updated platform payloads, and new metadata.
@@ -341,22 +759,43 @@ paths:
                 IOS:
                   $ref: '#/components/schemas/IosPayload'
                 meta_info:
-                  type: object
-                  description: Metadata for the new template version.
-                  required:
-                    - platform
-                    - template_style
-                    - updated_by
-                    - template_name
-                  properties:
-                    platform: { type: array, items: { type: string, enum: [ANDROID, IOS] } }
-                    template_style: { type: string, enum: [BASIC, STYLIZED] }
-                    updated_by: { type: string, description: "Identifier of the user updating the template (e.g., email)." }
-                    template_name: { type: string }
-                    template_version: { type: string, description: "The new version identifier for the template." }
+                  $ref: '#/components/schemas/MetaInfoUpdate'
               required:
                 - external_template_id
                 - meta_info
+            examples:
+              UpdateTemplate:
+                summary: Update Android Template
+                value:
+                  external_template_id: "d05a44f0-a7cf-471a-bcb6-63054800a367"
+                  update_campaigns: false
+                  ANDROID:
+                    basic_details:
+                      title: "Updated Basic Android Template"
+                      message: "Updated Basic Android Template"
+                      summary: "Updated Basic Android Template summary"
+                      image_url: ""
+                      default_click_action: "DEEPLINKING"
+                      default_click_action_value: "https://www.google.com"
+                    buttons:
+                      - btn_name: "btn1"
+                        click_action_type: "DEEPLINKING"
+                        click_action_name: "btn1"
+                        click_action_value: "https://www.google.com"
+                    advanced:
+                      coupon_code: ""
+                      icon_type_in_notification: "url"
+                      large_icon_url: "https://www.google.com"
+                      auto_dismiss_notification: true
+                      dismissal_time_multiplier: "minutes"
+                      dismissal_time_value: 5
+                  meta_info:
+                    platform: ["ANDROID"]
+                    template_style: "BASIC"
+                    updated_by: "John.doe@yourbrand.com"
+                    template_name: "Basic Android Template 2"
+                    template_version: "2.0"
+
       responses:
         '200':
           description: Template updated successfully.
@@ -371,7 +810,22 @@ paths:
                     description: The unique system-generated ID for the newly created version of the template.
                     example: "eca024b7-a8ea-4f31-9154-5b80c85d18a9"
         '400':
-          description: Bad Request. The request is malformed or the template ID is invalid.
+          description: Bad Request (Invalid Data or ID).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "400 Bad Request"
+                  message: "Invalid template id"
+                  details:
+                    - code: "MissingValue"
+                      target: "9925c8"
+                      message: "9925c8 is invalid template id."
+                  request_id: "BTkUaYgU"
+        '429':
+          description: Rate Limit Breach.
           content:
             application/json:
               schema:
@@ -388,7 +842,10 @@ paths:
       tags:
         - Templates
       summary: Search for Push Templates
-      description: Searches for push templates based on a variety of filter criteria. Sending an empty request body will fetch all templates.
+      description: |
+        Searches for push templates based on a variety of filter criteria. Sending an empty request body will fetch all templates.
+        
+        **Rate Limit:** 100 RPM.
       operationId: searchPushTemplates
       requestBody:
         description: A JSON object containing filters for the search.
@@ -398,15 +855,47 @@ paths:
             schema:
               type: object
               properties:
-                page: { type: integer, description: "The page number for pagination.", default: 1 }
-                entries: { type: integer, description: "Number of entries per page.", default: 10 }
-                template_name: { type: string, description: "Filter by template name (partial match supported)." }
-                platform: { type: array, items: { type: string, enum: [ANDROID, IOS] } }
-                template_source: { type: array, items: { type: string, enum: [API, MOENGAGE] } }
-                template_style: { type: array, items: { type: string, enum: [BASIC, STYLIZED] } }
-                template_type: { type: array, items: { type: string, enum: [CUSTOM, PRE_BUILT] } }
-                created_by: { type: array, items: { type: string, format: email } }
-                updated_by: { type: array, items: { type: string, format: email } }
+                page: 
+                  type: integer
+                  description: "The page number for pagination."
+                  default: 1
+                entries: 
+                  type: integer
+                  description: "Number of entries per page."
+                  default: 10
+                template_name: 
+                  type: string
+                  description: "Filter by template name (partial match supported)."
+                platform: 
+                  type: array
+                  items: 
+                    type: string
+                    enum: [ANDROID, IOS]
+                template_source: 
+                  type: array
+                  items: 
+                    type: string
+                    enum: [API, MOENGAGE]
+                template_style: 
+                  type: array
+                  items: 
+                    type: string
+                    enum: [BASIC, STYLIZED]
+                template_type: 
+                  type: array
+                  items: 
+                    type: string
+                    enum: [CUSTOM, PRE_BUILT]
+                created_by: 
+                  type: array
+                  items: 
+                    type: string
+                    format: email
+                updated_by: 
+                  type: array
+                  items: 
+                    type: string
+                    format: email
                 sort_params:
                   type: array
                   items:
@@ -422,6 +911,21 @@ paths:
                     properties:
                       external_template_id: { type: string, format: uuid }
                       version: { type: integer }
+            examples:
+              ComplexSearch:
+                summary: Complex Search Filter
+                value:
+                  page: 1
+                  entries: 10
+                  template_name: "NAME_OF_THE_TEMPLATE"
+                  platform: ["ANDROID", "IOS"]
+                  template_source: ["API","MOENGAGE"]
+                  template_style: ["BASIC", "STYLIZED"]
+                  template_type: ["CUSTOM", "PRE_BUILT"]
+                  created_by: ["user1@moengage.com", "user2@moengage.com"]
+                  updated_by: ["user1@moengage.com", "user2@moengage.com"]
+                  sort_params: [{"last_modified_date": "DESCENDING"}]
+
       responses:
         '200':
           description: Search completed successfully.
@@ -444,14 +948,59 @@ paths:
                         created_at: { type: string, format: date-time }
                         updated_by: { type: string }
                         updated_at: { type: string, format: date-time }
+              example:
+                data:
+                  - external_template_id: "9b09875c-edda-42e9-8f9f-a7d0a9a2aa26"
+                    version: 2
+                    ANDROID:
+                      basic_details:
+                        background_color_code: "#ffffff"
+                        notification_control_color: "Dark"
+                        apply_background_color: false
+                        title: "Winter Sale 50% Off"
+                        message: "Sample Message"
+                        summary: "Sample Summary"
+                        image_url: ""
+                        default_click_action: "RICH_LANDING"
+                        default_click_action_value: "https://www.google.com"
+                      buttons:
+                        - btn_name: "View Offers"
+                          click_action_type: "RICH_LANDING"
+                          click_action_value: "https://www.google.com"
+                      advanced:
+                        icon_type_in_notification: "appicon"
+                        make_notification_sticky: true
+                        dismiss_button_text: "Dismiss"
+                        auto_dismiss_notification: true
+                        dismissal_time_value: 24
+                        dismissal_time_multiplier: "hours"
+                    meta_info:
+                      platform: ["ANDROID"]
+                      template_style: "STYLIZED"
+                      template_id: "Stylizedandroid1"
+                      template_name: "Stylized Android Template 2"
+                      template_version: "1"
+                      updated_by: "Jane Doe"
+                      channel: "PUSH"
+                      template_source: "API"
+                      template_type: "CUSTOM"
+                    created_by: "John Doe"
+                    created_at: "2023-02-27T12:33:05.575000"
+                    updated_by: "Jane Doe"
+                    updated_at: "2023-02-27T12:33:05.575000"
+
         '400':
-          description: Bad Request. The search request contains invalid field values.
+          description: Bad Request.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimpleErrorResponse'
+              example:
+                title: "Invalid Field Value"
+                description: "Some of the field values are invalid"
+                code: "nGpUNpDQ"
         '429':
-          description: Rate Limit Breach. The number of requests has exceeded the allowed limit (100 RPM).
+          description: Rate Limit Breach.
           content:
             application/json:
               schema:
@@ -462,4 +1011,3 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimpleErrorResponse'
-
