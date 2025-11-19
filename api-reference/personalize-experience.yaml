@@ -114,16 +114,17 @@ paths:
             **Bad Request**
             
             This response is returned in case the payload is empty or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error_code: 'INVALID_PAYLOAD'
+                message: 'Request payload is empty or missing required fields.'
         "401":
-          description: |
-            **Authorization Failed**
-            
-            This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header.
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
-          description: |
-            **Internal Server error**
-            
-            This response is returned when the system runs into an unexpected error.
+          $ref: "#/components/responses/InternalServerError"
   /experiences/metadata:
     post:
       tags:
@@ -213,9 +214,9 @@ paths:
                       experience_key: "experience-3"
                       status: "Scheduled"
         "401":
-          description: Authorization Failed.
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
-          description: Internal Server error.
+          $ref: "#/components/responses/InternalServerError"
   /experiences/events:
     post:
       tags:
@@ -304,9 +305,9 @@ paths:
         "400":
           description: Bad Request. This response is returned in case the payload is empty or invalid.
         "401":
-          description: Authorization Failed. This response is returned when the authorization fails.
+          $ref: "#/components/responses/UnauthorizedError"
         "500":
-          description: Internal Server error. This response is returned when the system runs into an unexpected error.
+          $ref: "#/components/responses/InternalServerError"
 components:
   securitySchemes:
     basicAuth:
@@ -315,6 +316,15 @@ components:
       description: |
         Basic Authentication using your **Workspace ID** as the username and the **Personalize API Key** as the password.
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message detailing the issue.
     ExperienceFetchRequest:
       type: object
       properties:
@@ -467,7 +477,7 @@ components:
         customer_id:
           type: string
           description: |
-            Your brand provides this field, which should be pasted in the request. Generally, this is the phone number, email ID, or any other unique ID used to uniquely identify the user in MoEngage. This is essential for event mapping back to the user.
+            Your brand provides this field. Generally, this is the phone number, email ID, or any other unique ID used to uniquely identify the user in MoEngage. This is essential for event mapping back to the user.
             
             If the `customer_id` shared is not present in MoEngage, a new user profile will be created with the shared details.
         user_attributes:
@@ -556,3 +566,22 @@ components:
                 This field can be used to uniquely identify click tracking events on multiple elements on a page (e.g., "Add to Cart" vs "Wishlist").
               example: "Add to Cart"
           additionalProperties: true
+  responses:
+    UnauthorizedError:
+      description: Authorization Failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error_code: 'UNAUTHORIZED_ACCESS'
+            message: 'Authentication failed. Please check your Workspace ID and Personalize API Key.'
+    InternalServerError:
+      description: Internal Server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error_code: 'UNEXPECTED_ERROR'
+            message: 'An unexpected system error occurred. Please contact support with the request ID.'
