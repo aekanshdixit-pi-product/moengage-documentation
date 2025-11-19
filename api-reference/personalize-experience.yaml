@@ -187,3 +187,369 @@ paths:
       requestBody:
         description: Request body is typically empty for this metadata endpoint.
         required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: The request body is empty. Filtering is done via the `status` query parameter.
+      responses:
+        "200":
+          description: Successful retrieval of metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperienceMetadataResponse"
+              example:
+                metadata:
+                  count: 3
+                  experiences:
+                    - experience_name: "Experience 1"
+                      experience_key: "experience-1"
+                      status: "Active"
+                    - experience_name: "Experience 2"
+                      experience_key: "experience-2"
+                      status: "Paused"
+                    - experience_name: "Experience-3"
+                      experience_key: "experience-3"
+                      status: "Scheduled"
+        "401":
+          description: Authorization Failed.
+        "500":
+          description: Internal Server error.
+  /experiences/events:
+    post:
+      tags:
+        - Events
+      summary: Report Experience Events
+      description: |
+        Use this endpoint to report experience events. This is the recommended method for reporting analytics for all platforms (website, mobile, TV, etc.).
+        
+        You can report two types of events:
+        1. **Impression (Shown):** `MOE_PERSONALIZATION_MESSAGE_SHOWN`
+        2. **Click:** `MOE_PERSONALIZATION_MESSAGE_CLICKED`
+      x-mint:
+        content: |
+          ### SDK Usage: Experience Shown (Impression)
+          * **Web SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/39084350090772-Personalize-API-Experience-events-tracking#h_01JXWHX5488QT9XMEN0R5WPX6P) article.
+          * **Android SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/38474488247444-Personalize-Experience-Events-Tracking#h_01JXWHX5488QT9XMEN0R5WPX6P) article.
+          * **iOS SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/38532362954004-Personalize-Experience-Events-tracking#h_01JY0XF2DW9VKRF3S7G5FNR4XR) article.
+          
+          ### SDK Usage: Experience Click
+          * **Web SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/39084350090772/live_preview/01JZMXHTZJCMVA9BX0A67XD6VM#h_01JY0TEW61D02S5VMX4FV4PGZN) article.
+          * **Android SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/38474488247444-Personalize-Experience-Events-Tracking#h_01JY0TEW61D02S5VMX4FV4PGZN) article.
+          * **iOS SDK:** Refer to [this](https://developers.moengage.com/hc/en-us/articles/38532362954004-Personalize-Experience-Events-tracking#h_01JY0XF2DW05P2706PP5Y5PWS3) article.
+          
+          <Note>
+            **Authentication**
+            
+            This endpoint uses the same **Basic Authentication** method (Workspace ID & Personalize API Key) as the [Fetch Experience](#tag/Experiences/paths/~1experiences~1fetch/post) endpoint.
+          </Note>
+      parameters:
+        - in: header
+          name: MOE-APPKEY
+          required: true
+          schema:
+            type: string
+          description: This is the Workspace ID of your MoEngage account and needs to be passed along with the request.
+      requestBody:
+        description: An array of event elements to report.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExperienceEventRequest"
+            examples:
+              ImpressionEvent:
+                summary: Report Impression (Message Shown)
+                value:
+                  elements:
+                    - customer_id: "john@example.com"
+                      user_timezone_offset: 19800
+                      actions:
+                        - action: "MOE_PERSONALIZATION_MESSAGE_SHOWN"
+                          moe_event_uuid: "aa886712-4537-47c1-b126-2686efda2e26"
+                          event_time: 1725258666
+                          platform: "Web"
+                          attributes:
+                            cid: "66d55ae445921e4d35ae4368_F_T_WP_AB_2_P_0_AU_5A"
+                            experience: "Test Server side experience"
+                            moe_locale_id: "0"
+                            moe_variation_id: "2"
+                            audience_name: "All Users"
+                            audience_id: "5A"
+                            type: "Web Personalization"
+              ClickEvent:
+                summary: Report Click (Message Clicked)
+                value:
+                  elements:
+                    - customer_id: "john@example.com"
+                      user_timezone_offset: 19800
+                      actions:
+                        - action: "MOE_PERSONALIZATION_MESSAGE_CLICKED"
+                          moe_event_uuid: "bb997812-4537-47c1-b126-2686efda2e27"
+                          event_time: 1725258670
+                          platform: "Web"
+                          attributes:
+                            cid: "66d55ae445921e4d35ae4368_F_T_WP_AB_2_P_0_AU_5A"
+                            experience: "Test Server side experience"
+                            moe_locale_id: "0"
+                            moe_variation_id: "2"
+                            b_id: "Add to Cart"
+                            audience_name: "All Users"
+                            audience_id: "5A"
+                            type: "Web Personalization"
+      responses:
+        "200":
+          description: Success. The event was successfully submitted.
+        "400":
+          description: Bad Request. This response is returned in case the payload is empty or invalid.
+        "401":
+          description: Authorization Failed. This response is returned when the authorization fails.
+        "500":
+          description: Internal Server error. This response is returned when the system runs into an unexpected error.
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        Basic Authentication using your **Workspace ID** as the username and the **Personalize API Key** as the password.
+  schemas:
+    ExperienceFetchRequest:
+      type: object
+      properties:
+        identifiers:
+          type: object
+          description: User identification object.
+          properties:
+            customer_id:
+              type: string
+              description: |
+                Your brand provides this field. Generally, this is the phone number, email ID, or any other unique ID used to uniquely identify the user in MoEngage.
+                
+                This is essential for fetching experiences configured for audiences segmented based on user attributes/behavior.
+                
+                **Fallback Logic:** If the `customer_id` is not part of the request **OR** is inaccurate **OR** is not present in MoEngage, `user_identifiers` will be used to uniquely identify the user. 
+              example: "john.doe@example.com"
+            user_identifiers:
+              type: object
+              description: |
+                Additional identifiers used if **Identity Resolution** is enabled.
+                
+                If `user_identifiers` is not part of the request **OR** the `user_identifier` is not present in MoEngage, the API will return experiences configured for **All users**.
+              properties:
+                u_em:
+                  type: string
+                  description: User Email
+                  example: "user@example.com"
+                u_mb:
+                  type: string
+                  description: Mobile Number
+                  example: "+1234567890"
+              additionalProperties: true
+        experience_key:
+          type: array
+          items:
+            type: string
+          description: |
+            A list of experience keys to fetch.
+            
+            If no `experience_key` is specified, the API will return:
+            * All experiences for the specified `customer_id`, **OR**
+            * All experiences configured for **all users** if `customer_id` is not part of the request.
+          example:
+            - "experience-1"
+            - "experience-2"
+        Custom_attribute:
+          type: string
+          description: |
+            This field must contain the same value that has been used to identify users using the In-session attribute **Query Parameter**.
+            
+            Example: `utm_medium:"email"`
+          example: "utm_medium:email"
+        DAY_OF_THE_WEEK:
+          type: string
+          description: |
+            This field must contain the day of the week (e.g., "Sunday") for evaluating IN-session attribute-based experiences.
+          example: "Sunday"
+        TIME_OF_THE_DAY:
+          type: string
+          description: |
+            This field must contain the time of the day (00-23) for evaluating IN-session attribute-based experiences.
+          example: "19"
+        USER_IP_ADDRESS:
+          type: string
+          description: |
+            This field must contain the user’s IP address to fetch experiences for audiences segmented based on geo-location.
+          example: "192.168.1.1"
+        USER_AGENT:
+          type: string
+          description: |
+            This field must contain the `USER-AGENT` HTTP header. Useful for delivering experiences based on in-session attributes like Device Type.
+          example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ..."
+    ExperienceFetchResponse:
+      type: object
+      properties:
+        experiences:
+          type: object
+          description: An object where each key is an experience_key.
+          additionalProperties:
+            $ref: "#/components/schemas/ExperiencePayload"
+    ExperiencePayload:
+      type: object
+      properties:
+        payload:
+          type: object
+          description: This field contains a list of all the key-value pairs defined as part of the experience.
+          additionalProperties:
+            type: object
+            properties:
+              value:
+                type: string
+                description: This field contains the value of the keys defined in the payload.
+              data_type:
+                type: string
+                description: This field specifies the data type of the value of each key.
+        experience_context:
+          type: object
+          description: |
+            A JSON object to be used for reporting pageviews/impressions and/or tracking clicks via the Events API.
+          properties:
+            cid:
+              type: string
+            experience:
+              type: string
+            moe_locale_id:
+              type: string
+            moe_variation_id:
+              type: string
+            audience_name:
+              type: string
+            audience_id:
+              type: string
+            type:
+              type: string
+    ExperienceMetadataResponse:
+      type: object
+      properties:
+        metadata:
+          type: object
+          properties:
+            count:
+              type: integer
+              format: int32
+            experiences:
+              type: array
+              items:
+                type: object
+                properties:
+                  experience_name:
+                    type: string
+                  experience_key:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - Active
+                      - Paused
+                      - Scheduled
+    ExperienceEventRequest:
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventElement"
+    EventElement:
+      type: object
+      properties:
+        customer_id:
+          type: string
+          description: |
+            Your brand provides this field. Generally, this is the phone number, email ID, or any other unique ID used to uniquely identify the user in MoEngage.
+            
+            If the `customer_id` shared is not present in MoEngage, a new user profile will be created with the shared details.
+        user_attributes:
+          type: object
+          description: |
+            This field is used to update the details of a user identified by `customer_id`. If the `customer_id` does not exist, a new user will be created with the details present in `user_attributes`.
+          additionalProperties: true
+          example:
+            name: "John Doe"
+            first_name: "John"
+        user_timezone_offset:
+          type: integer
+          description: |
+            The difference in time between UTC and the local system time in seconds.
+            
+            Example: `19800` for IST (UTC+0530).
+          example: 19800
+        actions:
+          type: array
+          description: Multiple actions or events performed by a user can be grouped together in a single API call.
+          items:
+            $ref: "#/components/schemas/EventAction"
+    EventAction:
+      type: object
+      required:
+        - action
+        - moe_event_uuid
+        - event_time
+        - platform
+        - attributes
+      properties:
+        action:
+          type: string
+          description: This field identifies the action or the event performed by the user.
+          enum:
+            - MOE_PERSONALIZATION_MESSAGE_SHOWN
+            - MOE_PERSONALIZATION_MESSAGE_CLICKED
+        moe_event_uuid:
+          type: string
+          format: uuid
+          description: Unique identifier to be sent for each event to prevent duplication.
+          example: "aa886712-4537-47c1-b126-2686efda2e26"
+        event_time:
+          oneOf:
+            - type: integer
+              description: Epoch time in seconds.
+              example: 1725258666
+            - type: string
+              format: date-time
+              description: ISO 8601 string.
+          description: This field represents UTC time at which the event happened.
+        platform:
+          type: string
+          description: |
+            The platform on which the user is shown the personalization event. If the value is missing, **Unknown** will be used.
+          enum:
+            - Android
+            - IOS
+            - Web
+            - TV
+            - Unknown
+        attributes:
+          type: object
+          description: |
+            This field is the `experience_context` sent as part of the response to the Experience Fetch API request.
+          properties:
+            cid:
+              type: string
+            experience:
+              type: string
+            moe_locale_id:
+              type: string
+            moe_variation_id:
+              type: string
+            audience_name:
+              type: string
+            audience_id:
+              type: string
+            type:
+              type: string
+            b_id:
+              type: string
+              description: |
+                This field can be used to uniquely identify click tracking events on multiple elements on a page (e.g., "Add to Cart" vs "Wishlist").
+              example: "Add to Cart"
+          additionalProperties: true
