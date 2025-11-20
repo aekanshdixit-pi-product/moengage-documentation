@@ -28,14 +28,12 @@ servers:
     variables:
       dc:
         default: '1'
-        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, 4,5, 6.'
+        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, 4, etc.'
         enum:
           - '1'
           - '2'
           - '3'
           - '4'
-          - '5'
-          - '6'
   - url: 'https://fileimports-data-api-0{dc}.moengage.com/v1.0/data'
     description: MoEngage File Imports API Server
     variables:
@@ -59,14 +57,23 @@ paths:
       summary: Create or Update User
       x-mint:
         content: |
-          The 'dc' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping.
+          User API helps add or update users and user properties in MoEngage.
           
           **Use cases:**
           * Create a new user
           * Create new user property
           * Update existing user properties of users
 
-      description: "This helps add or update users and user properties in MoEngage."
+          <Note>
+          **Note:**
+          * "id", "_id", and "" keywords are blocked and not to be used as user attribute names.
+          * You can not use "moe_" as a prefix while naming user attributes. It is a system prefix and using it might result in periodic blacklisting without prior communication.
+          </Note>
+
+          ### Array Support
+          If you want to pass an attribute in an array, the appropriate syntax for that is:
+          Example: "Array_attributeName":["abc","123"],
+      description: "Adds new users or updates properties of existing users in MoEngage."
       parameters:
         - name: Workspace_ID
           in: path
@@ -596,7 +603,9 @@ paths:
                       request_id:
                         type: string
                         description: "A unique identifier for the request, useful for debugging."
-
+                      attribute:
+                        type: string
+                        description: "The attribute in the payload that caused the error."
               examples:
                 auth_error:
                   summary: Authorization errors
@@ -636,7 +645,9 @@ paths:
                       request_id:
                         type: string
                         description: "A unique identifier for the request, useful for debugging."
-
+                      attribute:
+                        type: string
+                        description: "The attribute in the payload that caused the error."
               examples:
                 account_blocked:
                   summary: Sample response for when your account is blocked
@@ -684,7 +695,9 @@ paths:
                       request_id:
                         type: string
                         description: "A unique identifier for the request, useful for debugging."
-
+                      attribute:
+                        type: string
+                        description: "The attribute in the payload that caused the error."
               examples:
                 payload_exceeded:
                   summary: Payloads exceeding the size limit
@@ -716,7 +729,9 @@ paths:
                       request_id:
                         type: string
                         description: "A unique identifier for the request, useful for debugging."
-
+                      attribute:
+                        type: string
+                        description: "The attribute in the payload that caused the error."
               examples:
                 unsupported_media_type:
                   summary: Unsupported media type
@@ -748,7 +763,9 @@ paths:
                       request_id:
                         type: string
                         description: "A unique identifier for the request, useful for debugging."
-
+                      attribute:
+                        type: string
+                        description: "The attribute in the payload that caused the error."
               examples:
                 rate_limit:
                   summary: Rate limit breach
@@ -780,7 +797,9 @@ paths:
                       request_id:
                         type: string
                         description: "A unique identifier for the request, useful for debugging."
-
+                      attribute:
+                        type: string
+                        description: "The attribute in the payload that caused the error."
               examples:
                 unknown_error:
                   summary: Unknown errors
@@ -790,7 +809,6 @@ paths:
                       message: "Internal Server Error"
                       type: "ServerError"
                       request_id: "ServErr123"
-                      
 
   /customer/merge:
     post:
