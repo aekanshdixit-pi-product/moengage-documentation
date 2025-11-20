@@ -5,7 +5,7 @@ info:
   version: '1.0'
 servers:
   - url: 'https://api-0{X}.moengage.com/core-services/v1'
-    description: MoEngage Core Services API Server (for Stats)
+    description: MoEngage Core Services API Server (for Stats).
     variables:
       X:
         default: '1'
@@ -23,7 +23,16 @@ paths:
       tags:
         - Stats
       summary: Get Campaign Stats
-      description: This API allows you to fetch detailed campaign stats synchronized in real time. This API fetches data at the platform level and provides data for all types of campaigns. 
+      description: |
+        The **Stats API** allows you to fetch detailed campaign statistics synchronized in real time.
+        This API fetches data at the platform level and provides stats for all types of campaigns.
+      x-mint:
+        content: |
+          <Note>
+
+          This API provides all version stats, and the call rate is limited to **100 API calls per minute or workspace.**
+
+          </Note>
       operationId: getCampaignStats
       security:
         - basicAuth: []
@@ -33,7 +42,10 @@ paths:
           required: true
           schema:
             type: string
-          description: 'This is the workspace ID (earlier APP ID) of your MoEngage workspace. Found in Settings -> Account -> APIs -> Workspace ID.'
+          description: |
+            This is the **Workspace ID** (earlier APP ID) of your MoEngage workspace, which must be passed in the request.
+
+            You can find your MoEngage Workspace ID in the MoEngage Dashboard under **Settings** -> **Account** -> **APIs** -> **Workspace ID**.
           example: 'YOUR_WORKSPACE_ID_XXXX'
       requestBody:
         $ref: '#/components/requestBodies/CampaignStatsRequest'
@@ -222,7 +234,9 @@ components:
     basicAuth:
       type: http
       scheme: basic
-      description: 'Basic Authentication using Workspace ID (username) and Campaign Report API Key (password) from MoEngage Dashboard > Settings > Account > APIs.'
+      description: |
+        Basic Authentication uses your **Workspace ID** (username) and your **Campaign Report API Key** (password).
+        These credentials can be found in the MoEngage Dashboard under **Settings** > **Account** > **APIs**.
     apiKeySignature:
       type: apiKey
       in: header
@@ -313,7 +327,7 @@ components:
       properties:
         request_id:
           type: string
-          description: A request ID created by the user to track API calls.
+          description: This field shows the request ID created by a user. Helps to know the API calls made by the client.
         campaign_ids:
           type: array
           items:
@@ -328,11 +342,13 @@ components:
         end_date:
           type: string
           format: date
-          description: 'The campaign''s end date in YYYY-MM-DD format. The range between start and end dates should not exceed 30 days.'
+          description: |
+            The campaign's end date in YYYY-MM-DD format. 
+            The days between the start and end dates should not exceed 30 days.
           example: '2024-12-23'
         attribution_type:
           type: string
-          description: The attribution type for conversion stats.
+          description: The attribution type that should be picked to show conversion stats.
           enum:
             - VIEW_THROUGH
             - CLICK_THROUGH
@@ -341,11 +357,13 @@ components:
             - CLICK_CONVERSIONS
         offset:
           type: integer
-          description: The position of a record in a dataset (for pagination). Default is 0.
+          description: |
+            The position of a record in a dataset (for pagination). Default is 0. 
+            For example, set the offset to 50 to see the data from page 51.
           default: 0
         limit:
           type: integer
-          description: The maximum number of campaigns to return. Default is 10, max is 10.
+          description: The maximum number of campaigns to return. The default and maximum limit is **10** campaigns.
           default: 10
           maximum: 10
         metric_type:
@@ -362,13 +380,15 @@ components:
           description: The response ID, which is the same as the request ID passed in the payload.
         total_campaigns:
           type: integer
-          description: The total number of campaigns requested in the payload.
+          description: The total number of campaigns that are requested in the payload.
         current_page:
           type: integer
           description: The current page number.
         total_pages:
           type: integer
-          description: The total number of pages.
+          description: |
+            The total number of pages. It is equal to the total campaigns,
+            which is limited to 10 for each call and 10 to be displayed for each page.
         data:
           type: object
           description: 'A map where each key is a Campaign ID. The value is an array of campaign stat objects.'
@@ -383,7 +403,9 @@ components:
           $ref: '#/components/schemas/Platforms'
     Platforms:
       type: object
-      description: 'An object where keys are platform names (e.g., "android", "EMAIL", "WEB").'
+      description: |
+        An object where keys are platform names (e.g., "android", "EMAIL", "WEB"). 
+        This field indicates the platforms where the user has engaged with your communication.
       additionalProperties:
         $ref: '#/components/schemas/PlatformStats'
     PlatformStats:
@@ -393,7 +415,7 @@ components:
           $ref: '#/components/schemas/Locales'
     Locales:
       type: object
-      description: 'An object where keys are locale names (e.g., "all_locales").'
+      description: 'An object where keys are locale names (e.g., "all_locales"). This field indicates the details of the locales configured.'
       additionalProperties:
         $ref: '#/components/schemas/LocaleStats'
     LocaleStats:
@@ -403,7 +425,11 @@ components:
           $ref: '#/components/schemas/Variations'
     Variations:
       type: object
-      description: Stats broken down by variation and control groups.
+      description: |
+        This object contains details of the variations of your locale. It includes:
+        - `all_variations`
+        - `campaign_control_group`
+        - `global_control_group`
       properties:
         all_variations:
           $ref: '#/components/schemas/VariationDetails'
@@ -429,69 +455,103 @@ components:
       properties:
         attempted:
           type: integer
+          description: This field shows the number of communication attempts made from a campaign.
         sent:
           type: integer
+          description: This field shows the number of communications sent from a campaign.
         failed:
           type: integer
+          description: This field shows the number of communications that failed to reach customers from a campaign.
         bounced:
           type: integer
+          description: This field shows the number of communications bounced for various reasons (Email channel only).
         impression:
           type: integer
+          description: This field shows the number of times your communication appeared to the user from your campaign.
         click:
           type: integer
+          description: This field shows the number of times your users clicked the message from your communication.
         opened:
           type: integer
+          description: This field shows the number of communications opened by the user (Email channel only).
         delivered:
           type: integer
+          description: This field shows the number of communications delivered to the customer.
         read:
           type: integer
+          description: This field shows the number of customers who read your communications (WhatsApp channel only).
         closed_click:
           type: integer
+          description: This field shows the number of messages closed by your customers by clicking the close button.
         unsubscribe:
           type: integer
+          description: This field shows the number of customers who have unsubscribed from your email (Email channel only).
         ctr:
           type: number
           format: double
+          description: |
+            This field shows the click-through rates (CTR) from your communication.
+            Calculated as **CTR = Clicks / Impressions**.
         delivery_rate:
           type: number
           format: double
+          description: This field shows the rate of delivery of your communication to the customers.
         read_rate:
           type: number
           format: double
+          description: |
+            This field shows the message rate of your communication that your customers have read (WhatsApp channel only).
+            Calculated as **UniqueRead / UniqueDelivered * 100**.
         successfully_synced:
           type: integer
+          description: Number of users successfully synced to the audience (FB Audience, Google Ads Audience).
         sent_rate:
           type: number
           format: double
+          description: |
+            This field shows the rate of your communication sent to your customers.
+            Calculated as **Sent / Attempted * 100**.
         failure_rate:
           type: number
           format: double
+          description: |
+            This field shows the rate of failures of your communication.
+            Calculated as **(Attempted - Sent) / Attempted * 100**.
         eligible_users:
           type: integer
+          description: This field shows the number of eligible users for your campaign (FB Audience, Google Ads Audience).
         complaint:
           type: integer
+          description: This field shows the count of complaints registered by your customers (Email channel only).
         hard_bounce:
           type: integer
+          description: This field shows the hard bounces for the Emails you sent (Email channel only).
         soft_bounce:
           type: integer
+          description: This field shows the soft bounces for the Emails you sent (Email channel only).
         open_rate:
           type: number
           format: double
+          description: This field shows the open rates of the Emails you sent (Email channel only).
         ctor:
           type: number
           format: double
+          description: This field shows the click-through open rates (CTOR) of the Emails you sent (Email channel only).
         unsub_rate:
           type: number
           format: double
+          description: This field shows the unsubscription rates for your Emails (Email channel only).
         bounce_rate:
           type: number
           format: double
+          description: This field shows the bounce rates for the Emails you sent (Email channel only).
         complaints_rate:
           type: number
           format: double
+          description: This field shows the complaint rates for the Emails you sent (Email channel only).
     ConversionGoalStats:
       type: object
-      description: 'A map where keys are conversion goal names (e.g., "Goal 1").'
+      description: 'A map where keys are conversion goal names (e.g., "Goal 1"). This object shows the conversion goal stats of your campaign.'
       additionalProperties:
         $ref: '#/components/schemas/ConversionGoal'
     ConversionGoal:
@@ -502,12 +562,15 @@ components:
           type: string
         conversions:
           type: integer
+          description: This field shows the number of conversions from your communication.
         cvr:
           type: number
           format: double
+          description: This field shows the conversion rate (CVR) for your communication.
         uplift:
           type: number
           format: double
+          description: This field shows the percentage change in the performance metrics.
         total:
           type: integer
         unique:
@@ -526,23 +589,33 @@ components:
       properties:
         reachable_users_in_segment:
           type: integer
+          description: This field shows the number of reachable customers in a segment.
         segment_after_uninstall:
           type: integer
+          description: This field shows the count of customers after uninstall (Push channel only).
         after_fc:
           type: integer
+          description: |
+            This field shows the number of users obtained after removing emails
+            that have crossed Frequency Capping (FC) from the After Invalid/Duplicate removal count.
         users_after_dup:
           type: integer
+          description: This field shows the customer count after duplication (Push channel only).
         sent:
           type: integer
+          description: This field shows the count of communications you have sent.
         user_devices:
           type: integer
+          description: This field shows the details of the devices used by the customer (Push channel only).
         impressions:
           type: integer
+          description: This field shows the number of impressions made by your communication (Push channel only).
         active_device_token:
           type: integer
+          description: This field shows the count of active device tokens (Push channel only).
         after_invalid_removal:
           type: integer
-        # Email-specific fields from sample
+          description: This field shows the count of customers after invalid removal.
         total_user_in_segment:
           type: integer
         user_with_email:
@@ -557,7 +630,7 @@ components:
           type: integer
     FailureBreakdown:
       type: object
-      description: 'A map where keys are failure reasons (e.g., "duplicate__emails_removed").'
+      description: 'A map where keys are failure reasons (e.g., "duplicate__emails_removed"). This object shows the failure breakdown of your campaign.'
       additionalProperties:
         type: integer
     ErrorResponseSimple:
