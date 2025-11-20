@@ -868,13 +868,103 @@ paths:
                   operation:
                     type: string
                     description: This field contains “created” when there is no error in the payload, and the user merge is successful.
-                    example: created
+                    example: created           
         '400':
-          description: Bad Request.
+          description: "This response is returned when the required parameters are missing from the request or when the provided parameters are invalid."
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        description: "The type or category of the error (Malformed JSON)."
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                malformed_json:
+                  summary: Malformed JSON request
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Could not decode the request body. The JSON was incorrect or not   encoded as UTF-8."
+                      type: "Malformed JSON"
+                      request_id: "pIvbWnGT"
+                app_blacklisted:
+                  summary: App blacklisted by MoEngage
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Your account is blacklisted, Please contact MoEngage."
+                      type: "Blacklisted"
+                      request_id: "pIvbWnGT"
+                invalid_workspaceid:
+                  summary: Invalid Workspace ID in request parameter
+                  value:
+                    status: "fail"
+                    error:
+                      message: "given app_id is invalid/blocked"
+                      type: "InvalidParams"
+                      request_id: "pIvbWnGT"
+                missing_workspaceid:
+                  summary: Workspace ID not present in the Request Parameter
+                  value:
+                    status: "fail"
+                    error:
+                      message: "app_id is required in path/query params."
+                      type: "ParamsRequired"
+                      request_id: "pIvbWnGT"
+                invalid_payload:
+                  summary: Workspace ID not present in the Request Parameter
+                  value:
+                    status: "fail"
+                    error:
+                      message: "A valid JSON document is required."
+                      type: "Body type is not JSON"
+                      request_id: "pIvbWnGT"  
+                empty_request:
+                  summary: Empty request body
+                  value:
+                    status: "fail"
+                    error:
+                      message: "A valid JSON document is required."
+                      type: "Body type is not JSON"
+                      request_id: "pIvbWnGT" 
+                invalid_datatype:
+                  summary: Invalid datatype
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "merged_user"
+                      message: "merged_user is expected to be String or Unicode String."
+                      type: "MissingAttributeError"
+                      request_id: "dBSEscwl"  
+                missing_contenttype:
+                  summary: Content type header is missing in the request
+                  value:
+                    status: "fail"
+                    error:
+                      message: "The Content-Type Header is required."
+                      type: "Missing header value"
+                      request_id: "pIvbWnGT" 
+                suspended_account:
+                  summary: Suspended MoEngage account used in the request
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Account Suspended."
+                      type: "Account Suspended"
+                      request_id: "pIvbWnGT"            
         '401':
           description: Unauthorized.
           content:
