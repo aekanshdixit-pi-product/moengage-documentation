@@ -1,8 +1,10 @@
 openapi: 3.0.3
-
 info:
   title: MoEngage Message Archival API
-  description: This API allows you to store and access any communication sent to customers for later access.
+  description: |
+    This API allows you to store and access any communication sent to customers for later access. 
+    
+    For more information, refer to [Message Archival](https://help.moengage.com/hc/en-us/articles/16229242010900-Message-Archival).
   version: '1.0'
 
 servers:
@@ -11,7 +13,9 @@ servers:
     variables:
       X:
         default: '1'
-        description: 'Your MoEngage Data Center (DC) number. Refer to MoEngage docs for your correct DC.'
+        description: |
+          Your MoEngage Data Center (DC) number. Each customer is hosted on a different data center. 
+          Refer to the [Data Center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25) to find your value for X.
 
 tags:
   - name: Message Archival
@@ -27,14 +31,30 @@ paths:
         - Message Archival
       summary: View Archived Message
       operationId: viewArchivedMessage
-      description: You can use this API to store any communication sent to customers for later access. For more information, refer to Message Archival.
+      description: |
+        You can use this API to store any communication sent to customers for later access.
+      x-mint:
+        content: |
+          <Note>
+            **Data Center Configuration**
+            
+            Each customer is hosted on a different data center. You must replace `{X}` in the Base URL with your specific Data Center number. Check the [mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25) to find yours.
+          </Note>
+
+          ### Rate Limit
+          The rate limit for this endpoint is **1000 RPM**.
+
+          ### Postman Collection
+          We have made it easy for you to test the APIs. [Click here to view it in Postman](https://moengage-dev.postman.co/workspace/New-Team-Workspace~02fb2ecf-217a-466f-9e1a-25bfb761e352/collection/9707451-eb26aac6-94f9-48e2-ad7f-c2b930964895?action=share&creator=9707451).
       parameters:
         - name: MOE-APPKEY
           in: header
           required: true
           schema:
             type: string
-          description: 'This is the workspace ID (earlier APP ID) of your MoEngage workspace. Found in Settings -> Account -> APIs -> Workspace ID.'
+          description: |
+            This is the Workspace ID (earlier APP ID) of your MoEngage workspace.
+            Found in **Settings -> Account -> APIs -> Workspace ID**.
           example: 'YOUR_WORKSPACE_ID_XXXX'
       requestBody:
         description: Request payload to identify the message to be retrieved.
@@ -107,8 +127,12 @@ paths:
           $ref: '#/components/responses/Error400'
         '401':
           $ref: '#/components/responses/Error401'
+        '429':
+          description: Too Many Requests. Rate limit breach.
         '500':
           $ref: '#/components/responses/Error500'
+        '502':
+          description: Server Error. Something went wrong on MoEngage.
 
 components:
   securitySchemes:
@@ -116,23 +140,15 @@ components:
       type: http
       scheme: basic
       description: |
-        The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
-
-        {"Authorization":"Basic Base64_ENCODED_APPKEY_APIKEY=="}
-
-        The username and password details can be obtained from the MoEngage Dashboard. We've revamped the settings UI in the Dashboard. If you're using the API for the first time, follow these steps:
+        The API request is authenticated through Basic Authentication (Base64-encoded `username:password`).
         
-        1. Navigate to Settings -> Account -> APIs.
-        2. Copy the following details:
-              a. Username: Under Workspace ID (earlier app id), click the copy icon to copy the username.
-              b. Password: In the API keys section, click the copy icon in the Data tile to copy the API key.
-        3. Use these details to authenticate the API requests.
-
-        ### Rate Limit
-        The rate limit is 1000 RPM.
-
-        ### Postman Collections
-        We have made it easy for you to test the APIs. Click here to view it in Postman.
+        **How to obtain credentials:**
+        1. Navigate to **Settings -> Account -> APIs**.
+        2. **Username:** Copy from the "Workspace ID" section.
+        3. **Password:** Copy the "API Key" from the "Data" tile in the API Keys section.
+        
+        Header format: `{"Authorization":"Basic Base64_ENCODED_APPKEY_APIKEY=="}`
+  
   schemas:
     ArchivalRequest:
       type: object
@@ -148,10 +164,11 @@ components:
       properties:
         user_id:
           type: string
-          description: Unique identifier of the user.
+          description: This field denotes the unique identifier of the user.
         delivery_type:
           type: string
-          description: Delivery type of the channel.
+          description: |
+            This field denotes the delivery type of the channel.
           enum:
             - ONE_TIME
             - PERIODIC
@@ -162,7 +179,14 @@ components:
             - BUSINESS_EVENT_TRIGGERED
         campaign_type:
           type: string
-          description: The campaign type.
+          description: |
+            This field denotes the campaign type.
+            
+            **Supported Values:**
+            * **Push:** General Push Campaign, Autotrigger Campaign, Geo-fencing Campaign, Business Event Trigger Push Campaign
+            * **SMS:** sms, Business Event Trigger SMS Campaign
+            * **Email:** Email Campaign, Email Triggers, Business Event Trigger Email Campaign
+            * **Alerts:** Inform Email, Inform SMS, Inform Push
           enum:
             - General Push Campaign
             - Autotrigger Campaign
@@ -191,10 +215,10 @@ components:
           example: 1716972486
         campaign_id:
           type: string
-          description: The campaign ID.
+          description: This field denotes the campaign ID.
         event_name:
           type: string
-          description: The name of the event.
+          description: The name of the event (e.g., 'Email Sent', 'SMS Sent', 'Notification Sent iOS').
           enum:
             - Email Sent
             - SMS Sent
@@ -213,7 +237,12 @@ components:
             - MWEB
         event_id:
           type: string
-          description: 'The event ID. Required for event-triggered campaigns (moe_event_id or moe_transaction_id for alerts).'
+          description: |
+            The event ID. **Required for event-triggered campaigns.**
+            
+            * You must pass `moe_event_id` if any event attribute is present for campaigns.
+            * You must pass `moe_transaction_id` for alerts.
+    
     ArchivalResponseSuccess:
       type: object
       properties:
@@ -222,6 +251,7 @@ components:
           example: true
         data:
           $ref: '#/components/schemas/ArchivalData'
+    
     ArchivalData:
       type: object
       properties:
@@ -233,6 +263,7 @@ components:
           $ref: '#/components/schemas/MessageContent'
         file_info:
           $ref: '#/components/schemas/FileInfo'
+    
     MessageDetails:
       type: object
       properties:
@@ -280,6 +311,7 @@ components:
             id:
               type: string
               example: stylizedbasic
+    
     MessageContent:
       type: object
       properties:
@@ -295,6 +327,7 @@ components:
           items:
             type: string
             format: uri
+    
     FileInfo:
       type: object
       properties:
@@ -304,6 +337,7 @@ components:
         file_name:
           type: string
           example: '66560c2d2880326031c474a6_pramodseg_1716915262_push_android.json'
+    
     ErrorResponse400:
       type: object
       properties:
@@ -313,6 +347,7 @@ components:
         error_message:
           type: string
           example: 'This event is unsupported to view message copy. The supported events are [...]'
+    
     ErrorResponse401:
       type: object
       properties:
@@ -322,6 +357,7 @@ components:
         error:
           type: string
           example: Invalid data key
+    
     ErrorResponse500:
       type: object
       properties:
@@ -334,9 +370,10 @@ components:
         code:
           type: string
           example: 'BiaFuAzn-aefa0b0e-2c88-4106-8d07-0f0c53513e48'
+
   responses:
     Success200:
-      description: Success. The message content is returned.
+      description: Success. The server successfully processed the request and returned the message content.
       content:
         application/json:
           schema:
@@ -383,7 +420,7 @@ components:
             status: false
             error_message: "This event is unsupported to view message copy. The supported events are ['Email Sent', 'SMS Sent', 'Notification Sent iOS', 'Notification Received Android', 'Notification Received Web']"
     Error401:
-      description: Authentication Failure. Invalid data key.
+      description: Authentication Failure. Invalid data key or missing headers.
       content:
         application/json:
           schema:
