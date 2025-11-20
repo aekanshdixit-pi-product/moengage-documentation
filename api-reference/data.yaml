@@ -1296,23 +1296,164 @@ paths:
               $ref: '#/components/schemas/DeleteUserRequest'
       responses:
         '200':
-          description: Delete request accepted.
+          description: This response is returned when the request is processed successfully. 
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccess'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: "This field contains the status of the request and specifies whether the request was successful. Supported values are success, fail"
+                    example: success
+                  message:
+                    type: string
+                    description: This field contains information about whether the response is being processed, the user is deleted, and so on.
+                    example: Your request has been accepted and will be processed soon 
+              examples:
+                success_response:
+                  summary: Successful request
+                  value:
+                    status: "success"
+                    message: "Your request has been accepted and will be processed soon."
         '400':
-          description: Bad Request.
+          description: "This response is returned when the required parameters APP KEY, user_id, etc are missing from the request or when the provided params are invalid."
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: This field contains the status of the request and specifies whether the request was successful. Supported values are success, fail
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "This field contains the error message and describes the reason for the error."
+                      type:
+                        type: string
+                        description: "The type or category of the error (e.g., Authentication Required, Invalid Params)."
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                bad_request:
+                  summary: Bad Requests
+                  value:
+                    status: "fail"
+                    error:
+                      message: "User doesn't exists with customer id b3XSJ7iXvqlCcrYGd5SB5m2m93eG9-9e9HPXd9GtufHvHueWm-mnuiAxUk7DGI1MKg=="
+                      type: "Not Found"
+                      request_id: "bYvNTyWb"
         '401':
-          description: Unauthorized.
+          description: 	This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: This field contains the status of the request and specifies whether the request was successful. Supported values are success, fail
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "This field contains the error message and describes the reason for the error"
+                      type:
+                        type: string
+                        description: 'The type or category of the error (e.g., Authentication Required, Invalid Params).'
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                authorization_error:
+                  summary: Authorization Errors
+                  value:
+                    status: "fail"
+                    error:
+                      message: "App Secret key mismatch. Please login to the dashboard to verify key"
+                      type: "Authentication required"
+                      request_id: "pIvbWnGT"
+        '403':
+          description: This response is returned when your MoEngage account has been blocked or suspended.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: This field contains the status of the request and specifies whether the request was successful. Supported values are success, fail
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: This field contains the error message and describes the reason for the error
+                      type:
+                        type: string
+                        description: "The type or category of the error (e.g., Authentication Required, Invalid Params)."
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                appid_invalid:
+                  summary: Blocked/Suspended Accounts
+                  value:
+                    status: "fail"
+                    error:
+                      message: "given app_id is invalid/blocked"
+                      type: "InvalidParams"
+                      request_id: "pIvbWnGT"             
+        '429':
+          description: This response is returned when the number of requests per minute has exceeded the rate limit.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                    description: This field is present in the response in the case of 429 and 5xx errors and contains the type of error.
+                  error_des:
+                    type: string
+                    description: This field is present in the response in the case of 429 and 5xx errors and contains the error description.  
+              examples:
+                rate_limit:
+                  summary: Rate limit breach
+                  value:
+                    status: "fail"
+                    title: "Rate limit exceeded"
+                    error_des:
+                      description: "Rate limit exceeded"
+        '500':
+          description: This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                    description: This field is present in the response in the case of 429 and 5xx errors and contains the type of error.
+                  error_des:
+                    type: string
+                    description: This field is present in the response in the case of 429 and 5xx errors and contains the error description.  
+              examples:
+                unknown_error:
+                  summary: Unknown errors
+                  value:
+                    status: "fail"
+                    title: "Internal Error"
+                    error_des:
+                      description: "Please Contact Moengage Team"
 
   # SECTION 2: EVENT
   /event/{Workspace_ID}:
