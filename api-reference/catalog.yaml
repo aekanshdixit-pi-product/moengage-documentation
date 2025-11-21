@@ -5,7 +5,7 @@ info:
     This API allows for the management of product and item catalogs, including **creation**, **attribute definition**, and **item ingestion, updates, and deletion**.
 
     Authentication is handled via **Basic Auth** (using your Workspace ID as username and API Key as password), and all requests additionally require the `MOE-APPKEY` header (Workspace ID).
-    
+
     The API has a platform-wide rate limit of **100 requests/minute OR 1000 requests/hour**, with a maximum payload size of **5MB**.
   version: '1.0'
 servers:
@@ -32,7 +32,8 @@ paths:
       summary: Create a New Catalog
       operationId: createCatalog
       description: |
-        This API allows you to create a new catalog with a unique name and specify the necessary attributes along with their respective data types.
+        This API allows you to create a new catalog by specifying a unique name and defining its necessary attributes along with their respective data types.
+        A catalog schema is mandatory before any items can be ingested.
       requestBody:
         required: true
         content:
@@ -70,7 +71,7 @@ paths:
                     type: string
                     description: |
                       The unique ID corresponding to a successful catalog creation.
-                      This ID must be stored by you and used as a path parameter
+                      **This ID must be stored by you** and used as a path parameter
                       for all subsequent item ingestion and modification requests.
                     example: "6a4d7b0f-9e3c-4b1a-8f6e-2d9c0b1a3e5d"
               example:
@@ -98,10 +99,17 @@ paths:
     patch:
       tags:
         - Catalog
-      summary: Add Catalog Attributes
+      summary: Add New Catalog Attributes
       operationId: addCatalogAttributes
-      description: |
-        Use this API to add new attributes to an existing catalog. If the request contains attributes that already exist, they will be safely ignored (not re-added).
+      description: >
+        Use this API to add one or more new attributes to an existing catalog's schema. If the request contains attributes that already exist in the schema, they will be safely ignored (not re-added).
+      x-mint:
+        content: |
+          <Note>
+          **Rate Limit Information**
+          Request limit: 100/min OR 1000/hr.
+          Payload size limit: 5MB (only when Content-Length header is provided).
+          </Note>
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -165,16 +173,15 @@ paths:
     post:
       tags:
         - Items
-      summary: Ingest Items into the Catalog
+      summary: Bulk Ingest New Items into the Catalog
       operationId: ingestCatalogItems
       description: |
-        Use this API to ingest new items into an existing catalog. All attributes provided during ingestion **must** match the schema defined during catalog creation.
+        Use this API to ingest new items into an existing catalog. All attributes provided during ingestion **must** match the schema defined during catalog creation. You can ingest up to **50 items per request**.
       x-mint:
         content: |
           <Note>
           **Rate Limit Information**
           Request limit: 100/min OR 1000/hr.
-          You can ingest up to **50 items per request**.
           Payload size limit: 5MB (only when Content-Length header is provided).
           </Note>
       parameters:
@@ -244,16 +251,15 @@ paths:
     patch:
       tags:
         - Items
-      summary: Update Existing Items in a Catalog
+      summary: Bulk Update Existing Items in a Catalog
       operationId: updateCatalogItems
       description: |
-        Use this API to update item attribute values. Attributes must adhere to the data type defined in the catalog schema. A maximum of 50 items are allowed to be updated in a single request.
+        Use this API to update item attribute values for existing items in the catalog. Attributes must adhere to the data type defined in the catalog schema. A maximum of 50 items are allowed to be updated in a single request.
       x-mint:
         content: |
           <Note>
           **Rate Limit Information**
           Request limit: 100/min OR 1000/hr.
-          You can update up to **50 items per request**.
           Payload size limit: 5MB (only when Content-Length header is provided).
           </Note>
       parameters:
@@ -321,24 +327,21 @@ paths:
     delete:
       tags:
         - Items
-      summary: Delete Existing Items
+      summary: Bulk Delete Existing Items
       operationId: deleteCatalogItems
-      description: >
-        **API Requirement:** This endpoint requires a request body containing a list of item IDs to delete. Although DELETE methods should not typically have a body, this API uses a bulk payload.
+      description: |
+        **API Requirement:** This endpoint uses a bulk payload and requires a request body containing a list of item IDs to delete. A maximum of 50 item IDs are allowed in a single request.
         
         The payload schema is defined by `#/components/schemas/DeleteItemsRequest`.
-        
-        Use this API to delete existing items in a given catalog. Only 50 item IDs are allowed in a single request.
       x-mint:
         content: |
           <Note>
           **Rate Limit Information**
           Request limit: 100/min OR 1000/hr.
-          You can delete up to **50 items per request**.
           Payload size limit: 5MB (only when Content-Length header is provided).
           </Note>
-          
-          **Required Payload (for reference):**
+
+          **Required Payload (using schema: DeleteItemsRequest):**
           ```json
           {
             "items": [
@@ -398,7 +401,7 @@ components:
       scheme: basic
       description: |
         Basic Authentication sends a Base64-encoded string containing your username and password.
-        
+
         You can obtain the username and password from the MoEngage Dashboard:
         1. Navigate to **Settings > Account > APIs**.
         2. **Username**: Copy the **Workspace ID**.
@@ -409,7 +412,7 @@ components:
       name: MOE-APPKEY
       description: |
         This is the Workspace ID (earlier APP ID) of your MoEngage workspace. This header is mandatory for all requests.
-        
+
         You can find your MoEngage Workspace ID in the MoEngage Dashboard:
         **Settings > Account > APIs > Workspace ID**
   parameters:
@@ -447,7 +450,7 @@ components:
           example: "ProductCatalog"
         price_currency:
           type: string
-          description: The ISO 4217 currency code for prices in the catalog.
+          description: The ISO 4217 currency code for prices in the catalog (e.g., USD, EUR).
           enum: [USD, CAD, EUR, AED, AFN, ALL, AMD, AOA, ARS, AUD, AZN, BAM, BDT, BGN, BHD, BIF, BND, BOB, BRL, BWP, BYR, BZD, CDF, CHF, CLP, CNY, COP, CRC, CVE, CZK, DJF, DKK, DOP, DZD, EEK, EGP, ERN, ETB, GBP, GEL, GHS, GNF, GTQ, HKD, HNL, HRK, HUF, IDR, ILS, INR, IQD, IRR, ISK, JMD, JOD, JPY, KES, KHR, KMF, KRW, KWD, KZT, LBP, LKR, LTL, LVL, LYD, MAD, MDL, MGA, MKD, MMK, MOP, MUR, MXN, MYR, MZN, NAD, NGN, NIO, NOK, NPR, NZD, OMR, PAB, PEN, PHP, PKR, PLN, PYG, QAR, RON, RSD, RUB, RWF, SAR, SDG, SEK, SGD, SOS, SYP, THB, TND, TOP, TRY, TTD, TWD, TZS, UAH, UGX, UYU, UZS, VEF, VND, XAF, XOF, YER, ZAR, ZMK]
         attributes:
           type: array
@@ -601,7 +604,7 @@ components:
             error-code: "request-unauthenticated"
             message: "Your request is unauthorized. Please verify your credentials and try again."
     Forbidden:
-      description: Forbidden - The client does anot have access rights to the Catalog APIs.
+      description: Forbidden - The client does not have access rights to the Catalog APIs.
       content:
         application/json:
           schema:
@@ -630,7 +633,7 @@ components:
     TooManyRequests:
       description: |
         Too Many Requests - The rate limit for the API has been exceeded.
-        
+
         The following headers are returned in case of rate-limit breach:
         * **x-ratelimit-limit (integer)**: The maximum number of requests that the consumer is permitted to make in a given time window.
         * **x-ratelimit-remaining (integer)**: The number of requests
