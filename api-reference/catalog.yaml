@@ -9,6 +9,7 @@ info:
     The API has a platform-wide rate limit of **100 requests/minute OR 1000 requests/hour**, with a maximum payload size of **5MB**.
   version: '1.0'
 servers:
+  - url: 'https://api.moengage.com/v1' # Updated to the base URL as requested for the API Playground
   - url: 'https://api-{dc}.moengage.com/v1'
     variables:
       dc:
@@ -100,7 +101,7 @@ paths:
       summary: Add Catalog Attributes
       operationId: addCatalogAttributes
       description: |
-        You can use this API to add new attributes to the catalog. If the API request contains attributes that already exist, they will not be added again.
+        Use this API to add new attributes to an existing catalog. If the request contains attributes that already exist, they will be safely ignored (not re-added).
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -167,7 +168,15 @@ paths:
       summary: Ingest Catalog Items (Max 50)
       operationId: ingestCatalogItems
       description: |
-        You can use this API to ingest items into an existing catalog as long as the attributes provided during ingestion match the attributes provided during catalog creation.
+        Use this API to ingest new items into an existing catalog. All attributes provided during ingestion **must** match the schema defined during catalog creation.
+      x-mint:
+        content: |
+          <Note>
+          **Rate Limit Information**
+          Request limit: 100/min OR 1000/hr.
+          You can ingest up to **50 items per request**.
+          Payload size limit: 5MB (only when Content-Length header is provided).
+          </Note>
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -182,7 +191,7 @@ paths:
                 items:
                   type: array
                   maxItems: 50
-                  description: An array of item objects to add to the catalog. Each item must contain the mandatory attributes (`id`, `title`, `link`, `image_link`).
+                  description: An array of item objects to add to the catalog. Each item **must** contain the mandatory attributes (`id`, `title`, `link`, `image_link`).
                   items:
                     $ref: '#/components/schemas/CatalogItem'
       responses:
@@ -238,7 +247,15 @@ paths:
       summary: Update Catalog Items (Max 50)
       operationId: updateCatalogItems
       description: |
-        You can use this API to update items with new attribute values. Attributes must adhere to the data type defined and only 50 items are allowed to be updated in a single request.
+        Use this API to update item attribute values. Attributes must adhere to the data type defined in the catalog schema. A maximum of 50 items are allowed to be updated in a single request.
+      x-mint:
+        content: |
+          <Note>
+          **Rate Limit Information**
+          Request limit: 100/min OR 1000/hr.
+          You can update up to **50 items per request**.
+          Payload size limit: 5MB (only when Content-Length header is provided).
+          </Note>
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -301,14 +318,22 @@ paths:
           $ref: '#/components/responses/PayloadTooLarge'
         '429':
           $ref: '#/components/responses/TooManyRequests'
-  /catalog/{catalog_id}/items/bulk-delete:
+  /catalog/{catalog_id}/items/delete: # Reverting the path segment, ensuring it is a unique path item
     post:
       tags:
         - Items
-      summary: Bulk Delete Catalog Items (Max 50)
+      summary: Delete Existing Items
       operationId: deleteCatalogItems
-      description: |
-        You can use this API to delete existing items in a given catalog. Only 50 items are allowed to be deleted in a single request.
+      description: >
+        Use this API to delete existing items in a given catalog. Only 50 item IDs are allowed in a single request.
+      x-mint:
+        content: |
+          <Note>
+          **Rate Limit Information**
+          Request limit: 100/min OR 1000/hr.
+          You can delete up to **50 items per request**.
+          Payload size limit: 5MB (only when Content-Length header is provided).
+          </Note>
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -381,9 +406,9 @@ components:
         Basic Authentication sends a Base64-encoded string containing your username and password.
         
         You can obtain the username and password from the MoEngage Dashboard:
-        1.  Navigate to **Settings > Account > APIs**.
-        2.  **Username**: Copy the **Workspace ID**.
-        3.  **Password**: Copy the **Catalog API** key.
+        1. Navigate to **Settings > Account > APIs**.
+        2. **Username**: Copy the **Workspace ID**.
+        3. **Password**: Copy the **Catalog API** key.
     AppKeyHeader:
       type: apiKey
       in: header
@@ -529,7 +554,7 @@ components:
                       message:
                         type: string
                         description: The reason for the failure.
-                        example: "Item ids within a catalog must be unique."
+                        example: "Item IDs within a catalog must be unique."
                       count:
                         type: integer
                         description: The number of items that failed due to this specific error.
@@ -570,7 +595,7 @@ components:
             error-code: "request-unauthenticated"
             message: "Your request is unauthorized. Please verify your credentials and try again."
     Forbidden:
-      description: Forbidden - The client does not have access rights to the Catalog APIs.
+      description: Forbidden - The client does anot have access rights to the Catalog APIs.
       content:
         application/json:
           schema:
@@ -602,5 +627,6 @@ components:
         
         The following headers are returned in case of rate-limit breach:
         * **x-ratelimit-limit (integer)**: The maximum number of requests that the consumer is permitted to make in a given time window.
-        * **x-ratelimit-remaining (integer)**: The number of requests remaining in the current rate limit window.
+        * **x-ratelimit-remaining (integer)**: The number of requests
+        remaining in the current rate limit window.
         * **x-ratelimit-reset (integer)**: The time at which the current rate limit window resets in UTC epoch seconds.
