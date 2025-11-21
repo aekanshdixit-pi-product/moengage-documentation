@@ -244,7 +244,7 @@ paths:
     patch:
       tags:
         - Items
-      summary: Update Catalog Items (Max 50)
+      summary: Update Existing Items in a Catalog
       operationId: updateCatalogItems
       description: |
         Use this API to update item attribute values. Attributes must adhere to the data type defined in the catalog schema. A maximum of 50 items are allowed to be updated in a single request.
@@ -318,13 +318,16 @@ paths:
           $ref: '#/components/responses/PayloadTooLarge'
         '429':
           $ref: '#/components/responses/TooManyRequests'
-  /catalog/{catalog_id}/items/delete: # Reverting the path segment, ensuring it is a unique path item
-    post:
+    delete: # DELETE operation is now structurally OAS 3.x compliant
       tags:
         - Items
       summary: Delete Existing Items
       operationId: deleteCatalogItems
       description: >
+        **API Requirement:** This endpoint requires a request body containing a list of item IDs to delete. Although DELETE methods should not typically have a body, this API uses a bulk payload.
+        
+        The payload schema is defined by `#/components/schemas/DeleteItemsRequest`.
+        
         Use this API to delete existing items in a given catalog. Only 50 item IDs are allowed in a single request.
       x-mint:
         content: |
@@ -334,27 +337,18 @@ paths:
           You can delete up to **50 items per request**.
           Payload size limit: 5MB (only when Content-Length header is provided).
           </Note>
+          
+          **Required Payload (for reference):**
+          ```json
+          {
+            "items": [
+              "item_id_123",
+              "another_item_id"
+            ]
+          }
+          ```
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - items
-              properties:
-                items:
-                  type: array
-                  maxItems: 50
-                  description: An array of item IDs to delete from the catalog.
-                  items:
-                    type: string
-                    example: "item_id_123"
-            example:
-              items:
-                - "{{item_ID}}"
       responses:
         '202':
           description: Accepted. The bulk delete request was processed successfully.
@@ -565,6 +559,18 @@ components:
                           type: string
                         description: The IDs of the items that failed.
                         example: ["item_id_xyz"]
+    DeleteItemsRequest: # NEW SCHEMA ADDED for documentation purposes
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          maxItems: 50
+          description: An array of item IDs to delete from the catalog.
+          items:
+            type: string
+            example: "item_id_123"
   responses:
     BadRequest:
       description: Bad Request - The request is improperly formatted, or contains missing/invalid parameters.
