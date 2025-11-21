@@ -2,20 +2,18 @@ openapi: 3.0.3
 info:
   title: MoEngage Subscription Categories API
   description: |
-    The Subscription Categories API enables you to fetch and update email subscription preferences on your MoEngage dashboard.
-    
-    Subscription Categories help your brand provide options to customers to choose the kind of communication they want to receive from you.
+    Enables you to fetch and update email subscription preferences on your MoEngage dashboard.
     
     This API provides endpoints for:
     * **Get Preferences**: Fetches subscription preferences for a specific user.
     * **Update Preferences**: Updates preferences for a specific user (e.g., from a landing page).
-    * **Bulk Update Preferences**: Updates preferences for a batch of users in large volumes.
+    * **Bulk Update Preferences**: Updates preferences for a batch of users.
     
     Authentication is handled via Basic Auth (Workspace ID as username, Data API Key as password).
   version: '1.0'
 servers:
   - url: 'https://api-{dc}.moengage.com/v1'
-    description: 'MoEngage API Server. {dc} is your data center number.'
+    description: 'MoEngage API Server. {dc} is your data center number (e.g., 01, 02, 03).'
     variables:
       dc:
         default: '01'
@@ -30,7 +28,7 @@ paths:
         - Subscription Preferences
       summary: Get Subscription Preferences
       operationId: getSubscriptionPreferences
-      description: Fetches the subscription category preferences for a specific user across all configured categories.
+      description: Fetches the subscription category preferences information for a specific user.
       x-ratelimit:
         limit: 100
         period: minute
@@ -48,7 +46,7 @@ paths:
             default: application/json
       responses:
         '200':
-          description: Success. Returns the user's subscription preferences.
+          description: Success. This response is returned when the request is processed successfully.
           content:
             application/json:
               schema:
@@ -78,8 +76,11 @@ paths:
         - Subscription Preferences
       summary: Update Subscription Preferences
       operationId: updateSubscriptionPreferences
-      description: |
-        Updates the subscription category preferences for a specific user who navigates from an email.
+      description: Updates the subscription category preferences for a specific user who navigates from an email.
+      x-ratelimit:
+        limit: 100
+        period: minute
+        unit: requests
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/UserIdQuery'
@@ -94,7 +95,7 @@ paths:
               $ref: '#/components/schemas/UpdatePreferencesRequest'
       responses:
         '200':
-          description: Success.
+          description: Success. This response is returned when the request is processed successfully.
           content:
             application/json:
               schema:
@@ -118,9 +119,13 @@ paths:
         - Subscription Preferences
       summary: Bulk Update Subscription Preferences
       operationId: bulkUpdateSubscriptionPreferences
-      description: |
+      description: >
         Updates subscription category preferences in bulk for a batch of up to 50 users.
         Use this API for updating the user preferences to MoEngage in large volumes.
+      x-ratelimit:
+        limit: 100
+        period: minute
+        unit: requests
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
       requestBody:
@@ -162,38 +167,40 @@ components:
       name: MOE-APPKEY
       in: header
       required: true
-      description: Your MoEngage Workspace ID.
+      description: >
+        This is your MoEngage account's APP ID that has to be passed along with the request.
+        You can find your MoEngage Workspace ID at **Settings** -> **Account** -> **APIs** -> **Workspace ID** (earlier app id).
       schema:
         type: string
     UserIdQuery:
       name: user_id
       in: query
       required: true
-      description: |
-        The MoEngage ID that uniquely identifies the customer.
-        (Encrypted and fetched from landing page URL).
+      description: >
+        The MoEngage ID that uniquely identifies the customer. 
+        This is encrypted using 16 bits DES and is encoded in the URL of the landing page. The same can be fetched from the URL of the landing page.
       schema:
         type: string
     CidQuery:
       name: cid
       in: query
       required: true
-      description: |
-        The campaign ID of the email campaign.
-        (Encrypted and fetched from landing page URL).
+      description: >
+        The campaign ID of the email campaign. This field contains the information about the email campaign received by the customer.
+        The campaign ID is encrypted using 16 bits DES and is encoded in the URL of the landing page. The same can be fetched from the URL of the landing page.
       schema:
         type: string
     MoeEventIdQuery:
       name: moe_event_id
       in: query
       required: false
-      description: Used to update the unsubscribe event when the user chooses 'unsubscribe all'.
+      description: Used to update the unsubscribe event when the user chooses the 'unsubscribe all' option.
       schema:
         type: string
   schemas:
     SubscriptionCategories:
       type: object
-      description: A map of category names to their subscription status (true for subscribed, false for unsubscribed).
+      description: A map of category names to their subscription status (**true** for subscribed, **false** for unsubscribed).
       additionalProperties:
         type: boolean
       example:
@@ -208,9 +215,10 @@ components:
       properties:
         categories:
           $ref: '#/components/schemas/SubscriptionCategories'
+          description: This field contains the details about the updated subscription preferences of the user.
         unsubscribe_all:
           type: boolean
-          description: "Set to true to unsubscribe the user from all categories, regardless of the 'categories' object."
+          description: "Set to **true** to unsubscribe the user from all categories. When true, the user is unsubscribed from all categories, irrespective of the categories marked as true in the category JSON object."
       example:
         unsubscribe_all: false
         categories:
@@ -226,13 +234,15 @@ components:
       properties:
         customer_id:
           type: string
-          description: The unique identifier for the customer (e.g., email or customer ID).
+          description: The unique identifier denoting the customer (ID on the user profile page) for whom you are updating the subscription preferences.
           example: "john@example.com"
         categories:
           $ref: '#/components/schemas/SubscriptionCategories'
+          description: A JSON Object that contains the subscription preferences of the customer.
         unsubscribe_all:
           type: boolean
-          description: "Set to true to unsubscribe the user from all categories."
+          description: "Set to **true** to unsubscribe the user from all categories. When true, the user is unsubscribed from all categories, irrespective of the categories marked as true in the category JSON object."
+      
     BulkUpdatePreferencesRequest:
       type: object
       required:
@@ -241,7 +251,7 @@ components:
       properties:
         channel:
           type: string
-          description: The communication channel.
+          description: The name of the channel. Allowed value: `email`.
           enum: [email]
           example: "email"
         user_preferences:
@@ -268,19 +278,19 @@ components:
       properties:
         title:
           type: string
-          description: The type of error.
+          description: The error type (present only when the request is unsuccessful).
           nullable: true
         description:
           type: string
-          description: A human-readable description of the error.
+          description: The error description (present only when the request is unsuccessful).
           nullable: true
         message:
           type: string
-          description: A human-readable description of the error.
+          description: A brief description of the request status in case of success.
           nullable: true
   responses:
     BadRequest:
-      description: Bad Request. Required parameters are missing, invalid, or payload limit is exceeded.
+      description: Bad Request. This response is returned when required parameters are missing or invalid, or when the payload limit is exceeded.
       content:
         application/json:
           schema:
@@ -296,7 +306,7 @@ components:
                 title: "Payload Limit Exceeded"
                 description: "Payload limit is set to 50"
     Unauthorized:
-      description: Authorization Failure. Incorrect credentials or missing header.
+      description: Authorization Failure. This response is returned when authorization fails due to incorrect APP KEY/HTTP Auth Header values.
       content:
         application/json:
           schema:
@@ -313,7 +323,7 @@ components:
                 title: "Header required"
                 description: "MOE-APPKEY missing in Header"
     Conflict:
-      description: Conflict. API Secret not configured on the dashboard.
+      description: Conflict. This response is returned when the authorization fails due to the APP SECRET key not being set on the Dashboard.
       content:
         application/json:
           schema:
@@ -331,7 +341,7 @@ components:
             title: "Rate-Limit Reached"
             description: "Exceeded rate limit for this url"
     InternalServerError:
-      description: Internal Server Error. The system ran into an unexpected error.
+      description: Internal Server Error. This response is returned when the system runs into an unexpected error.
       content:
         application/json:
           schema:
@@ -341,4 +351,3 @@ components:
             description: "Please Contact Moengage Team"
 security:
   - basicAuth: []
-    
