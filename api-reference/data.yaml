@@ -1692,7 +1692,7 @@ paths:
                       type: "MissingAttributeError"
                       request_id: "TgzuJhcj" 
                 incorrect_action:
-                  summary: Aaction key is not sent as a string
+                  summary: Action key is not sent as a string
                   value:
                     status: "fail"
                     error:
@@ -1953,23 +1953,295 @@ paths:
               $ref: '#/components/schemas/CreateDeviceRequest'
       responses:
         '200':
-          description: Request accepted successfully.
+          description: This response is returned when the request is processed successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericSuccess'
+              examples:
+                success_response:
+                  summary: Success Response
+                  value:
+                    status: "success"
+                    message: "Your request has been accepted and will be processed soon."
         '400':
-          description: Bad Request.
+          description: This response is returned when the required parameters are missing from the request, attributes are not found, and incorrect values are passed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        description: 'The type or category of the error ("MissingAttributeError").'
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                missing_customerid:
+                  summary: Customer_id is missing
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "customer_id"
+                      message: "'customer_id' is not found in the payload"
+                      type: "MissingAttributeError"
+                      request_id: "izsZuQNw"
+                missing_attributes:
+                  summary: Attributes is missing
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "attributes"
+                      message: "'attributes' is not found in the payload"
+                      type: "MissingAttributeError"
+                      request_id: "MwNnVDsC"
+                invalid_platform:
+                  summary: Invalid platform
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "platform"
+                      message: "'platform' is not a valid platform."
+                      type: "ValueError"
+                      request_id: "NDuFDLwS"
+                missing_pushid:
+                  summary: Push_id is missing
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "push_id"
+                      message: "'push_id' is not found in payload"
+                      type: "MissingAttributeError"
+                      request_id: "dsLXpKgJ" 
+                missing_platform:
+                  summary: Platform is not found in payload
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "platform"
+                      message: "'platform' is not found in payload"
+                      type: "MissingAttributeError"
+                      request_id: "gyLYpBFV"     
         '401':
-          description: Unauthorized.
+          description: This response is returned when the request does not have valid authentication credentials.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        description: 'The type or category of the error (e.g., Authentication required).'
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                auth_error:
+                  summary: Authorization errors
+                  value:
+                    status: "fail"
+                    error:
+                      message: "App Secret key mismatch. Please login to the dashboard to verify key"
+                      type: "Authentication required"
+                      request_id: "PVUDFisO"
+                missing_header:
+                  summary: Missing authentication header
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Authentication Header Required"
+                      type: "Authentication required"
+                      request_id: "PisPjGQQ"
+        '403':
+          description: This response is returned when your MoEngage account is suspended or blocked.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed.(e.g., Your account is suspended. Please contact MoEngage team.)"
+                      type:
+                        type: string
+                        description: "The type or category of the error (e.g., BlockedClient, Account Suspended, Account Temporarily Suspended)."
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                account_blocked:
+                  summary: Account is blocked
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Your account is suspended. Please contact MoEngage team."
+                      type: "BlockedClient"
+                      request_id: "ofHUEaEQ"
+                account_suspended:
+                  summary: Account is suspended
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Your account is suspended. Please contact MoEngage team."
+                      type: "Account Suspended"
+                      request_id: "gqJvCNYu3"
+                temp_suspended:
+                  summary: Account is temporarily suspended
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Your account is temporarily suspended. Please contact MoEngage team."
+                      type: "Account Temporarily Suspended"
+                      request_id: "ssSJjoyD"             
+        '413':
+          description: This response is returned when the payload size exceeds 128 KB.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        description: "The type or category of the error (e.g., Payload too large)."
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                payload_exceeded:
+                  summary: Payloads exceeding the size limit
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Payload size exceeds 128 KB"
+                      type: "PayloadTooLarge"
+                      request_id: "VFzDwhwt"              
+        '415':
+          description: This response is returned when the content type is not supported.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        description: "The type or category of the error (e.g., Unsupported media type)."
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                unsupported_media_type:
+                  summary: Unsupported media type
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Content type is not supported"
+                      type: "Unsupported media type"
+                      request_id: "SgBQfKJh"              
+        '429':
+          description: This response is returned when the number of requests has exceeded the rate limit.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        description: "The type or category of the error (e.g., Rate Limits Exceeded)."
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                rate_limit:
+                  summary: Rate limit breach
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Rate limits for customers exceeded. Please Try After Some Time"
+                      type: "Rate Limits Exceeded"
+                      request_id: "onqucLYL"              
+        '500':
+          description: This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        description: "The type or category of the error (e.g., Server Error)."
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                unknown_error:
+                  summary: Unknown errors
+                  value:
+                    status: "fail"
+                    error:
+                      message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+                      type: "ServerError"
+                      request_id: "KovrwJiF"              
 
   /devices/manage:
     post:
