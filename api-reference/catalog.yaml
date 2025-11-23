@@ -104,6 +104,11 @@ paths:
       operationId: addCatalogAttributes
       description: |
         You can use this API to add new attributes to the catalog. If the API request contains attributes that already exist, they will not be added again.
+      x-mint:
+        content: |
+          ### Rate Limit Information
+          Request limit - 100/min OR 1000/hr.
+          Payload size limit - 5MB only when Content-Length header is provided.
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -152,7 +157,14 @@ paths:
                   - colour
                   - weight
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request - Attribute already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error-code: "attribute-exists"
+                message: "Attribute already exists in the catalog"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -160,7 +172,14 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '413':
-          $ref: '#/components/responses/PayloadTooLarge'
+          description: Payload Too Large - Maximum attributes exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error-code: "too-many-attributes"
+                message: "Maximum allowed attributes is 50"
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /catalog/{catalog_id}/items:
