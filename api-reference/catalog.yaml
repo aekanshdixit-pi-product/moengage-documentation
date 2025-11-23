@@ -35,6 +35,18 @@ paths:
       operationId: createCatalog
       description: |
         This API allows you to create a new catalog with a unique name and specify the necessary attributes along with their respective data types.
+      x-mint:
+        content: |
+          ### Rate Limit Information
+          Request limit - 100/min OR 1000/hr.
+          Payload size limit - 5MB only when Content-Length header is provided.
+      parameters:
+        - name: MOE-APPKEY
+          in: header
+          description: "Your Workspace ID (earlier APP ID). This is a separate input field."
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -78,7 +90,32 @@ paths:
               example:
                 catalog_id: "{{Catalog_id}}"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request - Validation or logic error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                duplicate-name:
+                  summary: Duplicate Catalog Name
+                  value:
+                    error-code: "duplicate-catalog-name"
+                    message: "Catalog name already exists. Please use a different name for your catalog and try again."
+                invalid-datatype:
+                  summary: Invalid Data Type
+                  value:
+                    error-code: "invalid-request"
+                    message: "The data type provided for some of the attributes is invalid. Provided value: <provided datatype>  You can add attributes with valid data types - [bool, double, string, datetime, geopoint] only"
+                missing-attributes:
+                  summary: Missing Mandatory Attributes
+                  value:
+                    error-code: "missing-mandatory-attributes"
+                    message: "You must include mandatory attributes: id, title, link, and image_link with string data type and try again. Invalid or absent attributes: <missing attributes>"
+                limit-exceeded:
+                  summary: Catalog Limit Exceeded
+                  value:
+                    error-code: "catalog-limit-exceeded"
+                    message: "You have exceeded the total limit of 35 catalogs for your account. You need to delete unused catalogs from the dashboard and try again."
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -93,7 +130,14 @@ paths:
                 error-code: "duplicate-catalog-name"
                 message: "Catalog name already exists. Please use a different name for your catalog and try again."
         '413':
-          $ref: '#/components/responses/PayloadTooLarge'
+          description: Payload Too Large - Attribute limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error-code: "too-many-attributes"
+                message: "Maximum allowed attributes is 50"
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /catalog/{catalog_id}/attributes:
@@ -479,8 +523,11 @@ components:
           maxItems: 50
           description: |
             An array defining the schema of attributes for this catalog.
-            'id', 'title', 'link', and 'image_link' are mandatory attributes
-            and must be included here with the `string` type.
+            
+            **title** - name of the item (string)
+            **link** - weblink of the item (string)
+            **id** - unique ID of that represent this item item (string)
+            **image_link** - image source link of this item (string)
           items:
             $ref: '#/components/schemas/AttributeDefinition'
     CatalogItem:
