@@ -109,25 +109,11 @@ paths:
             type: string
       x-mint:
         content: |
-         ## Authentication
-         Authentication is performed using Basic Auth.
-         
+         <Note>
          If your file is private, you should whitelist [these IPs](https://help.moengage.com/hc/en-us/articles/35329024618772-A-Guide-to-MoEngage-IP-Whitelisting-Mechanism#h_01JNGJNR5F141E7KRK89YW1X8H) to provide access only to MoEngage for the file.
+         </Note>
          
          Check the data center and API endpoint [mapping page here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
-         
-         ## Response Codes
-         
-         | HTTP Status Code | Response Reason |
-         | :--- | :--- |
-         | 200 - OK | Everything worked as expected. |
-         | 202 - Accepted | Request accepted for the required operation. |
-         | 400 - Bad Request | Request not accepted due to missing a required parameter. The reason is passed in the description field. |
-         | 401 - Unauthorized | Signature is not valid. |
-         | 404 - Entity not found | The custom segment mentioned in the request does not exist. |
-         | 409 - Conflict | The request conflicts with another request. |
-         | 429 - Too Many Requests | The number of requests or the rate of requests exceeds the allowed limit. |
-         | 500, 502, 503, 504 | Server Errors. Something went wrong on MoEngage. |
          
          ## Limits
          
@@ -179,17 +165,26 @@ paths:
               emails: ["user1@example.com", "user2@example.com"]
               expiry_time: 30
       responses:
+        '200':
+          description: Everything worked as expected.
+          content:
+            application/json:
+              example: "No example response body available for this status code."
         '202':
           description: Request accepted for processing.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccessV2'
-              # Replaced Ref with explicit singular example to avoid dropdown
               example:
                 message: "File-segment creation request accepted"
                 success: true
                 cs_name: "custom_segment_unique_name"
+        '400':
+          description: Bad Request. Request not accepted due to missing a required parameter. The reason is passed in the description field.
+          content:
+            application/json:
+              example: "No example response body available for this status code."
         '401':
           $ref: '#/components/responses/401_FileSegmentError'
         '409':
@@ -198,6 +193,21 @@ paths:
           $ref: '#/components/responses/429_FileSegmentRateLimit'
         '500':
           $ref: '#/components/responses/5XX_FileSegmentError'
+        '502':
+          description: Bad Gateway. Something went wrong on MoEngage.
+          content:
+            application/json:
+              example: "No example response body available for this status code."
+        '503':
+          description: Service Unavailable. Something went wrong on MoEngage.
+          content:
+            application/json:
+              example: "No example response body available for this status code."
+        '504':
+          description: Gateway Timeout. Something went wrong on MoEngage.
+          content:
+            application/json:
+              example: "No example response body available for this status code."
       callbacks:
         segmentCreationCallback:
           $ref: '#/components/callbacks/segmentProcessingCallback'
