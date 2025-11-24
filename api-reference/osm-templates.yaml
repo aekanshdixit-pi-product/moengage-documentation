@@ -67,38 +67,63 @@ paths:
                     type: string
                     format: uuid
                     description: The unique ID assigned to the newly created template
-                      by MoEngage.
-                    example: d05a44f0-a7cf-471a-bcb6-63054800a367
+                      by MoEngage. This ID is used for subsequent updates or searches.
+              example:
+                external_template_id: d05a44f0-a7cf-471a-bcb6-63054800a367
         '400':
-          description: Bad Request. This response is returned when the required
-            parameters are missing from the request, when the provided parameters
-            are invalid, or when a template already exists with the same version,
-            name, or ID.
+          description: Bad Request. Returned when required parameters are missing, invalid, or when a template already exists with the same version, name, or ID.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/StandardErrorResponse'
+              example:
+                error:
+                  code: 400 Bad Request
+                  message: Duplicate - template_id and template_version
+                  details:
+                    - code: InvalidValue
+                      target: Duplicate - template_id and template_version
+                      message: "template_id:13343440 template_version:1 is already present."
+                  request_id: xZLmJvUi
         '401':
-          description: Authentication Failure. This response is returned when the
-            authorization parameters are missing in the HTTP Auth Header.
+          description: Authentication Failure. Returned when authorization parameters are missing or invalid.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SimpleErrorResponse'
+              example:
+                title: Authentication required
+                description: MOE-APPKEY missing in Authentication Header
+        '415':
+          description: Unsupported Media Type. Returned when the header Content-Type is not provided or is not supported.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleErrorResponse'
+              example:
+                title: Unsupported media type
+                description: Content type is not supported
         '429':
-          description: Rate limit breached. This response is returned when the
-            number of requests per minute has exceeded the rate limit, or the
-            number of templates has exceeded the allowed quota per channel.
+          description: Rate limit breached. Returned when requests per minute exceed the limit or template quota is exceeded.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/StandardErrorResponse'
+              example:
+                response_id: OUUkHvcn
+                type: custom_template
+                error:
+                  code: Too Many Requests
+                  message: "API rate limit breached. Current limit: n/m mins"
         '5XX':
-          description: Internal Server Error.
+          description: Internal Server Error. Returned when the system runs into an unexpected error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SimpleErrorResponse'
+              example:
+                title: Internal Server Error
+                message: An unexpected error was encountered while processing this request. Please contact MoEngage Team
     put:
       tags:
         - OSM Templates
@@ -137,22 +162,32 @@ paths:
                     type: string
                     format: uuid
                     description: The unique ID of the updated template.
-                    example: 4a1afbc5-4c31-4f19-8c23-793e27af01aa
+              example:
+                external_template_id: 4a1afbc5-4c31-4f19-8c23-793e27af01aa
         '400':
-          description: Bad Request. This response is returned when the required
-            parameters are missing from the request, when the provided parameters
-            are invalid, or when a template already exists with the same version,
-            name, or ID.
+          description: Bad Request. Validation failed or missing parameters.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/StandardErrorResponse'
+              example:
+                error:
+                  code: 400 Bad Request
+                  message: Validation failed because of invalid request data
+                  details:
+                    - code: MissingValue
+                      target: external_template_id
+                      message: external_template_id value is required but value is passed empty.
+                  request_id: cTRlnJaG
         '5XX':
           description: Internal Server Error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SimpleErrorResponse'
+              example:
+                title: Internal Server Error
+                message: An unexpected error was encountered while processing this request. Please contact MoEngage Team
   /custom-templates/osm/search:
     post:
       tags:
@@ -201,27 +236,61 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SearchOsmTemplateResponse'
+              example:
+                data:
+                  - meta_info:
+                      template_id: '1234567890123'
+                      template_name: NAME_OF_THE_TEMPLATE
+                      template_version: '1'
+                      created_by: test@moengage.com
+                      channel: ON-SITE
+                      template_source: API
+                      template_type: CUSTOM
+                    external_template_id: 4a1afbc5-4c31-4f19-8c23-793e27af01aa
+                    version: 1
+                    basic_details:
+                      payload: <html>...</html>
+                      preview_image: https://pbs.twimg.com/profile_images/10ydbKG1.jpg
+                    created_by: test@moengage.com
+                    created_at: '2023-08-01T07:58:53.880000'
+                    updated_by: test@moengage.com
+                    updated_at: '2023-08-01T07:58:53.880000'
         '400':
-          description: Bad Request. This response is returned when the required
-            parameters are missing from the request or when the provided parameters
-            are invalid.
+          description: Bad Request. Missing or invalid search parameters.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/StandardErrorResponse'
+              example:
+                error:
+                  code: 400 Bad Request
+                  message: Validation failed because of invalid request data
+                  details:
+                    - code: MissingValue
+                      target: external_template_ids
+                      message: external_template_id or version is missing in external_template_ids.
+                  request_id: npmQrbNE
         '429':
-          description: Rate limit breached. This response is returned when the
-            number of requests per minute has exceeded the rate limit.
+          description: Rate limit breached.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/StandardErrorResponse'
+              example:
+                response_id: OUUkHvcn
+                type: custom_template
+                error:
+                  code: Too Many Requests
+                  message: "API rate limit breached. Current limit: n/m mins"
         '5XX':
           description: Internal Server Error.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/SimpleErrorResponse'
+              example:
+                title: Internal Server Error
+                message: An unexpected error was encountered while processing this request. Please contact MoEngage Team
 components:
   securitySchemes:
     basicAuth:
@@ -239,43 +308,59 @@ components:
             * **Username:** Under **Workspace ID** (earlier App ID), click the copy icon.
             * **Password:** In the **API keys** section, click the copy icon in the **Campaign report**/**Business events**/**Custom templates**/**Catalog API** tile.
   schemas:
-    ErrorResponse:
+    StandardErrorResponse:
       type: object
+      description: Standard error structure used for 400 and 429 responses.
       properties:
         error:
           type: object
           properties:
             code:
               type: string
-              example: 400 Bad Request
+              description: A brief explanation of the error.
+              example: 4XX Bad Request
             message:
               type: string
+              description: Describes why the request failed (e.g., Duplicate - template_id).
               example: Duplicate - template_id and template_version
             details:
               type: array
+              description: A list of error detail objects containing code, target, and specific messages.
               items:
                 type: object
                 properties:
                   code:
                     type: string
+                    description: Descriptive Error Code.
                     example: InvalidValue
                   target:
                     type: string
+                    description: Denotes the field causing the issue.
                     example: Duplicate - template_id and template_version
                   message:
                     type: string
-                    example: template_id:BasicTemplate1 template_version:1 is already present.
+                    description: Descriptive Error Message.
+                    example: "template_id:BasicTemplate1 template_version:1 is already present."
             request_id:
               type: string
+              description: Unique identifier for the request.
               example: cLCcgLQj
+    SimpleErrorResponse:
+      type: object
+      description: Simplified error structure used for 401, 415, and 5xx responses.
+      properties:
         title:
           type: string
-          description: An alternative error title format.
+          description: The title of the error.
           example: Authentication required
         description:
           type: string
-          description: An alternative error description format.
+          description: A description of the error (used in 401/415).
           example: MOE-APPKEY missing in Authentication Header
+        message:
+          type: string
+          description: A message describing the error (used in 5xx).
+          example: An unexpected error was encountered.
     CreateOsmTemplateRequest:
       type: object
       required:
@@ -298,6 +383,7 @@ components:
                 * For payload structure examples, see the main endpoint documentation.
             template_type:
               type: string
+              description: The type of template being created.
               enum:
                 - BANNER
                 - POP_UP
@@ -314,7 +400,7 @@ components:
           properties:
             created_by:
               type: string
-              description: Identifier for the creator of the template.
+              description: Identifier for the creator of the template (e.g., email).
             template_id:
               type: string
               description: A unique ID for the template provided by you.
@@ -334,24 +420,29 @@ components:
         external_template_id:
           type: string
           format: uuid
-          description: The unique ID generated by MoEngage during template creation.
+          description: The unique identifier generated by MoEngage during template creation.
         update_campaigns:
           type: boolean
           default: false
           description: |
-            This flag is used to update all campaigns that are currently using the template being updated to the newer version.
-            * **`true`**: All campaigns running with this template will be updated to the latest version.
-            * **`false`**: A new version of the template will be created, but no change will be made to the template used in existing campaigns.
+            Flag to update all campaigns currently using this template to the newer version.
+            * **`true`**: All campaigns running with this template will be updated.
+            * **`false`**: A new version of the template is created; existing campaigns remain unchanged.
         basic_details:
           type: object
+          description: Details about the template payload.
           required:
             - payload
           properties:
             payload:
               type: string
-              description: The updated HTML content.
+              description: |
+                The updated HTML content.
+                * Payload type must be HTML.
+                * No limit restriction on field length.
         meta_info:
           type: object
+          description: Updates template information such as name, version, and updater details.
           required:
             - template_name
             - template_id
@@ -365,7 +456,7 @@ components:
               description: A unique ID for the template provided by you.
             template_version:
               type: string
-              description: Optional new version for the template.
+              description: Optional new version for the template. The version will be increased by 1 automatically after every update.
             updated_by:
               type: string
               format: email
@@ -377,21 +468,21 @@ components:
       properties:
         page:
           type: integer
-          description: The page number of the results to fetch. Mandatory after
-            Nov 15, 2025.
+          description: The index of the page to be returned. Mandatory after Nov 15, 2025.
         entries:
           type: integer
-          description: The number of templates to return per page. Max 15. Mandatory
+          description: The number of entries/templates to return per page. Max 15. Mandatory
             after Nov 15, 2025.
           maximum: 15
         template_name:
           type: string
-          description: The name of the template to search for (partial search supported).
+          description: The name of the template to search for. Returns templates matching this name.
         template_id:
           type: string
-          description: The ID of the template.
+          description: The unique ID of the template provided by you.
         template_source:
           type: array
+          description: Filter templates by their source.
           items:
             type: string
             enum:
@@ -399,6 +490,7 @@ components:
               - MOENGAGE
         template_type:
           type: array
+          description: Filter templates by type (Custom or Pre-built).
           items:
             type: string
             enum:
@@ -406,16 +498,19 @@ components:
               - PRE_BUILT
         created_by:
           type: array
+          description: Filter templates by the creator's email identifier.
           items:
             type: string
             format: email
         updated_by:
           type: array
+          description: Filter templates by the updater's email identifier.
           items:
             type: string
             format: email
         sort_params:
           type: array
+          description: Sort the templates by multiple fields in ASCENDING or DESCENDING order. Priority follows the array order.
           items:
             type: object
             properties:
@@ -436,6 +531,7 @@ components:
                   - DESCENDING
         external_template_ids:
           type: array
+          description: Search for multiple templates using pairs of `external_template_id` and `version`.
           items:
             type: object
             properties:
@@ -450,54 +546,70 @@ components:
         external_template_id:
           type: string
           format: uuid
+          description: The unique system-generated ID for the template.
         version:
           type: integer
+          description: The numeric version of the template.
         basic_details:
           type: object
           properties:
             payload:
               type: string
+              description: The HTML payload of the template.
             preview_image:
               type: string
               format: uri
+              description: A preview image URL generated by MoEngage for the HTML payload.
         meta_info:
           type: object
           properties:
             template_id:
               type: string
+              description: The user-provided template ID.
             template_name:
               type: string
+              description: The name of the template.
             template_version:
               type: string
+              description: The user-provided string version.
             created_by:
               type: string
+              description: The creator of the template.
             channel:
               type: string
               example: ON-SITE
+              description: The channel associated with the template.
             template_source:
               type: string
               enum:
                 - API
                 - MOENGAGE
+              description: The source of the template creation.
             template_type:
               type: string
               enum:
                 - CUSTOM
                 - PRE_BUILT
+              description: The type classification of the template.
         created_by:
           type: string
+          description: The user who created the template.
         created_at:
           type: string
           format: date-time
+          description: The timestamp when the template was created.
         updated_by:
           type: string
+          description: The user who last updated the template.
         updated_at:
           type: string
           format: date-time
+          description: The timestamp when the template was last updated.
     SearchOsmTemplateResponse:
       type: object
       properties:
         data:
           type: array
+          description: A list containing the details of the templates found.
           items:
             $ref: '#/components/schemas/OsmTemplate'
