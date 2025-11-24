@@ -3,19 +3,21 @@ info:
   title: MoEngage Content Block API
   version: '1.0'
   description: >
-    Content blocks allow marketers to reuse the same content across multiple campaigns. For example, a block might be a repeatedly used header, footer, or designed call-to-action button. 
+    Content blocks allow marketers to reuse the same content across multiple campaigns. For example, a block might be a repeatedly used header, footer, or designed call-to-action button.
     
+    
+
     This API enables you to fetch, create, and update content blocks on your MoEngage dashboard. [Read more about Content blocks in MoEngage](https://help.moengage.com/hc/en-us/articles/4414768369172-Content-blocks-).
 tags:
   - name: Content Blocks
-    description: Use these operations to programmatically fetch, create, and update reusable content blocks, which can be used across multiple campaigns and messages.
+    description: Use these operations to programmatically fetch, create, and update reusable content blocks.
 servers:
   - url: 'https://api-0{dc}.moengage.com/v1/external/campaigns'
     description: MoEngage Content Blocks API Server
     variables:
       dc:
         default: '1'
-        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, etc.'
+        description: 'Your MoEngage Data Center (DC). Replace {dc} with 1, 2, 3, etc. (e.g., api-01, api-02).'
         enum:
           - '1'
           - '2'
@@ -29,7 +31,10 @@ paths:
       tags:
         - Content Blocks
       summary: Create Content Block
-      description: Creates a new content block that can be reused in campaigns.
+      description: >
+        You can use this API to create a content block in MoEngage.
+      x-mint-groups:
+        - Management
       requestBody:
         required: true
         description: The details of the content block to be created.
@@ -49,15 +54,19 @@ paths:
               content_block_used: []
       responses:
         '202':
-          description: Accepted. The request has been accepted for processing.
+          description: Success
         '400':
-          description: Bad Request. The request is invalid due to missing or incorrect data.
+          description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Invalid Field Value"
+                description: "app_key - Some of the field values are invalid: app_key : None"
+                code: "nGpUNpDQ"
         '5XX':
-          description: Internal Server Error.
+          description: Failure. Server issue
           content:
             application/json:
               schema:
@@ -97,10 +106,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                title: "Internal Server Error"
-                description: "An unexpected error occurred on the server."
-                code: "SRV_ERR_123"
   /content-blocks/get-by-ids:
     post:
       tags:
@@ -132,10 +137,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                title: "Internal Server Error"
-                description: "An unexpected error occurred on the server."
-                code: "SRV_ERR_123"
   /content-blocks/search:
     post:
       tags:
@@ -168,10 +169,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                title: "Internal Server Error"
-                description: "An unexpected error occurred on the server."
-                code: "SRV_ERR_1g"
 components:
   securitySchemes:
     moeAppKey:
@@ -194,6 +191,7 @@ components:
           type: string
           example: "nGpUNpDQ"
     CreateContentBlockRequest:
+      title: Create Content Block Attribute Mapping
       type: object
       required:
         - name
@@ -201,54 +199,59 @@ components:
         - raw_content
         - content_type
         - created_by
+        - content_block_used
       properties:
         name:
           type: string
-          description: Name of the content block.
+          description: Name of the content block
         label:
           type: string
-          description: A unique label to identify the content block.
+          description: Label to uniquely identify your content block
         status:
           type: string
           enum: [ACTIVE, DRAFT]
-          description: Status of the content block.
+          description: Shows the status of the content block
         raw_content:
           type: string
-          description: The raw HTML or Text content of the block.
+          description: Content of the content block
         content_type:
           type: string
           enum: [HTML, TEXT]
-          description: The type of content.
+          description: Type of the content block - HTML/ Plain Text
         description:
           type: string
-          description: An optional description for the content block.
+          description: Description of the content block
         created_by:
           type: string
           format: email
-          description: Email ID of the user creating the content block.
+          description: Email id of the user who is creating the content block
         tag_ids:
           type: array
           items:
             type: string
-          description: List of tag IDs to associate with the content block.
+          description: Tags associated with the content block
         team_ids:
           type: array
           items:
             type: string
           description: >
-            List of team IDs. Name of the teams for which the content block is enabled. This is only applicable to accounts where Teams is enabled. For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).
+            Teams for which the content block should be available. Passing team id is mandatory if you are using multiple teams. 
+            
+            <Note>For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).</Note>
         content_block_used:
           type: array
           items:
             type: string
           description: >
-            If you are using nested content blocks, provide the names of the other content blocks used in this one. If not, pass an empty array `[]`.
+            In case, you are using nested content blocks, provide the names of the other content blocks used in this content block.
+            
+            <Note>If you are not using nested content blocks, you can pass this as an empty array: `content_block_used : []`</Note>
         images_used:
           type: array
           items:
             type: string
             format: uri
-          description: List of image URLs used in the content block.
+          description: Images used in content block
     UpdateContentBlockRequest:
       type: object
       required:
