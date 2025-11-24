@@ -5,6 +5,8 @@ info:
   description: >
     Content blocks allow marketers to reuse the same content across multiple campaigns. For example, a block might be a repeatedly used header, footer, or designed call-to-action button.
     
+    
+
     This API enables you to fetch, create, and update content blocks on your MoEngage dashboard. [Read more about Content blocks in MoEngage](https://help.moengage.com/hc/en-us/articles/4414768369172-Content-blocks-).
 tags:
   - name: Content Blocks
@@ -77,7 +79,8 @@ paths:
       tags:
         - Content Blocks
       summary: Update Content Block
-      description: Updates an existing content block.
+      description: >
+        You can use this API to update the content blocks in MoEngage.
       requestBody:
         required: true
         description: The updated details for the content block.
@@ -87,23 +90,35 @@ paths:
               $ref: '#/components/schemas/UpdateContentBlockRequest'
             example:
               id: "634fdf4db9c206ba55b8223b"
+              name: "Summer_Sale_Header_Updated"
+              status: "ACTIVE"
               raw_content: "<h1>Massive Summer Sale!</h1>"
-              updated_by: "jane.doe@example.com"
+              content_type: "HTML"
+              updated_by: "abc@gmail.com"
+              content_block_used: []
       responses:
         '202':
-          description: Accepted. The update request has been accepted for processing.
+          description: Success
         '400':
-          description: Bad Request. Invalid ID or other validation errors.
+          description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Invalid Field Value"
+                description: "app_key - Some of the field values are invalid: app_key : None"
+                code: "nGpUNpDQ"
         '5XX':
-          description: Internal Server Error.
+          description: Failure. Server issue
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Internal Server Error"
+                description: "An unexpected error occurred on the server."
+                code: "SRV_ERR_123"
   /content-blocks/get-by-ids:
     post:
       tags:
@@ -311,55 +326,68 @@ components:
             format: uri
           description: Images used in content block
     UpdateContentBlockRequest:
+      title: Update Content Block Attribute Mapping
       type: object
       required:
         - id
+        - name
+        - status
         - raw_content
+        - content_type
         - updated_by
+        - content_block_used
       properties:
         id:
           type: string
-          description: The unique ID of the content block to update. You can get this ID from the Search Content Blocks API.
+          description: ID of the content block that you want to update
         name:
           type: string
-          description: A new name for the content block.
+          description: Name of the content block
         status:
           type: string
           enum: [ACTIVE, DRAFT]
-          description: The new status of the content block.
+          description: Status of the content block - DRAFT/ACTIVE
         raw_content:
           type: string
-          description: The new raw HTML or Text content for the block.
+          description: Content of the content block
+        content_type:
+          type: string
+          enum: [HTML, TEXT]
+          description: Type of the content block - HTML/ Plain Text
         description:
           type: string
-          description: A new description for the content block.
+          description: Description of the content block
         updated_by:
           type: string
           format: email
-          description: Email ID of the user updating the content block.
+          description: Email id of the user who is creating the content block
         tag_ids:
           type: array
           items:
             type: string
-          description: A new list of tag IDs to associate with the content block.
+          description: Tags associated to the content block
         team_ids:
           type: array
           items:
             type: string
           description: >
-            A new list of team IDs. Name of the teams for which the content block is enabled. This is only applicable to accounts where Teams is enabled. For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).
+            Teams for which the content block should be available. Passing team id is mandatory if you are using multiple Teams. 
+            
+            <Note>For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).</Note>
         content_block_used:
           type: array
           items:
             type: string
           description: >
-            A new list of other content block names nested within this block. If not, pass an empty array `[]`.
+            In case, you are using nested content blocks, provide the names of the other content blocks used in this content block.
+            
+            <Note>If you are not using nested content blocks, you can pass this as an empty array: `content_block_used : []`</Note>
         images_used:
           type: array
           items:
             type: string
             format: uri
-          description: A new list of image URLs used in the content block.
+          description: Images used in content block
     GetByIdsRequest:
       type: object
       required:
