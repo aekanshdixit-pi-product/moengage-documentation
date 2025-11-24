@@ -108,7 +108,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/FetchCardsResponse'
         '400':
-          description: Bad Request. User not found.
+          description: This response is returned when the required parameters are missing from the request or when the provided parameters are invalid.
           content:
             application/json:
               schema:
@@ -121,7 +121,7 @@ paths:
                     error: "User not found for this uid/ unique_id"
                     request_id: "64f6a59ed1e36d0d57a790c1"
         '401':
-          description: Authorization Failure.
+          description: This response is returned when the authorization parameters are missing in the HTTP Auth Header.
           content:
             application/json:
               schema:
@@ -140,9 +140,31 @@ paths:
                     description: "Invalid APP_ID is provided"
                     code: "HEmxyvgs"
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: This response is returned when the number of requests per minute has exceeded the rate limit.
+          headers:
+            x-ratelimit-limit:
+              schema: { type: integer }
+            x-ratelimit-remaining:
+              schema: { type: integer }
+            x-ratelimit-reset:
+              schema: { type: integer }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Request limit reached"
+                description: "This API call has exceeded the rate limit"
+                code: "KMxkunyz"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Internal Server Error"
+                message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
 
   /cards/delete:
     delete:
@@ -161,6 +183,15 @@ paths:
         content: |
           ### Rate Limit
           The rate limit is **50K RPM** (Requests Per Minute) and is applicable at the DB (App) level.
+
+          ### Generating unique_id
+          The `unique_id` refers to the device identifier and is platform-specific. You can generate the unique id for Android and iOS using the methods listed below.
+          
+          1. [Android](https://moengage.github.io/android-api-reference/core/com.moengage.core/%5Bandroid-jvm%5D-mo-engage/-builder/index.html)
+          2. iOS
+          ```swift
+          MoEngageSDKCore.getMoEngageDeviceId(completionHandler: @escaping UserInfoHandler)
+          ```
 
           ### FAQs
           **What is the difference between unique_id and uid?**
@@ -182,13 +213,13 @@ paths:
               platforms: ["android", "ios"]
       responses:
         '200':
-          description: Delete request processed. The response details success/failure per platform.
+          description: This response is returned when the request is processed successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeleteCardsResponse'
         '400':
-          description: Bad Request. Missing parameters or User not found.
+          description: This response is returned when the required parameters are missing from the request or when the provided parameters are invalid.
           content:
             application/json:
               schema:
@@ -213,7 +244,7 @@ paths:
                     error: "User not found for this uid/ unique_id"
                     request_id: "64f6a59ed1e36d0d57a790c1"
         '401':
-          description: Authorization Failure.
+          description: This response is returned when the authorization parameters are missing in the HTTP Auth Header.
           content:
             application/json:
               schema:
@@ -226,9 +257,31 @@ paths:
                     description: "APP_ID and APP_SECRET_KEY is missing in Authorization Header."
                     code: "KMxkunyz"
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: This response is returned when the number of requests per minute has exceeded the rate limit.
+          headers:
+            x-ratelimit-limit:
+              schema: { type: integer }
+            x-ratelimit-remaining:
+              schema: { type: integer }
+            x-ratelimit-reset:
+              schema: { type: integer }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Request limit reached"
+                description: "This API call has exceeded the rate limit"
+                code: "KMxkunyz"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Internal Server Error"
+                message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
 
 components:
   securitySchemes:
