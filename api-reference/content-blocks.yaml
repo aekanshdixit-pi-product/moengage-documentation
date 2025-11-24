@@ -5,8 +5,6 @@ info:
   description: >
     Content blocks allow marketers to reuse the same content across multiple campaigns. For example, a block might be a repeatedly used header, footer, or designed call-to-action button.
     
-    
-
     This API enables you to fetch, create, and update content blocks on your MoEngage dashboard. [Read more about Content blocks in MoEngage](https://help.moengage.com/hc/en-us/articles/4414768369172-Content-blocks-).
 tags:
   - name: Content Blocks
@@ -142,7 +140,8 @@ paths:
       tags:
         - Content Blocks
       summary: Search Content Blocks
-      description: Searches for content blocks based on specified filter criteria.
+      description: >
+        You can use this API to search for the available content blocks in your MoEngage account.
       requestBody:
         required: true
         description: A set of filters to apply to the search.
@@ -150,25 +149,55 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SearchContentBlockRequest'
+            example:
+              filters:
+                content_type: ["TEXT"]
+                team_ids: ["0"]
+                tag_ids: ["6141c7ec9b4cbd0b57c872e5"]
+                status: ["ACTIVE"]
+                updated_by: ["geetima@moengage.com"]
+                search_text: "BT_non_personaliation"
       responses:
         '202':
-          description: Accepted. Returns the matching content blocks in the response body.
+          description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContentBlockListResponse'
+                $ref: '#/components/schemas/SearchContentBlockListResponse'
+              example:
+                data:
+                  - id: "61dd90a4cdfd67a8d48ef681"
+                    name: "BT_non_personaliation"
+                    label: "BT_non_personaliation"
+                    description: "BT_non_personaliation"
+                    content_type: "TEXT"
+                    status: "ACTIVE"
+                    created_by: "geetima@moengage.com"
+                    created_at: "2022-01-11T14:13:56.063000"
+                    updated_by: "geetima@moengage.com"
+                    updated_at: "2022-01-11T14:15:31.254000"
+                    tag_ids: ["6141c7ec9b4cbd0b57c872e5", "61409d091202397cc82f8356"]
+                    team_ids: ["0"]
         '400':
-          description: Bad Request.
+          description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Invalid Field Value"
+                description: "app_key - Some of the field values are invalid: app_key : None"
+                code: "nGpUNpDQ"
         '5XX':
-          description: Internal Server Error.
+          description: Failure. Server issue
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Internal Server Error"
+                description: "An unexpected error occurred on the server."
+                code: "SRV_ERR_123"
 components:
   securitySchemes:
     moeAppKey:
@@ -324,43 +353,40 @@ components:
           type: object
           description: |
             A set of filters to apply to the search.
-              You can send an empty filters object (`{}`) if you want to return all content blocks.
-              
-              ```json
-              { 
-                "filters" : {}
-              }
-              ```
+            <Note>You can send empty filters if you want all the content blocks: `{ "filters" : {} }`</Note>
           properties:
             content_type:
               type: array
               items:
                 type: string
                 enum: [HTML, TEXT]
+              description: Type of the content block - HTML/Text
             team_ids:
               type: array
               items:
                 type: string
               description: >
-                List of team IDs. Name of the teams for which the content block is enabled. This is only applicable to accounts where Teams is enabled. For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).
+                Name of the teams for which the content block is enabled. This is only applicable to the accounts where Teams is enabled. For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).
             tag_ids:
               type: array
               items:
                 type: string
+              description: Ids of the tags
             status:
               type: array
               items:
                 type: string
                 enum: [ACTIVE, ARCHIVED]
-              description: Status of the content block.
+              description: Status of the content block
             updated_by:
               type: array
               items:
                 type: string
                 format: email
+              description: Email id of the user who updated the content block
             search_text:
               type: string
-              description: Search term to match against content block names.
+              description: You can use this to search content block by content block name
     ContentBlockObject:
       type: object
       properties:
@@ -393,3 +419,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ContentBlockObject'
+    SearchResponseContentBlock:
+      type: object
+      description: Attribute Mapping for Search Response
+      properties:
+        id:
+          type: string
+          description: Content block id that was passed in the request
+        name:
+          type: string
+          description: Name of the content block
+        description:
+          type: string
+          description: Description of the content block
+        content_type:
+          type: string
+          description: Type of the content block - HTML/Text
+        content:
+          type: string
+          description: Content of the content block
+        created_by:
+          type: string
+          description: Email id of the user who created the content block
+        created_at:
+          type: string
+          description: Date Time of the content block creation
+        updated_by:
+          type: string
+          description: Email id of the user who updates the content block
+        updated_at:
+          type: string
+          description: Date Time of the content block update
+        tag_ids:
+          type: array
+          items:
+            type: string
+          description: Tags associated with the content block
+        team_ids:
+          type: array
+          items:
+            type: string
+          description: >
+            Name of the teams for which the content block is enabled. This is only applicable to the accounts where Teams is enabled. For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).
+    SearchContentBlockListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResponseContentBlock'
