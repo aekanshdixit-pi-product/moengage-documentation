@@ -15,13 +15,7 @@ x-mint:
     
     ### 1. Android
     
-    The platform-specific device ID (or Unique ID) can typically be retrieved from the SDK's core functionality after initialization.
-    
-    ```java
-    // This is an example of retrieving the persistent SDK device ID.
-    // The exact class/method may vary by SDK version.
-    String uniqueId = MoEHelper.getInstance(context).getUniqueId();
-    ```
+    The platform-specific device ID (or Unique ID) can typically be retrieved from the SDK's core functionality after initialization. [Android Documentation](https://moengage.github.io/android-api-reference/core/com.moengage.core/[android-jvm]-mo-e-core-helper/get-mo-engage-device-id.html)
     
     ### 2. iOS
     
@@ -36,7 +30,7 @@ servers:
     variables:
       dc:
         default: '01'
-        description: 'The data center number for your account (e.g., 01, 02, 03).'
+        description: 'The data center number for your account (e.g., 01, 02, 03). You can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).'
 tags:
   - name: Cards
     description: Operations related to fetching and deleting user cards.
@@ -57,8 +51,45 @@ paths:
           ### Rate Limit
           The rate limit is **50K RPM** (Requests Per Minute) and is applicable at the DB (App) level.
           
-          ### Unique ID vs. UID
-          The *unique_id* is the unique value that identifies the user to whom the cards need to be shown. It is a platform-specific device identifier. The *uid* is the unique MoEngage Standard ID (Email ID Standard or the Mobile Number Standard) that identifies the user.
+          ### Postman Collections
+          We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-3519f02b-7f0e-4ca2-8b7e-ba9a1a4cd139) to view it in Postman.
+
+          ### Generating unique_id
+          The `unique_id` refers to the device identifier and is platform-specific. 
+          * [Android](https://moengage.github.io/android-api-reference/core/com.moengage.core/[android-jvm]-mo-e-core-helper/get-mo-engage-device-id.html)
+          * iOS: `MoEngageSDKCore.getMoEngageDeviceId(completionHandler: @escaping UserInfoHandler)`
+
+          ### Action Examples
+          Below are examples of the JSON structure for different Action types returned within the Card object.
+
+          <CodeGroup>
+          ```json Rich Landing
+          {
+              "name": "navigate",
+              "type": "richLanding",
+              "value": "<value>",
+              "kvPairs": {<KV Pairs>}
+          }
+          ```
+
+          ```json Deep Linking
+          {
+              "name": "navigate",
+              "type": "deepLink",
+              "value": "<value>",
+              "kvPairs": {<KV Pairs>}
+          }
+          ```
+
+          ```json Navigate to Screen
+          {
+              "name": "navigate",
+              "type": "screenName",
+              "value": "<value>",
+              "kvPairs": {<KV Pairs>}
+          }
+          ```
+          </CodeGroup>
       parameters:
         - $ref: '#/components/parameters/PageQuery'
         - $ref: '#/components/parameters/LimitQuery'
@@ -83,9 +114,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/FetchCardsResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request. User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                user_not_found:
+                  summary: User Not Found
+                  value:
+                    status: false
+                    error: "User not found for this uid/ unique_id"
+                    request_id: "64f6a59ed1e36d0d57a790c1"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Authorization Failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_secret:
+                  summary: Invalid Secret Key
+                  value:
+                    title: "Authentication Failure"
+                    description: "Invalid APP_SECRET_KEY is provided"
+                    code: "OjueJWoh"
+                invalid_app_id:
+                  summary: Invalid App ID
+                  value:
+                    title: "Authentication Failure"
+                    description: "Invalid APP_ID is provided"
+                    code: "HEmxyvgs"
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -98,9 +157,8 @@ paths:
       summary: Delete Cards for User
       operationId: deleteCards
       description: |
-        The Delete Cards API can be used to delete cards for a specified user (using
-        the unique_id or uid) from the MoEngage Cards database. This option allows
-        you to delete cards for a user without any assistance.
+        The Delete Cards API can be used to delete cards for a specified user (using the `unique_id` or `uid`) from the MoEngage Cards database. This option allows you to delete cards for a user without any assistance.
+        
         **Note:** This operation uses a request body with the `DELETE` method, which is non-standard.
       x-mint:
         metadata:
@@ -109,9 +167,16 @@ paths:
         content: |
           ### Rate Limit
           The rate limit is **50K RPM** (Requests Per Minute) and is applicable at the DB (App) level.
+
+          ### Postman Collections
+          We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-f7526a88-56a7-4aee-bb60-51aa7a2e2bac) to view it in Postman.
           
-          ### Unique ID vs. UID
-          The *unique_id* is the unique value that identifies the user to whom the cards need to be deleted. It is a platform-specific device identifier. The *uid* is the unique MoEngage Standard ID (Email ID, Mobile Number, or other mapped identifier) that identifies the user.
+          ### FAQs
+          **What is the difference between unique_id and uid?**
+          
+          The *unique_id* is the unique value that identifies the user to whom the cards need to be deleted. It is a platform-specific device identifier that can be generated, as mentioned in the [Generating unique_id](/hc/en-us/articles/20732393719316#h_01H9HN44QCC8T3KZH5NH8PJ2RR) section.
+          
+          The *uid* is the unique MoEngage Standard ID that identifies the user.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
       requestBody:
@@ -122,8 +187,8 @@ paths:
               $ref: '#/components/schemas/DeleteCardsRequest'
             example:
               uid: "user@example.com"
-              campaign_ids": ["campaign_id1", "campaign_id2"]
-              platforms": ["android", "ios"]
+              campaign_ids: ["campaign_id1", "campaign_id2"]
+              platforms: ["android", "ios"]
       responses:
         '200':
           description: Delete request processed. The response details success/failure per platform.
@@ -132,9 +197,43 @@ paths:
               schema:
                 $ref: '#/components/schemas/DeleteCardsResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request. Missing parameters or User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_uid:
+                  summary: Missing ID
+                  value:
+                    status: false
+                    error: "Required field missing. Please include either 'uid' or 'unique_id'"
+                    request_id: "64f6a59ed1e36d0d57a790c1"
+                invalid_campaigns:
+                  summary: Invalid Campaign IDs
+                  value:
+                    status: false
+                    error: "Invalid or missing 'campaign_ids' field"
+                    request_id: "64f6a59ed1e36d0d57a790c1"
+                user_not_found:
+                  summary: User Not Found
+                  value:
+                    status: false
+                    error: "User not found for this uid/ unique_id"
+                    request_id: "64f6a59ed1e36d0d57a790c1"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Authorization Failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                auth_required:
+                  summary: Auth Required
+                  value:
+                    title: "Authentication required"
+                    description: "APP_ID and APP_SECRET_KEY is missing in Authorization Header."
+                    code: "KMxkunyz"
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -145,7 +244,9 @@ components:
     basicAuth:
       type: http
       scheme: basic
-      description: 'Uses **Workspace ID** as username and **API Key** (from Campaign report/Business events/Custom templates tile) as password.'
+      description: |
+        Uses **Workspace ID** as username and **API Key** (from Campaign report/Business events/Custom templates tile) as password.
+        To generate the authentication header, refer to [Authentication](/hc/en-us/articles/20732393719316#01GQRA6BGSEKV3P4EV4SK51F5J).
   parameters:
     AppKeyHeader:
       name: MOE-APPKEY
@@ -185,27 +286,30 @@ components:
           type: string
           description: |
             The `uid` is the unique **MoEngage Standard ID** (Email ID Standard or Mobile Number Standard) that identifies the user. You can get the `uid` from the **User Profile** page of your dashboard.
+            
+            This field is used to filter the cards based on the `unique_id` or `uid` specified in the request.
         unique_id:
           type: string
           description: |
-            The `unique_id` is the platform-specific device identifier (e.g., IDFA/AAID) that uniquely identifies the user. Refer to the 'Generating unique_id' section for details.
+            The `unique_id` is the platform-specific device identifier (e.g., IDFA/AAID) that uniquely identifies the user. Refer to [Generating unique_id](/hc/en-us/articles/18920335915284#h_01H9HN44QCC8T3KZH5NH8PJ2RR) for details.
         platforms:
           type: array
           items:
             type: string
             enum: [ANDROID, IOS, WEB]
           description: |
-            This field is used to filter the cards according to the platform. Cards of all the platforms that are provided are returned in the search result. When this field is not specified in the request, cards of all platforms are returned. Allowed Values: ANDROID, IOS, WEB.
+            This field is used to filter the cards according to the platform. Cards of all the platforms that are provided are returned in the search result. When this field is not specified in the request, cards of all platforms are returned. 
+            Allowed Values: ANDROID, IOS, WEB.
         card_category:
           type: string
           description: |
-            This field is used to filter the cards based on the card category. When this field is not specified in the request, cards of all categories are returned.
+            This field is used to filter the cards based on the card category. When this field is not specified in the request, cards of all categories are returned. For more information, refer to [Card Categories](https://help.moengage.com/hc/en-us/articles/360045074752-Create-Card-Campaign#01GEE3J5S4RH9F1P79VFQZHTJS).
         prev_sync_card_ids:
           type: array
           items:
             type: string
           description: |
-            This field is used to filter the cards based on the ID of the cards that were fetched earlier using this API. This field will be used to filter cards that do not have any changes made to them since the last fetch. Thus, only those cards that have been updated for the specified user since the last fetch would be returned. This must be used along with `last_updated_time`.
+            This field is used to filter the cards based on the ID of the cards that were fetched earlier using this API. This field will be used to filter cards that do not have any changes made to them since the last fetch. Thus, only those cards that have been updated for the specified user since the last fetch would be returned. This should be used along with `last_updated_time`.
         last_updated_time:
           type: integer
           format: int64
@@ -222,26 +326,26 @@ components:
       properties:
         uid:
           type: string
-          description: MoEngage Standard ID (Email or Mobile Number) identifying the user. Provide either `uid` or `unique_id`.
+          description: |
+            The `uid` is the unique **MoEngage Standard ID** (Email ID Standard or Mobile Number Standard) that identifies the user.
         unique_id:
           type: string
-          description: Platform-specific device identifier. Provide either `uid` or `unique_id`.
+          description: |
+            The `unique_id` is the platform-specific device identifier. Refer to [Generating unique_id](/hc/en-us/articles/20732393719316#h_01H9HN44QCC8T3KZH5NH8PJ2RR) for details.
         campaign_ids:
           type: array
           items:
             type: string
           description: |
             List of campaign IDs whose cards should be deleted for the user.
-            In the case of a periodic campaign, if the campaign ID of the parent campaign is specified,
-            the cards will get deleted for the child campaigns as well.
+            In the case of a periodic campaign, if the campaign ID of the parent campaign is specified, the cards will get deleted for the child campaigns as well.
         platforms:
           type: array
           items:
             type: string
             enum: [ANDROID, IOS, WEB, android, ios, web]
           description: |
-            Specify platforms to delete cards from. If omitted, the cards specified for deletion
-            will be deleted from all the platforms they are associated with.
+            Specify platforms to delete cards from. If omitted, the cards specified for deletion will be deleted from all the platforms they are associated with.
             Allowed Values: ANDROID, IOS, WEB
       description: Must provide either 'uid' or 'unique_id'.
 
@@ -265,8 +369,11 @@ components:
           type: object
           additionalProperties: true
           description: This field contains the parameters for the URL to which the user would be redirected.
+      description: |
+        Actions define what happens when the user taps on the card. For more information, refer to [Card Actions](https://help.moengage.com/hc/en-us/articles/360045074752-Create-Card-Campaign#01GEE3J5S40ER1FHJQYXD06VA4).
     CardWidget:
       type: object
+      description: Widgets refer to the UI properties defined for self-handled cards. For more information, refer to [Widgets](/hc/en-us/articles/18920335915284#h_01H9JD2ZKP6ESH6DGV7Y71GX8B).
       properties:
         id:
           type: integer
@@ -278,14 +385,9 @@ components:
         content:
           type: string
           description: This field refers to the content that would be displayed in the widget.
-        actions:
-          type: array
-          items:
-            $ref: '#/components/schemas/CardAction'
-          description: This field contains information about what should happen when the widget is tapped.
-          nullable: true
     CardContainer:
       type: object
+      description: Containers contain information about the individual UI elements and their properties for self-handled cards.
       properties:
         id:
           type: integer
@@ -314,6 +416,7 @@ components:
           description: This field contains information about what should happen when the card is tapped (for the container itself).
     CardTemplateData:
       type: object
+      description: This field contains information about the Card Template. For more information, refer to [Template Data](/hc/en-us/articles/18920335915284#h_01H9JCXGM63ZVSPWDZZDPY9MV4).
       properties:
         type:
           type: string
@@ -326,6 +429,7 @@ components:
           description: This field contains information about individual UI elements used in the Card.
     CardMetaData:
       type: object
+      description: This field contains identifiers for the card campaign, such as the campaign id, card id, and so on. For more information, refer to [Meta Data](/hc/en-us/articles/18920335915284#h_01H9HSZYQB4T7P812D93BJQE8K).
       properties:
         cid:
           type: string
@@ -366,6 +470,7 @@ components:
       description: This field contains information about the user's interaction with the card.
     CardDisplayControls:
       type: object
+      description: This field contains information about the display controls set in the card campaign. For more information, refer to [Display Controls](https://help.moengage.com/hc/en-us/articles/360045074752-Create-Card-Campaign#01GEE3J5S476DXG830PX2XR9Y5).
       properties:
         max_times_to_show:
           type: integer
@@ -416,7 +521,8 @@ components:
           description: This field contains information about the display controls set in the card campaign.
         category:
           type: string
-          description: This field contains information about the card category.
+          description: |
+            This field contains information about the card category. For more information, refer to [Card Categories](https://help.moengage.com/hc/en-us/articles/360045074752-Create-Card-Campaign#01GEE3J5S4RH9F1P79VFQZHTJS).
     FetchCardsResponseData:
       type: object
       properties:
@@ -540,46 +646,9 @@ components:
           type: string
           nullable: true
   responses:
-    BadRequest:
-      description: |
-        Bad Request. This response is returned when the required parameters are missing
-        from the request, when the provided parameters are invalid, or when the user is not found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing_uid:
-              summary: Missing User ID
-              value:
-                status: false
-                error: "Required field missing. Please include either 'uid' or 'unique_id'"
-                request_id: "64f6a59ed1e36d0d57a790c1"
-            user_not_found:
-              summary: User Not Found
-              value:
-                status: false
-                error: "User not found for this uid/ unique_id"
-                request_id: "64f6a59ed1e36d0d57a790c1"
-    Unauthorized:
-      description: |
-        Authorization Failure. This response is returned when the authorization parameters
-        are missing or invalid (e.g., Invalid credentials or missing header).
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            auth_failure:
-              summary: Auth Failure
-              value:
-                title: "Authentication Failure"
-                description: "Invalid APP_SECRET_KEY is provided"
-                code: "OjueJWoh"
     TooManyRequests:
       description: |
-        Rate Limit Breach. This response is returned when the number of requests per minute
-        has exceeded the rate limit.
+        Rate Limit Breach. This response is returned when the number of requests per minute has exceeded the rate limit.
       headers:
         x-ratelimit-limit:
           schema: { type: integer }
