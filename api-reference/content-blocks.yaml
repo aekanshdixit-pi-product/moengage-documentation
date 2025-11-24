@@ -116,25 +116,53 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GetByIdsRequest'
+            example:
+              ids: ["634fdf4db9c206ba55b8223b"]
+              is_raw_content_required: true
       responses:
         '202':
-          description: Accepted. Returns the requested content blocks in the response body.
+          description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContentBlockListResponse'
+                $ref: '#/components/schemas/GetByIdsListResponse'
+              example:
+                data:
+                  - id: "634fdf4db9c206ba55b8223ab"
+                    name: "Contentblocktest2"
+                    label: "Contentblocktest2"
+                    description: ""
+                    content_type: "TEXT"
+                    content: "aa"
+                    raw_content: "aa"
+                    status: "ACTIVE"
+                    created_by: "user@email.com"
+                    created_at: "2022-10-19T11:28:13.925000"
+                    updated_by: "test"
+                    updated_at: "2022-10-21T08:38:51.419000"
+                    tag_ids: ["0"]
+                    team_ids: ["test"]
+                    images_used: []
         '400':
-          description: Bad Request.
+          description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Invalid Field Value"
+                description: "app_key - Some of the field values are invalid: app_key : None"
+                code: "nGpUNpDQ"
         '5XX':
-          description: Internal Server Error.
+          description: Failure. Server issue
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                title: "Internal Server Error"
+                description: "An unexpected error occurred on the server."
+                code: "SRV_ERR_123"
   /content-blocks/search:
     post:
       tags:
@@ -340,11 +368,14 @@ components:
           type: array
           items:
             type: string
-          description: A list of content block IDs to retrieve.
+          description: Comma-separated list of the content block ids
         is_raw_content_required:
           type: boolean
           description: >
-            Boolean flag to control whether raw content is returned. `true` returns the non-personalized content given during creation. `false` does not return the content.
+            Boolean Flag used to control whether we need to show raw content or not.
+            
+            * `True`: Returns Non-Personalized content which was given during creation.
+            * `False`: Does not return Personalized content
           default: false
     SearchContentBlockRequest:
       type: object
@@ -387,38 +418,6 @@ components:
             search_text:
               type: string
               description: You can use this to search content block by content block name
-    ContentBlockObject:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        label: { type: string }
-        description: { type: string }
-        content_type: { type: string, enum: [HTML, TEXT] }
-        content: { type: string, description: "Rendered content of the block." }
-        raw_content:
-          type: string
-          description: >
-            Raw content of the content block. This is only returned when `is_raw_content_required: true` is passed in the 'Get Specific Content Blocks' request.
-        status: { type: string, enum: [ACTIVE, DRAFT, ARCHIVED] }
-        created_by: { type: string, format: email }
-        created_at: { type: string, format: date-time }
-        updated_by: { type: string, format: email }
-        updated_at: { type: string, format: date-time }
-        tag_ids: { type: array, items: { type: string } }
-        team_ids:
-          type: array
-          items: { type: string }
-          description: >
-            List of team IDs. Name of the teams for which the content block is enabled. This is only applicable to accounts where Teams is enabled. For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).
-        images_used: { type: array, items: { type: string, format: uri } }
-    ContentBlockListResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContentBlockObject'
     SearchResponseContentBlock:
       type: object
       description: Attribute Mapping for Search Response
@@ -461,6 +460,62 @@ components:
             type: string
           description: >
             Name of the teams for which the content block is enabled. This is only applicable to the accounts where Teams is enabled. For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).
+    GetByIdsResponseContentBlock:
+      type: object
+      description: Attribute Mapping for Get Specific Content Blocks Response
+      properties:
+        id:
+          type: string
+          description: Content block id that was passed in the request
+        name:
+          type: string
+          description: Name of the content block
+        description:
+          type: string
+          description: Description of the content block
+        label:
+          type: string
+          description: Label of the content block
+        content_type:
+          type: string
+          description: Type of the content block - HTML/Text
+        content:
+          type: string
+          description: Content of the content block
+        raw_content:
+          type: string
+          description: Raw content of the content block. This is returned when is_raw_content_required=true is passed in the request.
+        created_by:
+          type: string
+          description: Email id of the user who created the content block
+        status:
+          type: string
+          description: Shows the status of the content block
+        created_at:
+          type: string
+          description: Date Time of the content block creation
+        updated_by:
+          type: string
+          description: Email id of the user who updates the content block
+        updated_at:
+          type: string
+          description: Date Time of the content block update
+        tag_ids:
+          type: array
+          items:
+            type: string
+          description: Tags associated with the content block
+        team_ids:
+          type: array
+          items:
+            type: string
+          description: >
+            Name of the teams for which the content block is enabled. This is only applicable to the accounts where Teams is enabled. For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).
+        images_used:
+          type: array
+          items:
+            type: string
+          description: Images used in content block
     SearchContentBlockListResponse:
       type: object
       properties:
@@ -468,3 +523,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SearchResponseContentBlock'
+    GetByIdsListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetByIdsResponseContentBlock'
