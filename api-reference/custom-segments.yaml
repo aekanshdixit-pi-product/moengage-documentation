@@ -70,7 +70,7 @@ tags:
             You can use the LIST Custom Segment API with the name query param filter to get the id of the custom segment.
           </Accordion>
           <Accordion title="Why am I getting 409 Conflict even with a different name?">
-             Both the name and the definition of a custom segment are unique. If the definition of the custom segment in the request matches an existing segment, we return a conflict 409 error.
+              Both the name and the definition of a custom segment are unique. If the definition of the custom segment in the request matches an existing segment, we return a conflict 409 error.
           </Accordion>
           <Accordion title="How do I know which existing segment is conflicting?">
             In the case of 409 Conflict, we return a conflicting name/id in the response payload. You can check the payload to get the existing custom segment with the same definition.
@@ -86,28 +86,38 @@ paths:
       summary: Create File Segment
       description: Creates a new Custom File Segment from a CSV file URL.
       operationId: createFileSegment
+      parameters:
+        - name: Content-Type
+          in: header
+          description: Select the file content type.
+          required: true
+          schema:
+            type: string
+            default: text/csv
+            enum:
+              - text/csv
+              - application/csv
+              - application/vnd.ms-excel
+              - text/plain
+              - application/octet-stream
+              - binary/octet-stream
+        - name: Database
+          in: header
+          description: Set the database from which the data is available (MOE-DBNAME).
+          required: false
+          schema:
+            type: string
       x-mint:
         content: |
-         ## Request Headers
-         Request headers are applicable to create, update, archive, or unarchive the custom segment.
-        
-         | Header | Type | Description |
-         | :--- | :--- | :--- |
-         | `Content-Type` | String | Set the Content-Type header to any of the specified types. Accepted types: "text/csv", "application/csv", "application/vnd.ms-excel", "text/plain", "application/octet-stream", "binary/octet-stream". |
-         | `Database` | MOE-DBNAME | Set the database from which the data is available. |
-         | `Authorization` | String | Basic authentication is used for access control. Example: `{"Authorization": "Basic Base64_ENCODED_WORKSPACEID_APIKEY="}` |
-        
-         <Note>Any other Content Types besides the ones listed above will be rejected.</Note>
-        
          ## Authentication
          Authentication is performed using Basic Auth.
-        
+         
          If your file is private, you should whitelist [these IPs](https://help.moengage.com/hc/en-us/articles/35329024618772-A-Guide-to-MoEngage-IP-Whitelisting-Mechanism#h_01JNGJNR5F141E7KRK89YW1X8H) to provide access only to MoEngage for the file.
-        
+         
          Check the data center and API endpoint [mapping page here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
-        
+         
          ## Response Codes
-        
+         
          | HTTP Status Code | Response Reason |
          | :--- | :--- |
          | 200 - OK | Everything worked as expected. |
@@ -118,11 +128,11 @@ paths:
          | 409 - Conflict | The request conflicts with another request. |
          | 429 - Too Many Requests | The number of requests or the rate of requests exceeds the allowed limit. |
          | 500, 502, 503, 504 | Server Errors. Something went wrong on MoEngage. |
-        
+         
          ## Limits
-        
+         
          <Note>The limit of 1000 custom file segments is calculated only for the file segments that are active. Most of our customers utilize only 30-40% of this limit at any given point.</Note>
-        
+         
          | Rate Limit Name | Rate Limit |
          | :--- | :--- |
          | total active segment | The limit of the total number of active custom segments at a time for a client is 1000. |
@@ -130,7 +140,7 @@ paths:
          | file_segment ops per day | The total number of file segment operations (create/add/remove) per day per client allowed is 100. |
          | file_segment users per day | The total number of users uploaded via the File segment is limited to 2 million per day. (This limit is customizable, please get in touch with support) |
          | file_size_limit | The size of the file from which the segment is created/updated. For each request, the file size limit is 150 MB. |
-        
+         
           <Note>
            * Breaching the limits will reject the request.
            * Per hour and per day limits will consider the calculation based on the last hour and last 24 hrs respectively.
@@ -170,7 +180,16 @@ paths:
               expiry_time: 30
       responses:
         '202':
-          $ref: '#/components/responses/202_FileSegmentAccepted'
+          description: Request accepted for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccessV2'
+              # Replaced Ref with explicit singular example to avoid dropdown
+              example:
+                message: "File-segment creation request accepted"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '401':
           $ref: '#/components/responses/401_FileSegmentError'
         '409':
@@ -189,6 +208,27 @@ paths:
       summary: Add users to file segment
       description: Adds a list of users from a CSV file to an existing file segment.
       operationId: addUsersToFileSegment
+      parameters:
+        - name: Content-Type
+          in: header
+          description: Select the file content type.
+          required: true
+          schema:
+            type: string
+            default: text/csv
+            enum:
+              - text/csv
+              - application/csv
+              - application/vnd.ms-excel
+              - text/plain
+              - application/octet-stream
+              - binary/octet-stream
+        - name: Database
+          in: header
+          description: Set the database from which the data is available (MOE-DBNAME).
+          required: false
+          schema:
+            type: string
       requestBody:
         description: Details of the segment to update and the file URL of users to add.
         required: true
@@ -205,7 +245,16 @@ paths:
               emails: ["user1@example.com"]
       responses:
         '202':
-          $ref: '#/components/responses/202_FileSegmentAccepted'
+          description: Request accepted for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccessV2'
+              # Replaced Ref with explicit singular example to avoid dropdown
+              example:
+                message: "File-segment user-add request accepted"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '400':
           $ref: '#/components/responses/400_FileSegmentError'
         '401':
@@ -226,6 +275,27 @@ paths:
       summary: Remove users from File Segment
       description: Removes a list of users from a CSV file from an existing file segment.
       operationId: removeUsersFromFileSegment
+      parameters:
+        - name: Content-Type
+          in: header
+          description: Select the file content type.
+          required: true
+          schema:
+            type: string
+            default: text/csv
+            enum:
+              - text/csv
+              - application/csv
+              - application/vnd.ms-excel
+              - text/plain
+              - application/octet-stream
+              - binary/octet-stream
+        - name: Database
+          in: header
+          description: Set the database from which the data is available (MOE-DBNAME).
+          required: false
+          schema:
+            type: string
       requestBody:
         description: Details of the segment to update and the file URL of users to remove.
         required: true
@@ -242,7 +312,16 @@ paths:
               emails: ["user1@example.com"]
       responses:
         '202':
-          $ref: '#/components/responses/202_FileSegmentAccepted'
+          description: Request accepted for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccessV2'
+              # Replaced Ref with explicit singular example to avoid dropdown
+              example:
+                message: "File-segment user-remove request accepted"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '400':
           $ref: '#/components/responses/400_FileSegmentError'
         '401':
@@ -263,6 +342,27 @@ paths:
       summary: Replace users from File Segment
       description: Replaces all users in an existing file segment with a new list of users from a CSV file.
       operationId: replaceUsersInFileSegment
+      parameters:
+        - name: Content-Type
+          in: header
+          description: Select the file content type.
+          required: true
+          schema:
+            type: string
+            default: text/csv
+            enum:
+              - text/csv
+              - application/csv
+              - application/vnd.ms-excel
+              - text/plain
+              - application/octet-stream
+              - binary/octet-stream
+        - name: Database
+          in: header
+          description: Set the database from which the data is available (MOE-DBNAME).
+          required: false
+          schema:
+            type: string
       x-mint:
         content: |
           <Note>
@@ -285,7 +385,16 @@ paths:
               emails: ["user1@example.com"]
       responses:
         '202':
-          $ref: '#/components/responses/202_FileSegmentAccepted'
+          description: Request accepted for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccessV2'
+              # Replaced Ref with explicit singular example to avoid dropdown
+              example:
+                message: "File-segment user-replace request accepted"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '400':
           $ref: '#/components/responses/400_FileSegmentError'
         '401':
@@ -322,12 +431,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccessV2'
-              examples:
-                success:
-                  value:
-                    message: "Successfully archived the custom segment"
-                    success: true
-                    cs_name: "custom_segment_unique_name"
+              example:
+                message: "Successfully archived the custom segment"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '400':
           $ref: '#/components/responses/400_FileSegmentError'
         '401':
@@ -359,12 +466,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccessV2'
-              examples:
-                success:
-                  value:
-                    message: "Successfully unarchived the custom segment"
-                    success: true
-                    cs_name: "custom_segment_unique_name"
+              example:
+                message: "Successfully unarchived the custom segment"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '400':
           $ref: '#/components/responses/400_FileSegmentError'
         '401':
