@@ -2,7 +2,8 @@ openapi: 3.0.3
 info:
   title: MoEngage Recommendation API
   description: |
-    API for fetching recommendation metadata and recommendation results for users.
+    This API lets you fetch/retrieve the metadata associated with a recommendation using the recommendation ID. The metadata can include the recommendation name, model type, status, creation and update time, and so on.
+    
     Authentication is via Basic Auth.
   version: '1.0'
 servers:
@@ -22,47 +23,67 @@ paths:
       summary: Fetch Recommendation Metadata
       operationId: fetchRecommendationMetadata
       description: |
-        Retrieves the metadata associated with a specific recommendation setup using its unique ID. 
-        The metadata can include the recommendation name, model type, status, creation and update time, and so on.
+        Fetch/retrieve the metadata associated with a recommendation using the recommendation ID. The metadata can include the recommendation name, model type, status, creation and update time, and so on.
       x-mint:
         content: |
-          <Note>
-            **Information**
-
-            The response keys may vary depending on the filters used in the recommendation.
-          </Note>
-
-          ## Rate Limit
+          ### Rate Limit
           You can fetch 1,000 recommendations per minute.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/RecommendationIdPath'
       responses:
         '200':
-          description: Successfully retrieved recommendation metadata.
+          description: Indicates that the request is successful and a recommendation is fetched.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecommendationMetadata'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad request. Possible issues include a recommendation, the user does not exist, or the wrong format provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                recommendation_not_found:
+                  summary: Recommendation Not Found
+                  value:
+                    error-code: "recommendation does not exist"
+                    message: "Recommendation does not exist or archived. Please check recommendation_id."
+                invalid_format:
+                  summary: Invalid Format
+                  value:
+                    error-code: "invalid-request-format"
+                    message: "Invalid format provided for recommendation_id."
         '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          description: Recommendation Not Found. The specified recommendation ID does not exist or archived. Please check recommendation_id.
+          description: Unauthenticated. Your request is unauthorized. Verify your credentials and try again.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
-                error-code: "recommendation does not exist"
-                message: "Recommendation does not exist or archived. Please check recommendation_id."
+                error-code: "request-unauthenticated"
+                message: "Your request is unauthorized. Please verify your credentials and try again."
         '413':
-          $ref: '#/components/responses/PayloadTooLarge'
+          description: Request entity too large. The request body can be large in terms of size (bytes) or length of items.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error-code: "payload-size-exceeded"
+                message: "Your payload size exceeds the 1MB limit. Please reduce the payload size and try again."
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal server error. This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error-code: "unexpected-error"
+                message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
   /recommendations/{recommendations_id}/items:
     post:
       tags:
@@ -73,7 +94,7 @@ paths:
         This API lets you fetch/retrieve the metadata results of any recommendations for a user based on their user ID and item ID.
       x-mint:
         content: |
-          ## Rate Limit
+          ### Rate Limit
           You can fetch 10,000 recommendations per minute.
 
           <Note>
@@ -104,12 +125,12 @@ paths:
             schema:
               $ref: '#/components/schemas/FetchResultsRequest'
             example:
-              user_id": "user123@example.com"
-              item_id": "product_sku_abc" # Required for similar_item, frequently_*, etc.
-              include_fields": ["title", "image_link", "price"]
+              user_id: "user123@example.com"
+              item_id: "product_sku_abc"
+              include_fields: ["title", "image_link", "price"]
       responses:
         '200':
-          description: Successfully retrieved recommendation results.
+          description: Indicates that the request is successful and a recommendation is fetched.
           content:
             application/json:
               schema:
@@ -120,21 +141,44 @@ paths:
                     items:
                       $ref: '#/components/schemas/RecommendationResultItem'
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          description: Recommendation Not Found. The specified recommendation ID does not exist or is archived.
+          description: Bad request. Possible issues include a recommendation, the user does not exist, or the wrong format provided.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error-code: "recommendation does not exist"
+                message: "Recommendation does not exist or archived. Please check recommendation_id."
+        '401':
+          description: Unauthenticated. Your request is unauthorized. Verify your credentials and try again.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error-code: "request-unauthenticated"
+                message: "Your request is unauthorized. Please verify your credentials and try again."
         '413':
-          $ref: '#/components/responses/PayloadTooLarge'
+          description: Request entity too large. The request body can be large in terms of size (bytes) or length of items.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error-code: "payload-size-exceeded"
+                message: "Your payload size exceeds the 1MB limit. Please reduce the payload size and try again."
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal server error. This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error-code: "unexpected-error"
+                message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
+
 components:
   securitySchemes:
     basicAuth:
@@ -224,22 +268,14 @@ components:
         db_name: { type: string, description: "This is your workspace name." }
         recommendation_type:
           type: string
-          enum: [user_action, item_attribute, similar_item, frequently_viewed_together, frequently_bought_together, trending_item, user_personalization]
           description: |
             It represents the type of recommendations from which the results will be fetched.
-            The supported values are:
-            - `user_action`
-            - `item_attribute`
-            - `similar_item`
-            - `frequently_viewed_together`
-            - `frequently_bought_together`
-            - `trending_item`
-            - `user_personalization`
+            The supported values are: `user_action`, `item_attribute`, `similar_item`, `frequently_viewed_together`, `frequently_bought_together`, `trending_item`, `user_personalization`.
         name: { type: string, description: "This field represents the name of the recommendation for which you want to fetch the details." }
         description: { type: string, nullable: true, description: "This field describes the recommendation given at the time of its creation." }
         catalog: { type: string, description: "This is the unique identifier of the catalog assigned to the requested recommendation." }
         catalog_name: { type: string, description: "Name of the associated catalog." }
-        status: { type: string, enum: [Active, Archived], description: "The recommendation's status indicates whether it is active or archived." }
+        status: { type: string, description: "The recommendation's status indicates whether it is active or archived." }
         created_time: { type: string, format: date-time, description: "This field shows the timestamp when a recommendation was created." }
         updated_time: { type: string, format: date-time, description: "This field shows the timestamp when a recommendation setting was last modified." }
         all_user_actions:
@@ -280,8 +316,8 @@ components:
       properties:
         user_id:
           type: string
-          description: >
-            A user ID is a unique identifier that represents a user. You can obtain the user_id from the user info page.
+          description: |
+            A user ID is a unique identifier that represents a user. You can obtain the user_id from the user info page. For more information, refer to [User Identity Management](https://help.moengage.com/hc/en-us/articles/24050999467284-User-Identity-Management#h_01J2JHXRX95Z0R9KVW1ZNS2PBC).
         item_id:
           type: string
           description: |
@@ -322,74 +358,31 @@ components:
       additionalProperties: true
       example:
         item_id: "prod_xyz"
-        title": "Stylish Red Scarf"
-        link": "https://example.com/products/prod_xyz"
-        image_link": "https://example.com/images/prod_xyz.jpg"
-        price": 19.99
+        title: "Stylish Red Scarf"
+        link: "https://example.com/products/prod_xyz"
+        image_link: "https://example.com/images/prod_xyz.jpg"
+        price: 19.99
     ErrorResponse:
       type: object
       properties:
         error-code:
           type: string
-          description: Machine-readable error code.
+          description: Each error code is unique and serves as a shorthand representation for the type of error.
         message:
           type: string
-          description: Human-readable error message.
+          description: With the error code, a detailed message is also provided in the response describing the specifics of the request failure and the nature of the error.
   responses:
-    BadRequest:
-      description: Bad Request. Possible issues include a recommendation, the user does not exist, or the wrong format provided.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error-code: "invalid-request-format"
-            message": "Invalid format provided for recommendation_id."
-    Unauthorized:
-      description: Unauthorized. Your request is unauthorized. Verify your credentials and try again.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error-code: "request-unauthenticated"
-            message: "Your request is unauthorized. Please verify your credentials and try again."
-    PayloadTooLarge:
-      description: Request Entity Too Large. The request body can be large in terms of size (bytes) or length of items (1MB limit for POST).
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error-code: "payload-size-exceeded"
-            message: "Your payload size exceeds the 1MB limit. Please reduce the payload size and try again."
     TooManyRequests:
-      description: Too Many Requests. Rate limit exceeded.
+      description: Too Many Requests. There won't be any response body for this request.
       headers:
         x-ratelimit-limit:
           schema: { type: integer }
-          description: The request limit per time window.
+          description: The maximum number of requests that the consumer is permitted to make in a given time window.
         x-ratelimit-remaining:
           schema: { type: integer }
-          description: The remaining requests in the current window.
+          description: The number of requests remaining in the current rate limit window.
         x-ratelimit-reset:
           schema: { type: integer }
-          description: UTC epoch seconds when the limit resets.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error-code: "too-many-requests"
-            message: "Rate limit exceeded."
-    InternalServerError:
-      description: Internal Server Error. This response is returned when the system runs into an unexpected error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error-code: "unexpected-error"
-            message: "Something went wrong with your request. Contact the MoEngage team."
+          description: The time at which the current rate limit window resets in UTC epoch seconds.
 security:
   - basicAuth: []
