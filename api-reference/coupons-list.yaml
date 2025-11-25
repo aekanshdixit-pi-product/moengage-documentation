@@ -660,26 +660,80 @@ paths:
         - Coupon Files
       summary: Delete a Coupon File from the Coupon List
       operationId: deleteCouponFile
-      description: This API allows you to remove a specific coupon file from a coupon list.
+      description: |
+        This API allows you to remove a specific coupon file from a coupon list. It is useful in scenarios where a test file or incorrect file is inadvertently uploaded, thereby ensuring the accuracy and effectiveness of your coupon list management.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            There is no request body or content to send for this request except for headers.
+          </Note>
+
+          ### Rate Limit
+          You can delete:
+          * 5 coupon files per minute or
+          * 50 coupon files per day
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
         - $ref: '#/components/parameters/CouponFileIdPath' 
       responses:
         '204':
-          description: Coupon file deleted.
+          description: |
+            Success (No content)
+            The request is successful, and the coupon file is deleted.
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: |
+            Bad request
+            Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes. For more information, refer to Error Messages.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: |
+            Unauthenticated
+            Your request is unauthorized. Verify your credentials and try again.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: |
+            Forbidden
+            Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests
+            This response is returned when the number of requests per minute has exceeded the rate limit.
+            
+            There won't be any response body for this request.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: |
+            Internal server error
+            Something went wrong with your request. Contact the MoEngage team for further assistance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /coupon-list/{coupon_list_id}/usage-report:
     post:
