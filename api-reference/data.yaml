@@ -3018,23 +3018,93 @@ paths:
                           current_time: "1712567385726"      
       responses:
         '200':
-          description: Request accepted successfully.
+          description: This response is returned when the request is processed successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericSuccess'
+              examples:
+                success_response:
+                  summary: Success Response
+                  value:
+                    status: "success"
+                    message: "Your request has been accepted and will be processed soon."
         '400':
-          description: Bad Request.
+          description: This response is returned when the required parameters are missing from the request, attributes are not found, and incorrect values are passed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
-        '401':
-          description: Unauthorized.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "A descriptive error message explaining why the request failed."
+                      type:
+                        type: string
+                        description: 'The type or category of the error ("MissingAttributeError").'
+                      request_id:
+                        type: string
+                        description: "A unique identifier for the request, useful for debugging."
+              examples:
+                bad_request:
+                  summary:   Bad Request
+                  value:
+                    status: "fail"
+                    error:
+                      message: "'Could not decode the request body. The JSON was incorrect or not encoded as UTF-8."
+                      type: "Malformed JSON"
+                      request_id: "oWvxnUuo"
+                empty_elements:
+                  summary:   Empty Body
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "elements"
+                      message: "'elements cannot be empty array"
+                      type: "MissingAttributeError"
+                      request_id: "oWvxnUuo"
+                invalid_type:
+                  summary: Invalid Type
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "type"
+                      message: "'type in elements should be customer/event/device"
+                      type: "AttributeError"
+                      request_id: "oWvxnUuo"
+                missing_customerid:
+                  summary:   Customer ID is Missing
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "customer_id"
+                      message: "'customer_id not found in the payload"
+                      type: "MissingAttributeError"
+                      request_id: "oWvxnUuo" 
+                empty_action:
+                  summary: Empty Action
+                  value:
+                    status: "fail"
+                    error:
+                      attribute: "action"
+                      message: "'action cannot be empty Unicode string"
+                      type: "MissingAttributeError"
+                      request_id: "oWvxnUuo"
+                malformed_json:
+                  summary: Element Data Type
+                  value:
+                    status: "fail"
+                    error:
+                      message: "'Could not decode the request body. The JSON was incorrect or not decoded as UTF-8."
+                      type: "Malformed JSON"
+                      request_id: "oWvxnUuo"
+                 
 
   # SECTION 8: WEBHOOKS
   /webhooks/moengage-streams:
