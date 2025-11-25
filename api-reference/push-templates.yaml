@@ -11,11 +11,11 @@ info:
     ## FAQs
     * **Can I create a template that is supported only on iOS?**
       Yes, you can send only the iOS payload if you want to create a template for iOS.
-    * **What are the different types of image, video, and audio files supported?**
-      * Audio/Video: All formats supported by standard FCM/APNS.
-      * Images: png, jpeg, jpg, gif.
+    * **What are the different types of image, video, and audio files supported by MoEngage?**
+      * Audio and video file formats - all types of video and audio file formats supported by standard FCM/APNS platforms.
+      * Images- the following formats are supported: "image/png", "image/jpeg", "image/jpg", "image/gif".
     * **Can I create multiple templates with the same name?**
-      Yes, provided they have different versions.
+      Yes, you can create multiple templates with the same name, provided they have different versions.
   version: "1.0"
   x-logo:
     url: "https://images.g2crowd.com/uploads/product/image/social_landscape/social_landscape_4cb13a53c5240c218206532439a2f15a/moengage.png"
@@ -114,6 +114,7 @@ components:
       properties:
         basic_details:
           type: object
+          description: "The basic_details JSON object contains the following information:"
           required:
             - title
             - message
@@ -138,7 +139,7 @@ components:
             notification_control_color: 
               type: string
               enum: [Light, Dark]
-              description: This field contains the specification for the notification control color. Allowed values are Light, Dark. This is available only for the Android platform. This option is not available for the Basic Notification template.
+              description: "This field contains the specification for the notification control color. Allowed Values: Light, Dark. This is available only for the Android platform. This option is not available for the Basic Notification template."
             background_color_code: 
               type: string
               description: |
@@ -151,7 +152,7 @@ components:
             image_url: 
               type: string
               format: uri
-              description: This field contains the URL of the image to be added to the notification. Allowed file formats, jpg, jpeg, png, gif
+              description: "This field contains the URL of the image to be added to the notification. Allowed file formats: jpg, jpeg, png, gif"
             input_gif_url: 
               type: string
               format: uri
@@ -181,6 +182,7 @@ components:
           description: The buttons object contains the list of buttons in the notification and is optional.
         advanced:
           type: object
+          description: "The advanced JSON object contains the following information:"
           properties:
             coupon_code: 
               type: string
@@ -222,7 +224,7 @@ components:
               description: This field denotes the update key used to identify and update related push notifications. Ensure you use the same update key for all push notifications intended to update each other.
         template_backup:
           type: object
-          description: "Some of the options available in the higher SDK versions are not supported for devices that have lower SDK versions (versions lesser than **Android SDK version 10.3.00**). In such cases, a backup notification is sent, and this information is configured in the Template Backup section. **Note**: This option does not apply to the Basic notification template and is applicable only to the Stylized basic template."
+          description: "The template_backup JSON object contains backup options. Some of the options available in the higher SDK versions are not supported for devices that have lower SDK versions (versions lesser than **Android SDK version 10.3.00**). In such cases, a backup notification is sent, and this information is configured in the Template Backup section. **Note**: This option does not apply to the Basic notification template and is applicable only to the Stylized basic template."
           properties:
             title: { type: string, description: "This field contains the title of the message." }
             message: { type: string, description: "This field contains the message content." }
@@ -265,6 +267,7 @@ components:
       properties:
         basic_details:
           type: object
+          description: "The basic_details JSON object contains the following information:"
           required:
             - title
             - message
@@ -310,6 +313,7 @@ components:
           description: The buttons object contains the list of buttons in the notification and is optional.
         advanced:
           type: object
+          description: "The advanced JSON object contains the following information:"
           properties:
             coupon_code: { type: string, description: "This field contains the coupon code." }
             sound_file: { type: string, description: "This field contains the details of the sound file to be used for the notification in the user's device. This would be the sound the user would hear on their device upon receiving the notification." }
@@ -327,7 +331,7 @@ components:
               description: "This field denotes the update key used to identify and update related push notifications. Ensure you use the same update key for all push notifications intended to update each other."
         template_backup:
           type: object
-          description: "Some of the options available in the higher SDK versions are not supported for devices that have lower SDK versions (versions lesser than **iOS version 6.2.0**). In such cases, a backup notification is sent, and this information is configured in the Template Backup section. **Note**: This option does not apply to the Basic notification template and is applicable only to the Stylized basic template."
+          description: "The template_backup JSON object contains backup options. Some of the options available in the higher SDK versions are not supported for devices that have lower SDK versions (versions lesser than **iOS version 6.2.0**). In such cases, a backup notification is sent, and this information is configured in the Template Backup section. **Note**: This option does not apply to the Basic notification template and is applicable only to the Stylized basic template."
           properties:
             title: { type: string, description: "This field contains the title of the message." }
             subtitle: { type: string, description: "This field contains the message content." }
@@ -430,7 +434,7 @@ components:
         vendor_template_id:
           type: string
           description: "This field contains the ID for the template and is unique. This ID should be generated by you and will be used for updating or retrieving the template using the custom template APIs."
-
+    
     # --- Error Responses ---
     ErrorResponse:
       type: object
@@ -467,9 +471,23 @@ components:
         title:
           type: string
           example: "Authentication required"
+          description: "This field contains a brief description of the error."
         description:
           type: string
           example: "MOE-APPKEY missing in Authentication Header"
+          description: "This field contains a description of the error."
+    
+    ServerErrorResponse:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Internal Server Error"
+          description: "This field contains a brief description of the error."
+        message:
+          type: string
+          example: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+          description: "This field contains the error message."
 
 security:
   - BasicAuth: []
@@ -882,7 +900,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimpleErrorResponse'
+                $ref: '#/components/schemas/ServerErrorResponse'
               example:
                 title: "Internal Server Error"
                 message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
@@ -996,7 +1014,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimpleErrorResponse'
+                $ref: '#/components/schemas/ServerErrorResponse'
+              example:
+                title: "Internal Server Error"
+                message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
 
   /custom-templates/push/search:
     post:
@@ -1005,6 +1026,10 @@ paths:
       summary: Search for Push Templates
       description: |
         Searches for push templates based on a variety of filter criteria. Sending an empty request body will fetch all templates.
+        
+        **Note**:
+        * You can send empty filters to fetch all the push templates.
+        * You can send only template_ids if you want specific older versions of the push template. In other cases, you will receive the latest version of the template.
         
         **Rate Limit:** 100 RPM.
       operationId: searchPushTemplates
@@ -1068,17 +1093,31 @@ paths:
                   items:
                     type: object
                     properties:
-                      template_name: { type: string, enum: [ASCENDING, DESCENDING] }
-                      last_modified_date: { type: string, enum: [ASCENDING, DESCENDING] }
-                      last_modified_by: { type: string, enum: [ASCENDING, DESCENDING] }
+                      template_name: 
+                        type: string
+                        enum: [ASCENDING, DESCENDING]
+                        description: Sort by template name.
+                      last_modified_date: 
+                        type: string
+                        enum: [ASCENDING, DESCENDING]
+                        description: Sort by last modified date.
+                      last_modified_by: 
+                        type: string
+                        enum: [ASCENDING, DESCENDING]
+                        description: Sort by last modified by user.
                   description: "This field indicates the sorting parameters for the search result and the sort order. Example: \"sort_params\":[{\"template_name\": \"ASCENDING\",\"last_modified_date\": \"ASCENDING\",\"last_modified_by\": \"ASCENDING\"}]"
                 template_ids:
                   type: array
                   items:
                     type: object
                     properties:
-                      external_template_id: { type: string, format: uuid }
-                      version: { type: integer }
+                      external_template_id: 
+                        type: string
+                        format: uuid
+                        description: The unique ID of the template to fetch.
+                      version: 
+                        type: integer
+                        description: The specific version of the template to fetch.
                   description: "This field indicates the list of the template ids that must be fetched. When this value is specified, the template that matches the id specified in this field will be returned. Example: \"template_ids\":[{\"external_template_id\": \"e1c95cb8-4f15-4f22-ae73-e9f47c9925c8\", \"version\": 1}]"
             examples:
               ComplexSearch:
@@ -1109,15 +1148,44 @@ paths:
                     items:
                       type: object
                       properties:
-                        external_template_id: { type: string, format: uuid }
-                        version: { type: integer }
-                        ANDROID: { $ref: '#/components/schemas/AndroidPayload' }
-                        IOS: { $ref: '#/components/schemas/IosPayload' }
-                        meta_info: { type: object }
-                        created_by: { type: string }
-                        created_at: { type: string, format: date-time }
-                        updated_by: { type: string }
-                        updated_at: { type: string, format: date-time }
+                        external_template_id: 
+                          type: string
+                          format: uuid
+                          description: The unique template ID.
+                        version: 
+                          type: integer
+                          description: The version of the template.
+                        ANDROID: 
+                          $ref: '#/components/schemas/AndroidPayload'
+                        IOS: 
+                          $ref: '#/components/schemas/IosPayload'
+                        meta_info: 
+                          type: object
+                          description: "This field contains information about the template, such as the name, version, and id of the template, the template's platform, style, and the creator's details."
+                          properties:
+                            platform: { type: array, items: { type: string } }
+                            template_style: { type: string }
+                            template_id: { type: string }
+                            template_name: { type: string }
+                            template_version: { type: string }
+                            updated_by: { type: string }
+                            channel: { type: string, description: "The channel of the template (e.g., PUSH)." }
+                            template_source: { type: string, description: "The source of the template (e.g., API)." }
+                            template_type: { type: string, description: "The type of the template (e.g., CUSTOM)." }
+                        created_by: 
+                          type: string
+                          description: The user who created the template.
+                        created_at: 
+                          type: string
+                          format: date-time
+                          description: The timestamp when the template was created.
+                        updated_by: 
+                          type: string
+                          description: The user who last updated the template.
+                        updated_at: 
+                          type: string
+                          format: date-time
+                          description: The timestamp when the template was last updated.
                     description: "This field contains the list of push templates that satisfy the search criteria."
               example:
                 data:
@@ -1179,7 +1247,6 @@ paths:
               example:
                 title: "Invalid Field Value"
                 description: "Some of the field values are invalid"
-                code: "nGpUNpDQ"
         '429':
           description: This response is returned when the number of requests per minute has exceeded the rate limit.
           content:
@@ -1197,7 +1264,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimpleErrorResponse'
+                $ref: '#/components/schemas/ServerErrorResponse'
               example:
                 title: "Internal Server Error"
                 message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
