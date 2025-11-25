@@ -1,189 +1,493 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
-  title: MoEngage Email Template API
-  version: '2.0'
+  title: Email Templates API V1
   description: |
-    API for creating, updating, and searching Email templates within the MoEngage platform.
+    The Email Templates API allows you to create, retrieve, and update email templates in MoEngage.
     
-    **Postman Collections**
-    We have made it easy for you to test the APIs. [View in Postman](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-c13b39d2-6abb-45a2-9f9f-312e52a65791?action=share&creator=3182294).
+    The Create Email Template API can be used to create an email template in MoEngage. This API helps you upload templates created outside the MoEngage ecosystem to MoEngage and use them for campaign creation on the MoEngage Dashboard.
+
+    <Note>
+    Templates created using this API cannot be used in the Drag and Drop Editor in the MoEngage Dashboard. They are supported only for the Custom HTML Editor (Froala Editor).
+    </Note>
+  version: v2
 servers:
-  - url: 'https://api-{dc}.moengage.com/v2'
-    description: MoEngage Email Template API Server
+  - url: https://api-{dc}.moengage.com/v2
+    description: MoEngage API Server
     variables:
       dc:
-        default: '01'
-        description: 'Your MoEngage Data Center (DC). Refer to MoEngage docs for your correct DC.'
+        default: "01"
+        description: "Your Data Center number (e.g., 01, 02, 03). Check your dashboard URL to find this value (value of X)."
         enum:
-          - '01'
-          - '02'
-          - '03'
-          - '04'
+          - "01"
+          - "02"
+          - "03"
 
-  
-tags:
-  - name: Email Templates
-    description: Operations to manage email templates.
+security:
+  - basicAuth: []
+    appKey: []
 
 paths:
   /email-templates:
     post:
-      tags:
-        - Email Templates
       summary: Create Email Template
       description: |
-        The Create Email Template API can be used to create an email template in MoEngage. This API helps you upload templates created outside the MoEngage ecosystem to MoEngage and use them for campaign creation on the MoEngage Dashboard.
+        Upload templates created outside the MoEngage ecosystem to be used for campaign creation.
       x-mint:
         content: |
           <Note>
-          **Note**
           Templates created using this API cannot be used in the Drag and Drop Editor in the MoEngage Dashboard. They are supported only for the Custom HTML Editor (Froala Editor).
           </Note>
 
-          # Rate Limit
-          The rate limits are at the app level, and a maximum of **1000** (sum of all the API requests per app) requests are allowed for an app per minute.
-
-          # FAQs
-          <AccordionGroup>
-            <Accordion title="How do I access templates created using this API on the MoEngage Dashboard?">
-              You can access templates created using the Create Email Template API in the My Saved Templates tab during the second step of campaign creation in the MoEngage Dashboard.
-            </Accordion>
-          </AccordionGroup>
+          ### Rate Limit
+          The rate limits are at the app level, and a maximum of thousand (sum of all the API requests per app) requests are allowed for an app per minute.
       operationId: createEmailTemplate
-      parameters:
-        - name: MOE-APPKEY
-          in: header
-          required: true
-          description: |
-            This is your MoEngage account's APP ID that has to be passed along with the request. 
-            You can find your MoEngage APP ID at **Settings -> Account -> APIs -> App ID**.
-          schema:
-            type: string
-        - name: Content-Type
-          in: header
-          required: true
-          schema:
-            type: string
-            default: application/json
-          description: Set the Content-Type header to application/json.
-     
-       
-       
-        
-           
+      tags:
+        - Email Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCreateRequest'
       responses:
         '200':
-          description: Request processed successfully.
-          content:
-            application/json:
-              
-               
-              example:
-                status: success
-                data:
-                  id: 63f4962d4d31f4c68d980a01
-                  msg: Custom email template saved
-        '400':
-          description: Bad Request (Validation failure, missing fields).
-          content:
-            application/json:
-             
-              
-              examples:
-                invalidHeader:
-                  summary: Invalid Request Body/Header
-                  value:
-                    status: error
-                    data:
-                      code: 400
-                      title: Invalid request body
-                      description: MOE-APPKEY header is invalid or empty
-                emptyName:
-                  summary: Empty Name
-                  value:
-                    status: error
-                    data:
-                      code: 400
-                      title: Invalid email name
-                      description: Name field is empty
-                emptyHtml:
-                  summary: Empty HTML
-                  value:
-                    status: error
-                    data:
-                      code: 400
-                      title: Invalid email body
-                      description: Email body should not be empty
-        '401':
-          description: Authentication Failure.
-          content:
-            application/json:
-             
-              example:
-                status: error
-                data:
-                  code: 401
-                  title: Authentication required
-                  description: Invalid APP_ID used in Authentication Header
-        '429':
-          description: Rate Limit Breach.
-          content:
-            application/json:
-              
-              
-              example:
-                status: error
-                data:
-                  code: 429
-                  title: rate limiter exception
-                  description: Exceeded rate limit for this app
-        '500':
-          description: Internal Server Error.
+          description: Template created successfully
           content:
             application/json:
               schema:
                 type: object
-              example:
-                title: Internal Server Error
-                message: An unexpected error was encountered while processing this request. Please contact MoEngage Team
+                properties:
+                  status:
+                    type: string
+                    example: success
+                    description: This field contains the status of the request and denotes whether it was successful or not.
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: This field contains the template id and needs to be stored by you. This template id would be used for searching a specific template and updating it.
+                        example: "63f4962d4d31f4c68d980a01"
+                      msg:
+                        type: string
+                        description: This field contains information about the successful creation of the template.
+                        example: "Custom email template saved"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimit'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
     get:
+      summary: Get All Templates
+      description: |
+        The Get All Templates API fetches the list of all the email templates available in your MoEngage account.
+      operationId: getAllTemplates
       tags:
         - Email Templates
-      summary: Get All Email Templates
-      description: The Get All Templates API fetches the list of all the email templates available in your MoEngage account.
-      x-mint:
-        content: |
-          # Rate Limit
-          The rate limits are at the app level, and a maximum of **1000** (sum of all the API requests per app) requests are allowed for an app per minute.
-      operationId: getAllEmailTemplates
       parameters:
-        - name: MOE-APPKEY
-          in: header
-          required: true
-          description: |
-            This is your MoEngage account's WORKSPACE ID which must be passed along with the request.
-            You can find your MoEngage WORKSPACE ID at **Settings -> Account -> APIs -> Workspace ID**.
-          schema:
-            type: string
-        - name: Content-Type
-          in: header
-          required: true
-          schema:
-            type: string
-            default: application/json
-          description: Set the Content-Type header to application/json.
         - name: page
           in: query
-          required: true
           description: |
-            This parameter represents the page number. If this value is not specified, it will be considered as one by default.
-            Each page will have a batch size of 20 (20 templates will be returned in a page).
+            This parameter represents the page number. If this value is not specified, it will be considered as one by default. Each page will have a batch size of 20 (20 templates will be returned in a page).
           schema:
             type: integer
             default: 1
       responses:
         '200':
-          description: Successfully retrieved the list of templates.
+          description: Success
           content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      templates:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TemplateDetails'
+                      no_of_templates:
+                        type: integer
+                        example: 13
+                        description: The number of templates returned in the page.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimit'
+
+  /email-templates/{id}:
+    get:
+      summary: Get Specific Template
+      description: Fetches a specific email template using its unique template ID.
+      x-mint:
+        content: |
+          ### FAQ
+          **What happens when you search for a deleted template?**
+          The error description contains the following message in such a case: "Template for given template id is archived".
+      operationId: getTemplateById
+      tags:
+        - Email Templates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: |
+            This is the Template id of the template being searched. The template id is a unique identifier that is generated at the time of template creation.
+          schema:
+            type: string
+            example: "63f30792c66ddcaac2ef9109"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateDetailsFlat'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      summary: Update Specific Template
+      description: Updates an existing email template by specifying its template ID in the path.
+      operationId: updateTemplateById
+      tags:
+        - Email Templates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique template ID to update.
+          schema:
+            type: string
+            example: "63f30792c66ddcaac2ef9109"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateUpdateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "63f4962d4d31f4c68d980a01"
+                      msg:
+                        type: string
+                        example: "Custom email template updated"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /bulk/email-templates:
+    put:
+      summary: Bulk Create/Update Templates
+      description: |
+        The Bulk Create/Update Template API is used to create/update email templates in bulk. You can create or update up to fifty templates in a single request.
+      x-mint:
+        content: |
+          ### FAQ
+          **How is the create request differentiated from an update template request?**
+          In the case of an update, the template to be updated is identified using its template id. It is mandatory to pass the id field in the required for an update template request. Otherwise, it will be treated as a create template request.
+
+          ### Rate Limit
+          The rate limits are at the app level, and a maximum of a thousand (sum of all the API requests per app) requests are allowed for an app per minute.
+      operationId: bulkCreateUpdateTemplates
+      tags:
+        - Email Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              maxItems: 50
+              items:
+                oneOf:
+                  - $ref: '#/components/schemas/TemplateCreateRequest'
+                  - $ref: '#/components/schemas/TemplateBulkUpdateRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      new_templates:
+                        type: array
+                        items:
+                          type: string
+                        description: List of IDs for newly created templates.
+                      updated_templates:
+                        type: array
+                        items:
+                          type: string
+                        description: List of IDs for updated templates.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimit'
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request.
+        
+        **Format:** `Basic Base64_ENCODED_WORKSPACEID_APIKEY==`
+        
+        You can find your Workspace ID and API Key in **Settings -> Account -> APIs**.
+    appKey:
+      type: apiKey
+      in: header
+      name: MOE-APPKEY
+      description: |
+        This is your MoEngage account's WORKSPACE ID (formerly APP ID) which must be passed along with the request. You can find your MoEngage WORKSPACE ID at **Settings -> Account -> APIs -> WORKSPACE ID**.
+
+  schemas:
+    # Base properties common to create and update
+    TemplateBase:
+      type: object
+      required:
+        - name
+        - html
+        - source
+      properties:
+        name:
+          type: string
+          minLength: 5
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_]+$'
+          description: |
+            This field contains the name of the template and would be used for identifying the template.
             
+            **Constraints:**
+            * The name field can contain only alphanumeric and underscore characters.
+            * The length of this field can be between 5-50 characters.
+          example: "End_Of_Season_Sale_Template"
+        html:
+          type: string
+          description: |
+            This field contains the message body of the email. This is where you define the email template being created. The HTML tag and BODY tag (with text/tags) are mandatory. 
+            
+            **Note:** The SCRIPT tag is not allowed.
+          example: "<!DOCTYPE html><html><body><p>Content</p></body></html>"
+        subject:
+          type: string
+          description: "This field contains the subject of the email campaign."
+          example: "End of Season Sale!"
+        attachments:
+          type: array
+          description: |
+            This field contains the attachments to be included in the email.
+            
+            **Constraints:**
+            * Only URLs can be added as part of Email attachments.
+            * A maximum of ten attachments are allowed.
+            * The URL should start with https and end with a valid extension. 
+            * **Forbidden extensions:** .dmg, .exe, .xls, .ddl, .class, .obj, .int, .gnt, .o, .so, .lbr, and .net.
+            * Individual attachments should be less than 6 MB, and the total size of the attachments should be less than 20 MB.
+          maxItems: 10
+          items:
+            type: string
+            format: uri
+            example: "https://app-cdn.moengage.com/assets/LogoThumbnail.jpg"
+        sender_name:
+          type: string
+          description: "This field contains the name displayed that is displayed in the inboxes of your recipients."
+          example: "Your Brand Name"
+        source:
+          type: string
+          description: |
+            This field contains information about the source of template creation. This can be the name of the email partner.
+            
+            **Note:** Only alphanumerics, spaces, and underscores are allowed in this field.
+          example: "Partner"
+        updated_by:
+          type: string
+          description: |
+            This field contains information about who created the template.
+            
+            **Note:** Only alphanumerics, spaces, and hyphens are allowed in this field. This field can contain the email ID of the creator as well.
+          example: "john.doe@example.com"
+
+    # Schema for Creating a single template
+    TemplateCreateRequest:
+      allOf:
+        - $ref: '#/components/schemas/TemplateBase'
+
+    # Schema for Updating (requires ID in Bulk operations, but not in Path-based update)
+    TemplateUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/TemplateBase'
+
+    # Schema specifically for the Bulk array where ID is required for updates
+    TemplateBulkUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/TemplateBase'
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              description: "This is the Template id of the template being updated. It is mandatory to add this field when updating a template via the Bulk API."
+
+    # Schema for GET All response objects
+    TemplateDetails:
+      type: object
+      properties:
+        template_id:
+          type: string
+          description: The unique identifier that is created at the time of template creation.
+        template_name:
+          type: string
+          description: Name of the template being fetched.
+        is_archived:
+          type: boolean
+        builder_supported:
+          type: boolean
+          description: For the Froala editor, this value is false.
+        editor:
+          type: string
+          example: "Froala Editor"
+        created_date:
+          type: string
+          description: Timestamp of template creation.
+        updated_at:
+          type: string
+          description: Timestamp of when the template was last updated.
+        updated_by:
+          type: string
+          description: Details about who created or updated the template.
+
+    # Schema for GET Specific response (structure is slightly different than GET All)
+    TemplateDetailsFlat:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        template_id:
+          type: string
+          example: "645a0cec10e0307e6d7f7716"
+        template_name:
+          type: string
+          example: "End_of_season_sale_template"
+        subject:
+          type: string
+        template_content:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: object
+        source:
+          type: string
+        sender_name:
+          type: string
+        editor:
+          type: string
+        created_date:
+          type: string
+        updated_at:
+          type: string
+        updated_by:
+          type: string
+
+    ErrorData:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 400
+        title:
+          type: string
+          example: "Invalid request body"
+        description:
+          type: string
+          example: "MOE-APPKEY header is invalid or empty"
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              data:
+                $ref: '#/components/schemas/ErrorData'
+    Unauthorized:
+      description: Authorization Failure
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              data:
+                $ref: '#/components/schemas/ErrorData'
+    RateLimit:
+      description: Rate Limit Breach
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              data:
+                $ref: '#/components/schemas/ErrorData'
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+                example: "Internal Server Error"
+              message:
+                type: string
+                example: "An unexpected error was encountered."
