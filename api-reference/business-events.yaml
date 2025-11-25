@@ -31,6 +31,12 @@ paths:
       operationId: createBusinessEvent
       x-mint:
         content: |
+          ### Request Headers
+          | Key | Required | Sample Values | Description |
+          | :--- | :--- | :--- | :--- |
+          | Content-Type | Required | `{"Content-Type": "application/json"}` | Set the Content-Type header to application/json. |
+          | Authorization | Required | `{"Authorization": "Basic Base64_..."}` | The Basic authentication header contains your Base64-encoded key. |
+
           <Note>
             **Rate Limit**: The rate limits are at the workspace level. You can create a maximum of **50 business events** for each workspace.
           </Note>
@@ -110,23 +116,17 @@ paths:
                       MoEngage generates this identifier upon the successful creation of a business event. You must store this value and use it when searching for an event using the search API.
                     example: 64a40cff5547a6b2c5b14404
         '400':
-          description: Bad Request (e.g., missing mandatory fields, invalid data types, or event name already exists).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: |
+            **Bad Request**
+            This response is returned when the required parameters are missing from the request or when the provided parameters are invalid.
         '401':
-          description: Authorization Failure. Returned when the authorization parameters are missing or incorrect in the HTTP Auth Header.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: |
+            **Authorization Failure**
+            This response is returned when the authorization parameters are missing or incorrect in the HTTP Auth Header.
         '500':
-          description: Internal Server Error. Returned when the system runs into an unexpected error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServerErrorResponse'
+          description: |
+            **Internal Server Error**
+            This response is returned when the system runs into an unexpected error.
 
   /business_event/trigger:
     post:
@@ -138,6 +138,12 @@ paths:
       operationId: triggerBusinessEvent
       x-mint:
         content: |
+          ### Request Headers
+          | Key | Required | Sample Values | Description |
+          | :--- | :--- | :--- | :--- |
+          | Content-Type | Required | `{"Content-Type": "application/json"}` | Set the Content-Type header to application/json. |
+          | Authorization | Required | `{"Authorization": "Basic Base64_..."}` | The Basic authentication header contains your Base64-encoded key. |
+
           <Note>
             **Rate Limit**: You can send **200 triggers in a day**, and **50 in each hour**.
           </Note>
@@ -172,15 +178,25 @@ paths:
                   type: object
                   description: |
                     This field contains the event attributes with which the business event will be triggered.
-                    Pass the attribute name as the key and the value as the value.
-                  additionalProperties: true
-                  example:
-                    season: Season 1
-                    episodes: 12
+                  properties:
+                    season:
+                      type: string
+                      description: The season name.
+                      example: "Season 1"
+                    episodes:
+                      type: integer
+                      description: Number of episodes.
+                      example: 12
                     cast:
-                      - John Doe
-                      - Jane Doe
-                    date: '11/11/2023'
+                      type: array
+                      description: List of cast members.
+                      items:
+                        type: string
+                      example: ["John Doe", "Jane Doe"]
+                    date:
+                      type: string
+                      description: Release date.
+                      example: "11/11/2023"
                 triggered_by:
                   type: string
                   format: email
@@ -209,29 +225,21 @@ paths:
                     description: This field contains information about whether the request was successful or not.
                     example: The business event has been triggered
         '400':
-          description: Bad Request (e.g., event does not exist, wrong attributes sent, or no active campaign found).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: |
+            **Bad Request**
+            This response is returned when the required parameters are missing from the request or when the provided parameters are invalid.
         '401':
-          description: Authorization Failure.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: |
+            **Authorization Failure**
+            This response is returned when the authorization parameters are missing or incorrect in the HTTP Auth Header.
         '429':
-          description: Rate Limit Breach. The request rate limit has been exceeded.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RateLimitError'
+          description: |
+            **Rate Limit Breach**
+            This response is returned when the number of requests has exceeded the rate limit.
         '500':
-          description: Internal Server Error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServerErrorResponse'
+          description: |
+            **Internal Server Error**
+            This response is returned when the system runs into an unexpected error.
 
   /business_event/search:
     post:
@@ -242,6 +250,12 @@ paths:
       operationId: searchBusinessEvents
       x-mint:
         content: |
+          ### Request Headers
+          | Key | Required | Sample Values | Description |
+          | :--- | :--- | :--- | :--- |
+          | Content-Type | Required | `{"Content-Type": "application/json"}` | Set the Content-Type header to application/json. |
+          | Authorization | Required | `{"Authorization": "Basic Base64_..."}` | The Basic authentication header contains your Base64-encoded key. |
+
           <Note>
             **Rate Limit**: The rate limit is **100 RPM** (Requests Per Minute).
           </Note>
@@ -306,29 +320,21 @@ paths:
                     last_received_time: '2023-05-30T06:28:06.498000'
                     _id: 64a54500633fda13b6681163
         '400':
-          description: Bad Request (e.g., additional fields provided in the search request).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: |
+            **Bad Request**
+            This response is returned when the required parameters are missing from the request or when the provided parameters are invalid.
         '401':
-          description: Authorization Failure.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: |
+            **Authorization Failure**
+            This response is returned when the authorization parameters are missing or incorrect in the HTTP Auth Header.
         '429':
-          description: Rate Limit Breach.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RateLimitError'
+          description: |
+            **Rate Limit Breach**
+            This response is returned when the number of requests has exceeded the rate limit.
         '500':
-          description: Internal Server Error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServerErrorResponse'
+          description: |
+            **Internal Server Error**
+            This response is returned when the system runs into an unexpected error.
 
 components:
   securitySchemes:
@@ -414,67 +420,3 @@ components:
           type: string
           description: Internal database ID.
           example: 64a54500633fda13b6681163
-    ErrorResponse:
-      type: object
-      description: This field is present in the response only in case of an unsuccessful request.
-      properties:
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              description: This field contains the error code.
-              example: 400 Bad Request
-            message:
-              type: string
-              description: This field contains the error message.
-              example: Bad request
-            details:
-              type: array
-              description: This array contains the specifics and describes the error in detail.
-              items:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: InvalidValue
-                  target:
-                    type: string
-                    example: event_name
-                  message:
-                    type: string
-                    example: Business event does not exist
-            request_id:
-              type: string
-              description: This field contains the request ID of the failed request.
-              example: 64a54cf9633fda13b668132f
-    RateLimitError:
-      type: object
-      properties:
-        status:
-          type: string
-          example: error
-        data:
-          type: object
-          properties:
-            code:
-              type: integer
-              description: HTTP Status Code (429)
-              example: 429
-            title:
-              type: string
-              description: Error Title
-              example: rate limiter exception
-            description:
-              type: string
-              description: Description of the rate limit breach
-              example: Exceeded rate limit for this app
-    ServerErrorResponse:
-      type: object
-      properties:
-        title:
-          type: string
-          example: Internal Server Error
-        message:
-          type: string
-          example: An unexpected error was encountered while processing this request. Please contact MoEngage Team
