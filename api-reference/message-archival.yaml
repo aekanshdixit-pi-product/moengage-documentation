@@ -1,60 +1,38 @@
 openapi: 3.0.3
 info:
   title: MoEngage Message Archival API
-  description: |
-    This API allows you to store and access any communication sent to customers for later access. 
-    
-    For more information, refer to [Message Archival](https://help.moengage.com/hc/en-us/articles/16229242010900-Message-Archival).
+  description: This API allows you to store and access any communication sent to customers for later access.
   version: '1.0'
-
 servers:
   - url: 'https://api-0{X}.moengage.com/v1'
     description: MoEngage API Server
     variables:
       X:
         default: '1'
-        description: |
-          Your MoEngage Data Center (DC) number. Each customer is hosted on a different data center. 
-          Refer to the [Data Center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25) to find your value for X.
-
+        description: 'Your MoEngage Data Center (DC) number. Refer to MoEngage docs for your correct DC.'
 tags:
   - name: Message Archival
     description: Retrieve archived message content.
-
 security:
   - basicAuth: []
-
 paths:
   /archival/view:
     post:
       tags:
         - Message Archival
       summary: View Archived Message
+      description: Use this API to store any communication sent to customers for later access.
       operationId: viewArchivedMessage
-      description: |
-        You can use this API to store any communication sent to customers for later access.
-       
-      x-mint:
-        content: |
-          <Note>
-            **Data Center Configuration**
-            
-            Each customer is hosted on a different data center. You must replace `{X}` in the Base URL with your specific Data Center number. Check the [mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25) to find yours.
-          </Note>
-
       parameters:
         - name: MOE-APPKEY
           in: header
           required: true
           schema:
             type: string
-          description: |
-            This is the Workspace ID (earlier APP ID) of your MoEngage workspace.
-            Found in **Settings -> Account -> APIs -> Workspace ID**.
+          description: 'This is the workspace ID (earlier APP ID) of your MoEngage workspace. Found in Settings -> Account -> APIs -> Workspace ID.'
           example: 'YOUR_WORKSPACE_ID_XXXX'
-       
       requestBody:
-        description: The request body contains the parameters required to identify and retrieve the message.
+        description: Request payload to identify the message to be retrieved.
         required: true
         content:
           application/json:
@@ -117,7 +95,6 @@ paths:
                   campaign_id: 'CAMPAIGN_ID_XYZ'
                   event_name: Notification Received Web
                   platform: WEB
-
       responses:
         '200':
           $ref: '#/components/responses/Success200'
@@ -125,24 +102,18 @@ paths:
           $ref: '#/components/responses/Error400'
         '401':
           $ref: '#/components/responses/Error401'
+        '429':
+          $ref: '#/components/responses/Error429'
         '500':
           $ref: '#/components/responses/Error500'
-
+        '502':
+          $ref: '#/components/responses/Error502'
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-      description: |
-        The API request is authenticated through Basic Authentication (Base64-encoded `username:password`).
-        
-        **How to obtain credentials:**
-        1. Navigate to **Settings -> Account -> APIs**.
-        2. **Username:** Copy from the "Workspace ID" section.
-        3. **Password:** Copy the "API Key" from the "Data" tile in the API Keys section.
-        
-        Header format: `{"Authorization":"Basic Base64_ENCODED_APPKEY_APIKEY=="}`
-  
+      description: 'Basic Authentication using Workspace ID (username) and Data API Key (password) from MoEngage Dashboard > Settings > Account > APIs.'
   schemas:
     ArchivalRequest:
       type: object
@@ -158,11 +129,10 @@ components:
       properties:
         user_id:
           type: string
-          description: This field denotes the unique identifier of the user.
+          description: Unique identifier of the user.
         delivery_type:
           type: string
-          description: |
-            This field denotes the delivery type of the channel.
+          description: Delivery type of the channel.
           enum:
             - ONE_TIME
             - PERIODIC
@@ -173,14 +143,7 @@ components:
             - BUSINESS_EVENT_TRIGGERED
         campaign_type:
           type: string
-          description: |
-            This field denotes the campaign type.
-            
-            **Supported Values:**
-            * **Push:** General Push Campaign, Autotrigger Campaign, Geo-fencing Campaign, Business Event Trigger Push Campaign
-            * **SMS:** sms, Business Event Trigger SMS Campaign
-            * **Email:** Email Campaign, Email Triggers, Business Event Trigger Email Campaign
-            * **Alerts:** Inform Email, Inform SMS, Inform Push
+          description: The campaign type.
           enum:
             - General Push Campaign
             - Autotrigger Campaign
@@ -209,10 +172,10 @@ components:
           example: 1716972486
         campaign_id:
           type: string
-          description: This field denotes the campaign ID.
+          description: The campaign ID.
         event_name:
           type: string
-          description: The name of the event (e.g., 'Email Sent', 'SMS Sent', 'Notification Sent iOS').
+          description: The name of the event.
           enum:
             - Email Sent
             - SMS Sent
@@ -231,16 +194,7 @@ components:
             - MWEB
         event_id:
           type: string
-          description: |
-            The event ID. **Required for event-triggered campaigns.**
-            
-            * You must pass `moe_event_id` if any event attribute is present for campaigns.
-            * You must pass `moe_transaction_id` for alerts.
-
-            ---
-            ### Rate Limit
-            The rate limit for this endpoint is **1000 RPM**.
-   
+          description: 'The event ID. Required for event-triggered campaigns (moe_event_id or moe_transaction_id for alerts).'
     ArchivalResponseSuccess:
       type: object
       properties:
@@ -249,7 +203,6 @@ components:
           example: true
         data:
           $ref: '#/components/schemas/ArchivalData'
-   
     ArchivalData:
       type: object
       properties:
@@ -261,7 +214,6 @@ components:
           $ref: '#/components/schemas/MessageContent'
         file_info:
           $ref: '#/components/schemas/FileInfo'
-   
     MessageDetails:
       type: object
       properties:
@@ -309,7 +261,6 @@ components:
             id:
               type: string
               example: stylizedbasic
-   
     MessageContent:
       type: object
       properties:
@@ -325,7 +276,6 @@ components:
           items:
             type: string
             format: uri
-   
     FileInfo:
       type: object
       properties:
@@ -335,7 +285,6 @@ components:
         file_name:
           type: string
           example: '66560c2d2880326031c474a6_pramodseg_1716915262_push_android.json'
-   
     ErrorResponse400:
       type: object
       properties:
@@ -345,7 +294,6 @@ components:
         error_message:
           type: string
           example: 'This event is unsupported to view message copy. The supported events are [...]'
-   
     ErrorResponse401:
       type: object
       properties:
@@ -355,7 +303,6 @@ components:
         error:
           type: string
           example: Invalid data key
-   
     ErrorResponse500:
       type: object
       properties:
@@ -368,10 +315,9 @@ components:
         code:
           type: string
           example: 'BiaFuAzn-aefa0b0e-2c88-4106-8d07-0f0c53513e48'
-
   responses:
     Success200:
-      description: Success. The server successfully processed the request, but is not returning any content.
+      description: Success. The message content is returned.
       content:
         application/json:
           schema:
@@ -409,7 +355,7 @@ components:
                 version: v2
                 file_name: '66560c2d2880326031c474a6_pramodseg_1716915262_push_android.json'
     Error400:
-      description: "Bad Request. This response is returned when the required parameters are missing from the request, or when the provided parameters are invalid, or when a template already exists with the same version, name, or id."
+      description: 'Bad Request. Required parameters missing, invalid, or unsupported event.'
       content:
         application/json:
           schema:
@@ -418,7 +364,7 @@ components:
             status: false
             error_message: "This event is unsupported to view message copy. The supported events are ['Email Sent', 'SMS Sent', 'Notification Sent iOS', 'Notification Received Android', 'Notification Received Web']"
     Error401:
-      description: "Authentication Failure. This response is returned when the authorization parameters are missing in the HTTP Auth Header."
+      description: Authentication Failure. Invalid data key.
       content:
         application/json:
           schema:
@@ -426,8 +372,10 @@ components:
           example:
             status: false
             error: Invalid data key
+    Error429:
+      description: Too Many Requests. Rate limit breached (1000 RPM).
     Error500:
-      description: "Internal Server Error. This response is returned when the system runs into an unexpected error."
+      description: Internal Server Error.
       content:
         application/json:
           schema:
@@ -436,3 +384,5 @@ components:
             title: Server Error
             description: An unexpected error was encountered while processing this request. Please contact MoEngage Team
             code: 'BiaFuAzn-aefa0b0e-2c88-4106-8d07-0f0c53513e48'
+    Error502:
+      description: Server Error. Something went wrong on MoEngage.
