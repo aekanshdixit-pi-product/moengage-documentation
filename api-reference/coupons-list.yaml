@@ -290,7 +290,7 @@ paths:
     get:
       tags:
         - Coupon Files
-      summary: Fetch All Coupon Files in List
+      summary: Fetch All Coupon Files From Coupon List
       operationId: fetchAllCouponFiles
       description: |
         This API allows you to retrieve the details of each file in the given coupon list that is added and not deleted. The information retrieved will include the file's status, the number of coupons added from each file, and the respective file's addition date, thereby providing a comprehensive breakdown of each file's information for improved management and tracking.
@@ -299,12 +299,17 @@ paths:
           <Note>
             There is no request body or content to send for this request except for headers.
           </Note>
-          
+
           ### Rate Limit
           You can fetch 10,000 coupon files from coupon lists per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
-        - $ref: '#/components/parameters/CouponListIdPath'
+        - name: coupon_list_id
+          in: path
+          required: true
+          description: This field contains the coupon list ID from which you fetched the coupon files.
+          schema:
+            type: string
       responses:
         '200':
           description: |
@@ -318,7 +323,46 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/FetchCouponFilesResponseItem'
+                      type: object
+                      properties:
+                        coupon_list_id:
+                          type: string
+                          description: This field contains the coupon list ID from which you fetched the coupon files.
+                        name:
+                          type: string
+                          description: |
+                            This field contains the coupon file name.
+                            <Note>This is an optional field.</Note>
+                        status:
+                          type: string
+                          description: |
+                            This field shows one of the following statuses of the fetched coupon files:
+                            * PENDING
+                        file_url:
+                          type: string
+                          description: This field consists of the file path of the coupon list.
+                        created_at:
+                          type: string
+                          description: This field consists of the date and time the coupon file was created.
+                        updated_at:
+                          type: string
+                          description: This field consists of the date and time of the most recent update to the coupon file.
+                        created_by:
+                          type: string
+                          description: |
+                            This field consists of the name of the subscriber who uploaded the coupon file.
+                            <Note>This is an optional field.</Note>
+                        _id:
+                          type: string
+                          description: This field contains the unique ID corresponding to a successful coupon file fetch request. This ID is also used to update and archive coupon files from the coupon list.
+                        added_coupons:
+                          type: integer
+                          description: This field consists of the available number of coupons added to the coupon list.
+                        callback_url:
+                          type: string
+                          description: |
+                            This field consists of the callback URL.
+                            <Note>This is an optional field.</Note>
         '400':
           description: |
             Bad request
@@ -351,13 +395,16 @@ paths:
             There won't be any response body for this request.
           headers:
             x-ratelimit-limit:
-              schema: { type: integer }
+              schema:
+                type: integer
               description: The maximum number of requests that the consumer is permitted to make in a given time window.
             x-ratelimit-remaining:
-              schema: { type: integer }
+              schema:
+                type: integer
               description: The number of requests remaining in the current rate limit window.
             x-ratelimit-reset:
-              schema: { type: integer }
+              schema:
+                type: integer
               description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
           description: |
