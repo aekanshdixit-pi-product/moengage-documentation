@@ -426,7 +426,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenericError'
 
-  /fileimports/trigger/{import_id}:
+  /fileimports/trigger/{schedule_id}:
     post:
       tags:
         - File Import
@@ -435,27 +435,35 @@ paths:
         Triggers a pre-configured, on-demand file import job.
 
         ### Rate Limit
-        This API can be triggered once in every five minutes for a specific `import_id`. A Bad Request (400) response will be sent if this limit is exceeded.
+        This API can be triggered once in every five minutes for a specific schedule_id. A Bad request response (400) response will be sent if this is exceeded.
 
         ### FAQs
         **Does the trigger API change the import schedule?**
         No, the schedule still remains the same as originally set up in the MoEngage Dashboard.
       parameters:
-        - name: import_id
+        - name: schedule_id
           in: path
           required: true
-          description: The unique ID of the import schedule to trigger.
+          description: "The Import ID/Schedule ID."
           schema:
             type: string
         - name: MOE-APPKEY
           in: header
           required: true
-          description: "This is your MoEngage account's WORKSPACE ID that has to be passed along with the request. Found in Settings -> Account -> APIs -> Workspace ID."
+          description: "This is your MoEngage account's WORKSPACE ID that has to be passed along with the request. You can find your MoEngage Workspace ID at **Settings** -> **Account** -> **APIs -> Workspace ID (earlier app id)**."
           schema:
             type: string
+            example: "YOUR_WORKSPACE_ID"
+        - name: Authorization
+          in: header
+          required: true
+          description: "This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication."
+          schema:
+            type: string
+            example: "Basic Base64_ENCODED_WORKSPACEID_APIKEY=="
       responses:
         '200':
-          description: Success. The request was processed successfully.
+          description: "This response is returned when the request is processed successfully."
           content:
             application/json:
               schema:
@@ -463,14 +471,14 @@ paths:
                 properties:
                   status:
                     type: string
-                    description: "This field contains the status of the request and specifies whether the request was successful."
+                    description: "This field contains the status of the request and specifies whether the request was successful.\n\nSupported Values: success, failure\n\nExample: \"status\": \"success\""
                     example: "success"
                   message:
                     type: string
-                    description: "This field contains information about whether the request was successful or not."
+                    description: "This field contains information about whether the request was successful or not.\n\nExample: \n\"message\": \"Trigger Import Successful\""
                     example: "Triggered Import Successfully"
         '400':
-          description: Bad Request. Import ID is missing/invalid or Rate Limit breached.
+          description: "This response is returned when the Import ID/Schedule ID is missing from the request or when the provided parameters are invalid. Also, this response is returned when the rate limit (one request in five minutes) is breached."
           content:
             application/json:
               schema:
@@ -481,10 +489,10 @@ paths:
                     example: "FAILURE"
                   error_type:
                     type: string
-                    description: "Contains the error type."
+                    description: "This field is present in the response when the Import/Schedule ID in the request is not found in the system (either because it is invalid or has been deleted)."
                   message:
                     type: string
-                    description: "Contains the error description."
+                    description: "This field contains the error description."
               examples:
                 InvalidImportID:
                   summary: Import ID Invalid or Deleted
@@ -499,7 +507,7 @@ paths:
                     error_type: "ALREADY_EXISTS"
                     message: "Import has run in the last 5 min."
         '401':
-          description: Authorization Errors. Invalid APP Key, password, or other auth errors.
+          description: "This response is returned when the APP Key is invalid or missing, the password is incorrect, or there are other such authorization-related errors in the request."
           content:
             application/json:
               schema:
@@ -507,10 +515,10 @@ paths:
                 properties:
                   title:
                     type: string
-                    description: "The type of error."
+                    description: "This field is present in the response in the case of errors and contains the type of error."
                   description:
                     type: string
-                    description: "The error description."
+                    description: "This field is present in the response in the case of errors and contains the error description."
               examples:
                 IncorrectPassword:
                   summary: Incorrect Password (APP_KEY)
@@ -528,7 +536,7 @@ paths:
                     title: "HeaderMismatch"
                     description: "MOE_APPKEY doesn't match the Username (APP_KEY) used in Basic Auth authorization."
         '403':
-          description: Account Blocked.
+          description: "This response is returned when your MoEngage account has been blocked or suspended."
           content:
             application/json:
               schema:
@@ -537,6 +545,12 @@ paths:
                   status:
                     type: string
                     example: "fail"
+                  type:
+                    type: string
+                    description: "This field is present in the response in the case of 403 errors and contains the error type."
+                  request_id:
+                    type: string
+                    description: "This field is present in the response in the case of 403 errors and contains the request-id."
                   error:
                     type: object
                     properties:
@@ -556,7 +570,7 @@ paths:
                       type: "BlockedClient"
                       request_id: "ofHUEaEQ"
         '404':
-          description: Not Found. Incorrect URL.
+          description: "This response is returned when the request contains the incorrect URL (when you try to access a resource that is not present)."
           content:
             application/json:
               schema:
@@ -569,7 +583,7 @@ paths:
                     type: string
                     example: "Resource not found"
         '405':
-          description: Method Not Allowed. Unsupported method (e.g., GET instead of POST).
+          description: "This response is returned when the request contains an unsupported method. For example, if you were to use the GET method instead of POST for this request, you would result in a 405 error."
           content:
             application/json:
               schema:
@@ -582,7 +596,7 @@ paths:
                     type: string
                     example: "Method not allowed"
         '500':
-          description: Internal Server Error.
+          description: "This response is returned when the system runs into an unexpected error."
           content:
             application/json:
               schema:
@@ -596,6 +610,7 @@ paths:
                     example: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
                   code:
                     type: string
+                    description: "This field is present in the response in the case of 5xx errors and contains the error code."
                     example: "GlQhUzvM"
 
   /fileimports/import/run/history:
