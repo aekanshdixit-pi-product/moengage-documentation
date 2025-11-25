@@ -1,17 +1,13 @@
-openapi: 3.0.3.
+openapi: 3.0.3
 info:
-  title: MoEngage Coupon List API
+  title: Coupon List API 🏷️
   description: |
     API for managing coupon lists within the MoEngage system. This includes creating, fetching, updating, activating, archiving lists, uploading coupon files, managing files, and generating usage reports.
     Authentication is via Basic Auth using your **Workspace ID** as username and an **API Key** as password.
   version: '1.0'
 servers:
-  - url: 'https://api-{dc}.moengage.com/v1'
-    description: The MoEngage Coupon Management API endpoint. Replace {dc} with your data center number.
-    variables:
-      dc:
-        default: '01'
-        description: 'The data center number for your account (e.g., 01, 02, 03). Find this on the Data Centers and API Endpoint mapping page.'
+  - url: 'https://api.moengage.com/v1'
+    description: The MoEngage Coupon Management API endpoint. This base URL is independent of data center.
 tags:
   - name: Coupon Lists
     description: Operations related to defining, managing status (active/archive), and modifying coupon list metadata.
@@ -77,7 +73,7 @@ paths:
       summary: Fetch All Coupon Lists
       operationId: fetchAllCouponLists
       description: |
-        Retrieves all coupon lists in the workspace, optionally filtered by status (ACTIVE, ARCHIVED, EXPIRED). 
+        Retrieves all coupon lists in the workspace, optionally filtered by status (**ACTIVE**, **ARCHIVED**, **EXPIRED**). 
         If no status is specified, this API returns all existing coupon lists together.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
@@ -367,17 +363,24 @@ paths:
     get:
       tags:
         - Coupon Files
-      summary: Fetch Coupon File Details
+      summary: Fetch a Coupon File from Coupon List
       operationId: fetchCouponFile
       description: |
         Retrieves details of a specific coupon file within a coupon list, including its processing status, date information, and the number of coupons added from it.
+      x-mint:
+        content: |
+          <Note>
+            There is no request body or content to send for this request except for headers.
+          </Note>
+          ### Rate Limit
+          You can fetch **10,000** coupon files from a coupon list per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
         - $ref: '#/components/parameters/CouponFileIdPath' 
       responses:
         '200':
-          description: Coupon file details retrieved successfully.
+          description: Indicates that the request was successful and the coupon file was fetched.
           content:
             application/json:
               schema:
@@ -397,10 +400,9 @@ paths:
     delete:
       tags:
         - Coupon Files
-      summary: Delete Coupon File
+      summary: Delete a Coupon File from the Coupon List
       operationId: deleteCouponFile
-      description: |
-        Removes a specific coupon file from a coupon list. This is useful in scenarios where a test file or an incorrect file is inadvertently uploaded, thereby ensuring the accuracy and effectiveness of your coupon list management.
+      description: This API allows you to remove a specific coupon file from a coupon list. It is useful in scenarios where a test file or incorrect file is inadvertently uploaded, thereby ensuring the accuracy and effectiveness of your coupon list management.
       x-mint:
         content: |
           <Note>
@@ -436,7 +438,7 @@ paths:
               description: The number of requests remaining in the current rate limit window.
             x-ratelimit-reset:
               schema: { type: integer }
-              description: The time at which the current rate limit window resets in UTC epoch seconds.
+              description: UTC epoch seconds when the limit resets.
           content:
             application/json:
               schema:
@@ -772,8 +774,7 @@ components:
   responses:
     BadRequest:
       description: |
-        Bad Request (400).
-        Possible issues include invalid input, missing mandatory fields, duplicate names/labels, or date errors.
+        Bad Request (400) - Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes.
       content:
         application/json:
           schema:
@@ -783,7 +784,8 @@ components:
               code: "duplicate-coupon-list-name"
               message: "The coupon list name already exists. Please enter a unique name and try again."
     Unauthorized:
-      description: Unauthorized (401). Invalid authentication credentials.
+      description: |
+        Unauthorized (401) - Your request is unauthorized. Verify your credentials and try again.
       content:
         application/json:
           schema:
@@ -791,9 +793,10 @@ components:
           example:
             error:
               code: "request-unauthenticated"
-              message: "Your request is unauthorized. Please verify your credentials and try again."
+              message: "Your request is unauthorized. Verify your credentials and try again."
     Forbidden:
-      description: Forbidden (403). Access to the Coupon Management features is denied for your account.
+      description: |
+        Forbidden (403) - Your account does not have access to the Coupon Management features.
       content:
         application/json:
           schema:
@@ -813,7 +816,8 @@ components:
               code: "coupon-list-not-found"
               message: "Coupon list with the specified ID was not found."
     TooManyRequests:
-      description: Too Many Requests (429). Rate limit exceeded.
+      description: |
+        Too Many Requests (429) - This response is returned when the number of requests per minute has exceeded the rate limit.
       headers:
         x-ratelimit-limit:
           schema: { type: integer }
@@ -833,7 +837,8 @@ components:
               code: "too-many-requests"
               message: "Rate limit exceeded."
     InternalServerError:
-      description: Internal Server Error (500). Unexpected system error.
+      description: |
+        Internal Server Error (500) - This response is returned when the system runs into an unexpected error. Contact the MoEngage team for further assistance.
       content:
         application/json:
           schema:
