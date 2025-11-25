@@ -175,16 +175,61 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiResponseSuccessV2'
-              example:
-                message: "File-segment creation request accepted"
-                success: true
-                cs_name: "custom_segment_unique_name"
+                oneOf:
+                  - $ref: '#/components/schemas/ApiResponseSuccessV2'
+                  - $ref: '#/components/schemas/CallbackV2'
+              examples:
+                api_response:
+                  summary: API Response - Success
+                  description: Immediate response from the API when the request is accepted.
+                  value:
+                    message: "File-segment creation request accepted"
+                    success: true
+                    cs_name: "custom_segment_unique_name"
+                callback_success:
+                  summary: Callback - Success
+                  description: Callback sent to your callback_url when segment processing completes successfully.
+                  value:
+                    db_name: "test_db"
+                    segment_name: "test_segment_name"
+                    request_id: "d5a263c4ef1198ae3d8496c0460f570f"
+                    values_found: 80
+                    values_processed: 70
+                    user_count: 60
+                    status: 201
         '400':
           description: Bad Request. Request not accepted due to missing a required parameter. The reason is passed in the description field.
           content:
             application/json:
-              example: "No example response body available for this status code."
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ApiErrorV2'
+                  - $ref: '#/components/schemas/CallbackV2'
+              examples:
+                api_invalid_request:
+                  summary: API Response - Invalid Request
+                  description: Immediate response from the API when the request is invalid.
+                  value:
+                    title: "Invalid Request"
+                    description: "<message>"
+                callback_file_size:
+                  summary: Callback - Failure (File Size)
+                  description: Callback sent to your callback_url when file size exceeds the limit.
+                  value:
+                    db_name: "test_db"
+                    segment_name: "test_segment_name"
+                    request_id: "d5a263c4ef1198ae3d8496c0460f570f"
+                    status: 400
+                    error_message: "File size cannot be greater than 150MB. Created custom_segment contains 0 users."
+                callback_download_failed:
+                  summary: Callback - Failure (Download Failed)
+                  description: Callback sent to your callback_url when file download fails.
+                  value:
+                    db_name: "test_db"
+                    segment_name: "test_segment_name"
+                    request_id: "d5a263c4ef1198ae3d8496c0460f570f"
+                    status: 400
+                    error_message: "File download failed. Created custom_segment contains 0 users."
         '401':
           $ref: '#/components/responses/401_FileSegmentError'
         '409':
@@ -192,7 +237,28 @@ paths:
         '429':
           $ref: '#/components/responses/429_FileSegmentRateLimit'
         '500':
-          $ref: '#/components/responses/5XX_FileSegmentError'
+          description: Server Errors. Something went wrong on MoEngage.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ApiErrorV2'
+                  - $ref: '#/components/schemas/CallbackV2'
+              examples:
+                api_internal_error:
+                  summary: API Response - Internal Server Error
+                  description: Immediate response from the API when an internal server error occurs.
+                  value:
+                    title: "Internal Server Error"
+                callback_internal_error:
+                  summary: Callback - Failure (Internal Server Error)
+                  description: Callback sent to your callback_url when segment processing encounters an internal error.
+                  value:
+                    db_name: "test_db"
+                    segment_name: "test_segment_name"
+                    request_id: "d5a263c4ef1198ae3d8496c0460f570f"
+                    status: 500
+                    error_message: "Internal Server Error. Contact MoEngage Team."
         '502':
           description: Bad Gateway. Something went wrong on MoEngage.
           content:
@@ -260,13 +326,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccessV2'
-              # Replaced Ref with explicit singular example to avoid dropdown
               example:
                 message: "File-segment user-add request accepted"
                 success: true
                 cs_name: "custom_segment_unique_name"
         '400':
-          $ref: '#/components/responses/400_FileSegmentError'
+          description: Bad Request. Invalid payload format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Invalid Request"
+                description: "<message>"
         '401':
           $ref: '#/components/responses/401_FileSegmentError'
         '404':
@@ -274,10 +346,13 @@ paths:
         '429':
           $ref: '#/components/responses/429_FileSegmentRateLimit'
         '500':
-          $ref: '#/components/responses/5XX_FileSegmentError'
-      callbacks:
-        segmentUpdateCallback:
-          $ref: '#/components/callbacks/segmentProcessingCallback'
+          description: Server Errors. Something went wrong on MoEngage.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Internal Server Error"
   /v2/custom-segments/file-segment/remove-users:
     put:
       tags:
@@ -327,13 +402,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccessV2'
-              # Replaced Ref with explicit singular example to avoid dropdown
               example:
                 message: "File-segment user-remove request accepted"
                 success: true
                 cs_name: "custom_segment_unique_name"
         '400':
-          $ref: '#/components/responses/400_FileSegmentError'
+          description: Bad Request. Invalid payload format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Invalid Request"
+                description: "<message>"
         '401':
           $ref: '#/components/responses/401_FileSegmentError'
         '404':
@@ -341,10 +422,13 @@ paths:
         '429':
           $ref: '#/components/responses/429_FileSegmentRateLimit'
         '500':
-          $ref: '#/components/responses/5XX_FileSegmentError'
-      callbacks:
-        segmentUpdateCallback:
-          $ref: '#/components/callbacks/segmentProcessingCallback'
+          description: Server Errors. Something went wrong on MoEngage.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Internal Server Error"
   /v2/custom-segments/file-segment/replace:
     put:
       tags:
@@ -400,13 +484,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccessV2'
-              # Replaced Ref with explicit singular example to avoid dropdown
               example:
                 message: "File-segment user-replace request accepted"
                 success: true
                 cs_name: "custom_segment_unique_name"
         '400':
-          $ref: '#/components/responses/400_FileSegmentError'
+          description: Bad Request. Invalid payload format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Invalid Request"
+                description: "<message>"
         '401':
           $ref: '#/components/responses/401_FileSegmentError'
         '404':
@@ -414,10 +504,13 @@ paths:
         '429':
           $ref: '#/components/responses/429_FileSegmentRateLimit'
         '500':
-          $ref: '#/components/responses/5XX_FileSegmentError'
-      callbacks:
-        segmentUpdateCallback:
-          $ref: '#/components/callbacks/segmentProcessingCallback'
+          description: Server Errors. Something went wrong on MoEngage.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Internal Server Error"
   /v2/custom-segments/archive:
     patch:
       tags:
@@ -725,9 +818,11 @@ components:
       properties:
         message:
           type: string
+          description: The status message of the request.
         success:
           type: boolean
           example: true
+          description: Indicates if the request was accepted.
         cs_name:
           type: string
           description: The unique name of the custom segment being processed.
@@ -737,41 +832,43 @@ components:
         title:
           type: string
           description: A short title for the error.
-        description:
-          type: string
-          description: A detailed description of what went wrong.
-    CallbackSuccessV2:
+    CallbackV2:
       type: object
+      description: The payload sent to the callback URL. The structure depends on the processing status.
       properties:
         db_name:
           type: string
+          description: The database name.
+          example: "test_db"
         segment_name:
           type: string
+          description: The name of the segment.
+          example: "test_segment_name"
         request_id:
           type: string
+          description: The unique ID of the request.
+          example: "d5a263c4ef1198ae3d8496c0460f570f"
+        status:
+          type: integer
+          description: The HTTP status code indicating the outcome (e.g., 201 for success, 400/500 for failure).
+          example: 201
         values_found:
           type: integer
+          description: (Success only) Total number of identifiers found in the file.
         values_processed:
           type: integer
+          description: (Success only) Number of identifiers successfully processed.
         user_count:
           type: integer
-        status:
-          type: integer
-          example: 201
-    CallbackErrorV2:
-      type: object
-      properties:
-        db_name:
-          type: string
-        segment_name:
-          type: string
-        request_id:
-          type: string
-        status:
-          type: integer
-          example: 400
+          description: (Success only) Number of users added to the segment.
         error_message:
           type: string
+          description: (Failure only) A description of the error.
+      required:
+        - db_name
+        - segment_name
+        - request_id
+        - status
     # --- V3 Schemas ---
     FilterGroupV3:
       type: object
@@ -1120,14 +1217,13 @@ components:
             title: "Too Many Requests"
             description: "<appropriate message>"
     '5XX_FileSegmentError':
-      description: Server Errors. Something went wrong on MoEngage's end.
+      description: Server Errors. Something went wrong on MoEngage.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiErrorV2'
           example:
             title: "Internal Server Error"
-            description: "..."
     # --- V3 Responses ---
     '200_SegmentListV3':
       description: Successful retrieval of custom segments.
@@ -1375,31 +1471,11 @@ components:
           description: A webhook sent to your `callback_url` when a v2 file segment processing job is complete.
           requestBody:
             description: Result of the segment processing job.
+            required: true
             content:
               application/json:
                 schema:
-                  oneOf:
-                    - $ref: '#/components/schemas/CallbackSuccessV2'
-                    - $ref: '#/components/schemas/CallbackErrorV2'
-                examples:
-                  success:
-                    summary: Success Callback
-                    value:
-                      db_name: "test_db"
-                      segment_name: "test_segment_name"
-                      request_id: "d5a263c4ef1198ae3d8496c0460f570f"
-                      values_found: 80
-                      values_processed: 70
-                      user_count: 60
-                      status: 201
-                  failure_file_size:
-                    summary: Failure (File Size Limit)
-                    value:
-                      db_name: "test_db"
-                      segment_name: "test_segment_name"
-                      request_id: "d5a263c4ef1198ae3d8496c0460f570f"
-                      status: 400
-                      error_message: "File size cannot be greater than 150MB. Created custom_segment contains 0 users."
+                  $ref: '#/components/schemas/CallbackV2'
           responses:
             '200':
               description: OK. Acknowledges receipt of the callback. Your endpoint should return this.
