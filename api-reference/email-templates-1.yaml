@@ -2,10 +2,8 @@ openapi: 3.1.0
 info:
   title: Email Templates API V1
   description: |
-    The Email Templates API allows you to create, retrieve, and update email templates in MoEngage.
-    
     The Create Email Template API can be used to create an email template in MoEngage. This API helps you upload templates created outside the MoEngage ecosystem to MoEngage and use them for campaign creation on the MoEngage Dashboard.
-
+    
     <Note>
     Templates created using this API cannot be used in the Drag and Drop Editor in the MoEngage Dashboard. They are supported only for the Custom HTML Editor (Froala Editor).
     </Note>
@@ -31,7 +29,7 @@ paths:
     post:
       summary: Create Email Template
       description: |
-        Upload templates created outside the MoEngage ecosystem to be used for campaign creation.
+        The Create Email Template API can be used to create an email template in MoEngage.
       x-mint:
         content: |
           <Note>
@@ -40,6 +38,10 @@ paths:
 
           ### Rate Limit
           The rate limits are at the app level, and a maximum of thousand (sum of all the API requests per app) requests are allowed for an app per minute.
+          
+          ### FAQs
+          **How do I access templates created using this API on the MoEngage Dashboard?**
+          You can access templates created using the Create Email Template API in the My Saved Templates tab during the second step of campaign creation in the MoEngage Dashboard.
       operationId: createEmailTemplate
       tags:
         - Email Templates
@@ -51,7 +53,7 @@ paths:
               $ref: '#/components/schemas/TemplateCreateRequest'
       responses:
         '200':
-          description: Template created successfully
+          description: Success
           content:
             application/json:
               schema:
@@ -60,17 +62,25 @@ paths:
                   status:
                     type: string
                     example: success
-                    description: This field contains the status of the request and denotes whether it was successful or not.
+                    description: |
+                      This field contains the status of the request and denotes whether it was successful or not.
+                      **Example**: "status": "success", "status": "error"
                   data:
                     type: object
+                    description: |
+                      This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.
                     properties:
                       id:
                         type: string
-                        description: This field contains the template id and needs to be stored by you. This template id would be used for searching a specific template and updating it.
+                        description: |
+                          This field contains the template id and needs to be stored by you. This template id would be used for searching a specific template and updating it. The template id is a String.
+                          **Example**: "id": "63f4962d4d31f4c68d980a01"
                         example: "63f4962d4d31f4c68d980a01"
                       msg:
                         type: string
-                        description: This field contains information about the successful creation of the template.
+                        description: |
+                          This field contains information about the successful creation of the template.
+                          **Example**: "msg": "Custom email template saved"
                         example: "Custom email template saved"
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -91,8 +101,10 @@ paths:
       parameters:
         - name: page
           in: query
+          required: true
           description: |
             This parameter represents the page number. If this value is not specified, it will be considered as one by default. Each page will have a batch size of 20 (20 templates will be returned in a page).
+            **Example**: /v2/email-templates?page=1
           schema:
             type: integer
             default: 1
@@ -107,8 +119,13 @@ paths:
                   status:
                     type: string
                     example: success
+                    description: |
+                      This field contains the status of the request and denotes whether it was successful or not.
+                      **Example**: "status": "success", "status": "error"
                   data:
                     type: object
+                    description: |
+                      This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.
                     properties:
                       templates:
                         type: array
@@ -126,12 +143,16 @@ paths:
   /email-templates/{id}:
     get:
       summary: Get Specific Template
-      description: Fetches a specific email template using its unique template ID.
+      description: |
+        The Get a Specific Email Template API fetches an email template using its template id.
       x-mint:
         content: |
           ### FAQ
           **What happens when you search for a deleted template?**
-          The error description contains the following message in such a case: "Template for given template id is archived".
+          The error description contains the following message in such a case: “Template for given template id is archived”.
+
+          ### Rate Limit
+          The rate limits are at the app level, and a maximum of thousand (sum of all the API requests per app)requests are allowed for an app per minute.
       operationId: getTemplateById
       tags:
         - Email Templates
@@ -141,6 +162,7 @@ paths:
           required: true
           description: |
             This is the Template id of the template being searched. The template id is a unique identifier that is generated at the time of template creation.
+            Example: {"id": "63f30792c66ddcaac2ef9109"}
           schema:
             type: string
             example: "63f30792c66ddcaac2ef9109"
@@ -213,7 +235,7 @@ paths:
           In the case of an update, the template to be updated is identified using its template id. It is mandatory to pass the id field in the required for an update template request. Otherwise, it will be treated as a create template request.
 
           ### Rate Limit
-          The rate limits are at the app level, and a maximum of a thousand (sum of all the API requests per app) requests are allowed for an app per minute.
+          The rate limits are at the app level, and a maximum of a thousand (sum of all the API requests per app)requests are allowed for an app per minute.
       operationId: bulkCreateUpdateTemplates
       tags:
         - Email Templates
@@ -239,19 +261,26 @@ paths:
                   status:
                     type: string
                     example: success
+                    description: |
+                      This field contains the status of the request and denotes whether it was successful or not.
+                      **Example**: "status": "success", "status": "error"
                   data:
                     type: object
+                    description: |
+                      This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.
                     properties:
                       new_templates:
                         type: array
                         items:
                           type: string
-                        description: List of IDs for newly created templates.
+                        description: |
+                          This field contains the list of template ids for the newly created templates, and these need to be stored by you. The template id would be used for searching a specific template and updating it. The template id is a String.
                       updated_templates:
                         type: array
                         items:
                           type: string
-                        description: List of IDs for updated templates.
+                        description: |
+                          This field contains the list of template ids for the updated templates.
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -265,17 +294,22 @@ components:
       type: http
       scheme: basic
       description: |
-        The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request.
+        The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '.
         
         **Format:** `Basic Base64_ENCODED_WORKSPACEID_APIKEY==`
         
-        You can find your Workspace ID and API Key in **Settings -> Account -> APIs**.
+        The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+        1. Navigate to **Settings -> Account -> APIs**.
+        2. Copy the following details:
+           * Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+           * Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+        3. Use these details to authenticate the API requests.
     appKey:
       type: apiKey
       in: header
       name: MOE-APPKEY
       description: |
-        This is your MoEngage account's WORKSPACE ID (formerly APP ID) which must be passed along with the request. You can find your MoEngage WORKSPACE ID at **Settings -> Account -> APIs -> WORKSPACE ID**.
+        This is your MoEngage account's APP ID that has to be passed along with the request. You can find your MoEngage APP ID at **Settings -> Account -> APIs -> App ID**.
 
   schemas:
     # Base properties common to create and update
@@ -292,33 +326,37 @@ components:
           maxLength: 50
           pattern: '^[a-zA-Z0-9_]+$'
           description: |
-            This field contains the name of the template and would be used for identifying the template.
+            This field contains the name of the template and would be used for identifying the template. You can look for the template created using this API in the second step of campaign creation in the 'My Saved Templates' tab using this name. For more information, refer to accessing templates created via APIs on the Dashboard.
+            **Example**: "End_Of_Season_Sale_Template".
             
-            **Constraints:**
+            **Note**:
             * The name field can contain only alphanumeric and underscore characters.
             * The length of this field can be between 5-50 characters.
           example: "End_Of_Season_Sale_Template"
         html:
           type: string
           description: |
-            This field contains the message body of the email. This is where you define the email template being created. The HTML tag and BODY tag (with text/tags) are mandatory. 
+            This field contains the message body of the email. This is where you define the email template being created. The HTML tag and BODY tag (with text/tags) are mandatory. The SCRIPT tag is not allowed.
             
-            **Note:** The SCRIPT tag is not allowed.
+            **Example**:
+            "html": "<!DOCTYPE html><html><head>...</head><body aria-disabled=\"false\"><p>Your Email Template Content Here</p></body></html>"
           example: "<!DOCTYPE html><html><body><p>Content</p></body></html>"
         subject:
           type: string
-          description: "This field contains the subject of the email campaign."
+          description: |
+            This field contains the subject of the email campaign.
+            **Example**: "End of Season Sale!"
           example: "End of Season Sale!"
         attachments:
           type: array
           description: |
             This field contains the attachments to be included in the email.
+            **Example**: "attachments": ["https://app-cdn.moengage.com/assets/LogoThumbnail.jpg"]
             
-            **Constraints:**
+            **Note**:
             * Only URLs can be added as part of Email attachments.
             * A maximum of ten attachments are allowed.
-            * The URL should start with https and end with a valid extension. 
-            * **Forbidden extensions:** .dmg, .exe, .xls, .ddl, .class, .obj, .int, .gnt, .o, .so, .lbr, and .net.
+            * The URL should start with https and end with a valid extension. The following extensions are not allowed: .dmg, .exe, .xls, .ddl, .class, .obj, .int, .gnt, .o, .so, .lbr, and .net
             * Individual attachments should be less than 6 MB, and the total size of the attachments should be less than 20 MB.
           maxItems: 10
           items:
@@ -327,21 +365,25 @@ components:
             example: "https://app-cdn.moengage.com/assets/LogoThumbnail.jpg"
         sender_name:
           type: string
-          description: "This field contains the name displayed that is displayed in the inboxes of your recipients."
+          description: |
+            This field contains the name displayed that is displayed in the inboxes of your recipients. Sender names are one of the first things people see when you send them an email.
+            **Example**: "sender_name": "Your Brand Name"
           example: "Your Brand Name"
         source:
           type: string
           description: |
             This field contains information about the source of template creation. This can be the name of the email partner.
+            **Example**: "source": "Partner"
             
-            **Note:** Only alphanumerics, spaces, and underscores are allowed in this field.
+            **Note**: Only alphanumerics, spaces, and underscores are allowed in this field.
           example: "Partner"
         updated_by:
           type: string
           description: |
             This field contains information about who created the template.
+            **Example**: "updated_by": "john.doe@example.com"
             
-            **Note:** Only alphanumerics, spaces, and hyphens are allowed in this field. This field can contain the email ID of the creator as well.
+            **Note**: Only alphanumerics, spaces, and hyphens are allowed in this field. This field can contain the email ID of the creator as well. The email id should be in the right format and a valid one.
           example: "john.doe@example.com"
 
     # Schema for Creating a single template
@@ -364,7 +406,9 @@ components:
           properties:
             id:
               type: string
-              description: "This is the Template id of the template being updated. It is mandatory to add this field when updating a template via the Bulk API."
+              description: |
+                This is the Template id of the template being updated. It is mandatory to add this field when updating a template. The template id is a unique identifier that is generated at the time of template creation using the Create Email Template API.
+                Example: {"id": "63f30792c66ddcaac2ef9109"}
 
     # Schema for GET All response objects
     TemplateDetails:
@@ -372,15 +416,17 @@ components:
       properties:
         template_id:
           type: string
-          description: The unique identifier that is created at the time of template creation.
+          description: Template id - the unique identifier that is created at the time of template creation.
         template_name:
           type: string
           description: Name of the template being fetched.
         is_archived:
           type: boolean
+          example: false
         builder_supported:
           type: boolean
-          description: For the Froala editor, this value is false.
+          example: false
+          description: For the Froala editor, the builder_supported value is false. Thus, for all the templates created using APIs, this would be false.
         editor:
           type: string
           example: "Froala Editor"
@@ -401,32 +447,44 @@ components:
         status:
           type: string
           example: success
+          description: This field contains the status of the request and denotes whether it was successful or not.
         template_id:
           type: string
           example: "645a0cec10e0307e6d7f7716"
+          description: Template id - the unique identifier that is created at the time of template creation.
         template_name:
           type: string
           example: "End_of_season_sale_template"
+          description: Name of the template being fetched.
         subject:
           type: string
+          description: Subject of the template being fetched.
         template_content:
           type: string
+          description: html content of the template.
         attachments:
           type: array
+          description: |
+            The attachments field is a list of JSON Objects that contain the details about an attachment, such as its type, url, name, id, and so on.
           items:
             type: object
         source:
           type: string
+          description: Source of the template being fetched.
         sender_name:
           type: string
         editor:
           type: string
+          example: "Froala Editor"
         created_date:
           type: string
+          description: Timestamp of template creation.
         updated_at:
           type: string
+          description: Timestamp of when the template was last updated.
         updated_by:
           type: string
+          description: Details about who created or updated the template.
 
     ErrorData:
       type: object
@@ -434,12 +492,18 @@ components:
         code:
           type: integer
           example: 400
+          description: |
+            This field contains the error code and is a String. Example: 400 (for a Bad Request), 401( for Authentication failures), and so on. This field is present in the response only in the case of errors.
         title:
           type: string
           example: "Invalid request body"
+          description: |
+            This field contains the type of error encountered. Example: Bad Request, Authentication Required, and so on. This field is present in the response only in the case of errors.
         description:
           type: string
           example: "MOE-APPKEY header is invalid or empty"
+          description: |
+            This field describes why the request has failed and is a String. Example: 'MOE-APPKEY header is invalid or empty'.
 
   responses:
     BadRequest:
@@ -452,6 +516,8 @@ components:
               status:
                 type: string
                 example: error
+                description: |
+                  This response is returned when the required parameters are missing from the request or when the provided parameters are invalid, or when a template already exists with the same version, name, or id.
               data:
                 $ref: '#/components/schemas/ErrorData'
     Unauthorized:
@@ -464,6 +530,8 @@ components:
               status:
                 type: string
                 example: error
+                description: |
+                  This response is returned when the authorization parameters are missing in the HTTP Auth Header.
               data:
                 $ref: '#/components/schemas/ErrorData'
     RateLimit:
@@ -476,6 +544,8 @@ components:
               status:
                 type: string
                 example: error
+                description: |
+                  This response is returned when the number of requests per minute has exceeded the rate limit.
               data:
                 $ref: '#/components/schemas/ErrorData'
     InternalServerError:
@@ -488,6 +558,8 @@ components:
               title:
                 type: string
                 example: "Internal Server Error"
+                description: |
+                  This response is returned when the system runs into an unexpected error.
               message:
                 type: string
                 example: "An unexpected error was encountered."
