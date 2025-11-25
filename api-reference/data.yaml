@@ -431,7 +431,15 @@ paths:
       tags:
         - File Import
       summary: Trigger a File Import
-      description: Triggers a pre-configured, on-demand file import job.
+      description: |
+        Triggers a pre-configured, on-demand file import job.
+
+        ### Rate Limit
+        This API can be triggered once in every five minutes for a specific `import_id`. A Bad Request (400) response will be sent if this limit is exceeded.
+
+        ### FAQs
+        **Does the trigger API change the import schedule?**
+        No, the schedule still remains the same as originally set up in the MoEngage Dashboard.
       parameters:
         - name: import_id
           in: path
@@ -439,25 +447,156 @@ paths:
           description: The unique ID of the import schedule to trigger.
           schema:
             type: string
+        - name: MOE-APPKEY
+          in: header
+          required: true
+          description: "This is your MoEngage account's WORKSPACE ID that has to be passed along with the request. Found in Settings -> Account -> APIs -> Workspace ID."
+          schema:
+            type: string
       responses:
         '200':
-          description: Trigger request successful.
+          description: Success. The request was processed successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccess'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: "This field contains the status of the request and specifies whether the request was successful."
+                    example: "success"
+                  message:
+                    type: string
+                    description: "This field contains information about whether the request was successful or not."
+                    example: "Triggered Import Successfully"
         '400':
-          description: Bad Request.
+          description: Bad Request. Import ID is missing/invalid or Rate Limit breached.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "FAILURE"
+                  error_type:
+                    type: string
+                    description: "Contains the error type."
+                  message:
+                    type: string
+                    description: "Contains the error description."
+              examples:
+                InvalidImportID:
+                  summary: Import ID Invalid or Deleted
+                  value:
+                    status: "FAILURE"
+                    error_type: "NOT_FOUND"
+                    message: "This import is either deleted or expired."
+                RateLimitExceeded:
+                  summary: Rate Limit Exceeded
+                  value:
+                    status: "FAILURE"
+                    error_type: "ALREADY_EXISTS"
+                    message: "Import has run in the last 5 min."
         '401':
-          description: Unauthorized.
+          description: Authorization Errors. Invalid APP Key, password, or other auth errors.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  title:
+                    type: string
+                    description: "The type of error."
+                  description:
+                    type: string
+                    description: "The error description."
+              examples:
+                IncorrectPassword:
+                  summary: Incorrect Password (APP_KEY)
+                  value:
+                    title: "AuthenticationInvalid"
+                    description: "Password (APP_KEY) doesn't match the one available on the dashboard. Kindly ensure the same APP_KEY available on the dashboard is used."
+                MissingHeader:
+                  summary: Missing MOE-APPKEY Header
+                  value:
+                    title: "HeaderMissing"
+                    description: "MOE-APPKEY is missing in Header"
+                HeaderMismatch:
+                  summary: APP Key Mismatch
+                  value:
+                    title: "HeaderMismatch"
+                    description: "MOE_APPKEY doesn't match the Username (APP_KEY) used in Basic Auth authorization."
+        '403':
+          description: Account Blocked.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "fail"
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      type:
+                        type: string
+                      request_id:
+                        type: string
+              examples:
+                AccountBlocked:
+                  summary: Account Suspended
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Your account is suspended. Please contact MoEngage team."
+                      type: "BlockedClient"
+                      request_id: "ofHUEaEQ"
+        '404':
+          description: Not Found. Incorrect URL.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "fail"
+                  message:
+                    type: string
+                    example: "Resource not found"
+        '405':
+          description: Method Not Allowed. Unsupported method (e.g., GET instead of POST).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "fail"
+                  message:
+                    type: string
+                    example: "Method not allowed"
+        '500':
+          description: Internal Server Error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                    example: "Server Error"
+                  description:
+                    type: string
+                    example: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+                  code:
+                    type: string
+                    example: "GlQhUzvM"
 
   /fileimports/import/run/history:
     post:
