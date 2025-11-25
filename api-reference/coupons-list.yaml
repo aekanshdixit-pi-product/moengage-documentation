@@ -387,7 +387,7 @@ paths:
               example:
                 error:
                   code: "request-forbidden"
-                  message: "Your account does not have access to the Coupon Management features. Please contact the MoEngage team for further assistance."
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
         '429':
           description: |
             Too Many Requests
@@ -418,7 +418,7 @@ paths:
               example:
                 error:
                   code: "unexpected-error"
-                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
+                  message: "Something went wrong with your request. Contact the MoEngage team for further assistance."
     get:
       tags:
         - Coupon Files
@@ -503,6 +503,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "bad-request"
+                  message: "Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes."
         '401':
           description: |
             Unauthenticated
@@ -511,6 +515,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Please verify your credentials and try again."
         '403':
           description: |
             Forbidden
@@ -519,6 +527,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
         '429':
           description: |
             Too Many Requests
@@ -546,6 +558,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Contact the MoEngage team for further assistance."
 
   /coupon-list/{coupon_list_id}/files/{coupon_file_id}: 
     get:
@@ -554,15 +570,17 @@ paths:
       summary: Fetch a Coupon File from Coupon List
       operationId: fetchCouponFile
       description: |
-        This API allows you to retrieve the details of a specific file in the given coupon list. The information retrieved will include the file's status, the number of coupons added from each file, and the respective file's addition date, thereby providing a comprehensive breakdown of the file's information for improved management and tracking.
+        This API allows you to retrieve the details of a particular coupon file added to a given coupon list. This includes information such as file status, the number of added coupons, and the file addition date.
       x-mint:
         content: |
           <Note>
+            **Information**
+            
             There is no request body or content to send for this request except for headers.
           </Note>
 
           ### Rate Limit
-          You can fetch 10,000 coupon files from coupon lists per day.
+          You can fetch 10,000 coupon files from a coupon list per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
@@ -571,53 +589,45 @@ paths:
         '200':
           description: |
             Success
-            Indicates that the request was successful and the coupon files have been fetched.
+            Indicates that the request was successful and the coupon file was fetched.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  data:
-                    type: object
-                    properties:
-                      coupon_list_id:
-                        type: string
-                        description: This field contains the coupon list ID from which you fetched the coupon files.
-                      name:
-                        type: string
-                        description: |
-                          This field contains the coupon file name.
-                          <Note>This is an optional field.</Note>
-                      status:
-                        type: string
-                        description: |
-                          This field shows one of the following statuses of the fetched coupon files:
-                          * PENDING
-                      file_url:
-                        type: string
-                        description: This field consists of the file path of the coupon list.
-                      created_at:
-                        type: string
-                        description: This field consists of the date and time the coupon file was created.
-                      updated_at:
-                        type: string
-                        description: This field consists of the date and time of the most recent update to the coupon file.
-                      created_by:
-                        type: string
-                        description: |
-                          This field consists of the name of the subscriber who uploaded the coupon file.
-                          <Note>This is an optional field.</Note>
-                      _id:
-                        type: string
-                        description: This field contains the unique ID corresponding to a successful coupon file fetch request. This ID is also used to update and archive coupon files from the coupon list.
-                      added_coupons:
-                        type: integer
-                        description: This field consists of the available number of coupons added to the coupon list.
-                      callback_url:
-                        type: string
-                        description: |
-                          This field consists of the callback URL.
-                          <Note>This is an optional field.</Note>
+                  coupon_list_id:
+                    type: string
+                    description: This field contains the coupon list ID from which you fetched the coupon file.
+                  name:
+                    type: string
+                    description: |
+                      This field contains the coupon file name.
+                      <Note>This is an optional field.</Note>
+                  status:
+                    type: string
+                    description: |
+                      This field shows one of the following statuses of the fetched coupon file:
+                      * PENDING
+                  file_url:
+                    type: string
+                    description: This field consists of the file path of the coupon list.
+                  created_by:
+                    type: string
+                    description: |
+                      This field consists of the name of the subscriber who uploaded the coupon file.
+                      <Note>This is an optional field.</Note>
+                  created_at:
+                    type: string
+                    description: This field consists of the date and time the coupon file was created.
+                  updated_at:
+                    type: string
+                    description: This field consists of the date and time of the most recent update to the coupon file.
+                  _id:
+                    type: string
+                    description: This field contains the unique ID corresponding to a successful coupon file fetch request. This ID is also used to update and archive coupon files from the coupon list.
+                  added_coupons:
+                    type: integer
+                    description: This field consists of the available number of coupons added to the coupon list.
         '400':
           description: |
             Bad request
@@ -626,6 +636,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "bad-request"
+                  message: "Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes."
         '401':
           description: |
             Unauthenticated
@@ -634,6 +648,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Please verify your credentials and try again."
         '403':
           description: |
             Forbidden
@@ -642,6 +660,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
         '429':
           description: |
             Too Many Requests
@@ -661,8 +683,6 @@ paths:
               schema:
                 type: integer
               description: The time at which the current rate limit window resets in UTC epoch seconds.
-        '404':
-          $ref: '#/components/responses/NotFound'
         '500':
           description: |
             Internal server error
@@ -671,6 +691,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Contact the MoEngage team for further assistance."
     delete:
       tags:
         - Coupon Files
