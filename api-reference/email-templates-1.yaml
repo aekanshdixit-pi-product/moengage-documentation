@@ -22,7 +22,6 @@ servers:
 
 security:
   - basicAuth: []
-    appKey: []
 
 paths:
   /email-templates:
@@ -45,6 +44,9 @@ paths:
       operationId: createEmailTemplate
       tags:
         - Email Templates
+      parameters:
+        - $ref: '#/components/parameters/MoeAppKeyHeader'
+        - $ref: '#/components/parameters/ContentTypeHeader'
       requestBody:
         required: true
         content:
@@ -57,33 +59,45 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-                    description: |
-                      This field contains the status of the request and denotes whether it was successful or not.
-                      **Example**: "status": "success", "status": "error"
-                  data:
-                    type: object
-                    description: |
-                      This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.
-                    properties:
-                      id:
-                        type: string
-                        description: |
-                          This field contains the template id and needs to be stored by you. This template id would be used for searching a specific template and updating it. The template id is a String.
-                          **Example**: "id": "63f4962d4d31f4c68d980a01"
-                        example: "63f4962d4d31f4c68d980a01"
-                      msg:
-                        type: string
-                        description: |
-                          This field contains information about the successful creation of the template.
-                          **Example**: "msg": "Custom email template saved"
-                        example: "Custom email template saved"
+                $ref: '#/components/schemas/SuccessResponseCreate'
+              examples:
+                Success:
+                  value:
+                    status: "success"
+                    data:
+                      id: "63f4962d4d31f4c68d980a01"
+                      msg: "Custom email template saved"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InvalidRequestBody:
+                  summary: Validation failure
+                  value:
+                    status: "error"
+                    data:
+                      code: 400
+                      title: "Invalid request body"
+                      description: "MOE-APPKEY header is invalid or empty"
+                InvalidName:
+                  summary: Name field empty
+                  value:
+                    status: "error"
+                    data:
+                      code: 400
+                      title: "Invalid email name"
+                      description: "Name field is empty"
+                InvalidBody:
+                  summary: HTML field empty
+                  value:
+                    status: "error"
+                    data:
+                      code: 400
+                      title: "Invalid email body"
+                      description: "Email body should not be empty"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
@@ -99,6 +113,8 @@ paths:
       tags:
         - Email Templates
       parameters:
+        - $ref: '#/components/parameters/MoeAppKeyHeader'
+        - $ref: '#/components/parameters/ContentTypeHeader'
         - name: page
           in: query
           required: true
@@ -119,13 +135,8 @@ paths:
                   status:
                     type: string
                     example: success
-                    description: |
-                      This field contains the status of the request and denotes whether it was successful or not.
-                      **Example**: "status": "success", "status": "error"
                   data:
                     type: object
-                    description: |
-                      This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.
                     properties:
                       templates:
                         type: array
@@ -135,10 +146,49 @@ paths:
                         type: integer
                         example: 13
                         description: The number of templates returned in the page.
+              examples:
+                Success:
+                  value:
+                    status: "success"
+                    data:
+                      templates:
+                        - template_id: "645a2bd910e0307e6d7f7717"
+                          template_name: "Coupon_code_template"
+                          is_archived: false
+                          builder_supported: false
+                          editor: "Froala Editor"
+                          created_date: "2023-05-09 11:17:43.112000"
+                          updated_at: "2023-05-09 11:18:37.692000"
+                          updated_by: "jane.doe@example.com"
+                        - template_id: "645a2c0d10e0307e6d7f7719"
+                          template_name: "Season_Sale_Template"
+                          is_archived: false
+                          builder_supported: false
+                          editor: "Froala Editor"
+                          created_date: "2023-05-09 11:18:35.398000"
+                          updated_at: "2023-05-09 11:18:35.398000"
+                          updated_by: "john.doe@example.com"
+                      no_of_templates: 13
+        '400':
+          description: Bad Request
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 InvalidId:
+                   value:
+                     status: "error"
+                     data:
+                       code: 400
+                       title: "Invalid template id"
+                       description: "Please provide a valid template id"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/RateLimit'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /email-templates/{id}:
     get:
@@ -157,6 +207,8 @@ paths:
       tags:
         - Email Templates
       parameters:
+        - $ref: '#/components/parameters/MoeAppKeyHeader'
+        - $ref: '#/components/parameters/ContentTypeHeader'
         - name: id
           in: path
           required: true
@@ -173,10 +225,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TemplateDetailsFlat'
+              examples:
+                Success:
+                  value:
+                    status: "success"
+                    template_id: "645a0cec10e0307e6d7f7716"
+                    template_name: "End_of_season_sale_template"
+                    subject: ""
+                    template_content: "<!DOCTYPE html><html>...</html>"
+                    attachments: []
+                    source: "Partner"
+                    sender_name: "Your Brand Name"
+                    editor: "Froala Editor"
+                    created_date: "2023-05-09 09:05:46.350000"
+                    updated_at: "2023-05-09 10:00:57.149000"
+                    updated_by: "john.doe@example.com"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 InvalidId:
+                   value:
+                     status: "error"
+                     data:
+                       code: 400
+                       title: "Invalid template id"
+                       description: "Please provide a valid template id"
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimit'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
     put:
       summary: Update Specific Template
@@ -185,6 +268,8 @@ paths:
       tags:
         - Email Templates
       parameters:
+        - $ref: '#/components/parameters/MoeAppKeyHeader'
+        - $ref: '#/components/parameters/ContentTypeHeader'
         - name: id
           in: path
           required: true
@@ -204,24 +289,20 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        example: "63f4962d4d31f4c68d980a01"
-                      msg:
-                        type: string
-                        example: "Custom email template updated"
+                $ref: '#/components/schemas/SuccessResponseCreate'
+              examples:
+                Success:
+                  value:
+                    status: "success"
+                    data:
+                      id: "63f4962d4d31f4c68d980a01"
+                      msg: "Custom email template updated"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /bulk/email-templates:
     put:
@@ -239,8 +320,13 @@ paths:
       operationId: bulkCreateUpdateTemplates
       tags:
         - Email Templates
+      parameters:
+        - $ref: '#/components/parameters/MoeAppKeyHeader'
+        - $ref: '#/components/parameters/ContentTypeHeader'
       requestBody:
         required: true
+        description: |
+          You can pass the templates to be created and/or updated as an array of JSON Objects.
         content:
           application/json:
             schema:
@@ -281,12 +367,28 @@ paths:
                           type: string
                         description: |
                           This field contains the list of template ids for the updated templates.
+              examples:
+                Success:
+                  value:
+                    status: "success"
+                    data:
+                      new_templates: ["645a2c0d10e0307e6d7f7719"]
+                      updated_templates: ["645a2bd910e0307e6d7f7717"]
+                ValidationFailure:
+                  summary: Validation Failure in Bulk
+                  value:
+                    status: "success"
+                    data:
+                      new_templates: ["Email attachment should be valid one with size less than 6mb & total attachments size less than 20mb"]
+                      updated_templates: ["Given id is invalid email template id"]
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/RateLimit'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
@@ -304,12 +406,25 @@ components:
            * Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
            * Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
         3. Use these details to authenticate the API requests.
-    appKey:
-      type: apiKey
-      in: header
+
+  parameters:
+    MoeAppKeyHeader:
       name: MOE-APPKEY
+      in: header
+      required: true
       description: |
-        This is your MoEngage account's APP ID that has to be passed along with the request. You can find your MoEngage APP ID at **Settings -> Account -> APIs -> App ID**.
+        This is your MoEngage account's APP ID that has to be passed along with the request. You can find your MoEngage APP ID at **Settings** -> **Account** -> **APIs** -> **App ID**.
+      schema:
+        type: string
+        example: "APP ID"
+    ContentTypeHeader:
+      name: Content-Type
+      in: header
+      required: true
+      description: Set the Content-Type header to application/json.
+      schema:
+        type: string
+        example: "application/json"
 
   schemas:
     # Base properties common to create and update
@@ -505,51 +620,88 @@ components:
           description: |
             This field describes why the request has failed and is a String. Example: 'MOE-APPKEY header is invalid or empty'.
 
+    SuccessResponseCreate:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+          description: |
+            This field contains the status of the request and denotes whether it was successful or not.
+            **Example**: "status": "success", "status": "error"
+        data:
+          type: object
+          description: |
+            This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.
+          properties:
+            id:
+              type: string
+              description: |
+                This field contains the template id and needs to be stored by you. This template id would be used for searching a specific template and updating it. The template id is a String.
+                **Example**: "id": "63f4962d4d31f4c68d980a01"
+              example: "63f4962d4d31f4c68d980a01"
+            msg:
+              type: string
+              description: |
+                This field contains information about the successful creation of the template.
+                **Example**: "msg": "Custom email template saved"
+              example: "Custom email template saved"
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        data:
+          $ref: '#/components/schemas/ErrorData'
+
   responses:
     BadRequest:
       description: Bad Request
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              status:
-                type: string
-                example: error
-                description: |
-                  This response is returned when the required parameters are missing from the request or when the provided parameters are invalid, or when a template already exists with the same version, name, or id.
-              data:
-                $ref: '#/components/schemas/ErrorData'
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            Default:
+              value:
+                status: "error"
+                data:
+                  code: 400
+                  title: "Bad Request"
+                  description: "Invalid parameter"
     Unauthorized:
       description: Authorization Failure
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              status:
-                type: string
-                example: error
-                description: |
-                  This response is returned when the authorization parameters are missing in the HTTP Auth Header.
-              data:
-                $ref: '#/components/schemas/ErrorData'
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            AuthFail:
+              value:
+                status: "error"
+                data:
+                  code: 401
+                  title: "Authentication required"
+                  description: "Invalid APP_ID used in Authentication Header"
     RateLimit:
       description: Rate Limit Breach
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              status:
-                type: string
-                example: error
-                description: |
-                  This response is returned when the number of requests per minute has exceeded the rate limit.
-              data:
-                $ref: '#/components/schemas/ErrorData'
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            RateLimitExceeded:
+              value:
+                status: "error"
+                data:
+                  code: 429
+                  title: "rate limiter exception"
+                  description: "Exceeded rate limit for this app"
     InternalServerError:
-      description: Internal Server Error
+      description: |
+        This response is returned when the system runs into an unexpected error.
       content:
         application/json:
           schema:
@@ -558,8 +710,11 @@ components:
               title:
                 type: string
                 example: "Internal Server Error"
-                description: |
-                  This response is returned when the system runs into an unexpected error.
               message:
                 type: string
                 example: "An unexpected error was encountered."
+          examples:
+            ServerError:
+              value:
+                title: "Internal Server Error"
+                message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
