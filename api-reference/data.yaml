@@ -397,17 +397,60 @@ paths:
     post:
       tags:
         - Utilities
-      summary: Test API Connection
-      description: Validates if the provided MoEngage endpoint details (Workspace ID, Data Key) are correct and accessible.
+      summary: Test Connection API
+      description: |
+        The Test Connection API allows you to validate if the entered endpoint details are valid. The API verifies if the provided endpoint URL, workspace ID an data key is accessible and responds without any errors.
+        
+        **Base URL**
+        `https://api-0X.moengage.com/v1/integrations/authentication`
+        Here X is your MoEngage datacenter. [Know more](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage)
+
+        **Sample cURL Request**
+        ```bash
+        curl --location '[https://api-01.moengage.com/v1/integrations/authentication](https://api-01.moengage.com/v1/integrations/authentication)' \
+        --header 'MOE-APPKEY: ********' \
+        --header 'Content-Type: application/json' \
+        --header 'Authorization: Basic *****' \
+        --data '{
+        "app_id": "********",
+        "app_secret": "**********",
+        "source": "test",
+        "region": "01"
+        }'
+        ```
+      parameters:
+        - name: MOE-APPKEY
+          in: header
+          required: true
+          description: "This is your MoEngage account's data API keythat has to be passed along with the request. You can find it at **Settings** -> **Account** -> **APIs** -> **API Keys** -> **Data**."
+          schema:
+            type: string
+            example: "{MoEngage data API key}"
+        - name: Authorization
+          in: header
+          required: true
+          description: "This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication."
+          schema:
+            type: string
+            example: "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="
       requestBody:
         required: true
+        description: Set the Content-Type header to application/json.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/TestConnectionRequest'
+            examples:
+               cURL_Body:
+                value:
+                  app_id: "********"
+                  app_secret: "**********"
+                  source: "test"
+                  region: "01"
       responses:
         '200':
-          description: Authentication successful.
+          description: |
+            Success. This response is returned when the request is processed successfully.
           content:
             application/json:
               schema:
@@ -415,16 +458,46 @@ paths:
                 properties:
                   status:
                     type: string
+                    description: |
+                      This field contains the status of the request and denotes whether it was successful or not.
+                      **Example**: "status": "success", "status": "error"
                     example: success
                   app_name:
                     type: string
+                    description: This field contains the workspace name of your MoEngage workspace
                     example: PI-Prod-DC01
+              example:
+                status: "success"
+                app_name: "PI-Prod-DC01"
         '401':
-          description: Authentication failed.
+          description: |
+            Authorization Failure. This response is returned when the authorization parameters are missing in the HTTP Auth Header.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "App Secret key mismatch. Please login to the dashboard to verify key"
+                      type:
+                        type: string
+                        example: "Authentication required"
+                      request_id:
+                        type: string
+                        example: "kKcQUqvo"
+              example:
+                status: "fail"
+                error:
+                  message: "App Secret key mismatch. Please login to the dashboard to verify key"
+                  type: "Authentication required"
+                  request_id: "kKcQUqvo"
 
   /fileimports/trigger/{schedule_id}:
     post:
