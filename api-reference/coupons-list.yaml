@@ -6,8 +6,12 @@ info:
     Authentication is via Basic Auth using your **Workspace ID** as username and an **API Key** as password.
   version: '1.0'
 servers:
-  - url: 'https://api.moengage.com/v1'
+  - url: 'https://api-0{dc}.moengage.com/v1'
     description: The MoEngage Coupon Management API endpoint.
+    variables:
+      dc:
+        default: '1'
+        description: The data center number (e.g., 1, 2, 3). Check the data center mapping page to find your value.
 tags:
   - name: Coupon Lists
     description: Operations related to defining, managing status (active/archive), and modifying coupon list metadata.
@@ -76,6 +80,7 @@ paths:
           required: false
           description: |
             This field contains an array of all the coupons with their respective attributes based on the following statuses you provide in the request parameter:
+            
             * ACTIVE - to view only active coupon lists
             * ARCHIVED - to view only archived coupon lists
             * EXPIRED - to view only expired coupon lists
@@ -157,7 +162,7 @@ paths:
         '401':
           description: |
             Unauthenticated
-            Your request is unauthorized. Verify your credentials and try again.
+            Your request is unauthorized.
           content:
             application/json:
               schema:
@@ -165,11 +170,11 @@ paths:
               example:
                 error:
                   code: "request-unauthenticated"
-                  message: "Your request is unauthorized. Please verify your credentials and try again."
+                  message: "Your request is unauthorized. Verify your credentials and try again."
         '403':
           description: |
             Forbidden
-            Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance.
+            Your account does not have access to the Coupon Management features.
           content:
             application/json:
               schema:
@@ -177,7 +182,7 @@ paths:
               example:
                 error:
                   code: "request-forbidden"
-                  message: "Your account does not have access to the Coupon Management features. Please contact the MoEngage team for further assistance."
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
         '429':
           description: |
             Too Many Requests
@@ -208,7 +213,7 @@ paths:
               example:
                 error:
                   code: "unexpected-error"
-                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
+                  message: "Something went wrong with your request. Contact the MoEngage team for further assistance."
 
   /coupon-list/{coupon_list_id}:
     get:
@@ -248,7 +253,7 @@ paths:
     patch:
       tags:
         - Coupon Lists
-      summary: Update Coupon List
+      summary: Update a Coupon List
       operationId: updateCouponList
       description: |
         This API allows users to modify existing coupon lists within a defined workspace. It facilitates changes to specifications like list name, expiry date, and alert settings, thereby promoting efficient coupon operations management.
@@ -536,7 +541,7 @@ paths:
     put:
       tags:
         - Coupon Lists
-      summary: Archive Coupon List
+      summary: Archive a Coupon List
       operationId: archiveCouponList
       description: |
         This API transitions an active coupon list to an archived status. Upon archival, the coupon codes within the list are deleted. Consequently, any campaigns that were previously dependent on this list will no longer be able to utilize the dynamic coupon allocation.
