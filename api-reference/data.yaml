@@ -3797,18 +3797,40 @@ components:
           description: 'This field denotes the name of the import.The import_id or import_name has to be passed. If both are passed, import_id takes precedence.'
         date:
           type: object
-          description: 'This field denotes the file processing date. Supported values are: '
+          description: 'This field denotes the file processing date. Supported values are:
+          * start_date
+          * end_date
+          * format
+          If this field is not passed, the API will respond with details of all the files corresponding to the import_id / import_name passed and in accordance to the offset and limit values.
+
+Supported date time formats are:
+           * "datetime_format": "YYYY-MM-DD"2022-01-22
+           * "datetime_format": "YYYY/MM/DD"2022/01/22
+           * "datetime_format": "DD/MM/YYYY"22/01/2022
+           * "datetime_format": "DD-MM-YYYY"22-01-2022
+           * "datetime_format": "DD-MM-YYYY hh:mm:ss"31-12-2022 12:10:33
+           * "datetime_format": "DD/MM/YYYY hh:mm:ss"31/12/2022 12:10:33
+           * "datetime_format": "YYYY-MM-DD hh:mm:ss"2019-02-22 17:54:14
+           * "datetime_format": "YYYY/MM/DD hh:mm:ss"2019/02/22 17:54:14'
           properties:
             start_date: { type: string, format: date-time }
             end_date: { type: string, format: date-time }
         file_status:
           type: array
+          description: 'This field denotes the status of files contained in an import.'
           items:
             type: string
             enum: [SUCCESSFUL, FAILED, PARTIAL_SUCCESS, PROCESSING, QUEUED, WAITING]
         offset:
           type: integer
-          description: 'Pagination offset. Each page returns 50 results.'
+          description: 'API responds with a maximum of 50 file details in a single response. For example, if there are a total of 150 files that are part of the API response, then:
+          * Offset = 1 will fetch the details of the first 50 files
+          * Offset = 2 will fetch the file details of the next 50 imports
+          * Offset = 3 will fetch the import details of the last 50 imports
+          If offset is not passed in the request body, the API response will consider offset = 1.
+          You can refer to the total_count parameter in the response to understand how many total files are part of the response. 
+  OR
+If the API responds with more_files = true, it indicates that there are more files that are not part of the current response for which another API request must be made with offset +1.'
           default: 1
 
     FileImportStatusResponse:
