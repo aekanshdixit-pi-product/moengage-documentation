@@ -2675,23 +2675,188 @@ paths:
             type: string    
       responses:
         '200':
-          description: Trigger request successful.
+          description: This response is returned when the request is processed successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccess'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: "This field contains the status of the request and specifies whether the request was successful."
+                    example: success, failure
+                  message:
+                    type: string
+                    description: This field contains information about whether the request was successful or not.
+                    example: Trigger Import Successful 
+              examples:
+                success_response:
+                  summary: Successful request
+                  value:
+                    status: "success"
+                    message: "Triggered Import Successfully"
         '400':
-          description: Bad Request.
+          description: "This response is returned when the Import ID/Schedule ID is missing from the request or when the provided parameters are invalid. Also, this response is returned when the rate limit (one request in five minutes) is breached."
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error_type:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "This field is present in the response when the Import/Schedule ID in the request is not found in the system (either because it is invalid or has been deleted)."
+                  message:
+                    type: string
+                    description: "The type or category of the error "
+              examples:
+                invalid_scheduleid:
+                  summary: The Import ID (Schedule ID) in the Request is Invalid
+                  value:
+                    status: "fail"
+                    error_type: "NOT_FOUND"
+                    message: "This import is either deleted or expired."
+                exceeded_user_limit:
+                  summary: The Number of Users Exceeds the Allowed Limit in the Request
+                  value:
+                    status: "fail"
+                    error_type: "ALREADY_EXISTS"
+                    message: "Import has run in the last 5 min." 
         '401':
-          description: Unauthorized.
+          description: This response is returned when the APP Key is invalid or missing, the password is incorrect, or there are other such authorization-related errors in the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  title:
+                    type: string
+                    example: fail
+                    description: "This field is present in the response in the case of errors and contains the type of error."  
+                  error_description: 
+                    type: string
+                    description: "This field is present in the response in the case of errors and contains the error description."
+              examples:
+                incorrect_password:
+                  summary: Incorrect Password in the Header
+                  value:
+                    title: "AuthenticationInvalid"
+                    error_description: "Password (APP_KEY) doesn't match the one available on the dashboard. Kindly ensure the same APP_KEY available on the dashboard is used."
+                missing_authorization_key:
+                  summary: Missing Authorization Key in the Header
+                  value:
+                    title: "HeaderMissing"
+                    error_description: "MOE-APPKEY is missing in Header"    
+                header_mismatch:
+                  summary: APP Key Mismatch in the Header
+                  value:
+                    title: "HeaderMismatch"
+                    error_description: "MOE_APPKEY doesn't match the Username (APP_KEY) used in Basic Auth authorization"        
+        '403':
+          description: This response is returned when your MoEngage account has been blocked or suspended.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "This field contains information about whether the request was successful or not."
+                      type:
+                        type: string
+                        description: "This field is present in the response in the case of 403 errors and contains the error type."
+                      request_id:
+                        type: string
+                        description: "This field is present in the response in the case of 403 errors and contains the request-id."
+              examples:
+                account_blocked:
+                  summary: Your Account is Blocked
+                  value:
+                    status: "fail"
+                    error:
+                      message: "Your account is suspended. Please contact MoEngage team."
+                      type: "BlockedClient"
+                      request_id: "ofHUEaEQ"  
+        '404':
+        description: This response is returned when the request contains the incorrect URL (when you try to access a resource that is not present).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                    description: This field contains the status of the request and specifies whether the request was successful. 
+                  message:
+                    type: string
+                    description: "This field contains information about whether the request was successful or not."
+                    example: Trigger Import Successful
+
+              examples:
+                missing_resource:
+                  summary: Resource Not Found Error
+                  value:
+                    status: "fail"
+                    message: "Resource not found"
+        '405':
+          description: This response is returned when the request contains an unsupported method. For example, if you were to use the GET method instead of POST for this request, you would result in a 405 error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                    description: This field contains the status of the request and specifies whether the request was successful. 
+                  message:
+                    type: string
+                    description: "This field contains information about whether the request was successful or not."
+                    example: Trigger Import Successful
+
+              examples:
+                missing_resource:
+                  summary: Method Not Allowed Error
+                  value:
+                    status: "fail"
+                    message: "Method not allowed"
+        '500':
+          description: This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                    example: fail
+                    description: "This field is present in the response in the case of errors and contains the type of error."  
+                  error_description: 
+                    type: string
+                    description: "This field is present in the response in the case of errors and contains the error description."
+                  code:
+                   type: string
+                   description: This field is present in the response in the case of 5xx errors and contains the error code. 
+              examples:
+                unknown_error:
+                  summary:  Unknown Errors
+                  value:
+                    title: "Server Error"
+                    error_description: "An unexpected error was encountered while processing this request. Please contact MoEngage Team." 
+                    code: "GlQhUzvM"        
+      
 
   /fileimports/import/run/history:
     post:
