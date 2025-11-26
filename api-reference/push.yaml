@@ -3,8 +3,6 @@ info:
   title: MoEngage Push API
   version: '2.0'
   description: |
-    API for sending transactional and targeted push notifications to users across Android, iOS, and Web platforms.
-    
     # Overview
     Push API is used to:
     * Create campaigns (targeting all users or a group of users) to send notifications.
@@ -14,8 +12,15 @@ info:
     # Postman Collection
     We have made it easy for you to test the APIs. [Click here to view it in Postman](https://www.postman.com/moengage-dev/api-docs/collection/acmujor/moengage-transaction-push-api?action=share&source=copy-link&creator=5883765).
 
-    # Authentication
-    A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key using SHA 256. See the interactive panel for Python generation scripts.
+    # Authentication & Signature
+    A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key using SHA 256.
+    
+    **Steps to Generate:**
+    1. Go to **Settings > Account > APIs** on the MoEngage dashboard.
+    2. Copy **Workspace ID** (app_id) and **Push API Key**.
+    3. Ensure `campaign_name` matches the one used in the request body.
+    
+    See the code samples below for Python generation scripts.
 
     # FAQs
     **Does the Push API support silent notifications?**
@@ -25,7 +30,7 @@ info:
     Yes, the basic template supports HTML tags.
 
 tags:
-  - name: Push
+  - name: Transactional
     description: Operations to create and send push notification campaigns.
 
 servers:
@@ -34,32 +39,24 @@ servers:
     variables:
       dc:
         default: '1'
-        description: "The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25)."
+        description: "The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). Replace 'X' with your DC number. Mapping available [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25)."
         enum:
           - '1'
           - '2'
           - '3'
           - '4'
 
-security:
-  - basicAuth: []
-  - apiKeyAuth: []
-
 paths:
   /transaction/sendpush:
     post:
       tags:
-        - Push
+        - Transactional
       summary: Send Push Notification
       description: |
         Creates and sends a push notification campaign. Can target all users, a pre-defined custom segment, or specific users based on their attributes.
 
-        The event ID. **Required for event-triggered campaigns.**
-        * You must pass `moe_event_id` if any event attribute is present for campaigns.
-        * You must pass `moe_transaction_id` for alerts.
-
         ## Rate Limit
-        The rate limit for this endpoint is **1000 RPM**.
+        You can create **10,000 requests per minute**.
       x-code-samples:
         - lang: API Endpoint
           label: API Endpoint
@@ -79,17 +76,12 @@ paths:
           label: Python 2 (Signature)
           source: |
             from hashlib import sha256
-            app_id = "{{Your Workspace ID}}" 
+            app_id = "{{Your Workspace ID}}"
             campaign_name = "{{your campaign name}}"
-            api_key = "{{your push api key}}" 
+            api_key = "{{your push api key}}"
             signature_key = app_id+'|'+ campaign_name+'|'+ api_key
             signature = sha256(signature_key).hexdigest()
             print(signature)
-        - lang: Text
-          label: Generated Signature Output
-          source: |
-            Generated Signature: 
-            {{Signature}}
         - lang: cURL
           label: Sample cURL Request
           source: |
@@ -136,55 +128,10 @@ paths:
                                 "iconUrl": "abc"
                             }
                         ]
-                    },
-                    "IOS": {
-                        "groupKey": "thisisgroupkey",
-                        "collapseReplaceKey": "this is update key",
-                        "message": "this is ios message",
-                        "title": "this is ios title",
-                        "richContent": [
-                            {
-                                "type": "sound",
-                                "value": "custSound4.wav"
-                            }
-                        ],
-                        "additionalActions": [
-                            {
-                                "category": "INVITE_CATEGORY"
-                            }
-                        ]
-                    },
-                    "WEB": {
-                        "message": "this is web message",
-                        "title": "this is web title",
-                        "redirectURL": "https://www.google.com",
-                        "iconURL": "sbc.jpeg",
-                        "imageURL": "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
                     }
                 },
                 "campaignDelivery": {
                     "type": "soon"
-                },
-                "conversionGoals": [
-                    {
-                        "name": "amount1",
-                        "eventName": "AddedTocart",
-                        "attrs": {
-                            "filter": "is between",
-                            "name": "amount",
-                            "value": "10,100",
-                            "type": "numeric"
-                        }
-                    }
-                ],
-                "advancedSettings": {
-                    "ttl": {
-                        "ANDROID": 12,
-                        "WEB": 24
-                    },
-                    "ignoreFC": false,
-                    "sendAtHighPriority": true,
-                    "inboxExpiry": 360
                 }
             }'
       requestBody:
@@ -196,7 +143,7 @@ paths:
               $ref: '#/components/schemas/PushRequest'
             examples:
               Ex1_Android_App:
-                summary: Example 1 - Android App
+                summary: Ex 1 - Android App
                 value:
                   ANDROID:
                     message: "Message"
@@ -226,7 +173,7 @@ paths:
                         iconURL: "abc"
                     fallback: {}
               Ex1_iOS_App:
-                summary: Example 1 - iOS App
+                summary: Ex 1 - iOS App
                 value:
                   IOS:
                     message: "Message"
@@ -257,7 +204,7 @@ paths:
                       additionalActions:
                         - category: "INVITE_CATEGORY"
               Ex1_Web_Chrome:
-                summary: Example 1 - Web (Chrome Push)
+                summary: Ex 1 - Web (Chrome)
                 value:
                   WEB:
                     message: "Message"
@@ -266,8 +213,8 @@ paths:
                     iconURL: "https://app.moengage.com/v3/images/favicon.ico"
                     imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
                     fallback: {}
-              Ex2_Android:
-                summary: Example 2 - Target All Users (Android)
+              Ex2_Android_TargetAll:
+                summary: Ex 2 - Target All (Android)
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
                   campaignName: "Test Push"
@@ -316,8 +263,8 @@ paths:
                     ignoreFC: "false"
                     sendAtHighPriority: "true"
                     inboxExpiry: 360
-              Ex2_iOS:
-                summary: Example 2 - Target All Users (iOS)
+              Ex2_iOS_TargetAll:
+                summary: Ex 2 - Target All (iOS)
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
                   campaignName: "Test Push"
@@ -348,8 +295,8 @@ paths:
                   advancedSettings:
                     ignoreFC: "false"
                   inboxExpiry: 360
-              Ex2_Web:
-                summary: Example 2 - Target All Users (Web)
+              Ex2_Web_TargetAll:
+                summary: Ex 2 - Target All (Web)
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
                   campaignName: "Test Push"
@@ -380,8 +327,8 @@ paths:
                       WEB: 24
                     ignoreFC: "false"
                     sendAtHighPriority: "true"
-              Ex2_All_Platforms:
-                summary: Example 2 - Target All Users (All Platforms)
+              Ex2_AllPlatforms_TargetAll:
+                summary: Ex 2 - Target All (All Platforms)
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
                   campaignName: "Test Push"
@@ -446,7 +393,7 @@ paths:
                     sendAtHighPriority: "true"
                     inboxExpiry: 360
               Ex3_Target_Single_User:
-                summary: Example 3 - Target Single User
+                summary: Ex 3 - Target Single User
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
                   campaignName: "Test Push"
@@ -499,7 +446,7 @@ paths:
                     sendAtHighPriority: "true"
                     inboxExpiry: 360
               Ex3_Target_Custom_Segment:
-                summary: Example 3 - Target Custom Segment
+                summary: Ex 3 - Target Custom Segment
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
                   campaignName: "Test Push"
@@ -565,7 +512,7 @@ paths:
                     sendAtHighPriority: "true"
                     inboxExpiry: 360
               Ex3_Custom_Attribute:
-                summary: Example 3 - Custom Attribute
+                summary: Ex 3 - Custom Attribute
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
                   campaignName: "Test Push"
@@ -619,7 +566,7 @@ paths:
                     sendAtHighPriority: "true"
                     inboxExpiry: 360
               Ex3_Target_All_Users_Detailed:
-                summary: Example 3 - Target All Users (Detailed)
+                summary: Ex 3 - Target All Users (Detailed)
                 value:
                   appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
                   campaignName: "Test Push"
@@ -702,7 +649,17 @@ paths:
                         type: "numeric"
       responses:
         '200':
-          description: Request received. The status in the response body indicates whether it was successfully processed or failed.
+          description: |
+            Request received. The status in the response body indicates whether it was successfully processed or failed. 
+            Possible failures include:
+            * Invalid Request Type
+            * Invalid appId / appId not present
+            * Campaign Name too short (must be >= 5 chars) / Campaign name missing
+            * Request limit exceeded
+            * Signature missing or not verified
+            * Duplicate campaign name
+            * Key not of Type List or Value not allowed
+            * Error parsing parameters
           content:
             application/json:
               schema:
@@ -765,10 +722,6 @@ components:
   schemas:
     TargetUserAttributes:
       type: object
-      required:
-        - attribute
-        - comparisonParameter
-        - attributeValue
       properties:
         attribute:
           type: string
@@ -837,7 +790,7 @@ components:
         title: 
           type: string 
           description: "This field denotes the headline or subject of the notification/message."
-        channel_Id: 
+        channel_id: 
           type: string 
           description: "This field denotes the channel identifier for the campaign."
         summary: 
@@ -1228,12 +1181,6 @@ components:
             * For API requests where the target audience is a specific user, if a campaign with the given name already exists, existing campaign data corresponding to the given name will be used to send notifications.
             * Any edits in other parts of campaign data except payload within the API request parameters will be ignored.
             * If any changes are required in the campaign data, change the campaign name in the API request to create a new campaign.
-        moe_event_id:
-          type: string
-          description: "The event ID. Required for event-triggered campaigns. You must pass `moe_event_id` if any event attribute is present for campaigns."
-        moe_transaction_id:
-          type: string
-          description: "You must pass `moe_transaction_id` for alerts."
         payload:
           $ref: '#/components/schemas/Payload'
           description: |
@@ -1268,7 +1215,7 @@ components:
     PushSuccessResponse:
       type: object
       properties:
-        status:
+        status: 
           type: string
           enum: [Success]
           description: "This field indicates the campaign status."
@@ -1279,10 +1226,10 @@ components:
     PushFailureResponse:
       type: object
       properties:
-        status:
+        status: 
           type: string
           enum: [Fail]
           description: "This field indicates the campaign status."
         Error_Message: { type: string, example: "Campaign Name not found" }
         responseId: { type: string, description: "This field indicates the response ID." }
-        requestId: { type: string, description: "This field indicates the request ID." } 
+        requestId: { type: string, description: "This field indicates the request ID." }
