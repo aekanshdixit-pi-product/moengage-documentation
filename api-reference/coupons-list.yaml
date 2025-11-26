@@ -173,16 +173,21 @@ paths:
     put:
       tags:
         - Coupon Lists
-      summary: Activate Coupon List
+      summary: Activate a Coupon List
       operationId: activateCouponList
       description: |
-        Reactivates an **ARCHIVED** coupon list. This requires providing a new expiry date that is in the future.
+        This API reactivates archived coupon lists, provided the expiry date is in the future.
       x-mint:
         content: |
           <Note>
-            - Only active coupon lists can be utilized in campaigns.
-            - If you need to modify the expiry date and activate a coupon list, you must use the **Update Coupon List (PATCH)** API.
+            **Information**
+            
+            * Only active coupon lists can be utilized in campaigns.
+            * If you need to modify the expiry date and activate a coupon list, you must use the [Update a Coupon List API](#operation/updateCouponList).
           </Note>
+
+          ### Rate Limit
+          You can activate 100 coupon lists per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
@@ -198,27 +203,88 @@ paths:
                 expires_at:
                   type: string
                   format: date
+                  description: |
+                    Add a new expiry date for the coupon list in yyyy-mm-dd format.
+                    
+                    **Note:** Your request could fail if the mandatory attributes are absent from your payload.
       responses:
         '204':
-          description: Coupon list activated successfully.
+          description: |
+            Success (No content)
+            Coupon list activation is successful.
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: |
+            Bad request
+            Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes. For more information, refer to Error Messages.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "bad-request"
+                  message: "Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes."
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: |
+            Unauthenticated
+            Your request is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Verify your credentials and try again."
         '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: |
+            Forbidden
+            Your account does not have access to the Coupon Management features.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests
+            This response is returned when the number of requests per minute has exceeded the rate limit.
+            
+            There won't be any response body for this request.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: |
+            Internal server error
+            This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Contact the MoEngage team for further assistance."
 
   /coupon-list/{coupon_list_id}/archive:
     put:
       tags:
         - Coupon Lists
-      summary: Archive a Coupon List
+      summary: Archive Coupon List
       operationId: archiveCouponList
       description: |
         This API transitions an active coupon list to an archived status. Upon archival, the coupon codes within the list are deleted. Consequently, any campaigns that were previously dependent on this list will no longer be able to utilize the dynamic coupon allocation.
