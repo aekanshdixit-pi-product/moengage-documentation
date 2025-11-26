@@ -27,12 +27,17 @@ paths:
       summary: Create Coupon List
       operationId: createCouponList
       description: |
-        Creates a new, organized coupon list definition to hold unique, single-use coupon codes within the system. Coupons must be added separately using the Upload Coupons via File URL API.
+        This API enables you to organize unique, single-use coupon codes within the system. It allows you to create and organize distinct lists for different coupon code categories.
       x-mint:
         content: |
           <Note>
-            This API creates the coupon list with basic specifications only. The coupons should be added using the **Upload Coupons via File URL API** to this coupon list before utilizing it in campaigns.
+            **Information**
+            
+            This API creates the coupon list with basic specifications only. The coupons should be added using [Upload the Coupons](/hc/en-us/articles/31560826909204) API to this coupon list before utilizing it in campaigns.
           </Note>
+
+          ### Rate Limit
+          You can create 100 coupon lists per day.
       requestBody:
         required: true
         content:
@@ -41,21 +46,81 @@ paths:
               $ref: '#/components/schemas/CreateCouponListRequest'
       responses:
         '201':
-          description: Coupon list creation request accepted successfully. The list status will be **ACTIVE**.
+          description: |
+            Success
+            Indicates that the request is successful and the coupon list creation request is accepted.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CouponList'
+              example:
+                name: "Example Name"
+                label: "Sample Label"
+                expires_at: "2024-10-31T18:29:00"
+                created_by: "John"
+                email_alert_subscribers:
+                  - "john.doe@example.com"
+                alert_conditions:
+                  success_alert: true
+                  failure_alert: true
+                  expiry_alert:
+                    alert: true
+                    days_before: 1
+                  coupon_shortage_alert:
+                    alert: true
+                    threshold_count: 10
+                status: "ACTIVE"
+                _id: "6721d00eefc476c0f67e0d05"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: |
+            Bad request
+            Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes. For more information, refer to [Error Messages](/hc/en-us/articles/31289838563860#Error-Messages).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "duplicate-coupon-list-name"
+                  message: "The coupon list name already exists. Please enter a unique name and try again."
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: |
+            Unauthenticated
+            Your request is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Please verify your credentials and try again."
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: |
+            Forbidden
+            Your account does not have access to the Coupon Management features.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Please contact the MoEngage team for further assistance."
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: |
+            Internal server error
+            This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
     get:
       tags:
         - Coupon Lists
@@ -1212,12 +1277,35 @@ components:
       type: object
       required: [name, label, expires_at, created_by]
       properties:
-        name: { type: string }
-        label: { type: string }
-        expires_at: { type: string, format: date }
-        email_alert_subscribers: { type: array, items: { type: string, format: email } }
-        created_by: { type: string }
-        alert_conditions: { $ref: '#/components/schemas/AlertConditions' }
+        name: 
+          type: string
+          description: This field consists of the coupon list's unique name.
+        label: 
+          type: string
+          description: This field consists of the label name for the coupon list.
+        expires_at: 
+          type: string
+          format: date
+          description: This field consists of the date the coupon list expires in yyyy-mm-dd format.
+        email_alert_subscribers: 
+          type: array
+          items: { type: string, format: email }
+          description: This field consists of the email address of the coupon list subscriber. The subscriber will receive all the alerts on the coupon list in the email provided in this field.
+        created_by: 
+          type: string
+          description: This field consists of the user name who requests to create the coupon list.
+        alert_conditions: 
+          $ref: '#/components/schemas/AlertConditions'
+          description: |
+            This object contains the details and types of alert conditions listed below:
+            * success_alert (boolean)
+            * failure_alert (boolean)
+            * coupon_shortage_alert
+                * alert (boolean)
+                * threshold_count (integer)
+            * expiry_alert
+                * alert (boolean)
+                * days_before (integer)
     UpdateCouponListRequest:
       type: object
       properties:
@@ -1333,6 +1421,8 @@ components:
         * `x-ratelimit-limit` (integer) - The maximum number of requests that the consumer is permitted to make in a given time window.
         * `x-ratelimit-remaining` (integer) - The number of requests remaining in the current rate limit window.
         * `x-ratelimit-reset` (integer) - The time at which the current rate limit window resets in UTC epoch seconds.
+        
+        There won't be any response body for this request.
       headers:
         x-ratelimit-limit:
           schema:
