@@ -133,7 +133,7 @@ components:
         basic_details:
           $ref: '#/components/schemas/PushBasicDetails'
         trigger_condition:
-          $ref: '#/components/schemas/TriggerCondition'
+          $ref: '#/components/schemas/PushTriggerCondition'
         campaign_content:
           $ref: '#/components/schemas/PushCampaignContent'
         segmentation_details:
@@ -150,8 +150,6 @@ components:
           $ref: '#/components/schemas/ControlGroupDetails'
         utm_params:
           $ref: '#/components/schemas/UTMParams'
-        campaign_audience_limit:
-          $ref: '#/components/schemas/CampaignAudienceLimit'
 
     # ==================== Email Campaign Request ====================
     EmailCampaignRequest:
@@ -196,7 +194,7 @@ components:
         basic_details:
           $ref: '#/components/schemas/EmailBasicDetails'
         trigger_condition:
-          $ref: '#/components/schemas/TriggerCondition'
+          $ref: '#/components/schemas/EmailTriggerCondition'
         connector:
           $ref: '#/components/schemas/Connector'
         campaign_content:
@@ -252,7 +250,7 @@ components:
         basic_details:
           $ref: '#/components/schemas/PushBasicDetails'
         trigger_condition:
-          $ref: '#/components/schemas/TriggerCondition'
+          $ref: '#/components/schemas/PushTriggerCondition'
         campaign_content:
           $ref: '#/components/schemas/PushCampaignContent'
         segmentation_details:
@@ -295,7 +293,7 @@ components:
         basic_details:
           $ref: '#/components/schemas/EmailBasicDetails'
         trigger_condition:
-          $ref: '#/components/schemas/TriggerCondition'
+          $ref: '#/components/schemas/EmailTriggerCondition'
         connector:
           $ref: '#/components/schemas/Connector'
         campaign_content:
@@ -1209,7 +1207,10 @@ components:
           type: object
           description: The campaign content including locales and variations.
         trigger_condition:
-          $ref: '#/components/schemas/TriggerCondition'
+          type: object
+          description: |
+            Trigger condition details for event-triggered campaigns.
+            Structure varies by channel (Push supports INTELLIGENT_DELAY, Email does not).
         segmentation_details:
           $ref: '#/components/schemas/SegmentationDetails'
         scheduling_details:
@@ -1448,10 +1449,10 @@ components:
           description: The user action that triggers the campaign (when user enters/exits the geofence).
 
     # ==================== Trigger Condition ====================
-    TriggerCondition:
+    PushTriggerCondition:
       type: object
       description: |
-        Trigger condition details for event-triggered campaigns.
+        Trigger condition details for Push event-triggered campaigns.
         
         **Required** for EVENT_TRIGGERED campaigns.
       properties:
@@ -1519,6 +1520,52 @@ components:
                 - HOURS
                 - DAYS
               description: The time unit that qualifies the max_delay_value.
+
+    EmailTriggerCondition:
+      type: object
+      description: |
+        Trigger condition details for Email event-triggered campaigns.
+        
+        **Required** for EVENT_TRIGGERED campaigns.
+      properties:
+        included_filters:
+          $ref: '#/components/schemas/FilterGroup'
+        secondary_included_filters:
+          $ref: '#/components/schemas/FilterGroup'
+        trigger_delay_type:
+          type: string
+          enum:
+            - DELAY
+            - ASAP
+          description: |
+            The type of triggered delay.
+            
+            When set to DELAY, the following fields are mandatory:
+            - trigger_delay_value
+            - trigger_delay_granularity
+            - trigger_relation
+        trigger_delay_value:
+          type: integer
+          description: The numeric value of the triggered delay.
+        trigger_delay_granularity:
+          type: string
+          enum:
+            - MINUTES
+            - HOURS
+            - DAYS
+          description: The time unit for the trigger delay.
+        trigger_relation:
+          type: string
+          enum:
+            - BEFORE
+            - AFTER
+          description: |
+            The trigger relation with delay.
+            
+            **Required** when trigger_delay_type is DELAY.
+        trigger_attr:
+          type: object
+          description: The attribute value of the trigger.
 
     # ==================== Push Campaign Content ====================
     PushCampaignContent:
