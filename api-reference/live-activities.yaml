@@ -8,22 +8,22 @@ tags:
     description: Operations to manage broadcast Live Activities for iOS.
 servers:
   - url: 'https://api-0{dc}.moengage.com/v1.0'
-    description: Live Activities API Server
+    description: "Live Activities API Server"
     variables:
       dc:
         default: '1'
-        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, etc.'
+        description: "Your MoEngage Data Center (DC). Can be 1, 2, 3, etc."
         enum:
           - '1'
           - '2'
           - '3'
           - '4'
   - url: 'https://sandbox-api-0{dc}.moengage.com/v1.0'
-    description: Test/Sandbox Live Activities API Server
+    description: "Test/Sandbox Live Activities API Server"
     variables:
       dc:
         default: '1'
-        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, etc.'
+        description: "Your MoEngage Data Center (DC). Can be 1, 2, 3, etc."
         enum:
           - '1'
           - '2'
@@ -45,6 +45,9 @@ paths:
         <Info>
         You can start live activities for only push campaigns created with the BROADCAST_LIVE_ACTIVITY delivery type using the [Create Push Campaigns API](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns), not campaigns created through the MoEngage UI.
         </Info>
+
+        **Rate Limit:**
+        You can create 5 requests per minute per workspace.
       requestBody:
         required: true
         description: The configuration for starting the Live Activity, including the initial content and alert message.
@@ -64,7 +67,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorResponseWithDetails'
               example:
                 error:
                   code: "PayloadError"
@@ -78,7 +81,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               examples:
                 invalid-app-key:
                   summary: Invalid App Key
@@ -103,7 +106,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               examples:
                 campaign-not-found:
                   summary: Campaign Not Found
@@ -134,7 +137,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               example:
                 error:
                   code: "PayloadSizeError"
@@ -152,7 +155,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               example:
                 error:
                   code: "ServerError"
@@ -163,7 +166,13 @@ paths:
       tags:
         - Live Activities
       summary: Update Broadcast Live Activity
-      description: Pushes a single, unified update to all subscribed Live Activities, such as an updated game score or a new development in a breaking news story.
+      description: |
+        Pushes a single, unified update to all subscribed Live Activities, such as an updated game score or a new development in a breaking news story.
+        
+        **Rate Limit:**
+        You can create:
+        * 500 requests per minute per workspace.
+        * 5 requests per minute per live activity ID.
       parameters:
         - name: X-Broadcast-Live-Activity-Id
           in: header
@@ -193,7 +202,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorResponseWithDetails'
               example:
                 error:
                   code: "PayloadError"
@@ -207,7 +216,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               examples:
                 invalid-app-key:
                   summary: Invalid App Key
@@ -232,7 +241,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               examples:
                 campaign-not-found:
                   summary: Campaign Not Found
@@ -275,7 +284,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               example:
                 error:
                   code: "PayloadSizeError"
@@ -293,7 +302,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               example:
                 error:
                   code: "ServerError"
@@ -304,7 +313,13 @@ paths:
       tags:
         - Live Activities
       summary: End Broadcast Live Activity
-      description: Simultaneously terminates a broadcast Live Activity across all subscribed devices, with options for a final state update or immediate dismissal.
+      description: |
+        Simultaneously terminates a broadcast Live Activity across all subscribed devices, with options for a final state update or immediate dismissal.
+        
+        **Rate Limit:**
+        You can create:
+        * 500 requests per minute per workspace.
+        * 5 requests per minute per live activity ID.
       parameters:
         - name: X-Broadcast-Live-Activity-Id
           in: header
@@ -334,7 +349,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorResponseWithDetails'
               example:
                 error:
                   code: "PayloadError"
@@ -348,7 +363,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               examples:
                 invalid-app-key:
                   summary: Invalid App Key
@@ -373,7 +388,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               examples:
                 campaign-not-found:
                   summary: Campaign Not Found
@@ -424,7 +439,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BasicErrorResponse'
               example:
                 error:
                   code: "ServerError"
@@ -435,22 +450,32 @@ components:
     basicAuth:
       type: http
       scheme: basic
-      description: This authentication parameter, used for access control, must be passed in the request. You can generate it  using Workspace ID as username and Push API Key as password.
+      description: "This authentication parameter, used for access control, must be passed in the request. You can generate it  using Workspace ID as username and Push API Key as password."
     moeAppKey:
       type: apiKey
       in: header
       name: X-MOE-APPKEY
-      description: This is the workspace ID (earlier APP ID) of your MoEngage workspace. The X-MOE-APPKEY must be passed in the request. You can find your MoEngage Workspace ID in the MoEngage UI- Settings > Account > APIs -> Workspace ID (earlier app id)Your MoEngage Workspace ID.
+      description: "This is the workspace ID (earlier APP ID) of your MoEngage workspace. The X-MOE-APPKEY must be passed in the request. You can find your MoEngage Workspace ID in the MoEngage UI- Settings > Account > APIs -> Workspace ID (earlier app id)Your MoEngage Workspace ID."
 
   schemas:
     ErrorDetail:
       type: object
       properties:
-        code: { type: string, example: "extra_forbidden" }
-        target: { type: string, example: "ios.alert.metrics" }
-        message: { type: string, example: "Extra inputs are not permitted" }
+        code: 
+          type: string
+          example: "extra_forbidden"
+          description: "This field denotes a computer-readable identifier of the error type."
+        target: 
+          type: string
+          example: "ios.alert.metrics"
+          description: "This field denotes the specific key parameter that triggered the validation error."
+        message: 
+          type: string
+          example: "Extra inputs are not permitted"
+          description: "This field denotes a human-readable explanation of the error."
 
-    ErrorResponse:
+    # For 400 Bad Request - Includes details array
+    ErrorResponseWithDetails:
       type: object
       properties:
         error:
@@ -459,13 +484,32 @@ components:
             code:
               type: string
               example: "PayloadError"
+              description: "Each error code is unique and serves as a shorthand representation for the type of error, providing a quick reference that can be used to diagnose, troubleshoot, and address the problem based on a predefined set of error conditions."
             message:
               type: string
               example: "Mandatory fields are missing or invalid"
+              description: "This field contains the message that denotes the type of error."
             details:
               type: array
+              description: "This object contains the error details. This field is applicable only for 400 error responses."
               items:
                 $ref: '#/components/schemas/ErrorDetail'
+
+    # For 401, 403, 413, 500 - Does NOT include details array
+    BasicErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "AuthError"
+              description: "Each error code is unique and serves as a shorthand representation for the type of error, providing a quick reference that can be used to diagnose, troubleshoot, and address the problem based on a predefined set of error conditions."
+            message:
+              type: string
+              example: "Invalid App Key"
+              description: "This field contains the message that denotes the type of error."
     
     SuccessResponse:
       type: object
@@ -476,9 +520,11 @@ components:
             instance_id:
               type: string
               example: "1749822841120-57c5c617"
+              description: "This field denotes the instance ID."
             message:
               type: string
               example: "success"
+              description: "This field denotes the success message."
 
     AlertObject:
       type: object
@@ -486,18 +532,18 @@ components:
       properties:
         title:
           type: string
-          description: This field denotes the primary heading of the Live Activity alert shown on the device. It captures the user’s attention and conveys the core event or message.
+          description: "This field denotes the primary heading of the Live Activity alert shown on the device. It captures the user’s attention and conveys the core event or message."
         subtitle:
           type: string
-          description: This field denotes the defined additional context or information for the alert.
+          description: "This field denotes the defined additional context or information for the alert."
         body:
           oneOf:
             - type: string
             - type: object
-          description: This field denotes the main message content of the alert. The value can be a string or JSON object depending on the widget UI configuration in your iOS app.
+          description: "This field denotes the main message content of the alert. The value can be a string or JSON object depending on the widget UI configuration in your iOS app."
         sound:
           type: string
-          description: This field denotes the name of the sound file in your app's main bundle or in the Library/Sounds folder of your app's container directory. Specify the string as "default" to play the system sound.
+          description: "This field denotes the name of the sound file in your app's main bundle or in the Library/Sounds folder of your app's container directory. Specify the string as 'default' to play the system sound."
     
     IOSStartPayload:
       type: object
@@ -506,21 +552,22 @@ components:
         dismissal_date:
           type: integer
           format: int64
-          description: This field denotes the epoch timestamp (in seconds) at which the Live Activity should be automatically dismissed from the device. If omitted, the activity will persist until dismissed manually or replaced.
+          description: "This field denotes the epoch timestamp (in seconds) at which the Live Activity should be automatically dismissed from the device. If omitted, the activity will persist until dismissed manually or replaced."
         attribute_type:
           type: string
-          description: This field denotes the attribute type defined in your iOS application’s Live Activity schema. It represents the data model or struct registered in your app that dictates the format of the Live Activity’s attributes. This value must exactly match the class or struct name used in the app to ensure compatibility.
+          description: "This field denotes the attribute type defined in your iOS application’s Live Activity schema. It represents the data model or struct registered in your app that dictates the format of the Live Activity’s attributes. This value must exactly match the class or struct name used in the app to ensure compatibility."
           example: "LiveActivityAttributes"
         attribute_info:
           type: object
           additionalProperties: true
-          description: This field denotes a JSON object containing the values for the attributes declared in the `attribute_type`. It defines the static or contextual information to be displayed when the Live Activity starts, for example, match name, participants, or scorecard details.
+          description: "This field denotes a JSON object containing the values for the attributes declared in the `attribute_type`. It defines the static or contextual information to be displayed when the Live Activity starts, for example, match name, participants, or scorecard details."
         content_state:
           type: object
           additionalProperties: true
-          description: This field denotes a JSON object representing the dynamic, real-time state of the Live Activity. It contains the content that will update in real time on the user’s device, such as live scores, countdowns, or player stats. The keys and structure must correspond to the content state struct in your app’s Live Activity configuration.
+          description: "This field denotes a JSON object representing the dynamic, real-time state of the Live Activity. It contains the content that will update in real time on the user’s device, such as live scores, countdowns, or player stats. The keys and structure must correspond to the content state struct in your app’s Live Activity configuration."
         alert:
           $ref: '#/components/schemas/AlertObject'
+          description: "This field denotes a JSON object containing the textual content for the Live Activity’s push notification alert. This controls the user-facing message elements such as the title, subtitle, and body displayed when the activity is triggered."
 
     IOSUpdatePayload:
       type: object
@@ -529,17 +576,21 @@ components:
         dismissal_date:
           type: integer
           format: int64
-          description: This field denotes the epoch timestamp (in seconds) at which the Live Activity should be automatically dismissed from the device. If omitted, the activity will persist until dismissed manually or replaced.If the specified time stamp is in the past, the live activity ends immediately.Epoch timestamp (seconds) for automatic dismissal.
+          description: |
+            This field denotes the epoch timestamp (in seconds) at which the Live Activity should be automatically dismissed from the device. If omitted, the activity will persist until dismissed manually or replaced.
+            
+            **Note:** If the specified time stamp is in the past, the live activity ends immediately.
         stale_date:
           type: integer
           format: int64
-          description: This field denotes the time at which the Live Activity’s content is considered outdated. The value must be specified as an epoch timestamp (in seconds). After this time, the system may choose to deprioritize or visually de-emphasize the Live Activity on the user’s device, but it will not dismiss it.
+          description: "This field denotes the time at which the Live Activity’s content is considered outdated. The value must be specified as an epoch timestamp (in seconds). After this time, the system may choose to deprioritize or visually de-emphasize the Live Activity on the user’s device, but it will not dismiss it."
         content_state:
           type: object
           additionalProperties: true
-          description: This field denotes a JSON object representing the dynamic, real-time state of the Live Activity. It contains the content that will update in real time on the user’s device, such as live scores, countdowns, or player stats. The keys and structure must correspond to the content state struct in your app’s Live Activity configuration.
+          description: "This field denotes a JSON object representing the dynamic, real-time state of the Live Activity. It contains the content that will update in real time on the user’s device, such as live scores, countdowns, or player stats. The keys and structure must correspond to the content state struct in your app’s Live Activity configuration."
         alert:
           $ref: '#/components/schemas/AlertObject'
+          description: "This field denotes a JSON object containing the textual content for the Live Activity’s push notification alert. This controls the user-facing message elements such as the title, subtitle, and body displayed when the activity is triggered."
 
     StartLiveActivityRequest:
       type: object
@@ -547,12 +598,13 @@ components:
       properties:
         broadcast_live_activity_id:
           type: string
-          description: Required This field denotes the unique identifier for the broadcast Live Activity campaign. It links the broadcast request to a specific campaign previously created via the [Create Push Campaigns API](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns#01GQRA6BGSEZA2F6DR6NA2BBDA) with the `BROADCAST_LIVE_ACTIVITY` delivery type.
+          description: "This field denotes the unique identifier for the broadcast Live Activity campaign. It links the broadcast request to a specific campaign previously created via the [Create Push Campaigns API](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns#01GQRA6BGSEZA2F6DR6NA2BBDA) with the `BROADCAST_LIVE_ACTIVITY` delivery type."
         instance_id:
           type: string
-          description: This field denotes a unique, optional identifier for a specific instance of the Live Activity. It can be used to differentiate between multiple broadcasts of the same activity or to avoid duplicate requests.For example, "1749822841120-57c5c617" 
+          description: "This field denotes a unique, optional identifier for a specific instance of the Live Activity. It can be used to differentiate between multiple broadcasts of the same activity or to avoid duplicate requests. For example, '1749822841120-57c5c617'."
         ios:
           $ref: '#/components/schemas/IOSStartPayload'
+          description: "This field denotes a JSON object containing iOS-specific content, configuration details, and metadata necessary for managing the Live Activity on iOS devices."
 
     UpdateLiveActivityRequest:
       type: object
@@ -560,22 +612,24 @@ components:
       properties:
         broadcast_live_activity_id:
           type: string
-          description: This field denotes the unique identifier for the broadcast Live Activity campaign. It links the broadcast request to a specific campaign previously created via the [Create Push Campaigns API](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns) with the `BROADCAST_LIVE_ACTIVITY` delivery type.
+          description: "This field denotes the unique identifier for the broadcast Live Activity campaign. It links the broadcast request to a specific campaign previously created via the [Create Push Campaigns API](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns) with the `BROADCAST_LIVE_ACTIVITY` delivery type."
         instance_id:
           type: string
-          description: This field denotes a unique, optional identifier for a specific instance of the Live Activity. It can be used to differentiate between multiple broadcasts of the same activity or to avoid duplicate requests. Sample value:1749822841120-57c5c617.
+          description: "This field denotes a unique, optional identifier for a specific instance of the Live Activity. It can be used to differentiate between multiple broadcasts of the same activity or to avoid duplicate requests. Sample value:1749822841120-57c5c617."
         ios:
           $ref: '#/components/schemas/IOSUpdatePayload'
-          
+          description: "This field denotes a JSON object containing iOS-specific content, configuration details, and metadata necessary for managing the Live Activity on iOS devices."
+           
     EndLiveActivityRequest:
       type: object
       required: [broadcast_live_activity_id, ios]
       properties:
         broadcast_live_activity_id:
           type: string
-          description: This field denotes the unique identifier for the broadcast Live Activity campaign. It links the broadcast request to a specific campaign previously created via the [Create Push Campaigns API](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns) with the `BROADCAST_LIVE_ACTIVITY` delivery type.
+          description: "This field denotes the unique identifier for the broadcast Live Activity campaign. It links the broadcast request to a specific campaign previously created via the [Create Push Campaigns API](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns) with the `BROADCAST_LIVE_ACTIVITY` delivery type."
         instance_id:
           type: string
-          description: This field denotes a unique, optional identifier for a specific instance of the Live Activity. It can be used to differentiate between multiple broadcasts of the same activity or to avoid duplicate requests. Sample value:1749822841120-57c5c617Optional unique identifier for this specific broadcast instance.
+          description: "This field denotes a unique, optional identifier for a specific instance of the Live Activity. It can be used to differentiate between multiple broadcasts of the same activity or to avoid duplicate requests. Sample value:1749822841120-57c5c617. Optional unique identifier for this specific broadcast instance."
         ios:
           $ref: '#/components/schemas/IOSUpdatePayload'
+          description: "This field denotes a JSON object containing iOS-specific content, configuration details, and metadata necessary for managing the Live Activity on iOS devices."
