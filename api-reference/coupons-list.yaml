@@ -222,24 +222,53 @@ paths:
       summary: Fetch Coupon List Details
       operationId: fetchCouponList
       description: |
-        Retrieves the specifications and status of a specific coupon list by its ID. 
-        The response includes configurations, statuses, expiry dates, alert conditions, and real-time counts of total and available coupons.
+        This API allows you to retrieve the specifications of a particular coupon list. It includes information such as configurations, statuses, expiry dates, and alert conditions with real-time counts of added and currently available coupons. Using this API, you can easily access and manage critical data about individual coupon lists.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            There is no request body or content to send for this request except for headers and parameters.
+          </Note>
+
+          ### Rate Limit
+          You can fetch 10000 coupon lists per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
       responses:
         '200':
-          description: Coupon list details retrieved successfully.
+          description: |
+            Success
+            Indicates that the request is successful and the coupon list is fetched.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CouponList'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: |
+            Bad request
+            Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes. For more information, refer to [Error Messages](/hc/en-us/articles/31290107022356#Error-Messages).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: |
+            Unauthenticated
+            Your request is unauthorized. Verify your credentials and try again.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: |
+            Forbidden
+            Your account does not have access to the Coupon Management features.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Coupon list not found for the given ID.
           content:
@@ -247,9 +276,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests
+            This response is returned when the number of requests per minute has exceeded the rate limit.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: |
+            Internal server error
+            This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     patch:
       tags:
         - Coupon Lists
