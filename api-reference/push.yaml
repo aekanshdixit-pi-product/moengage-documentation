@@ -29,6 +29,35 @@ paths:
         - Push
       summary: Send Push Notification
       operationId: sendPushNotification
+      
+      # --- PANEL 1: SIGNATURE GENERATION (Vendor Extension) ---
+      x-code-samples:
+        - lang: Python
+          label: "Python 3.x (Signature Generation)"
+          source: |
+            from hashlib import sha256
+            app_id = "{{Your Workspace ID}}"
+            campaign_name = "{{your campaign name}}"
+            api_key = "{{your push api key}}"
+            signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+            signature = sha256(signature_key.encode('utf-8')).hexdigest()
+            print(signature)
+        - lang: Python
+          label: "Python 2.x (Signature Generation)"
+          source: |
+            from hashlib import sha256
+            app_id = "{{Your Workspace ID}}" 
+            campaign_name = "{{your campaign name}}"
+            api_key = "{{your push api key}}" 
+            signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+            signature = sha256(signature_key).hexdigest()
+            print(signature)
+        - lang: Text
+          label: "Generated Signature Format"
+          source: |
+            Generated Signature: 
+            {{Signature}}
+
       description: |
         # Overview
         Push API is used to:
@@ -51,7 +80,114 @@ paths:
             2. api_key: In the API keys section, click the copy icon in the **Push** tile to copy the API key.
         3. campaign_name: Ensure the campaign name matches the one used in the request body.
 
-        **Note:** Copy-pasteable Python scripts for signature generation are available in the **Request Body Examples** dropdown panel below.
+        **Python 3.x Signature Code**
+        ```python
+        from hashlib import sha256
+        app_id = "{{Your Workspace ID}}"
+        campaign_name = "{{your campaign name}}"
+        api_key = "{{your push api key}}"
+        signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+        signature = sha256(signature_key.encode('utf-8')).hexdigest()
+        print(signature)
+        ```
+
+        # Sample cURL Request
+        ```bash
+        curl --location '[https://pushapi-0X.moengage.com/v2/transaction/sendpush](https://pushapi-0X.moengage.com/v2/transaction/sendpush)'
+        --header 'Content-Type: application/json' \
+            --data '{
+            "appId": "{{your Workspace ID}}",
+            "campaignName": "{{your campaign name}}",
+            "signature": "{{Signature}}",
+            "requestType": "push",
+            "targetPlatform": ["ANDROID"],
+            "targetAudience": "User",
+            "targetUserAttributes": {
+                "attribute": "USER_ATTRIBUTE_USER_EMAIL",
+                "comparisonParameter": "is",
+                "attributeValue": "abc@example.com"
+            },
+            "payload": {
+                "ANDROID": {
+                    "groupKey": "thisisgroupkey",
+                    "collapseReplaceKey": "this is update key",
+                    "message": "this is message",
+                    "title": "this is title",
+                    "summary": "this is summary",
+                    "richContent": [
+                        {
+                            "type": "image",
+                            "value": "[https://images.iimg.in/c](https://images.iimg.in/c)"
+                        },
+                        {
+                            "type": "gif",
+                            "value": "sun-18283_256.gif"
+                        }
+                    ],
+                    "defaultAction": {
+                        "type": "richlanding",
+                        "value": "[https://www.moengage.com](https://www.moengage.com)"
+                    },
+                    "additionalActions": [
+                        {
+                            "type": "call",
+                            "value": "123123",
+                            "name": "call button",
+                            "iconUrl": "abc"
+                        }
+                    ]
+                },
+                "IOS": {
+                    "groupKey": "thisisgroupkey",
+                    "collapseReplaceKey": "this is update key",
+                    "message": "this is ios message",
+                    "title": "this is ios title",
+                    "richContent": [
+                        {
+                            "type": "sound",
+                            "value": "custSound4.wav"
+                        }
+                    ],
+                    "additionalActions": [
+                        {
+                            "category": "INVITE_CATEGORY"
+                        }
+                    ]
+                },
+                "WEB": {
+                    "message": "this is web message",
+                    "title": "this is web title",
+                    "redirectURL": "[https://www.google.com](https://www.google.com)",
+                    "iconURL": "sbc.jpeg",
+                    "imageURL": "[https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg](https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg)"
+                }
+            },
+            "campaignDelivery": {
+                "type": "soon"
+            },
+            "conversionGoals": [
+                {
+                    "name": "amount1",
+                    "eventName": "AddedTocart",
+                    "attrs": {
+                        "filter": "is between",
+                        "name": "amount",
+                        "value": "10,100",
+                        "type": "numeric"
+                    }
+                }
+            ],
+            "advancedSettings": {
+                "ttl": {
+                    "ANDROID": 12,
+                    "WEB": 24
+                },
+                "ignoreFC": false,
+                "sendAtHighPriority": true,
+                "inboxExpiry": 360
+            }
+        }'
+        ```
 
         # FAQs
         <AccordionGroup>
@@ -72,51 +208,21 @@ paths:
             example: application/json
           description: Set the Content-Type header to application/json.
 
+      # --- PANEL 2: REQUEST BODY / SAMPLE REQUESTS ---
       requestBody:
         required: true
         description: |
           The complete configuration for the push campaign.
 
           ### Rate Limit
-          You can create 10000 requests per minute.
+          The rate limit for this endpoint is **10,000 requests per minute**.
         content:
           application/json:
             schema:
-              oneOf:
-                - $ref: '#/components/schemas/PushRequest'
-                - type: string 
-                  description: "Used for displaying code snippets"
+              $ref: '#/components/schemas/PushRequest'
             examples:
-              # --- UTILITY: SIGNATURE GENERATION CODE ---
-              00_Python_3_Signature_Code:
-                summary: "Helper: Python 3.x Signature Code"
-                value: |
-                  from hashlib import sha256
-                  app_id = "{{Your Workspace ID}}"
-                  campaign_name = "{{your campaign name}}"
-                  api_key = "{{your push api key}}"
-                  signature_key = app_id+'|'+ campaign_name+'|'+ api_key
-                  signature = sha256(signature_key.encode('utf-8')).hexdigest()
-                  print(signature)
-              01_Python_2_Signature_Code:
-                summary: "Helper: Python 2.x Signature Code"
-                value: |
-                  from hashlib import sha256
-                  app_id = "{{Your Workspace ID}}" 
-                  campaign_name = "{{your campaign name}}"
-                  api_key = "{{your push api key}}" 
-                  signature_key = app_id+'|'+ campaign_name+'|'+ api_key
-                  signature = sha256(signature_key).hexdigest()
-                  print(signature)
-              02_Generated_Signature_Example:
-                summary: "Helper: Generated Signature Format"
-                value: |
-                  Generated Signature: 
-                  {{Signature}}
-
-              # --- REQUEST PAYLOAD EXAMPLES ---
-              03_Sample_cURL_Payload:
-                summary: Sample cURL Request Payload
+              Sample_cURL_Payload:
+                summary: Sample cURL Payload
                 value:
                   appId: "{{your Workspace ID}}"
                   campaignName: "{{your campaign name}}"
@@ -693,6 +799,7 @@ paths:
                     sendAtHighPriority: true
                     inboxExpiry: 360
 
+      # --- PANEL 3: RESPONSES ---
       responses:
         '200':
           description: |
