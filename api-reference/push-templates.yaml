@@ -7,6 +7,15 @@ info:
     ## External Links
     * [Postman Collection](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-7980d47d-248a-4060-96d2-a7d9ebc3e22d?action=share&creator=3182294&ctx=documentation)
     * [MoEngage Help Center](https://help.moengage.com/hc/en-us/articles/4415622460948-Push-Templates)
+
+    ## FAQs
+    * **Can I create a template that is supported only on iOS?**
+      Yes, you can send only the iOS payload if you want to create a template for iOS.
+    * **What are the different types of image, video, and audio files supported by MoEngage?**
+      * Audio and video file formats - all types of video and audio file formats supported by standard FCM/APNS platforms.
+      * Images - the following formats are supported: "image/png", "image/jpeg", "image/jpg", "image/gif".
+    * **Can I create multiple templates with the same name?**
+      Yes, you can create multiple templates with the same name, provided they have different versions.
   version: "1.0"
   x-logo:
     url: "https://images.g2crowd.com/uploads/product/image/social_landscape/social_landscape_4cb13a53c5240c218206532439a2f15a/moengage.png"
@@ -490,7 +499,7 @@ paths:
         - Templates
       summary: Create Push Template
       description: |
-        The Create Push Template  API can be used to create a push template in MoEngage. This API helps you upload templates created outside the MoEngage ecosystem to MoEngage and use them for campaign creation. The *Basic Notification* and *Stylized Basic template* types are supported for this API.
+        Creates a new push notification template for one or more platforms (Android, iOS).
         
         **Rate Limit:** 100 RPM (Requests Per Minute).
         
@@ -1021,11 +1030,19 @@ paths:
         - Templates
       summary: Search for Push Templates
       description: |
+        **Note**: 
+        We are introducing mandatory pagination, effective November 15, 2025, all calls to this API must include the following two parameters:
+        
+        * **page**: The page number of the results you wish to fetch.
+        * **entries**: The number of templates to return per page, with a maximum value of 15.
+        
+        Please update all integrations to include these parameters. API requests submitted without them after the effective date will result in an error and fail to execute.
+
         Searches for push templates based on a variety of filter criteria. 
         
-        **Note**: 
-        * You can send empty filters to fetch all the push templates.
-        * You can send only template_ids if you want specific older versions of the push template. In other cases, you will receive the latest version of the template.
+        > **Note**: 
+        > * You can send empty filters to fetch all the push templates.
+        > * You can send only template_ids if you want specific older versions of the push template. In other cases, you will receive the latest version of the template.
         
         **Rate Limit:** 100 RPM.
       operationId: searchPushTemplates
@@ -1036,15 +1053,19 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - page
+                - entries
               properties:
                 page: 
                   type: integer
-                  description: "This field contains the index of the pages to be returned in the search result."
+                  description: "The page number of the results you wish to fetch."
                   default: 1
                 entries: 
                   type: integer
-                  description: "This field contains the number of entries per page in the search result."
+                  description: "The number of templates to return per page, with a maximum value of 15."
                   default: 10
+                  maximum: 15
                 template_name: 
                   type: string
                   description: "This field indicates the name of the template. When this value is specified, the template that matches the name specified in this field will be returned."
