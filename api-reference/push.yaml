@@ -3,7 +3,61 @@ info:
   title: MoEngage Push API
   version: '2.0'
   description: |
-    API for sending transactional and targeted push notifications to users across Android, iOS, and Web platforms.
+    # Overview
+    Push API is used to:
+    * Create campaigns (targeting all users or a group of users) to send notifications.
+    * Target a single user using a unique user attribute.
+    * Personalize payload for each user.
+
+    # API Endpoint
+    Method: **POST**
+    `https://pushapi-0X.moengage.com/v2/transaction/sendpush`
+
+    The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+    # Generate Authentication Signature
+    A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key. MoEngage uses the SHA 256 method to generate this hash. Python code is used to generate the signature for your test account, and use your account's app_id.
+
+    1. On the left navigation menu in the MoEngage dashboard, go to **Settings > Account > APIs**.
+    2. Copy the following details:
+        1. app_id: Under Workspace ID (earlier app_id), click the copy icon to copy the app-id.
+        2. api_key: In the API keys section, click the copy icon in the **Push** tile to copy the API key.
+    3. campaign_name: Ensure the campaign name matches the one used in the request body.
+
+    **Note:** Copy-pasteable Python scripts for signature generation are available below:
+
+    ### Python 3
+    ```python
+    from hashlib import sha256
+    app_id = "{{Your Workspace ID}}"
+    campaign_name = "{{your campaign name}}"
+    api_key = "{{your push api key}}"
+    signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+    signature = sha256(signature_key.encode('utf-8')).hexdigest()
+    print(signature)
+    ```
+
+    ### Python 2
+    ```python
+    from hashlib import sha256
+    app_id = "{{Your Workspace ID}}" 
+    campaign_name = "{{your campaign name}}"
+    api_key = "{{your push api key}}" 
+    signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+    signature = sha256(signature_key).hexdigest()
+    print(signature)
+    ```
+
+    # FAQs
+    <details>
+    <summary>Does the Push API support silent notifications?</summary>
+    No, MoEngage Push API doesn't support silent notifications.
+    </details>
+
+    <details>
+    <summary>Can I use HTML to format notification text?</summary>
+    Yes, the basic template supports HTML tags.
+    </details>
 tags:
   - name: Push
     description: Operations to create and send push notification campaigns.
@@ -30,68 +84,9 @@ paths:
       summary: Send Push Notification
       operationId: sendPushNotification
       description: |
-        # Overview
-        Push API is used to:
-        * Create campaigns (targeting all users or a group of users) to send notifications.
-        * Target a single user using a unique user attribute.
-        * Personalize payload for each user.
-
-        # API Endpoint
-        Method: **POST**
-        `https://pushapi-0X.moengage.com/v2/transaction/sendpush`
-
-        The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
-
-        # Generate Authentication Signature
-        A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key. MoEngage uses the SHA 256 method to generate this hash. Python code is used to generate the signature for your test account, and use your account's app_id.
-
-        1. On the left navigation menu in the MoEngage dashboard, go to **Settings > Account > APIs**.
-        2. Copy the following details:
-            1. app_id: Under Workspace ID (earlier app_id), click the copy icon to copy the app-id.
-            2. api_key: In the API keys section, click the copy icon in the **Push** tile to copy the API key.
-        3. campaign_name: Ensure the campaign name matches the one used in the request body.
-
-        **Note:** Copy-pasteable Python scripts for signature generation are available below:
-
-        <CodeGroup>
-          <CodeGroupItem title="Python 3">
-
-          ```python
-          from hashlib import sha256
-          app_id = "{{Your Workspace ID}}"
-          campaign_name = "{{your campaign name}}"
-          api_key = "{{your push api key}}"
-          signature_key = app_id+'|'+ campaign_name+'|'+ api_key
-          signature = sha256(signature_key.encode('utf-8')).hexdigest()
-          print(signature)
-          ```
-
-          </CodeGroupItem>
-          <CodeGroupItem title="Python 2">
-
-          ```python
-          from hashlib import sha256
-          app_id = "{{Your Workspace ID}}" 
-          campaign_name = "{{your campaign name}}"
-          api_key = "{{your push api key}}" 
-          signature_key = app_id+'|'+ campaign_name+'|'+ api_key
-          signature = sha256(signature_key).hexdigest()
-          print(signature)
-          ```
-
-          </CodeGroupItem>
-        </CodeGroup>
-
-        # FAQs
-        <AccordionGroup>
-          <Accordion title="Does the Push API support silent notifications?">
-            No, MoEngage Push API doesn't support silent notifications.
-          </Accordion>
-          <Accordion title="Can I use HTML to format notification text?">
-            Yes, the basic template supports HTML tags.
-          </Accordion>
-        </AccordionGroup>
-
+        Sends a push notification to the specified target audience.
+        
+        *Refer to the **API Info** section above for details on Signature Generation and FAQs.*
       parameters:
         - name: Content-Type
           in: header
@@ -113,7 +108,7 @@ paths:
             schema:
               oneOf:
                 - $ref: '#/components/schemas/PushRequest'
-                - type: string 
+                - type: string
                   description: "Used for displaying code snippets"
             examples:
               # --- UTILITY: SIGNATURE GENERATION CODE ---
@@ -131,16 +126,16 @@ paths:
                 summary: "Helper: Python 2.x Signature Code"
                 value: |
                   from hashlib import sha256
-                  app_id = "{{Your Workspace ID}}" 
+                  app_id = "{{Your Workspace ID}}"
                   campaign_name = "{{your campaign name}}"
-                  api_key = "{{your push api key}}" 
+                  api_key = "{{your push api key}}"
                   signature_key = app_id+'|'+ campaign_name+'|'+ api_key
                   signature = sha256(signature_key).hexdigest()
                   print(signature)
               02_Generated_Signature_Example:
                 summary: "Helper: Generated Signature Format"
                 value: |
-                  Generated Signature: 
+                  Generated Signature:
                   {{Signature}}
 
               # --- REQUEST PAYLOAD EXAMPLES ---
@@ -726,7 +721,7 @@ paths:
         '200':
           description: |
             The request was received. The status in the body indicates whether it was successfully processed or failed.
-            
+
             **Common Error Messages:**
             * `Invalid Request Type`: This response is returned when an invalid request type is passed, that is, other than *push*.
             * `Invalid appId`: This response is returned when no dashboard exists for the given app ID.
@@ -818,29 +813,29 @@ components:
         - payload
         - campaignDelivery
       properties:
-        appId: 
+        appId:
           type: string
           description: "This field denotes the app ID that you must pass to create the campaign. You can find it by selecting **Settings > Account > APIs -> Workspace ID (earlier app id)** on the MoEngage dashboard. MoEngage recommends that you test API integration in the Test Environment. The App ID for TEST ACCOUNT is suffixed with `_DEBUG`."
-        campaignName: 
+        campaignName:
           type: string
           minLength: 5
           description: |
             This field denotes the campaign name. The campaign name should be unique for *All Users* and *Custom Segment* campaigns.
-            
+
             **Note**:
             * API automatically creates a campaign with the given name. You need not create a campaign from the dashboard to use the name.
             * For User type *targetAudience* API requests, reuse this campaign name for requests that should be clubbed in the same campaign.
-        campaignTags: 
+        campaignTags:
           type: array
           description: |
             Used to add more context to campaigns. Context can be descriptive names or campaign themes such as onboarding, retention, country, and all users. Tags can also be used to filter campaigns or identify the behaviors of users who received these campaigns. The list of tags should be passed in this field.
-            
+
             For example, `“campaignTags“ : [“Transactional“, “Accounts“]`
           items: { type: string }
-        signature: 
+        signature:
           type: string
           description: "This field denotes the signature that is required to verify whether the client is authorized to make the API call. For more information, refer to Generate Authentication Signature."
-        requestType: 
+        requestType:
           type: string
           default: "push"
           description: "The value of this key is used to indicate the intention of an API request. The default value is *push*."
@@ -885,13 +880,13 @@ components:
     PushSuccessResponse:
       type: object
       properties:
-        requestId: 
+        requestId:
           type: string
           description: "This field indicates the request ID."
-        responseId: 
+        responseId:
           type: string
           description: "This field indicates the response ID."
-        cid: 
+        cid:
           type: string
           description: "This field indicates the campaign ID."
         status:
@@ -927,7 +922,7 @@ components:
       type: object
       description: |
           This object contains the target user attribute details. For more information, refer to Target User Attributes.
-          
+
           **Note**:
           * This value is required when the **targetAudience** value is *User*.
           * For API requests where the target audience is a specific user, if a campaign with the given name already exists, existing campaign data corresponding to the given name will be used to send notifications.
@@ -952,7 +947,7 @@ components:
             This field denotes a condition or operator that compares the user attributes against a specific value. Supported values are:
             * The "is" query type
             * The "in" query type
-            
+
             **Note**: The maximum number of parameters that can be added while using the "in" comparisonParameter is 50. This value is required when the **targetAudience** value is *User*.
           enum: [is, in]
         attributeValue:
@@ -987,27 +982,27 @@ components:
       type: object
       required: [message, title]
       properties:
-        groupKey: 
+        groupKey:
           type: string
           description: |
             This field denotes the group key used to identify and categorize related push notifications.
-            
+
             **Note**:
             * Ensure you use the same group key for all push notifications you want to group.
             * MoEngage automatically modifies the group key to ensure it does not exceed the 45-character limit. MoEngage removes non-Latin scripts, special characters, and spaces to restrict the key composition to ASCII characters exclusively.
-        collapseReplaceKey: 
+        collapseReplaceKey:
           type: string
           description: "This field denotes the update key used to identify and update related push notifications. Ensure you use the same update key for all push notifications intended to update each other."
-        message: 
+        message:
           type: string
           description: "This field denotes the main content or text to be displayed in the notification/message."
-        title: 
+        title:
           type: string
           description: "This field denotes the headline or subject of the notification/message."
         channel_id:
           type: string
           description: "This field denotes the channel identifier for the campaign."
-        summary: 
+        summary:
           type: string
           description: "This field denotes the brief summary or condensed version of the content. Typically displayed in collapsed notifications."
         richContent:
@@ -1033,7 +1028,7 @@ components:
             * Snooze
             * Copy
             * Share
-            
+
             A maximum of two additional action buttons can be used at a time.
           maxItems: 2
           items:
@@ -1043,7 +1038,7 @@ components:
               value: { type: string }
               name: { type: string }
               iconURL: { type: string }
-        fallback: 
+        fallback:
           type: object
           description: "This JSON object contains the fallback values for the values mentioned above."
 
@@ -1051,27 +1046,27 @@ components:
       type: object
       required: [message, title]
       properties:
-        groupKey: 
+        groupKey:
           type: string
           description: |
             This field denotes the group key used to identify and categorize related push notifications.
-            
+
             **Note**:
             * Ensure you use the same group key for all push notifications you want to group.
             * MoEngage automatically modifies the group key to ensure it does not exceed the 45-character limit. MoEngage removes non-Latin scripts, special characters, and spaces to restrict the key composition to ASCII characters exclusively.
-        collapseReplaceKey: 
+        collapseReplaceKey:
           type: string
           description: "This field denotes the update key used to identify and update related push notifications. Ensure you use the same update key for all push notifications intended to update each other."
-        message: 
+        message:
           type: string
           description: "This field denotes the primary text or body of the notification/message."
-        title: 
+        title:
           type: string
           description: "This field denotes the title or subject line of the notification/message."
-        subtitle: 
+        subtitle:
           type: string
           description: "This field denotes the subtitle of the notification/message."
-        enableIosBadge: 
+        enableIosBadge:
           type: boolean
           description: "This field specifies whether a notification should automatically update the iOS app’s badge count with push notifications. Supported values are 'true' and 'false'."
         richContent:
@@ -1084,7 +1079,7 @@ components:
             * Image
             * Audio
             * Video
-            
+
             Image, video, and audio are only supported after iOS-10.
             To use emoticons (emojis), just copy-paste it where required (for example, ❤️ )
             **Note**: Image, video, and audio can not be used together.
@@ -1107,7 +1102,7 @@ components:
             type: object
             properties:
               category: { type: string }
-        fallback: 
+        fallback:
           type: object
           description: "This JSON object contains the fallback values for the values mentioned above."
 
@@ -1115,28 +1110,28 @@ components:
       type: object
       required: [message, title, redirectURL, iconURL]
       properties:
-        message: 
+        message:
           type: string
           description: "This field denotes the main text content or notification body displayed to users."
-        title: 
+        title:
           type: string
           description: "This field denotes the subject or heading of the notification."
-        redirectURL: 
+        redirectURL:
           type: string
           format: uri
           description: "This field denotes the URL to which the user will be redirected upon interacting with the notification."
-        iconURL: 
+        iconURL:
           type: string
           format: uri
           description: "This field denotes the URL of an icon image representing the notification, usually displayed alongside the title and message."
-        imageURL: 
+        imageURL:
           type: string
           format: uri
           description: "This field denotes the URL of an additional image to be shown in the notification, providing further context or visual appeal."
-        autoDismiss: 
+        autoDismiss:
           type: boolean
           description: "This field specifies whether to dismiss the notification automatically after 8 seconds."
-        fallback: 
+        fallback:
           type: object
           description: "This JSON object contains the fallback values for the values mentioned above."
 
@@ -1162,8 +1157,8 @@ components:
           type: string
           description: |
              This field helps decide when the campaign should be sent.
-             
-             **Note**: 
+
+             **Note**:
              * All notifications targeted to a single user will be sent as soon as possible (ASAP).
              * Scheduling campaigns for Later or Periodic is applied only for segmented or *All users* campaigns.
              * The **timezone** field can be used to pass the timezone for scheduled campaigns. This is not mandatory, and if it is not passed, the default timezone will be set to IST (and not UTC/GMT).
@@ -1200,16 +1195,16 @@ components:
             * *value*: Event attribute filter value.
             * *type*: Event attribute data type. This is mandatory.
           properties:
-            name: 
+            name:
               type: string
               description: "Event attribute name. This is mandatory."
-            filter: 
+            filter:
               type: string
               description: "Event attribute filter operator."
-            value: 
+            value:
               oneOf: [{ type: string }, { type: number }, { type: array, items: { type: string } }]
               description: "Event attribute filter value."
-            type: 
+            type:
               type: string
               enum: [string, numeric]
               description: "Event attribute data type. This is mandatory."
@@ -1230,7 +1225,7 @@ components:
             This field denotes if the ignoreFC is enabled. Supported values are:
             * `true`: Bypasses frequency capping set on the dashboard and sends the notifications to everyone in the target segment.
             * `false`: Applies the frequency capping set on the dashboard and does not send the notification after the limit is reached.
-            
+
             **Note**: This field is case-sensitive. When passing the value in the request, follow the case as described in the allowed values above.
             * "true" value: Bypasses frequency capping set on the dashboard and sends the notifications to everyone in the target segment.
             * "false" value: Applies the frequency capping set on the dashboard and does not send the notification after the limit is reached.
@@ -1241,7 +1236,7 @@ components:
             This field denotes if the countFC is enabled. Supported values are:
             * `true`
             * `false`
-            
+
             Values are "true" or "false" only when ignoreFC value is set to true.
             * "true" value - Only Push campaigns are counted in the frequency cap count.
             * "false" value - Push campaigns are not counted in the frequency cap count.
