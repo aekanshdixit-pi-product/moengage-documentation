@@ -14,9 +14,6 @@ info:
     # Postman Collection
     We have made it easy for you to test the APIs. [Click here to view it in Postman](https://www.postman.com/moengage-dev/api-docs/collection/acmujor/moengage-transaction-push-api?action=share&source=copy-link&creator=5883765).
 
-    # Rate Limit
-    The rate limit for this endpoint is **1000 RPM**.
-
     # Authentication
     A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key using SHA 256. See the interactive panel for Python generation scripts.
 
@@ -37,7 +34,7 @@ servers:
     variables:
       dc:
         default: '1'
-        description: "The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). Can be 1, 2, 3, 4, etc. Refer to the DC and API endpoint mapping."
+        description: "The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25)."
         enum:
           - '1'
           - '2'
@@ -56,6 +53,13 @@ paths:
       summary: Send Push Notification
       description: |
         Creates and sends a push notification campaign. Can target all users, a pre-defined custom segment, or specific users based on their attributes.
+
+        The event ID. **Required for event-triggered campaigns.**
+        * You must pass `moe_event_id` if any event attribute is present for campaigns.
+        * You must pass `moe_transaction_id` for alerts.
+
+        ## Rate Limit
+        The rate limit for this endpoint is **1000 RPM**.
       x-code-samples:
         - lang: API Endpoint
           label: API Endpoint
@@ -776,6 +780,7 @@ components:
             * for Google Advertising identifier: MOE_GAID
             * for iOS Identifier for advertising: ADVERTISING_IDENTIFIER
             * for device push token: PUSH_ID (the same key is used for Android GCM ID, iOS push token)
+            For more information, refer to [Target User Attributes](/hc/en-us/articles/32986034181268#h_01JGZQ07FC9P3RHKXYJ67AJ9QV).
           enum: [USER_ATTRIBUTE_UNIQUE_ID, USER_ATTRIBUTE_USER_EMAIL, USER_ATTRIBUTE_USER_MOBILE, MOE_GAID, ADVERTISING_IDENTIFIER, PUSH_ID]
         comparisonParameter:
           type: string
@@ -969,9 +974,9 @@ components:
       type: object
       description: |
         This object contains the payload details. Supported values are:
-        * Android. For more information, refer to Android.
-        * iOS. For more information, refer to IOS.
-        * Web. For more information, refer to Web.
+        * Android. For more information, refer to [Android](/hc/en-us/articles/32986034181268#h_01JGZQJ15BBPB56MCAPZTNKASC).
+        * iOS. For more information, refer to [IOS](/hc/en-us/articles/32986034181268#01JGZQRNMF624JYWRH4T882JPR).
+        * Web. For more information, refer to [Web](/hc/en-us/articles/32986034181268#01JGZQRQTMXFC01DWTJZJAT2TQ).
       properties:
         ANDROID:
           $ref: '#/components/schemas/AndroidPayload'
@@ -1001,7 +1006,7 @@ components:
           description: "Repeat interval in days for 'periodic' type."
         timezone:
           type: string
-          description: "Timezone for scheduling, e.g., 'Asia/Kolkata'. Defaults to IST if not provided. For more information on allowed timezone values, refer here."
+          description: "Timezone for scheduling, e.g., 'Asia/Kolkata'. Defaults to IST if not provided. For more information on allowed timezone values, refer [here](https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98)."
 
     ConversionGoal:
       type: object
@@ -1012,6 +1017,7 @@ components:
         attrs:
           type: object
           description: |
+            This object contains the conversion goals details. For more information, refer to [Conversion Goals](/hc/en-us/articles/32986034181268#h_01JGZRHWD1CSMSH1PB0P1K80GN).
             This field denotes the event attribute filters. It contains the following elements:
             * name: Event attribute name. This is mandatory.
             * filter: Event attribute filter operator. This is mandatory.
@@ -1046,7 +1052,7 @@ components:
 
     AdvancedSettings:
       type: object
-      description: "This object contains information about advanced settings."
+      description: "This object contains information about advanced settings. For more information, refer to [Advanced Settings](/hc/en-us/articles/32986034181268#h_01JGZRM6BSGJ9VS3YWKB21DYFW)."
       properties:
         ttl:
           type: object
@@ -1081,7 +1087,7 @@ components:
             * "false" value - Push campaigns are not counted in the frequency cap count.
         notificationPrioritySettings:
           type: object
-          description: "This field denotes whether the notification priority settings are configured. Supported values are \"true\" or \"false\" only for Android push / Web push notifications. It uses the GCM/FCM flag to send time-critical messages with high priority and drains the user's device battery more than normal messages. This object contains information about notification priority settings."
+          description: "This field denotes whether the notification priority settings are configured. Supported values are \"true\" or \"false\" only for Android push / Web push notifications. It uses the GCM/FCM flag to send time-critical messages with high priority and drains the user's device battery more than normal messages. This object contains information about notification priority settings. For more information, refer to [notificationPrioritySettings](/hc/en-us/articles/32986034181268#h_01JJ3VXZZQ1Z4N9VVNGWGE6B9J)."
           properties:
             Android:
               type: string
@@ -1104,7 +1110,7 @@ components:
             - type: string
               enum: ["true", "false"]
             - type: boolean
-          description: "This field denotes whether the pushAmp+ is enabled. Supported values are \"true\" or \"false.\""
+          description: "This field denotes whether the pushAmp+ is enabled. Supported values are \"true\" or \"false.\" For more information about Push Amp+, refer to [Push Amp+ help documentation](https://help.moengage.com/hc/en-us/articles/360039754532-Push-Amplification-Plus-and-Delivery-Impact)."
         preCacheSegment:
           oneOf:
             - type: string
@@ -1208,7 +1214,7 @@ components:
           description: |
             This field denotes the target segment for the campaign. Supported values are:
             * All Users: Pass this value to target all users of your App/Website.
-            * Custom Segment: Pass this value to target pre-created user segments. Custom segments can be created using the MoEngage dashboard or custom segment API. Note that the custom segment name should exactly match the name of the target segment.
+            * Custom Segment: Pass this value to target pre-created user segments. Custom segments can be created using the MoEngage dashboard or [custom segment API](https://developers.moengage.com/hc/en-us/articles/13277936457748-Create-Custom-Segment). Note that the custom segment name should exactly match the name of the target segment.
             * User: Pass this value to target a user with an attribute. It will target a maximum of 100 users of the associated targetUserAttributes definition.
         customSegmentName:
           type: string
@@ -1216,7 +1222,7 @@ components:
         targetUserAttributes:
           $ref: '#/components/schemas/TargetUserAttributes'
           description: |
-            This object contains the target user attribute details.
+            This object contains the target user attribute details. For more information, refer to [Target User Attributes](/hc/en-us/articles/32986034181268#h_01JGZQ07FC9P3RHKXYJ67AJ9QV).
             Note:
             * This value is required when the targetAudience value is User.
             * For API requests where the target audience is a specific user, if a campaign with the given name already exists, existing campaign data corresponding to the given name will be used to send notifications.
@@ -1232,9 +1238,9 @@ components:
           $ref: '#/components/schemas/Payload'
           description: |
             This object contains the payload details. Supported values are:
-            * Android
-            * iOS
-            * Web
+            * Android. For more information, refer to [Android](/hc/en-us/articles/32986034181268#h_01JGZQJ15BBPB56MCAPZTNKASC).
+            * iOS. For more information, refer to [IOS](/hc/en-us/articles/32986034181268#01JGZQRNMF624JYWRH4T882JPR).
+            * Web. For more information, refer to [Web](/hc/en-us/articles/32986034181268#01JGZQRQTMXFC01DWTJZJAT2TQ).
         campaignDelivery:
           $ref: '#/components/schemas/CampaignDelivery'
           description: |
@@ -1243,20 +1249,21 @@ components:
             * All notifications targeted to a single user will be sent as soon as possible (ASAP).
             * Scheduling campaigns for Later or Periodic is applied only for segmented or All users campaigns.
             * The timezone field can be used to pass the timezone for scheduled campaigns. This is not mandatory, and if it is not passed, the default timezone will be set to IST (and not UTC/GMT).
+            * For more information on allowed timezone values, refer [here](https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98).
         conversionGoals:
           type: array
           maxItems: 5
           items:
             $ref: '#/components/schemas/ConversionGoal'
           description: |
-            This object contains the conversion goals details.
+            This object contains the conversion goals details. For more information, refer to [Conversion Goals](/hc/en-us/articles/32986034181268#h_01JGZRHWD1CSMSH1PB0P1K80GN).
             Note:
             * You can pass a single conversion goal or multiple conversion goals.
             * If you are passing multiple conversion goals, the first conversion goal in the list is considered the primary conversion goal for the campaign.
             * A Push campaign supports a maximum of five conversion goals on its list.
         advancedSettings:
           $ref: '#/components/schemas/AdvancedSettings'
-          description: "This object contains information about advanced settings."
+          description: "This object contains information about advanced settings. For more information, refer to [Advanced Settings](/hc/en-us/articles/32986034181268#h_01JGZRM6BSGJ9VS3YWKB21DYFW)."
 
     PushSuccessResponse:
       type: object
