@@ -3,7 +3,39 @@ info:
   title: MoEngage Push API
   version: '2.0'
   description: |
-    API for sending transactional and targeted push notifications to users across Android, iOS, and Web platforms.
+    # Overview
+    Push API is used to:
+    * Create campaigns (targeting all users or a group of users) to send notifications.
+    * Target a single user using a unique user attribute.
+    * Personalize payload for each user.
+    
+    # API Endpoint
+    Method: **POST**
+    `https://pushapi-0X.moengage.com/v2/transaction/sendpush`
+    
+    The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+    # Generate Authentication Signature
+    A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key. MoEngage uses the SHA 256 method to generate this hash. Python code is used to generate the signature for your test account, and use your account's app_id.
+
+    1. On the left navigation menu in the MoEngage dashboard, go to **Settings > Account > APIs**.
+    2. Copy the following details:
+        1. app_id: Under Workspace ID (earlier app_id), click the copy icon to copy the app-id.
+        2. api_key: In the API keys section, click the copy icon in the **Push** tile to copy the API key.
+    3. campaign_name: Ensure the campaign name matches the one used in the request body.
+
+    **Note:** Copy-pasteable Python scripts for signature generation are available in the **Request Body Examples** dropdown panel below.
+
+    # Postman Collection
+    We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/acmujor/moengage-transaction-push-api?action=share&source=copy-link&creator=5883765) to view it in Postman.
+
+    # FAQs
+    **Does the Push API support silent notifications?**
+    No, MoEngage Push API doesn't support silent notifications.
+    
+    **Can I use HTML to format notification text?**
+    Yes, the basic template supports HTML tags.
+
 tags:
   - name: Push
     description: Operations to create and send push notification campaigns.
@@ -13,7 +45,7 @@ servers:
     variables:
       dc:
         default: '1'
-        description: "The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping."
+        description: "The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC)."
         enum:
           - '1'
           - '2'
@@ -29,40 +61,6 @@ paths:
         - Push
       summary: Send Push Notification
       operationId: sendPushNotification
-      description: |
-        # Overview
-        Push API is used to:
-        * Create campaigns (targeting all users or a group of users) to send notifications.
-        * Target a single user using a unique user attribute.
-        * Personalize payload for each user.
-
-        # API Endpoint
-        Method: **POST**
-        `https://pushapi-0X.moengage.com/v2/transaction/sendpush`
-
-        The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
-
-        # Generate Authentication Signature
-        A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key. MoEngage uses the SHA 256 method to generate this hash. Python code is used to generate the signature for your test account, and use your account's app_id.
-
-        1. On the left navigation menu in the MoEngage dashboard, go to **Settings > Account > APIs**.
-        2. Copy the following details:
-            1. app_id: Under Workspace ID (earlier app_id), click the copy icon to copy the app-id.
-            2. api_key: In the API keys section, click the copy icon in the **Push** tile to copy the API key.
-        3. campaign_name: Ensure the campaign name matches the one used in the request body.
-
-        **Note:** Copy-pasteable Python scripts for signature generation are available in the **Request Body Examples** dropdown panel below.
-
-        # FAQs
-        <AccordionGroup>
-          <Accordion title="Does the Push API support silent notifications?">
-            No, MoEngage Push API doesn't support silent notifications.
-          </Accordion>
-          <Accordion title="Can I use HTML to format notification text?">
-            Yes, the basic template supports HTML tags.
-          </Accordion>
-        </AccordionGroup>
-
       parameters:
         - name: Content-Type
           in: header
@@ -76,7 +74,7 @@ paths:
         required: true
         description: |
           The complete configuration for the push campaign.
-
+          
           ### Rate Limit
           You can create 10000 requests per minute.
         content:
@@ -87,9 +85,9 @@ paths:
                 - type: string 
                   description: "Used for displaying code snippets"
             examples:
-              # --- UTILITY: SIGNATURE GENERATION CODE ---
-              00_Python_3_Signature_Code:
-                summary: "Helper: Python 3.x Signature Code"
+              # --- 1. SIGNATURE SNIPPETS (3 Snippets) ---
+              00_Signature_Python_3:
+                summary: "Signature: Python 3.x Code"
                 value: |
                   from hashlib import sha256
                   app_id = "{{Your Workspace ID}}"
@@ -98,8 +96,8 @@ paths:
                   signature_key = app_id+'|'+ campaign_name+'|'+ api_key
                   signature = sha256(signature_key.encode('utf-8')).hexdigest()
                   print(signature)
-              01_Python_2_Signature_Code:
-                summary: "Helper: Python 2.x Signature Code"
+              01_Signature_Python_2:
+                summary: "Signature: Python 2.x Code"
                 value: |
                   from hashlib import sha256
                   app_id = "{{Your Workspace ID}}" 
@@ -108,15 +106,16 @@ paths:
                   signature_key = app_id+'|'+ campaign_name+'|'+ api_key
                   signature = sha256(signature_key).hexdigest()
                   print(signature)
-              02_Generated_Signature_Example:
-                summary: "Helper: Generated Signature Format"
+              02_Signature_Generated:
+                summary: "Signature: Generated Format"
                 value: |
                   Generated Signature: 
                   {{Signature}}
 
-              # --- REQUEST PAYLOAD EXAMPLES ---
+              # --- 2. REQUEST PAYLOADS (12 Requests) ---
+              # Sample cURL Request
               03_Sample_cURL_Payload:
-                summary: Sample cURL Request Payload
+                summary: "Sample cURL Request"
                 value:
                   appId: "{{your Workspace ID}}"
                   campaignName: "{{your campaign name}}"
@@ -181,30 +180,25 @@ paths:
                     ignoreFC: false
                     sendAtHighPriority: true
                     inboxExpiry: 360
+              
+              # Example 1
               Ex1_AndroidApp:
                 summary: "Ex 1: Android App"
                 value:
-                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
-                  campaignName: "Test_Campaign"
-                  signature: "{{Signature}}"
-                  requestType: "push"
-                  targetPlatform: ["ANDROID"]
-                  targetAudience: "All Users"
-                  payload:
-                    ANDROID:
+                   ANDROID:
                       message: "Message"
                       title: "Title"
                       channel_id: "ChannelId"
                       richContent:
                         - type: "image"
-                          value: "https://images.iimg.in/c"
-                        - type: "coupon"
+                          value: "https://images.iimg.in/c" 
+                        - type: "coupon" 
                           value: "free"
                         - type: "sound"
                           value: "tring"
                       defaultAction:
                         type: "richlanding"
-                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
                         kvPairs:
                           key1: "value1"
                           Key2: "value2"
@@ -218,20 +212,12 @@ paths:
                           name: "Copy button"
                           iconURL: "abc"
                       fallback: {}
-                  campaignDelivery: { type: "soon" }
               Ex1_IOSApp:
                 summary: "Ex 1: iOS App"
                 value:
-                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
-                  campaignName: "Test_Campaign"
-                  signature: "{{Signature}}"
-                  requestType: "push"
-                  targetPlatform: ["IOS"]
-                  targetAudience: "All Users"
-                  payload:
-                    IOS:
+                  IOS:
                       message: "Message"
-                      title: "Title"
+                      title: "Tittle"
                       subtitle: "Subtitle"
                       enableIosBadge: true
                       richContent:
@@ -244,11 +230,11 @@ paths:
                       additionalActions:
                         - category: "INVITE_CATEGORY"
                       defaultAction:
-                        type: "navigation"
-                        value: ""
-                        kvPairs:
-                          key1: "value1"
-                          Key2: "value2"
+                          type: "navigation"
+                          value: ""
+                          kvPairs:
+                            key1: "value1"
+                            Key2: "value2"
                       fallback:
                         message: "fallback ios"
                         title: "title"
@@ -257,25 +243,18 @@ paths:
                             value: "iOS"
                         additionalActions:
                           - category: "INVITE_CATEGORY"
-                  campaignDelivery: { type: "soon" }
               Ex1_WebChrome:
                 summary: "Ex 1: Web (Chrome Push)"
                 value:
-                  appId: "XXXXXXXXXXXXXXXXXXXXXXXX"
-                  campaignName: "Test_Campaign"
-                  signature: "{{Signature}}"
-                  requestType: "push"
-                  targetPlatform: ["WEB"]
-                  targetAudience: "All Users"
-                  payload:
-                    WEB:
-                      message: "Message"
-                      title: "Title"
-                      redirectURL: "https://www.google.com"
-                      iconURL: "https://app.moengage.com/v3/images/favicon.ico"
-                      imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
-                      fallback: {}
-                  campaignDelivery: { type: "soon" }
+                  WEB:
+                    message: "Message"
+                    title: "Title"
+                    redirectURL: "https://www.google.com"
+                    iconURL: "https://app.moengage.com/v3/images/favicon.ico"
+                    imageURL: "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
+                    fallback: {}
+              
+              # Example 2
               Ex2_AndroidFull:
                 summary: "Ex 2: Android App Full"
                 value:
@@ -290,7 +269,7 @@ paths:
                     ANDROID:
                       message: "Android Message"
                       title: "Android Message Title"
-                      summary: "Android Summary"
+                      Summary: "Android Summary"
                       richContent:
                         - type: "image"
                           value: "https://images.iimg.in/c"
@@ -300,7 +279,7 @@ paths:
                           value: "tring"
                       defaultAction:
                         type: "richlanding"
-                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
                       additionalActions:
                         - type: "call"
                           value: "12345678"
@@ -323,8 +302,8 @@ paths:
                   advancedSettings:
                     ttl:
                       ANDROID: 12
-                    ignoreFC: false
-                    sendAtHighPriority: true
+                    ignoreFC: "false"
+                    sendAtHighPriority: "true"
                     inboxExpiry: 360
               Ex2_IOSFull:
                 summary: "Ex 2: iOS App Full"
@@ -356,8 +335,8 @@ paths:
                         value: "10,100"
                         type: "numeric"
                   advancedSettings:
-                    ignoreFC: false
-                    inboxExpiry: 360
+                    ignoreFC: "false"
+                  inboxExpiry: 360
               Ex2_WebFull:
                 summary: "Ex 2: Web Full"
                 value:
@@ -388,8 +367,8 @@ paths:
                   advancedSettings:
                     ttl:
                       WEB: 24
-                    ignoreFC: false
-                    sendAtHighPriority: true
+                    ignoreFC: "false"
+                    sendAtHighPriority: "true"
               Ex2_AcrossAllPlatforms:
                 summary: "Ex 2: Across All Platforms"
                 value:
@@ -403,7 +382,7 @@ paths:
                     ANDROID:
                       message: "Android Message"
                       title: "Android Message Title"
-                      summary: "summary"
+                      Summary: "summary"
                       richContent:
                         - type: "image"
                           value: "https://images.iimg.in/c"
@@ -413,7 +392,7 @@ paths:
                           value: "tring"
                       defaultAction:
                         type: "richlanding"
-                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
                       additionalActions:
                         - type: "call"
                           value: "12345678"
@@ -452,9 +431,11 @@ paths:
                     ttl:
                       ANDROID: 12
                       WEB: 24
-                    ignoreFC: false
-                    sendAtHighPriority: true
+                    ignoreFC: "false"
+                    sendAtHighPriority: "true"
                     inboxExpiry: 360
+              
+              # Example 3
               Ex3_TargetSingleUser:
                 summary: "Ex 3: Target Single User"
                 value:
@@ -472,7 +453,7 @@ paths:
                     ANDROID:
                       message: "Android Message"
                       title: "Android Message Title"
-                      summary: "Android Summary"
+                      Summary: "Android Summary"
                       richContent:
                         - type: "image"
                           value: "https://images.iimg.in/c"
@@ -482,7 +463,7 @@ paths:
                           value: "tring"
                       defaultAction:
                         type: "richlanding"
-                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
                       additionalActions:
                         - type: "call"
                           value: "12345678"
@@ -505,8 +486,8 @@ paths:
                   advancedSettings:
                     ttl:
                       ANDROID: 12
-                    ignoreFC: false
-                    sendAtHighPriority: true
+                    ignoreFC: "false"
+                    sendAtHighPriority: "true"
                     inboxExpiry: 360
               Ex3_TargetCustomSegment:
                 summary: "Ex 3: Target Custom Segment"
@@ -522,7 +503,7 @@ paths:
                     ANDROID:
                       message: "testing txn v2"
                       title: "testing txn v2"
-                      summary: "summary"
+                      Summary: "summary"
                       richContent:
                         - type: "image"
                           value: "https://images.iimg.in/c"
@@ -532,7 +513,7 @@ paths:
                           value: "tring"
                       defaultAction:
                         type: "richlanding"
-                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
                       additionalActions:
                         - type: "call"
                           value: "12345678"
@@ -571,8 +552,8 @@ paths:
                     ttl:
                       ANDROID: 12
                       WEB: 24
-                    ignoreFC: false
-                    sendAtHighPriority: true
+                    ignoreFC: "false"
+                    sendAtHighPriority: "true"
                     inboxExpiry: 360
               Ex3_CustomAttribute:
                 summary: "Ex 3: Custom Attribute"
@@ -592,7 +573,7 @@ paths:
                     ANDROID:
                       message: "Android Message"
                       title: "Android Message Title"
-                      summary: "Android Summary"
+                      Summary: "Android Summary"
                       richContent:
                         - type: "image"
                           value: "https://images.iimg.in/c"
@@ -602,7 +583,7 @@ paths:
                           value: "tring"
                       defaultAction:
                         type: "richlanding"
-                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
                       additionalActions:
                         - type: "call"
                           value: "12345678"
@@ -625,8 +606,8 @@ paths:
                   advancedSettings:
                     ttl:
                       ANDROID: 12
-                    ignoreFC: false
-                    sendAtHighPriority: true
+                    ignoreFC: "false"
+                    sendAtHighPriority: "true"
                     inboxExpiry: 360
               Ex3_TargetAllUsers:
                 summary: "Ex 3: Target All Users"
@@ -650,7 +631,7 @@ paths:
                           value: "tring"
                       defaultAction:
                         type: "richlanding"
-                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+                        value: "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
                       additionalActions:
                         - type: "call"
                           value: "12345678"
@@ -689,8 +670,8 @@ paths:
                     ttl:
                       ANDROID: 12
                       WEB: 24
-                    ignoreFC: false
-                    sendAtHighPriority: true
+                    ignoreFC: "false"
+                    sendAtHighPriority: "true"
                     inboxExpiry: 360
 
       responses:
@@ -723,6 +704,7 @@ paths:
                   - $ref: '#/components/schemas/PushSuccessResponse'
                   - $ref: '#/components/schemas/PushFailureResponse'
               examples:
+                # --- 3. SAMPLE RESPONSES (5 Responses) ---
                 success:
                   summary: Success Response
                   value:
@@ -733,14 +715,20 @@ paths:
                 failure:
                   summary: Failure Response
                   value:
-                    responseId: "{{responseId}}"
-                    Error_Message: "Campaign Name not found"
+                    responseId: "response_id"
+                    Error_Message: "error_msg"
                     status: "Fail"
-                    "Payload error": "Campaign Name not found"
+                    "Payload error": "error_msg"
         '401':
           description: |
             Unauthorised
             This response is returned when an incorrect JSON format is passed.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
+              example: []
         '404':
           description: |
             Not Found
@@ -897,13 +885,13 @@ components:
     TargetUserAttributes:
       type: object
       description: |
-         This object contains the target user attribute details. For more information, refer to Target User Attributes.
-         
-         **Note**:
-         * This value is required when the **targetAudience** value is *User*.
-         * For API requests where the target audience is a specific user, if a campaign with the given name already exists, existing campaign data corresponding to the given name will be used to send notifications.
-         * Any edits in other parts of campaign data except payload within the API request parameters will be ignored.
-         * If any changes are required in the campaign data, change the campaign name in the API request to create a new campaign.
+          This object contains the target user attribute details. For more information, refer to Target User Attributes.
+          
+          **Note**:
+          * This value is required when the **targetAudience** value is *User*.
+          * For API requests where the target audience is a specific user, if a campaign with the given name already exists, existing campaign data corresponding to the given name will be used to send notifications.
+          * Any edits in other parts of campaign data except payload within the API request parameters will be ignored.
+          * If any changes are required in the campaign data, change the campaign name in the API request to create a new campaign.
       properties:
         attribute:
           type: string
