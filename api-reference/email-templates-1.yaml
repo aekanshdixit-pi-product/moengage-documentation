@@ -52,6 +52,15 @@ paths:
           **How do I access templates created using this API on the MoEngage Dashboard?**
           
           You can access templates created using the Create Email Template API in the My Saved Templates tab during the second step of campaign creation in the MoEngage Dashboard.
+      parameters:
+        - name: MOE-APPKEY
+          in: header
+          required: true
+          schema:
+            type: string
+          description: |
+            This is your MoEngage account's APP ID that has to be passed along with the request. You can find your MoEngage APP ID at **Settings** -> **Account** -> **APIs** -> **App ID**.
+          example: "APP ID"
       requestBody:
         required: true
         content:
@@ -84,14 +93,78 @@ paths:
                         description: |
                           This field contains information about the successful creation of the template.
                         example: "Custom email template saved"
+              examples:
+                Success:
+                  value:
+                    status: "success"
+                    data:
+                      id: "63f4962d4d31f4c68d980a01"
+                      msg: "Custom email template saved"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 InvalidRequestBody:
+                   value:
+                     status: "error"
+                     data:
+                       code: 400
+                       title: "Invalid request body"
+                       description: "MOE-APPKEY header is invalid or empty"
+                 EmptyName:
+                   value:
+                     status: "error"
+                     data:
+                       code: 400
+                       title: "Invalid email name"
+                       description: "Name field is empty"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Authorization Failure
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 AuthFailure:
+                   value:
+                     status: "error"
+                     data:
+                       code: 401
+                       title: "Authentication required"
+                       description: "Invalid APP_ID used in Authentication Header"
         '429':
-          $ref: '#/components/responses/RateLimit'
+          description: Rate Limit Breach
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 RateLimit:
+                   value:
+                     status: "error"
+                     data:
+                       code: 429
+                       title: "rate limiter exception"
+                       description: "Exceeded rate limit for this app"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal Server Error
+          content:
+             application/json:
+               schema:
+                 type: object
+                 properties:
+                   title: 
+                     type: string
+                   message: 
+                     type: string
+               examples:
+                 ServerError:
+                   value:
+                     title: "Internal Server Error"
+                     message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
 
     get:
       summary: Get All Templates
@@ -100,7 +173,19 @@ paths:
       operationId: getAllTemplates
       tags:
         - Email Templates
+      x-mint:
+        content: |
+          ### Rate Limit
+          The rate limits are at the app level, and a maximum of thousand (sum of all the API requests per app)requests are allowed for an app per minute.
       parameters:
+        - name: MOE-APPKEY
+          in: header
+          required: true
+          schema:
+            type: string
+          description: |
+            This is your MoEngage account's WORKSPACE ID which must be passed along with the request. You can find your MoEngage WORKSPACE ID at **Settings** -> **Account** -> **APIs** -> **WORKSPACE ID**.
+          example: "WORKSPACE ID"
         - name: page
           in: query
           description: |
@@ -123,6 +208,8 @@ paths:
                     description: This field contains the status of the request and denotes whether it was successful or not.
                   data:
                     type: object
+                    description: |
+                       This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.
                     properties:
                       templates:
                         type: array
@@ -132,12 +219,79 @@ paths:
                         type: integer
                         description: The number of templates returned is also available in the response.
                         example: 13
+              examples:
+                Success:
+                  value:
+                    status: "success"
+                    data:
+                      templates:
+                        - template_id: "645a2bd910e0307e6d7f7717"
+                          template_name: "Coupon_code_template"
+                          is_archived: false
+                          builder_supported: false
+                          editor: "Froala Editor"
+                          created_date: "2023-05-09 11:17:43.112000"
+                          updated_at: "2023-05-09 11:18:37.692000"
+                          updated_by: "jane.doe@example.com"
+                      no_of_templates: 13
+        '400':
+          description: Bad Request
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 InvalidTemplateId:
+                   value:
+                     status: "error"
+                     data:
+                       code: 400
+                       title: "Invalid template id"
+                       description: "Please provide a valid template id"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Authorization Failure
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 AuthFailure:
+                   value:
+                     status: "error"
+                     data:
+                       code: 401
+                       title: "Authentication required"
+                       description: "Invalid APP_ID used in Authentication Header"
         '429':
-          $ref: '#/components/responses/RateLimit'
+          description: Rate Limit Breach
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 RateLimit:
+                   value:
+                     status: "error"
+                     data:
+                       code: 429
+                       title: "rate limiter exception"
+                       description: "Exceeded rate limit for this app"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal Server Error
+          content:
+             application/json:
+               schema:
+                 type: object
+                 properties:
+                   title: 
+                     type: string
+                   message: 
+                     type: string
+               examples:
+                 ServerError:
+                   value:
+                     title: "Internal Server Error"
+                     message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
 
   /email-templates/{id}:
     get:
@@ -148,6 +302,14 @@ paths:
       tags:
         - Email Templates
       parameters:
+        - name: MOE-APPKEY
+          in: header
+          required: true
+          schema:
+            type: string
+          description: |
+            This is your MoEngage account's Workspace ID, which must be passed along with the request. You can find your MoEngage Workspace ID at **Settings** -> **Account** -> **APIs** -> **Workspace ID**.
+          example: "Workspace ID"
         - name: id
           in: path
           required: true
@@ -163,14 +325,79 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TemplateDetailsFlat'
+              examples:
+                Success:
+                  value:
+                    status: "success"
+                    template_id: "645a0cec10e0307e6d7f7716"
+                    template_name: "End_of_season_sale_template"
+                    subject: ""
+                    template_content: "<!DOCTYPE html><html>...</html>"
+                    attachments: []
+                    source: "Partner"
+                    sender_name: "Your Brand Name"
+                    editor: "Froala Editor"
+                    created_date: "2023-05-09 09:05:46.350000"
+                    updated_at: "2023-05-09 10:00:57.149000"
+                    updated_by: "john.doe@example.com"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 InvalidTemplateId:
+                   value:
+                     status: "error"
+                     data:
+                       code: 400
+                       title: "Invalid template id"
+                       description: "Please provide a valid template id"
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Authorization Failure
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 AuthFailure:
+                   value:
+                     status: "error"
+                     data:
+                       code: 401
+                       title: "Authentication required"
+                       description: "Invalid APP_ID used in Authentication Header"
         '429':
-          $ref: '#/components/responses/RateLimit'
+          description: Rate Limit Breach
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 RateLimit:
+                   value:
+                     status: "error"
+                     data:
+                       code: 429
+                       title: "rate limiter exception"
+                       description: "Exceeded rate limit for this app"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal Server Error
+          content:
+             application/json:
+               schema:
+                 type: object
+                 properties:
+                   title: 
+                     type: string
+                   message: 
+                     type: string
+               examples:
+                 ServerError:
+                   value:
+                     title: "Internal Server Error"
+                     message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
 
     put:
       summary: Update Specific Template
@@ -179,6 +406,14 @@ paths:
       tags:
         - Email Templates
       parameters:
+        - name: MOE-APPKEY
+          in: header
+          required: true
+          schema:
+            type: string
+          description: |
+            This is your MoEngage account's Workspace ID, which must be passed along with the request. You can find your MoEngage Workspace ID at **Settings** -> **Account** -> **APIs** -> **Workspace ID**.
+          example: "Workspace ID"
         - name: id
           in: path
           required: true
@@ -204,8 +439,10 @@ paths:
                   status:
                     type: string
                     example: success
+                    description: This field contains the status of the request and denotes whether it was successful or not.
                   data:
                     type: object
+                    description: This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.
                     properties:
                       id:
                         type: string
@@ -235,6 +472,15 @@ paths:
           **How is the create request differentiated from an update template request?**
           
           In the case of an update, the template to be updated is identified using its template id. It is mandatory to pass the id field in the required for an update template request. Otherwise, it will be treated as a create template request.
+      parameters:
+        - name: MOE-APPKEY
+          in: header
+          required: true
+          schema:
+            type: string
+          description: |
+            This is your MoEngage account's APP ID that has to be passed along with the request. You can find your MoEngage APP ID at **Settings** -> **Account** -> **APIs** -> **App ID**.
+          example: "APP ID"
       requestBody:
         required: true
         content:
@@ -261,6 +507,7 @@ paths:
                     description: This field contains the status of the request and denotes whether it was successful or not.
                   data:
                     type: object
+                    description: This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.
                     properties:
                       new_templates:
                         type: array
@@ -276,14 +523,69 @@ paths:
                         description: |
                           This field contains the list of template ids for the updated templates.
                         example: ["645a2bd910e0307e6d7f7717"]
+              examples:
+                Success:
+                  value:
+                    status: "success"
+                    data:
+                      new_templates:
+                        - "645a2c0d10e0307e6d7f7719"
+                      updated_templates:
+                        - "645a2bd910e0307e6d7f7717"
+                ValidationFailure:
+                  value:
+                    status: "success"
+                    data:
+                      new_templates:
+                        - "Email attachment should be valid one with size less than 6mb & total attachments size less than 20mb"
+                      updated_templates:
+                        - "Given id is invalid email template id"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Authorization Failure
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 AuthFailure:
+                   value:
+                     status: "error"
+                     data:
+                       code: 401
+                       title: "Authentication required"
+                       description: "Invalid APP_ID used in Authentication Header"
         '429':
-          $ref: '#/components/responses/RateLimit'
+          description: Rate Limit Breach
+          content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+               examples:
+                 RateLimit:
+                   value:
+                     status: "error"
+                     data:
+                       code: 429
+                       title: "rate limiter exception"
+                       description: "Exceeded rate limit for this app"
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal Server Error
+          content:
+             application/json:
+               schema:
+                 type: object
+                 properties:
+                   title: 
+                     type: string
+                   message: 
+                     type: string
+               examples:
+                 ServerError:
+                   value:
+                     title: "Internal Server Error"
+                     message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
 
 components:
   securitySchemes:
@@ -299,14 +601,18 @@ components:
            * Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
            * Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
         3. Use these details to authenticate the API requests.
-    appKey:
-      type: apiKey
-      in: header
-      name: MOE-APPKEY
-      description: |
-        This is your MoEngage account's APP ID / Workspace ID that has to be passed along with the request. You can find your MoEngage APP ID at **Settings -> Account -> APIs -> App ID**.
 
   schemas:
+    # Common Error Response Schema
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        data:
+          $ref: '#/components/schemas/ErrorData'
+
     # Base properties common to create and update
     TemplateBase:
       type: object
@@ -438,9 +744,13 @@ components:
         status:
           type: string
           example: success
+          description: |
+            This field contains the status of the request and denotes whether it was successful or not.
         template_id:
           type: string
           example: "645a0cec10e0307e6d7f7716"
+          description: |
+            This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.
         template_name:
           type: string
           example: "End_of_season_sale_template"
