@@ -520,9 +520,8 @@ components:
       description: |
         Override values for personalizing campaign content during testing.
         
-        <Info>
+        ### Important
         When you pass personalization details, MoEngage uses these values to personalize user/event attributes in the content instead of using actual user profile data.
-        </Info>
       properties:
         user_attributes:
           type: object
@@ -594,9 +593,8 @@ components:
       description: |
         Metadata for specifying test recipients for Email campaigns.
         
-        <Note>
+        ### Note
         Maximum 10 users can be tested at a time.
-        </Note>
       required:
         - identifier
         - identifier_values
@@ -886,10 +884,8 @@ components:
           description: |
             Reachability information for the campaign.
             
-            <Info>
-            Only populated for **scheduled** campaigns (one-time, business event-triggered, and event-triggered).
+            **Important:** Only populated for **scheduled** campaigns (one-time, business event-triggered, and event-triggered).
             Reachability is calculated once daily and cached for 24 hours.
-            </Info>
           properties:
             count:
               type: integer
@@ -3233,28 +3229,27 @@ paths:
       operationId: create_campaign
       summary: Create Campaign
       description: |
-        Creates a new Push or Email campaign in MoEngage with specified content, audience, and delivery settings.
+        Creates a new Push or Email campaign in MoEngage with specified content, audience, and delivery settings.   
+      x-mint:
+        content: |
+          <Info>
+            **API Enablement**
+            
+            If this API is not enabled for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team to request enablement.
+          </Info>
+          ### Supported Channels
+          - **PUSH**: Android, iOS, Web push notifications
+          - **EMAIL**: Email campaigns
         
-        **Supported Channels:**
-        - **PUSH**: Android, iOS, Web push notifications
-        - **EMAIL**: Email campaigns
+          ### Rate Limits
+          - 5 campaigns per minute
+          - 25 campaigns per hour
+          - 100 campaigns per day
         
-        **Rate Limits:** 
-        - 5 campaigns per minute
-        - 25 campaigns per hour
-        - 100 campaigns per day
-        
-        <Note>
-        After successful campaign creation, do not reuse the same request_id for 1 hour (Push) or 1 day (Email).
-        </Note>
-        
-        <Tip>
-        Use the **Body** tabs below to select your campaign type:
-        - Select **Push Campaign** tab for creating Push notifications
-        - Select **Email Campaign** tab for creating Email campaigns
-        
-        The form will automatically show only the relevant fields for your selected campaign type.
-        </Tip>
+          <Note>
+          After successful campaign creation, do not reuse the same request_id for 1 hour (Push) or 1 day (Email).
+          </Note>         
+          
       tags:
         - Create Campaigns
       parameters:
@@ -3434,10 +3429,6 @@ paths:
           $ref: '#/components/responses/RateLimitExceeded'
         '500':
           $ref: '#/components/responses/InternalServerError'
-      x-mint:
-        metadata:
-          title: "Create Campaign"
-          description: "Create Push and Email campaigns with comprehensive configuration options including A/B testing, scheduling, and audience targeting."
   
   /campaigns/{campaign_id}:
     patch:
@@ -3445,40 +3436,36 @@ paths:
       summary: Update Campaign
       description: |
         Updates an existing Push or Email campaign in MoEngage.
+      x-mint:
+        content: |
+          <Info>
+          **Important Information**
+          - You can only update campaigns created via the API, not campaigns created through the MoEngage Dashboard.
+          - Pass only the fields you want to update. You don't need to send the complete payload.
+          - If updating a field within an object, you must pass the complete object.
+          - Campaigns cannot be updated when in **Stopped** or **Archived** state.
+          </Info>
         
-        <Info>
-        **Important Information:**
-        - You can only update campaigns created via the API, not campaigns created through the MoEngage Dashboard.
-        - Pass only the fields you want to update. You don't need to send the complete payload.
-        - If updating a field within an object, you must pass the complete object.
-        - Campaigns cannot be updated when in **Stopped** or **Archived** state.
-        </Info>
+          <Warning>
+          **Update Restrictions**
         
-        <Warning>
-        **Update Restrictions:**
+          **For Scheduled Campaigns**
+          - Can edit all fields **except scheduling type** for One-Time campaigns
+          - Can edit all fields **except scheduling type** for Periodic/Event-Triggered campaigns if no instance has been sent yet
         
-        **For Scheduled Campaigns:**
-        - Can edit all fields **except scheduling type** for One-Time campaigns
-        - Can edit all fields **except scheduling type** for Periodic/Event-Triggered campaigns if no instance has been sent yet
+          **For Active Campaigns**
+          Cannot edit the following fields:
+          - Trigger Condition
+          - Segmentation Details
+          - Conversion Goal Details
+          - Scheduling Type
+          - Scheduling Start Date
+          </Warning>
         
-        **For Active Campaigns:**
-        Cannot edit the following fields:
-        - Trigger Condition
-        - Segmentation Details
-        - Conversion Goal Details
-        - Scheduling Type
-        - Scheduling Start Date
-        </Warning>
+          <Note>
+          For Event-Triggered campaigns, updated content is cached and takes up to 30 minutes to take effect.
+          </Note>
         
-        <Note>
-        For Event-Triggered campaigns, updated content is cached and takes up to 30 minutes to take effect.
-        </Note>
-        
-        <Tip>
-        Use the **Body** tabs below to select your campaign type:
-        - Select **Push Campaign** tab for updating Push notifications
-        - Select **Email Campaign** tab for updating Email campaigns
-        </Tip>
       tags:
         - Update Campaigns
       parameters:
@@ -3557,10 +3544,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-      x-mint:
-        metadata:
-          title: "Update Campaign"
-          description: "Update existing Push and Email campaigns. Only campaigns created via API can be updated."
   
   /campaigns/search:
     post:
@@ -3568,25 +3551,26 @@ paths:
       summary: Search Campaigns
       description: |
         Fetches a list of campaigns with all current fields and status. You can pass multiple filters to find specific campaigns.
+      x-mint:
+        content: |
+          **Supported Channels**
+          - **PUSH**: Push notification campaigns
+          - **EMAIL**: Email campaigns
+          - **SMS**: SMS campaigns
         
-        **Supported Channels:**
-        - **PUSH**: Push notification campaigns
-        - **EMAIL**: Email campaigns
-        - **SMS**: SMS campaigns
+          **Search Capabilities**
+          - Filter by channel, delivery type, status, tags, name, ID, created by, created date
+          - Include child campaigns (flow nodes, periodic children)
+          - Include archived campaigns
+          - Paginated results (max 15 per page)
         
-        **Search Capabilities:**
-        - Filter by channel, delivery type, status, tags, name, ID, created by, created date
-        - Include child campaigns (flow nodes, periodic children)
-        - Include archived campaigns
-        - Paginated results (max 15 per page)
+          <Info>
+          If this API is not enabled for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team to request enablement.
+          </Info>
         
-        <Info>
-        If this API is not enabled for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team to request enablement.
-        </Info>
-        
-        <Tip>
-        To fetch flow campaign nodes, set `include_child_campaigns` to `true`. Flow campaigns can be identified by the presence of `flow_id` and `flow_name` in the response.
-        </Tip>
+          <Tip>
+          To fetch flow campaign nodes, set `include_child_campaigns` to `true`. Flow campaigns can be identified by the presence of `flow_id` and `flow_name` in the response.
+          </Tip>
       tags:
         - Get Campaign Details
       parameters:
@@ -3736,10 +3720,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-      x-mint:
-        metadata:
-          title: "Search Campaigns"
-          description: "Search and retrieve campaigns across Push, Email, and SMS channels with flexible filtering options."
   
   /campaigns/test:
     post:
@@ -3747,30 +3727,31 @@ paths:
       summary: Test Campaign
       description: |
         Send a test campaign to specific users or identifiers before launching it to your entire audience.
+      x-mint:
+        content: |
+          **Supported Channels**
+          - **PUSH**: Test Push notification campaigns
+          - **EMAIL**: Test Email campaigns
         
-        **Supported Channels:**
-        - **PUSH**: Test Push notification campaigns
-        - **EMAIL**: Test Email campaigns
+          <Info>
+          **Important Information**
+          - You can only test campaigns created via the API, not campaigns created through the MoEngage Dashboard
+          - For Email: Maximum 10 users can be tested at a time
+          - If using EMAIL identifier, content will not be personalized with user profile data
+          </Info>
         
-        <Info>
-        **Important Information:**
-        - You can only test campaigns created via the API, not campaigns created through the MoEngage Dashboard
-        - For Email: Maximum 10 users can be tested at a time
-        - If using EMAIL identifier, content will not be personalized with user profile data
-        </Info>
+          <Note>
+          **Personalization Behavior**
+          - When you pass personalization_details, MoEngage uses those values instead of the user's actual profile data
+          - The same personalization values apply to all test recipients
+          - If you pass only a subset of attributes, remaining values are picked from the user profile
+          </Note>
         
-        <Note>
-        **Personalization Behavior:**
-        - When you pass personalization_details, MoEngage uses those values instead of the user's actual profile data
-        - The same personalization values apply to all test recipients
-        - If you pass only a subset of attributes, remaining values are picked from the user profile
-        </Note>
-        
-        <Tip>
-        Use the **Body** tabs below to select your campaign type:
-        - Select **Push Campaign** tab for testing Push notifications
-        - Select **Email Campaign** tab for testing Email campaigns
-        </Tip>
+          <Tip>
+          Use the **Body** tabs below to select your campaign type:
+          - Select **Push Campaign** tab for testing Push notifications
+          - Select **Email Campaign** tab for testing Email campaigns
+          </Tip>
       tags:
         - Test Campaigns
       parameters:
@@ -3910,49 +3891,46 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-      x-mint:
-        metadata:
-          title: "Test Campaign"
-          description: "Send test campaigns to specific users to preview content before launching to your entire audience."
   
   /personalization/preview:
     post:
       operationId: personalized_preview
       summary: Personalized Preview
       description: |
-        Preview personalized content for a specific user before sending campaigns. This API retrieves personalized message content with all user/event attributes resolved.
+        Preview personalized content for a specific user before sending campaigns. This API retrieves personalized message content with all user/event attributes resolved.  
+      x-mint:
+        content: |
+          **Supported Channels**
+          - **EMAIL** - Email content preview
+          - **PUSH** - Push notification preview
+          - **SMS** - SMS message preview
         
-        **Supported Channels:**
-        - **EMAIL** - Email content preview
-        - **PUSH** - Push notification preview
-        - **SMS** - SMS message preview
+          **Personalization Support**
+          - User attributes
+          - Event attributes
+          - Custom templates
+          - Content blocks
+          - Content APIs
+          - Product sets
         
-        **Personalization Support:**
-        - User attributes
-        - Event attributes
-        - Custom templates
-        - Content blocks
-        - Content APIs
-        - Product sets
+          **Rate Limit** 10,000 requests per minute
         
-        **Rate Limit:** 10,000 requests per minute
+          <Info>
+          **Important Information**
+          - When you pass personalization_details, MoEngage uses those values to personalize content instead of actual user profile data
+          - Attributes must exist in the MoEngage Dashboard
+          - If an attribute doesn't exist and default value is not "MOE_NOT_SEND", it will appear empty
+          - Event attributes can be used when the same event is used for the campaign
+          - Either `payload` or `custom_template_data` must be provided in personalization_content
+          </Info>
         
-        <Info>
-        **Important Information:**
-        - When you pass personalization_details, MoEngage uses those values to personalize content instead of actual user profile data
-        - Attributes must exist in the MoEngage Dashboard
-        - If an attribute doesn't exist and default value is not "MOE_NOT_SEND", it will appear empty
-        - Event attributes can be used when the same event is used for the campaign
-        - Either `payload` or `custom_template_data` must be provided in personalization_content
-        </Info>
+          <Note>
+          You can use event attributes to personalize content APIs when the same event is used for the campaign.
+          </Note>
         
-        <Note>
-        You can use event attributes to personalize content APIs when the same event is used for the campaign.
-        </Note>
-        
-        <Tip>
-        Use this API to validate your personalization logic and see exactly how content will appear to specific users before launching campaigns.
-        </Tip>
+          <Tip>
+          Use this API to validate your personalization logic and see exactly how content will appear to specific users before launching campaigns.
+          </Tip>
       tags:
         - Test Campaigns
       parameters:
@@ -4095,10 +4073,6 @@ paths:
           $ref: '#/components/responses/RateLimitExceeded'
         '500':
           $ref: '#/components/responses/InternalServerError'
-      x-mint:
-        metadata:
-          title: "Personalized Preview"
-          description: "Preview personalized campaign content for specific users to validate personalization logic."
   
   /campaigns/meta:
     post:
@@ -4106,29 +4080,30 @@ paths:
       summary: Get Campaign Meta
       description: |
         Retrieves campaign details and reachability information for scheduled campaigns.
+      x-mint:
+        content: |
+          **Supported Channels**
+          - **EMAIL** - Email campaigns
+          - **PUSH** - Push notification campaigns
+          - **SMS** - SMS campaigns
+          - **WHATSAPP** - WhatsApp campaigns
+          - **FACEBOOK** - Facebook campaigns
+          - **GOOGLE ADS** - Google Ads campaigns
+          - **CONNECTORS** - Connector-based campaigns
         
-        **Supported Channels:**
-        - **EMAIL** - Email campaigns
-        - **PUSH** - Push notification campaigns
-        - **SMS** - SMS campaigns
-        - **WHATSAPP** - WhatsApp campaigns
-        - **FACEBOOK** - Facebook campaigns
-        - **GOOGLE ADS** - Google Ads campaigns
-        - **CONNECTORS** - Connector-based campaigns
+          **Reachability Information**
+          - Available only for **scheduled** campaigns (one-time, business event-triggered, and event-triggered)
+          - Provides estimated user count that will receive the campaign
+          - Calculated once daily and cached for 24 hours
+          - May vary due to app installations/uninstalls or subscription changes
         
-        **Reachability Information:**
-        - Available only for **scheduled** campaigns (one-time, business event-triggered, and event-triggered)
-        - Provides estimated user count that will receive the campaign
-        - Calculated once daily and cached for 24 hours
-        - May vary due to app installations/uninstalls or subscription changes
+          <Info>
+          Reachability is an estimated value and may vary over time. It is calculated once per day and cached for 24 hours. Multiple API calls within the same day will return the cached value.
+          </Info>
         
-        <Info>
-        Reachability is an estimated value and may vary over time. It is calculated once per day and cached for 24 hours. Multiple API calls within the same day will return the cached value.
-        </Info>
-        
-        <Tip>
-        To fetch child campaign information (flow nodes, periodic children), set `include_child_campaigns` to `true`. Use `flow_id`, `flow_name`, or `parent_campaign_id` in the response to identify relationships.
-        </Tip>
+          <Tip>
+          To fetch child campaign information (flow nodes, periodic children), set `include_child_campaigns` to `true`. Use `flow_id`, `flow_name`, or `parent_campaign_id` in the response to identify relationships.
+          </Tip>
       tags:
         - Get Campaign Details
       parameters:
@@ -4247,10 +4222,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-      x-mint:
-        metadata:
-          title: "Get Campaign Meta"
-          description: "Retrieve campaign metadata and reachability details for scheduled campaigns across all channels."
   
   /campaigns/status:
     post:
@@ -4258,35 +4229,36 @@ paths:
       summary: Change Campaign Status
       description: |
         Updates the status of campaigns to stop, pause, or resume them.
+      x-mint:
+        content: |
+          **Supported Actions**
+          - **STOP**: Stop a scheduled One-time campaign
+          - **PAUSE**: Pause a running Periodic or Event-triggered campaign
+          - **RESUME**: Resume a paused Periodic or Event-triggered campaign
         
-        **Supported Actions:**
-        - **STOP**: Stop a scheduled One-time campaign
-        - **PAUSE**: Pause a running Periodic or Event-triggered campaign
-        - **RESUME**: Resume a paused Periodic or Event-triggered campaign
+          **Supported Channels**
+          - **Email**: Pause and resume Periodic or Event-triggered campaigns
+          - **Push**: Pause and resume the following campaign types:
+            - Periodic
+            - Event-triggered
+            - Device-triggered
+            - Location-triggered
         
-        **Supported Channels:**
-        - **Email**: Pause and resume Periodic or Event-triggered campaigns
-        - **Push**: Pause and resume the following campaign types:
-          - Periodic
-          - Event-triggered
-          - Device-triggered
-          - Location-triggered
+          <Info>
+          **Important Information**
+          - You can only change the status of campaigns created via the API (not Dashboard-created campaigns)
+          - Maximum 10 campaign IDs can be processed per request
+          - STOP action only works for **scheduled** One-time campaigns
+          - Once a One-time campaign moves to Active state, it cannot be stopped
+          </Info>
         
-        <Info>
-        **Important Information:**
-        - You can only change the status of campaigns created via the API (not Dashboard-created campaigns)
-        - Maximum 10 campaign IDs can be processed per request
-        - STOP action only works for **scheduled** One-time campaigns
-        - Once a One-time campaign moves to Active state, it cannot be stopped
-        </Info>
-        
-        <Warning>
-        **Action Restrictions:**
-        - **STOP**: Only for scheduled One-time campaigns
-        - **PAUSE**: Only for Periodic and Event-triggered campaigns
-        - **RESUME**: Only for paused Periodic and Event-triggered campaigns
-        - Periodic campaigns do NOT support STOP action
-        </Warning>
+          <Warning>
+          **Action Restrictions**
+          - **STOP**: Only for scheduled One-time campaigns
+          - **PAUSE**: Only for Periodic and Event-triggered campaigns
+          - **RESUME**: Only for paused Periodic and Event-triggered campaigns
+          - Periodic campaigns do NOT support STOP action
+          </Warning>
       tags:
         - Update Campaigns
       parameters:
@@ -4332,21 +4304,12 @@ paths:
             Campaign status changed successfully. No content returned.
             
             For a successful 200 response, the API does not return any content.
-          content:
-            application/json:
-              schema:
-                type: object
-                example: {}
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-      x-mint:
-        metadata:
-          title: "Change Campaign Status"
-          description: "Stop, pause, or resume Email and Push campaigns created via API."
   
   /campaigns/{parent_campaign_id}/executions:
     post:
@@ -4354,27 +4317,28 @@ paths:
       summary: Get Child Campaigns
       description: |
         Retrieves child campaign execution details for Periodic or Business Event-triggered campaigns.
+      x-mint:
+        content: |
+          **Information Retrieved**
+          - Child campaign IDs
+          - Sent time for each execution
+          - Status of each child campaign
+          - Total number of times the parent campaign has been executed
+          
+          **Supported Campaign Types**
+          - **Periodic Campaigns** (Email and Push)
+          - **Business Event-triggered Campaigns** (Email and Push)
+          
+          <Info>
+          **Important Information**
+          - You can only retrieve child campaigns for campaigns created via the API (Create Email Campaigns API or Create Push Campaigns API)
+          - This endpoint is only applicable for Periodic and Business Event-triggered campaigns
+          - Results are paginated with a maximum of 15 children per page
+          </Info>
         
-        **Information Retrieved:**
-        - Child campaign IDs
-        - Sent time for each execution
-        - Status of each child campaign
-        - Total number of times the parent campaign has been executed
-        
-        **Supported Campaign Types:**
-        - **Periodic Campaigns** (Email and Push)
-        - **Business Event-triggered Campaigns** (Email and Push)
-        
-        <Info>
-        **Important Information:**
-        - You can only retrieve child campaigns for campaigns created via the API (Create Email Campaigns API or Create Push Campaigns API)
-        - This endpoint is only applicable for Periodic and Business Event-triggered campaigns
-        - Results are paginated with a maximum of 15 children per page
-        </Info>
-        
-        <Tip>
-        Use this endpoint to track execution history of recurring campaigns and monitor the performance of individual instances.
-        </Tip>
+          <Tip>
+          Use this endpoint to track execution history of recurring campaigns and monitor the performance of individual instances.
+          </Tip>
       tags:
         - Get Campaign Details
       parameters:
@@ -4449,8 +4413,3 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-      x-mint:
-        metadata:
-          title: "Get Child Campaigns"
-          description: "Retrieve execution history and status of child campaigns for Periodic and Business Event-triggered campaigns."
-
