@@ -2885,24 +2885,160 @@ paths:
               $ref: '#/components/schemas/FileRunHistoryRequest'
       responses:
         '200':
-          description: Successfully retrieved import history.
+          description: Success.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FileRunHistoryResponse'
+              examples:
+                success_response:
+                  summary: Successful request
+                  value:
+                    status: "success"
+                    total_count: "1"
+                    data: 
+                    type: object
+                    items:
+                      type: object
+                      properties:
+                        id: "672561rr0abd2da34cf7f7df"
+                        file_name: "filename.csv"
+                        scheduled_at: "2024-11-14T12:31:31.713000"
+                        completed_at: "2024-11-14T12:32:09.942000"
+                        type: "AUX_DATA"
+                        file_size: "1544"
+                        file_status: "SUCCESSFUL"
+                        status_msg: ""
+                        total_rows: 10
+                        skipped_rows: 0
+                        updated_rows: 0
+                        failed_rows: 0
+                        aux_data_added_count: 10
+                        aux_data_failed_count: 0
+                        added_rows: 10
+                    offset: 1
+                    more_files: "false"
         '400':
-          description: Bad Request.
+          description: "This response is returned when the required parameters are missing from the request, attributes are not found, and incorrect values are passed."
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                    description: This field denotes the status of the request. 
+                  error_type:
+                    type: object
+                    description: "This field denotes the type of error occured"
+                  message:
+                    type: string
+                    description: "This field denotes the error message. "
+              examples:
+                bad_request:
+                  summary: 	Bad request 
+                  value:
+                    status: "FAILURE"
+                    error_type: "Import Doesn't Exist"
+                    message: "No import exist in the database with the given query parameters."
+                invalid_date_format:
+                  summary: 	Date range not in ISO format
+                  value:
+                    status: "FAILURE"
+                    error_type: "Invalid Date format"
+                    message: "The date entered is not in the correct format. Please ensure you are using the ISO 8601 format which should look like this: YYYY-MM-DDTHH:MM:SS.ssssss. Please check this and try again."    
+                incorrect_offset_value:
+                  summary: 	Incorrect offset value passed
+                  value:
+                    status: "FAILURE"
+                    error_type: "Import Doesn't Exist"
+                    message: "No import exist in the database with the given query parameters."    
         '401':
-          description: Unauthorized.
+          description: This response is returned when the APP Key is invalid or missing, the password is incorrect, or there are other such authorization-related errors in the request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
-
+                type: object
+                properties:
+                  title:
+                    type: string
+                    example: fail
+                  error_description: 
+                    type: string
+              examples:
+                missing_header:
+                  summary: MOE-APPKEY is missing in Header
+                  value:
+                    title: "HeaderMissing"
+                    error_description: "MOE-APPKEY is missing in Header"
+        '404':
+          description: This response is returned when the APP Key is invalid or missing, the password is incorrect, or there are other such authorization-related errors in the request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  data: 
+                    type: string
+              examples:
+                invalid_endpoint:
+                  summary: Resource not found
+                  value:
+                    status: "fail"
+                    data: "Resource not found"            
+        '415':
+          description: This response is returned when the APP Key is invalid or missing, the password is incorrect, or there are other such authorization-related errors in the request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                    example: fail
+                  error_description: 
+                    type: string
+              examples:
+                unsupported_media_type:
+                  summary: Unsupported media type
+                  value:
+                    title: "Unsupported media type"
+                    error_description: "Content type is not supported"            
+        '500':
+          description: This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  error: 
+                    type: string
+                    properties:
+                      message:
+                       type: string
+                       description: A descriptive error message explaining why the request failed.
+                      error_type:
+                        type: string
+                        description: The type or category of the error
+                      request_id:
+                        type: string
+                        description: A unique identifier for the request, useful for debugging.
+              examples:
+                unknown_error:
+                  summary: Unknown errors
+                  value:
+                    status: "fail"
+                    error:
+                      message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+                      type: "ServerError"
+                      request_id: "KovrwJiF"                   
   # SECTION 7: BULK
   /transition/{Workspace_ID}:
     post:
