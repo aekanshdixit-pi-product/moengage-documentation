@@ -29,8 +29,16 @@ components:
       type: http
       scheme: basic
       description: |
-        This authentication parameter, used for access control, must be passed along with the request.
-        `Authorization: Basic <Base64_ENCODED_WORKSPACEID_APIKEY>`
+        The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+        
+        `{"Authorization: Basic Base64_ENCODED_WORKSPACEID_APIKEY=="}`
+        
+        The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+        1. Navigate to **Settings -> Account -> APIs**.
+        2. Copy the following details:
+           * Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+           * Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+        3. Use these details to authenticate the API requests.
 
   schemas:
     # Common Error Structure based on HTML
@@ -197,8 +205,7 @@ paths:
           required: true
           schema:
             type: string
-          description: |
-            This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication.
+          description: "This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication."
       requestBody:
         required: true
         content:
@@ -272,17 +279,18 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  title:
-                    type: string
-                  description:
-                    type: string
+                $ref: '#/components/schemas/ErrorResponse'
               examples:
                 auth_fail:
                   value:
-                    title: "Authentication required"
-                    description: "MOE-APPKEY missing in Authentication Header"
+                    error:
+                      code: "401 Unauthorized"
+                      message: "Authentication required"
+                      details:
+                        - code: "InvalidValue"
+                          target: "APP_ID"
+                          message: "Invalid APP_ID is provided."
+                      request_id: "{{request_id}}"
         '415':
           description: This response is returned when the header Content-Type is not provided/is not supported.
           content:
@@ -357,8 +365,7 @@ paths:
           required: true
           schema:
             type: string
-          description: |
-            This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication.
+          description: "This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication."
       requestBody:
         required: true
         content:
@@ -526,8 +533,7 @@ paths:
           required: true
           schema:
             type: string
-          description: |
-            This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication.
+          description: "This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication."
       requestBody:
         required: true
         content:
@@ -752,4 +758,3 @@ paths:
                   value:
                     title: "Internal Server Error"
                     message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
-                    
