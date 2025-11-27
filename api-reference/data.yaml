@@ -347,7 +347,10 @@ paths:
       tags:
         - Tracking
       summary: Track App Install
-      description: Provides MoEngage with install attribution data.
+      description: |
+        Install attribution tracking is a great way to improve your initial relationship with your user. Knowing how, where, and even more importantly, why a user installs your app allows you to get a better understanding of who your user is and how you should introduce them to your app.
+
+        You can use our APIs to seamlessly provide MoEngage with install data. These APIs allow you to track the install attribution data in MoEngage, which you can then use to enhance your marketing automation campaigns on MoEngage.
       security: []
       parameters:
         - name: publisher_name
@@ -362,6 +365,7 @@ paths:
           description: Campaign name of the install.
         - name: src
           in: query
+          required: true
           schema:
             type: string
           description: Partner name.
@@ -370,28 +374,86 @@ paths:
           required: true
           schema:
             type: string
-          description: Workspace ID of your MoEngage account.
+          description: |
+            This is your MoEngage account's Workspace ID that must be included in the request. You can find your Workspace ID in the following navigation on the dashboard:
+            
+            Revamped UI: **Settings > Account > APIs > Workspace ID**
         - name: advertising_id
           in: query
           schema:
             type: string
-          description: Google Advertising ID (GAID) of the device (Android only).
+          description: Google Advertising ID of the device on which the install was detected (for Android only).
         - name: idfv
           in: query
           schema:
             type: string
-          description: Identifier for Vendors (IDFV) of the iOS device (iOS only).
+          description: IDFV of the iOS device on which the install was detected (for iOS only).
         - name: appAttributionKey
           in: query
           required: true
           schema:
             type: string
-          description: Found on the MoEngage dashboard under Settings > Analytics > Acquisition Tracking.
+          description: Available on the MoEngage dashboard by navigating to **Settings > Analytics > Acquisition Tracking > Attribution Key**.
       responses:
         '200':
-          description: Install information received.
+          description: |
+            **Success**
+            This response is returned when the request is processed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccess'
         '400':
-          description: Bad request, missing required parameters.
+          description: |
+            **Bad Request**
+            This response is returned when the required parameters are missing from the request, attributes are not found, and incorrect values are passed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '401':
+          description: |
+            **Unauthorized**
+            This response is returned when the request does not have valid authentication credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '403':
+          description: |
+            **Account Blocked**
+            This response is returned when your MoEngage account is suspended or blocked.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: fail
+                  message:
+                    type: string
+                    example: Account is blocked
+        '413':
+          description: |
+            **Payload Size Exceeded**
+            This response is returned when the payload size exceeds 128 KB.
+        '415':
+          description: |
+            **Unsupported Media Type**
+            This response is returned when the content type is not supported.
+        '429':
+          description: |
+            **Rate Limit Breach**
+            This response is returned when the number of requests has exceeded the rate limit.
+        '500':
+          description: |
+            **Internal Server Error**
+            This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
 
   /integrations/authentication:
     post:
@@ -762,7 +824,7 @@ paths:
         * Feed campaign interaction events from MoEngage to your recommendation system.
         * Export the notification interaction data from MoEngage to your machine learning system for optimizing the performance of your algorithms.
         * Send all user events present in MoEngage to an external data lake.
-        
+         
         # Enable Streams for Your Account
         Please reach out to your Customer Success Manager to get this enabled for your account. Note that Streams is available as a part of the Streams add-on.
 
@@ -875,7 +937,7 @@ paths:
 
         # API Request Format
         When Streams sends an event to your API endpoint, the request format will be as described in the request body schema.
-        
+         
         **Headers:**
         `"Content-Type":"application/json"`
 
@@ -921,7 +983,7 @@ paths:
         Please be aware of the following constraints or limitations while integrating Streams with third-party apps.
         * We can send data to only one static endpoint where the access token or link has no expiry. We cannot integrate it on a dynamic endpoint where the access token is refreshed every few hours.
         * We cannot modify the body or key names while streaming the data from MoEngage.
-        
+         
         # Syncing Events from One MoEngage App to Another
         With MoEngage Streams, it is possible to sync your events from one MoEngage App to another.
 
@@ -944,7 +1006,7 @@ paths:
             * `"Content-Type" : "application/json"`
         * The list of events you want to stream to the destination app.
         * The list of user properties you want to stream along with the above events.
-        
+         
         Once you have enabed Streams on your source app, the events should start flowing to your destination app.
 
         # Frequently Asked Questions
@@ -1610,4 +1672,4 @@ components:
                 example:
                   moengage_device_id: "moe_internal_device_id"
                   device_attr_1: "device_attr_val1"
-                  device_attr_2: "device_attr_val2" 
+                  device_attr_2: "device_attr_val2"
