@@ -44,8 +44,7 @@ paths:
           ### FAQs
           **How do we fetch the parameters to be passed in the request?**
           
-          The `user_id` (MoEngage ID) and the `cid` (Campaign ID) fields should be fetched from the landing page URL. 
-          
+          The `user_id` (MoEngage ID) and the `cid` (Campaign ID) fields should be fetched from the landing page URL.
           
           For example, if the link to the custom landing page was `https://www.abc.com/managepreference`, when the user clicks the same from the email, the link will look like this:
           
@@ -77,7 +76,7 @@ paths:
         - name: Content-Type
           in: header
           required: true
-          description: Must be set to application/json.
+          description: Set the Content-Type header to application/json.
           schema:
             type: string
             default: application/json
@@ -105,7 +104,13 @@ paths:
                   Artist Updates: true
                   test: true
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request. Returned when parameters are missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Invalid Params Received"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '409':
@@ -152,6 +157,13 @@ paths:
           description: This is used to update the unsubscribe event when the user chooses the 'unsubscribe all' option.
           schema:
             type: string
+        - name: Content-Type
+          in: header
+          required: true
+          description: Set the Content-Type header to application/json.
+          schema:
+            type: string
+            default: application/json
       requestBody:
         required: true
         description: The user's updated preferences.
@@ -171,7 +183,14 @@ paths:
                     type: string
                     example: "Success"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                title: "Internal App Key"
+                description: "Valid App-Key required to process"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '409':
@@ -198,6 +217,13 @@ paths:
           The maximum batch size is 50.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
+        - name: Content-Type
+          in: header
+          required: true
+          description: Set the Content-Type header to application/json for using the Bulk Update Preferences API.
+          schema:
+            type: string
+            default: application/json
       requestBody:
         required: true
         description: A list of preference updates for multiple users.
@@ -217,7 +243,22 @@ paths:
                     type: string
                     example: "Your request has been processed"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request. Returned when payload limit exceeded or categories missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                categories_required:
+                  summary: Categories Required
+                  value:
+                    title: "Categories Required"
+                    description: "Categories Preferences Required"
+                payload_limit:
+                  summary: Payload Limit Exceeded
+                  value:
+                    title: "Payload Limit Exceeded"
+                    description: "Payload limit is set to 50"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '409':
@@ -232,7 +273,10 @@ components:
     basicAuth:
       type: http
       scheme: basic
-      description: 'Uses **Workspace ID** as username and **Data API Key** as password. Found in Settings > Account > APIs > Data.'
+      description: |
+        This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication.
+        
+        It uses **Workspace ID** as username and **Data API Key** as password.
 
   parameters:
     AppKeyHeader:
@@ -240,8 +284,8 @@ components:
       in: header
       required: true
       description: |
-        This is your MoEngage account's APP ID that has to be passed along with the request.
-        You can find your MoEngage Workspace ID at **Settings** -> **Account** -> **APIs** -> **Workspace ID** (earlier app id).
+        This is your MoEngage account's APP ID that has to be passed along with the request. 
+        You can find your MoEngage Workspace ID at **Settings** -> **Account** -> **APIs** -> **Workspace ID (earlier app id)**.
       schema:
         type: string
 
@@ -349,32 +393,7 @@ components:
           description: A brief description of the request status.
 
   responses:
-    BadRequest:
-      description: Bad Request. Returned when required parameters are missing/invalid or payload limit exceeded.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          examples:
-            invalid_params:
-              summary: Invalid Params
-              value:
-                message: "Invalid Params Received"
-            bad_request_app_key:
-              summary: Invalid App Key
-              value:
-                title: "Internal App Key"
-                description: "Valid App-Key required to process"
-            categories_required:
-              summary: Categories Required
-              value:
-                title: "Categories Required"
-                description: "Categories Preferences Required"
-            payload_limit:
-              summary: Payload Limit Exceeded
-              value:
-                title: "Payload Limit Exceeded"
-                description: "Payload limit is set to 50"
+    # Note: 400 Bad Request is defined inline in operations as the examples differ per endpoint in the docs.
 
     Unauthorized:
       description: Authorization Failure. Returned when authorization fails due to incorrect APP KEY/HTTP Auth Header.
