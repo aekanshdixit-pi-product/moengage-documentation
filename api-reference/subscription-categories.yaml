@@ -108,7 +108,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  message:
+                    type: string
               example:
                 message: "Invalid Params Received"
         '401':
@@ -177,17 +180,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Success"
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                message: "Success"
         '400':
           description: Bad Request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
               example:
                 title: "Internal App Key"
                 description: "Valid App-Key required to process"
@@ -237,17 +238,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Your request has been processed"
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                message: "Your request has been processed"
         '400':
           description: Bad Request. Returned when payload limit exceeded or categories missing.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
               examples:
                 categories_required:
                   summary: Categories Required
@@ -385,7 +384,14 @@ components:
               Recommendations: true
             unsubscribe_all: false
 
-    Error:
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A brief description of the request status in the case of success.
+
+    ErrorResponse:
       type: object
       properties:
         title:
@@ -394,19 +400,16 @@ components:
         description:
           type: string
           description: The error description.
-        message:
-          type: string
-          description: A brief description of the request status.
 
   responses:
-    # Note: 400 Bad Request is defined inline in operations as the examples differ per endpoint in the docs.
+    # 400 Bad Request is defined inline in operations to handle specific schema differences (GET vs PUT/POST)
 
     Unauthorized:
       description: Authorization Failure. Returned when authorization fails due to incorrect APP KEY/HTTP Auth Header.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/ErrorResponse'
           examples:
             auth_required:
               summary: Auth Failure
@@ -424,7 +427,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/ErrorResponse'
           example:
             title: "API SECRET not configured"
             description: "This response is returned when the authorization fails due to the APP SECRET key not being set on the Dashboard."
@@ -434,7 +437,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/ErrorResponse'
           example:
             title: "Rate-Limit Reached"
             description: "Exceeded rate limit for this url"
@@ -444,7 +447,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/ErrorResponse'
           example:
             title: "Internal Error"
             description: "Please Contact Moengage Team"
