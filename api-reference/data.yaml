@@ -2969,30 +2969,36 @@ paths:
                     example: fail
                     description: This field denotes the status of the request. 
                   error_type:
-                    type: object
+                    type: string
                     description: "This field denotes the type of error occured"
                   message:
                     type: string
                     description: "This field denotes the error message. "
               examples:
-                bad_request:
-                  summary: 	Bad request 
-                  value:
-                    status: "FAILURE"
-                    error_type: "Import Doesn't Exist"
-                    message: "No import exist in the database with the given query parameters."
                 invalid_date_format:
-                  summary: 	Date range not in ISO format
+                  summary: Invalid or Mismatched date format passed
                   value:
                     status: "FAILURE"
                     error_type: "Invalid Date format"
-                    message: "The date entered is not in the correct format. Please ensure you are using the ISO 8601 format which should look like this: YYYY-MM-DDTHH:MM:SS.ssssss. Please check this and try again."    
-                incorrect_offset_value:
-                  summary: 	Incorrect offset value passed
+                    message: "The provided date format is either incorrect or doesn't match the entered dates. Please ensure both the dates and the format are valid."
+                case_sensitivity:
+                  summary: Invalid bad request - Case sensitivity in parameter values passed in the API body 
+                  value:
+                    success: false
+                    status_code: "400 Bad Request"
+                    data: "Unable to process the request"
+                invalid_offset:
+                  summary: Bad request - Incorrect offset value passed
                   value:
                     status: "FAILURE"
-                    error_type: "Import Doesn't Exist"
-                    message: "No import exist in the database with the given query parameters."    
+                    error_type: "Invalid Offset Value"
+                    message: "The offset value you have provided is not valid. Please review and correct the offset."
+                date_range_exceeded:
+                  summary: Date range exceeds 30 days 
+                  value:
+                    status: "FAILURE"
+                    error_type: "Difference exceeds 30 days"
+                    message: "Please note that only imports with a date difference of 30 can be displayed. Kindly adjust the dates accordingly."
         '401':
           description: This response is returned when the APP Key is invalid or missing, the password is incorrect, or there are other such authorization-related errors in the request.
           content:
@@ -3007,7 +3013,7 @@ paths:
                     type: string
               examples:
                 missing_header:
-                  summary: MOE-APPKEY is missing in Header
+                  summary: 	MoeAPPkey missing, Invalid username, invalid password
                   value:
                     title: "HeaderMissing"
                     error_description: "MOE-APPKEY is missing in Header"
@@ -3047,8 +3053,8 @@ paths:
                   value:
                     title: "Unsupported media type"
                     error_description: "Content type is not supported"            
-        '500':
-          description: This response is returned when the system runs into an unexpected error.
+        '429':
+          description: This response is returned when the number of requests has exceeded the rate limit..
           content:
             application/json:
               schema:
@@ -3065,19 +3071,19 @@ paths:
                         description: "A descriptive error message explaining why the request failed."
                       type:
                         type: string
-                        description: "The type or category of the error (e.g., Server Error)."
+                        description: "The type or category of the error (e.g., Rate Limits Exceeded)."
                       request_id:
                         type: string
                         description: "A unique identifier for the request, useful for debugging."
               examples:
-                unknown_error:
-                  summary: Unknown errors
+                rate_limit_exceeded:
+                  summary: Rate limits exceeded
                   value:
                     status: "fail"
                     error:
-                      message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team."
-                      type: "ServerError"
-                      request_id: "KovrwJiF"                           
+                      message: "Rate limits exceeded, please try after some time"
+                      type: "Rate Limits Exceeded"
+                      request_id: "1234"                           
 
   /fileimports/import/run/history:
     post:
