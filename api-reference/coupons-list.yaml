@@ -104,10 +104,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: "duplicate-coupon-list-name"
-                  message: "The coupon list name already exists. Please enter a unique name and try again."
+              examples:
+                duplicate_name:
+                  summary: Duplicate Name
+                  value:
+                    error:
+                      code: "duplicate-coupon-list-name"
+                      message: "The coupon list name already exists. Please enter a unique name and try again."
+                duplicate_label:
+                  summary: Duplicate Label
+                  value:
+                    error:
+                      code: "duplicate-coupon-list-label"
+                      message: "The coupon list label already exists. Please enter a unique label and try again."
+                missing_attributes:
+                  summary: Missing Attributes
+                  value:
+                    error:
+                      code: "missing-mandatory-attributes"
+                      message: "Missing mandatory key. Please verify and try again."
+                invalid_request:
+                  summary: Invalid Request
+                  value:
+                    error:
+                      code: "invalid-request"
+                      message: "The requested JSON is incorrect. Please verify and try again."
         '401':
           description: Unauthenticated
           content:
@@ -476,16 +497,7 @@ paths:
                   description: This field consists of the new email address of the coupon list subscriber. The subscriber will receive all the alerts on the coupon list in the email provided in this field.
                 alert_conditions:
                   $ref: '#/components/schemas/AlertConditions'
-                  description: |
-                    This object contains the updated details for the alert conditions listed below:
-                    * success_alert (boolean)
-                    * failure_alert (boolean)
-                    * coupon_shortage_alert
-                        * alert (boolean)
-                        * threshold_count (integer)
-                    * expiry_alert
-                        * alert (boolean)
-                        * days_before (integer)
+                  description: This object contains the updated details for the alert conditions.
       responses:
         '200':
           description: |
@@ -541,10 +553,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error:
-                  code: "duplicate-coupon-list-name"
-                  message: "The coupon list name already exists. Please enter a unique name and try again."
+              examples:
+                duplicate_name:
+                  summary: Duplicate Name
+                  value:
+                    error:
+                      code: "duplicate-coupon-list-name"
+                      message: "The coupon list name already exists. Please enter a unique name and try again."
+                duplicate_label:
+                  summary: Duplicate Label
+                  value:
+                    error:
+                      code: "duplicate-coupon-list-label"
+                      message: "The coupon list label already exists. Please enter a unique label and try again."
+                missing_attributes:
+                  summary: Missing Attributes
+                  value:
+                    error:
+                      code: "missing-mandatory-attributes"
+                      message: "Missing mandatory key ''. Please verify and try again."
+                invalid_request:
+                  summary: Invalid Request
+                  value:
+                    error:
+                      code: "invalid-request"
+                      message: "The requested JSON is incorrect. Please verify and try again."
         '401':
           description: Unauthenticated
           content:
@@ -1449,15 +1482,34 @@ components:
   schemas:
     AlertConditions:
       type: object
+      description: Configuration for various alert triggers.
       properties:
-        success_alert: { type: boolean }
-        failure_alert: { type: boolean }
+        success_alert: 
+          type: boolean
+          description: Indicates whether to send an alert on success.
+        failure_alert: 
+          type: boolean
+          description: Indicates whether to send an alert on failure.
         coupon_shortage_alert:
           type: object
-          properties: { alert: { type: boolean }, threshold_count: { type: integer } }
+          description: Configuration for the coupon shortage alert.
+          properties: 
+            alert: 
+              type: boolean
+              description: Indicates whether to enable the coupon shortage alert.
+            threshold_count: 
+              type: integer
+              description: The minimum count of coupons remaining to trigger the alert.
         expiry_alert:
           type: object
-          properties: { alert: { type: boolean }, days_before: { type: integer } }
+          description: Configuration for the expiry alert.
+          properties: 
+            alert: 
+              type: boolean
+              description: Indicates whether to enable the expiry alert.
+            days_before: 
+              type: integer 
+              description: Number of days before expiry to trigger the alert.
     CreateCouponListRequest:
       type: object
       required: [name, label, expires_at, created_by]
@@ -1481,16 +1533,7 @@ components:
           description: This field consists of the user name who requests to create the coupon list.
         alert_conditions:
           $ref: '#/components/schemas/AlertConditions'
-          description: |
-            This object contains the details and types of alert conditions listed below:
-            * success_alert (boolean)
-            * failure_alert (boolean)
-            * coupon_shortage_alert
-                * alert (boolean)
-                * threshold_count (integer)
-            * expiry_alert
-                * alert (boolean)
-                * days_before (integer)
+          description: This object contains the details and types of alert conditions.
     UpdateCouponListRequest:
       type: object
       properties:
