@@ -907,39 +907,6 @@ components:
     CampaignDelivery:
       type: object
       required: [type]
-      description: |
-        This field helps decide when the campaign should be sent.
-        
-        **ASAP**
-        
-        ```json
-        // send campaign asap
-        "campaignDelivery": {
-            "type": "soon"
-          }
-        ```
-        
-        **Schedule Later**
-        
-        ```json
-        "campaignDelivery": {
-            "type": "later",
-            "date": "11/07/2016",
-            "time": "04:33 PM"
-          }
-        ```
-        
-        **Recurring Campaigns**
-        
-        ```json
-        "campaignDelivery": {
-            "type": "periodic",
-            "endDate": "11/07/2016",
-            "time": "04:55 PM",
-            "timezone": "Asia/Calcutta",
-            "repeatAfter": "1" // campaign will be recurring sent after every 1 day.
-          }
-        ```
       properties:
         type:
           type: string
@@ -968,6 +935,271 @@ components:
         eventName: { type: string, description: "This field denotes the actual event name." }
         attrs:
           type: object
+          description: |
+            This object contains the conversion goals details. For more information, refer to [Conversion Goals](/hc/en-us/articles/32986034181268#h_01JGZRHWD1CSMSH1PB0P1K80GN).
+            This field denotes the event attribute filters. It contains the following elements:
+            * name: Event attribute name. This is mandatory.
+            * filter: Event attribute filter operator. This is mandatory.
+            * value: Event attribute filter value.
+            * type: Event attribute data type. This is mandatory.
+          properties:
+            name: { type: string }
+            filter: 
+              type: string
+              enum: 
+                - is
+                - is not
+                - contains
+                - does not contain
+                - starts with
+                - does not start with
+                - ends with
+                - does not end with
+                - in the following
+                - not in the following
+                - exists
+                - does not exist
+                - is equal to
+                - is not equal to
+                - is between
+                - is not between
+                - is less than
+                - is greater than
+            value: 
+              oneOf: [{ type: string }, { type: number }, { type: array, items: { type: string } }] 
+            type: { type: string, enum: [string, numeric] }
+
+    AdvancedSettings:
+      type: object
+      description: "This object contains information about advanced settings. For more information, refer to [Advanced Settings](/hc/en-us/articles/32986034181268#h_01JGZRM6BSGJ9VS3YWKB21DYFW)."
+      properties:
+        ttl:
+          type: object
+          description: "This field denotes the duration for which the push notification service keeps a push message before it's discarded if it can't be delivered. If not delivered, Push Services (GCM/WEB) retry to send the message until the TTL (in minutes) does not expire. Send ‘0’ if it is not applicable to you. After the TTL has expired, push notifications will not be shown to the user. The default value for TTL is 36 hours and applies only to Android push or Web push notifications."
+          properties:
+            ANDROID: { type: integer, description: "TTL in minutes for Android." }
+            WEB: { type: integer, description: "TTL in minutes for Web." }
+        ignoreFC:
+          oneOf:
+            - type: string
+              enum: ["true", "false"]
+            - type: boolean
+          description: |
+            This field denotes if the ignoreFC is enabled. Supported values are:
+            * true
+            * false
+            Note: This field is case-sensitive. When passing the value in the request, follow the case as described in the allowed values above.
+            * "true" value: Bypasses frequency capping set on the dashboard and sends the notifications to everyone in the target segment.
+            * "false" value: Applies the frequency capping set on the dashboard and does not send the notification after the limit is reached.
+            * If the key is not present, it will be treated as ignoreFC="false." While testing your API, ensure that you set this flag as "true"; otherwise, you might not receive a few notifications.
+        countFC:
+          oneOf:
+            - type: string
+              enum: ["true", "false"]
+            - type: boolean
+          description: |
+            This field denotes if the countFC is enabled. Supported values are:
+            * true
+            * false
+            Values are "true" or "false" only when ignoreFC value is set to true.
+            * "true" value - Only Push campaigns are counted in the frequency cap count.
+            * "false" value - Push campaigns are not counted in the frequency cap count.
+        notificationPrioritySettings:
+          type: object
+          description: "This field denotes whether the notification priority settings are configured. Supported values are \"true\" or \"false\" only for Android push / Web push notifications. It uses the GCM/FCM flag to send time-critical messages with high priority and drains the user's device battery more than normal messages. This object contains information about notification priority settings. For more information, refer to [notificationPrioritySettings](/hc/en-us/articles/32986034181268#h_01JJ3VXZZQ1Z4N9VVNGWGE6B9J)."
+          properties:
+            Android:
+              type: string
+              enum: [High, Low]
+              description: |
+                This field denotes the notification priority configured for Android devices for this campaign.
+                Supported values are:
+                * High
+                * Low
+            iOS:
+              type: integer
+              enum: [1, 5, 10]
+              description: |
+                This field denotes the notification priority configured for iOS devices for this campaign. Supported values are:
+                * 1
+                * 5
+                * 10
+        "pushAmp+":
+          oneOf:
+            - type: string
+              enum: ["true", "false"]
+            - type: boolean
+          description: "This field denotes whether the pushAmp+ is enabled. Supported values are \"true\" or \"false.\" For more information about Push Amp+, refer to [Push Amp+ help documentation](https://help.moengage.com/hc/en-us/articles/360039754532-Push-Amplification-Plus-and-Delivery-Impact)."
+        preCacheSegment:
+          oneOf:
+            - type: string
+              enum: ["true", "false"]
+            - type: boolean
+          description: "This field denotes whether the preCacheSegment is enabled. Supported values are \"true\" or \"false.\" Applicable for scheduled and periodic campaigns. If enabled, pre-caches the segmentation and improves campaign sending time. For caching, it is recommended that the campaign be created at least 2 hours before the scheduled time."
+        campaignThrottleTime:
+          type: integer
+          description: "This field denotes if the campaign throttle time is configured. Push throttling allows you to control the rate of sending a push notification. The value to be passed can be between 1 and 360 (minutes)."
+        campaignThrottleRpm:
+          type: integer
+          description: |
+            The default throughput for the Push API is 100K RPM. You can send either of the key-value pairs in the Push API payload between campaignThrottleRpm and campaignThrottleTime. Both of the key-value pairs are optional.
+            * If you send both, the value for campaignThrottleRpm takes precedence over the value for campaignThrottleTime.
+            * If you send either of them, the value you send is considered.
+            * If you do not send any of them, the value defined in settings is considered.
+            * If the RPM value is not defined in settings, the default RPM for Push channel (that is, 100K) is enforced.
+            For personalized campaigns, the maximum RPM value MoEngage supports is 250K.
+        useJinjaPersonalization:
+          oneOf:
+            - type: string
+              enum: ["true", "false"]
+            - type: boolean
+          description: "This field denotes whether Jinja personalization can be used in the payload. Values are \"true\" or \"false.\" A boolean value is used to indicate if Jinja personalization is applied to the message payloads. It is recommended that this personalization format be used."
+        ignoreMinimumDelay:
+          oneOf:
+            - type: string
+              enum: ["true", "false"]
+            - type: boolean
+          default: true
+          description: "This field denotes whether ignore minimum delay is enabled. Supported values are \"true\" or \"false.\" This is a boolean value to indicate if the Client level Minimum Delay setting should be applied for the campaign. The default value is true, if this field is not passed in the API."
+        inboxExpiry:
+          type: integer
+          description: "This field specifies the expiry value for the push notification in hours."
+        iOSTargetDevice:
+          type: string
+          enum: [apns_device_default_push, apns_device_provisional_push, apns_device_non_provisional_push]
+          description: |
+            Supported values are:
+            * apns_device_default_push
+            * apns_device_provisional_push
+            * apns_device_non_provisional_push
+        deliverWhenActive:
+          oneOf:
+            - type: string
+              enum: ["true", "false"]
+            - type: boolean
+          description: "This field specifies whether the push notifications will be delivered when the device is in an active state. supported value: \"true\" and \"false\"."
+        bypassDND:
+          type: boolean
+          description: "This field specifies whether to deliver the notification immediately, bypassing device restrictions such as battery optimizations or low-power modes."
+        sendAtHighPriority:
+          oneOf:
+            - type: string
+              enum: ["true", "false"]
+            - type: boolean
+          description: "Send at high priority (legacy flag)."
+
+    PushRequest:
+      type: object
+      required:
+        - appId
+        - campaignName
+        - signature
+        - targetPlatform
+        - targetAudience
+        - payload
+        - campaignDelivery
+      properties:
+        appId: 
+          type: string
+          description: "This field denotes the app ID that you must pass to create the campaign. You can find it by selecting Settings > Account > APIs -> Workspace ID (earlier app id) on the MoEngage dashboard. MoEngage recommends that you test API integration in the Test Environment. The App ID for TEST ACCOUNT is suffixed with _DEBUG."
+        campaignName: 
+          type: string
+          minLength: 5
+          description: |
+            This field denotes the campaign name. The campaign name should be unique for All Users and Custom Segment campaigns.
+            Note:
+            * API automatically creates a campaign with the given name. You need not create a campaign from the dashboard to use the name.
+            * For User type targetAudience API requests, reuse this campaign name for requests that should be clubbed in the same campaign.
+        campaignTags: 
+          type: array
+          items: { type: string }
+          description: |
+            Used to add more context to campaigns. Context can be descriptive names or campaign themes such as onboarding, retention, country, and all users. Tags can also be used to filter campaigns or identify the behaviors of users who received these campaigns. The list of tags should be passed in this field.
+            
+            For example,
+            ```json
+            “campaignTags“ : [“Transactional“, “Accounts“]
+            ```
+        signature: 
+          type: string
+          description: "This field denotes the signature that is required to verify whether the client is authorized to make the API call. For more information, refer to Generate Authentication Signature."
+        requestType: 
+          type: string
+          default: "push"
+          description: "The value of this key is used to indicate the intention of an API request. The default value is push."
+        targetPlatform:
+          type: array
+          items:
+            type: string
+            enum: [ANDROID, IOS, WEB]
+          description: "This field denotes the platform devices that are targeted by your campaign. The Push API allows you to target users on Android, iOS, and Web platforms. You can target one or more platforms. If you want to send Web (Chrome) push notifications through the API, you should choose Web as the platform."
+        targetAudience:
+          type: string
+          enum: ["All Users", "Custom Segment", "User"]
+          description: |
+            This field denotes the target segment for the campaign. Supported values are:
+            * All Users: Pass this value to target all users of your App/Website.
+            * Custom Segment: Pass this value to target pre-created user segments. Custom segments can be created using the MoEngage dashboard or [custom segment API](https://developers.moengage.com/hc/en-us/articles/13277936457748-Create-Custom-Segment). Note that the custom segment name should exactly match the name of the target segment.
+            * User: Pass this value to target a user with an attribute. It will target a maximum of 100 users of the associated targetUserAttributes definition.
+        customSegmentName:
+          type: string
+          description: "Required if targetAudience is 'Custom Segment'."
+        targetUserAttributes:
+          $ref: '#/components/schemas/TargetUserAttributes'
+          description: |
+            This object contains the target user attribute details. For more information, refer to [Target User Attributes](/hc/en-us/articles/32986034181268#h_01JGZQ07FC9P3RHKXYJ67AJ9QV).
+            Note:
+            * This value is required when the targetAudience value is User.
+            * For API requests where the target audience is a specific user, if a campaign with the given name already exists, existing campaign data corresponding to the given name will be used to send notifications.
+            * Any edits in other parts of campaign data except payload within the API request parameters will be ignored.
+            * If any changes are required in the campaign data, change the campaign name in the API request to create a new campaign.
+        payload:
+          $ref: '#/components/schemas/Payload'
+          description: |
+            This object contains the payload details. Supported values are:
+            * Android. For more information, refer to [Android](/hc/en-us/articles/32986034181268#h_01JGZQJ15BBPB56MCAPZTNKASC).
+            * iOS. For more information, refer to [IOS](/hc/en-us/articles/32986034181268#01JGZQRNMF624JYWRH4T882JPR).
+            * Web. For more information, refer to [Web](/hc/en-us/articles/32986034181268#01JGZQRQTMXFC01DWTJZJAT2TQ).
+        campaignDelivery:
+          $ref: '#/components/schemas/CampaignDelivery'
+          description: |
+            This field helps decide when the campaign should be sent.
+            
+            **ASAP**
+            
+            ```json
+            // send campaign asap
+            "campaignDelivery": {
+                "type": "soon"
+              }
+            ```
+            
+            **Schedule Later**
+            
+            ```json
+            "campaignDelivery": {
+                "type": "later",
+                "date": "11/07/2016",
+                "time": "04:33 PM"
+              }
+            ```
+            
+            **Recurring Campaigns**
+            
+            ```json
+            "campaignDelivery": {
+                "type": "periodic",
+                "endDate": "11/07/2016",
+                "time": "04:55 PM",
+                "timezone": "Asia/Calcutta",
+                "repeatAfter": "1" // campaign will be recurring sent after every 1 day.
+              }
+            ```
+        conversionGoals:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/ConversionGoal'
           description: |
             This object contains the conversion goals details. For more information, refer to [Conversion Goals](/hc/en-us/articles/32986034181268#h_01JGZRHWD1CSMSH1PB0P1K80GN).
             This field denotes the event attribute filters. It contains the following elements:
@@ -1328,244 +1560,6 @@ components:
                   }
             }
             ```
-          properties:
-            name: { type: string }
-            filter: 
-              type: string
-              enum: 
-                - is
-                - is not
-                - contains
-                - does not contain
-                - starts with
-                - does not start with
-                - ends with
-                - does not end with
-                - in the following
-                - not in the following
-                - exists
-                - does not exist
-                - is equal to
-                - is not equal to
-                - is between
-                - is not between
-                - is less than
-                - is greater than
-            value: 
-              oneOf: [{ type: string }, { type: number }, { type: array, items: { type: string } }] 
-            type: { type: string, enum: [string, numeric] }
-
-    AdvancedSettings:
-      type: object
-      description: "This object contains information about advanced settings. For more information, refer to [Advanced Settings](/hc/en-us/articles/32986034181268#h_01JGZRM6BSGJ9VS3YWKB21DYFW)."
-      properties:
-        ttl:
-          type: object
-          description: "This field denotes the duration for which the push notification service keeps a push message before it's discarded if it can't be delivered. If not delivered, Push Services (GCM/WEB) retry to send the message until the TTL (in minutes) does not expire. Send ‘0’ if it is not applicable to you. After the TTL has expired, push notifications will not be shown to the user. The default value for TTL is 36 hours and applies only to Android push or Web push notifications."
-          properties:
-            ANDROID: { type: integer, description: "TTL in minutes for Android." }
-            WEB: { type: integer, description: "TTL in minutes for Web." }
-        ignoreFC:
-          oneOf:
-            - type: string
-              enum: ["true", "false"]
-            - type: boolean
-          description: |
-            This field denotes if the ignoreFC is enabled. Supported values are:
-            * true
-            * false
-            Note: This field is case-sensitive. When passing the value in the request, follow the case as described in the allowed values above.
-            * "true" value: Bypasses frequency capping set on the dashboard and sends the notifications to everyone in the target segment.
-            * "false" value: Applies the frequency capping set on the dashboard and does not send the notification after the limit is reached.
-            * If the key is not present, it will be treated as ignoreFC="false." While testing your API, ensure that you set this flag as "true"; otherwise, you might not receive a few notifications.
-        countFC:
-          oneOf:
-            - type: string
-              enum: ["true", "false"]
-            - type: boolean
-          description: |
-            This field denotes if the countFC is enabled. Supported values are:
-            * true
-            * false
-            Values are "true" or "false" only when ignoreFC value is set to true.
-            * "true" value - Only Push campaigns are counted in the frequency cap count.
-            * "false" value - Push campaigns are not counted in the frequency cap count.
-        notificationPrioritySettings:
-          type: object
-          description: "This field denotes whether the notification priority settings are configured. Supported values are \"true\" or \"false\" only for Android push / Web push notifications. It uses the GCM/FCM flag to send time-critical messages with high priority and drains the user's device battery more than normal messages. This object contains information about notification priority settings. For more information, refer to [notificationPrioritySettings](/hc/en-us/articles/32986034181268#h_01JJ3VXZZQ1Z4N9VVNGWGE6B9J)."
-          properties:
-            Android:
-              type: string
-              enum: [High, Low]
-              description: |
-                This field denotes the notification priority configured for Android devices for this campaign.
-                Supported values are:
-                * High
-                * Low
-            iOS:
-              type: integer
-              enum: [1, 5, 10]
-              description: |
-                This field denotes the notification priority configured for iOS devices for this campaign. Supported values are:
-                * 1
-                * 5
-                * 10
-        "pushAmp+":
-          oneOf:
-            - type: string
-              enum: ["true", "false"]
-            - type: boolean
-          description: "This field denotes whether the pushAmp+ is enabled. Supported values are \"true\" or \"false.\" For more information about Push Amp+, refer to [Push Amp+ help documentation](https://help.moengage.com/hc/en-us/articles/360039754532-Push-Amplification-Plus-and-Delivery-Impact)."
-        preCacheSegment:
-          oneOf:
-            - type: string
-              enum: ["true", "false"]
-            - type: boolean
-          description: "This field denotes whether the preCacheSegment is enabled. Supported values are \"true\" or \"false.\" Applicable for scheduled and periodic campaigns. If enabled, pre-caches the segmentation and improves campaign sending time. For caching, it is recommended that the campaign be created at least 2 hours before the scheduled time."
-        campaignThrottleTime:
-          type: integer
-          description: "This field denotes if the campaign throttle time is configured. Push throttling allows you to control the rate of sending a push notification. The value to be passed can be between 1 and 360 (minutes)."
-        campaignThrottleRpm:
-          type: integer
-          description: |
-            The default throughput for the Push API is 100K RPM. You can send either of the key-value pairs in the Push API payload between campaignThrottleRpm and campaignThrottleTime. Both of the key-value pairs are optional.
-            * If you send both, the value for campaignThrottleRpm takes precedence over the value for campaignThrottleTime.
-            * If you send either of them, the value you send is considered.
-            * If you do not send any of them, the value defined in settings is considered.
-            * If the RPM value is not defined in settings, the default RPM for Push channel (that is, 100K) is enforced.
-            For personalized campaigns, the maximum RPM value MoEngage supports is 250K.
-        useJinjaPersonalization:
-          oneOf:
-            - type: string
-              enum: ["true", "false"]
-            - type: boolean
-          description: "This field denotes whether Jinja personalization can be used in the payload. Values are \"true\" or \"false.\" A boolean value is used to indicate if Jinja personalization is applied to the message payloads. It is recommended that this personalization format be used."
-        ignoreMinimumDelay:
-          oneOf:
-            - type: string
-              enum: ["true", "false"]
-            - type: boolean
-          default: true
-          description: "This field denotes whether ignore minimum delay is enabled. Supported values are \"true\" or \"false.\" This is a boolean value to indicate if the Client level Minimum Delay setting should be applied for the campaign. The default value is true, if this field is not passed in the API."
-        inboxExpiry:
-          type: integer
-          description: "This field specifies the expiry value for the push notification in hours."
-        iOSTargetDevice:
-          type: string
-          enum: [apns_device_default_push, apns_device_provisional_push, apns_device_non_provisional_push]
-          description: |
-            Supported values are:
-            * apns_device_default_push
-            * apns_device_provisional_push
-            * apns_device_non_provisional_push
-        deliverWhenActive:
-          oneOf:
-            - type: string
-              enum: ["true", "false"]
-            - type: boolean
-          description: "This field specifies whether the push notifications will be delivered when the device is in an active state. supported value: \"true\" and \"false\"."
-        bypassDND:
-          type: boolean
-          description: "This field specifies whether to deliver the notification immediately, bypassing device restrictions such as battery optimizations or low-power modes."
-        sendAtHighPriority:
-          oneOf:
-            - type: string
-              enum: ["true", "false"]
-            - type: boolean
-          description: "Send at high priority (legacy flag)."
-
-    PushRequest:
-      type: object
-      required:
-        - appId
-        - campaignName
-        - signature
-        - targetPlatform
-        - targetAudience
-        - payload
-        - campaignDelivery
-      properties:
-        appId: 
-          type: string
-          description: "This field denotes the app ID that you must pass to create the campaign. You can find it by selecting Settings > Account > APIs -> Workspace ID (earlier app id) on the MoEngage dashboard. MoEngage recommends that you test API integration in the Test Environment. The App ID for TEST ACCOUNT is suffixed with _DEBUG."
-        campaignName: 
-          type: string
-          minLength: 5
-          description: |
-            This field denotes the campaign name. The campaign name should be unique for All Users and Custom Segment campaigns.
-            Note:
-            * API automatically creates a campaign with the given name. You need not create a campaign from the dashboard to use the name.
-            * For User type targetAudience API requests, reuse this campaign name for requests that should be clubbed in the same campaign.
-        campaignTags: 
-          type: array
-          items: { type: string }
-          description: |
-            Used to add more context to campaigns. Context can be descriptive names or campaign themes such as onboarding, retention, country, and all users. Tags can also be used to filter campaigns or identify the behaviors of users who received these campaigns. The list of tags should be passed in this field.
-            
-            For example,
-            ```json
-            “campaignTags“ : [“Transactional“, “Accounts“]
-            ```
-        signature: 
-          type: string
-          description: "This field denotes the signature that is required to verify whether the client is authorized to make the API call. For more information, refer to Generate Authentication Signature."
-        requestType: 
-          type: string
-          default: "push"
-          description: "The value of this key is used to indicate the intention of an API request. The default value is push."
-        targetPlatform:
-          type: array
-          items:
-            type: string
-            enum: [ANDROID, IOS, WEB]
-          description: "This field denotes the platform devices that are targeted by your campaign. The Push API allows you to target users on Android, iOS, and Web platforms. You can target one or more platforms. If you want to send Web (Chrome) push notifications through the API, you should choose Web as the platform."
-        targetAudience:
-          type: string
-          enum: ["All Users", "Custom Segment", "User"]
-          description: |
-            This field denotes the target segment for the campaign. Supported values are:
-            * All Users: Pass this value to target all users of your App/Website.
-            * Custom Segment: Pass this value to target pre-created user segments. Custom segments can be created using the MoEngage dashboard or [custom segment API](https://developers.moengage.com/hc/en-us/articles/13277936457748-Create-Custom-Segment). Note that the custom segment name should exactly match the name of the target segment.
-            * User: Pass this value to target a user with an attribute. It will target a maximum of 100 users of the associated targetUserAttributes definition.
-        customSegmentName:
-          type: string
-          description: "Required if targetAudience is 'Custom Segment'."
-        targetUserAttributes:
-          $ref: '#/components/schemas/TargetUserAttributes'
-          description: |
-            This object contains the target user attribute details. For more information, refer to [Target User Attributes](/hc/en-us/articles/32986034181268#h_01JGZQ07FC9P3RHKXYJ67AJ9QV).
-            Note:
-            * This value is required when the targetAudience value is User.
-            * For API requests where the target audience is a specific user, if a campaign with the given name already exists, existing campaign data corresponding to the given name will be used to send notifications.
-            * Any edits in other parts of campaign data except payload within the API request parameters will be ignored.
-            * If any changes are required in the campaign data, change the campaign name in the API request to create a new campaign.
-        payload:
-          $ref: '#/components/schemas/Payload'
-          description: |
-            This object contains the payload details. Supported values are:
-            * Android. For more information, refer to [Android](/hc/en-us/articles/32986034181268#h_01JGZQJ15BBPB56MCAPZTNKASC).
-            * iOS. For more information, refer to [IOS](/hc/en-us/articles/32986034181268#01JGZQRNMF624JYWRH4T882JPR).
-            * Web. For more information, refer to [Web](/hc/en-us/articles/32986034181268#01JGZQRQTMXFC01DWTJZJAT2TQ).
-        campaignDelivery:
-          $ref: '#/components/schemas/CampaignDelivery'
-          description: |
-            This field helps decide when the campaign should be sent.
-            Note:
-            * All notifications targeted to a single user will be sent as soon as possible (ASAP).
-            * Scheduling campaigns for Later or Periodic is applied only for segmented or All users campaigns.
-            * The timezone field can be used to pass the timezone for scheduled campaigns. This is not mandatory, and if it is not passed, the default timezone will be set to IST (and not UTC/GMT).
-            * For more information on allowed timezone values, refer [here](https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98).
-        conversionGoals:
-          type: array
-          maxItems: 5
-          items:
-            $ref: '#/components/schemas/ConversionGoal'
-          description: |
-            This object contains the conversion goals details. For more information, refer to [Conversion Goals](/hc/en-us/articles/32986034181268#h_01JGZRHWD1CSMSH1PB0P1K80GN).
-            Note:
-            * You can pass a single conversion goal or multiple conversion goals.
-            * If you are passing multiple conversion goals, the first conversion goal in the list is considered the primary conversion goal for the campaign.
-            * A Push campaign supports a maximum of five conversion goals on its list.
         advancedSettings:
           $ref: '#/components/schemas/AdvancedSettings'
           description: "This object contains information about advanced settings. For more information, refer to [Advanced Settings](/hc/en-us/articles/32986034181268#h_01JGZRM6BSGJ9VS3YWKB21DYFW)."
