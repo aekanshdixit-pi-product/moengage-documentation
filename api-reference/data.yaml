@@ -4178,16 +4178,30 @@ components:
           oneOf:
             - type: number
             - type: string
-          description: Local time at which the event happened. (Epoch seconds or ISO 8601 string).
+          description: |
+            Local time at which the event happened. (Epoch seconds or ISO 8601 string). This field lets the system identify the local system time for when the event happened. Acceptable formats for user_time:
+                      * ISO 8601 (for example - 2020-05-31T16:33:35Z)
+                      * Epoch time in seconds (for example - 1590404615)
         current_time:
           oneOf:
             - type: number
             - type: string
-          description: UTC time at which the event happened. (Epoch seconds or ISO 8601 string).
+          description: |
+            UTC time at which the event happened. (Epoch seconds or ISO 8601 string). This field is necessary to specify the UTC time of the event. Acceptable formats for current_time include:
+                   * ISO 8601 (for example - 2020-05-31T16:33:35Z)
+                   * Epoch time in seconds (for example - 1590404615)
         user_timezone_offset:
           type: number
-          description: The difference in time between UTC and the local system time in a particular time zone. All time zones are defined by their offset from UTC. The offset is expressed as either UTC- or UTC+.
-            user_timezone_offset should have a value in seconds which can be between -54000 to 54000. For example, for IST (UTC+0530), "user_timezone_offset" will be 19800.      
+          description: |
+            The difference in time between UTC and the local system time in a particular time zone. All time zones are defined by their offset from UTC. The offset is expressed as either UTC- or UTC+.
+             * user_timezone_offset should have a value in seconds which can be between -54000 to 54000. For example, for IST (UTC+0530), "user_timezone_offset" will be 19800.
+            * This field is crucial for establishing the `User_time` or `Current_time`.
+            * This field should contain a numerical value between -54000 and 54000, representing the local timezone’s offset from UTC in seconds.
+            * If the field is absent, MoEngage gets this information from the internal system in the sequence as follows:
+                  * The user profile’s timezone is taken into consideration.
+                  * If the user profile’s timezone is not present, the App/account’s timezone is considered.
+                  * In cases where neither is present, the UTC timezone is used.
+            * Only include `User_timezone_offset` in your request if you have accurate timezone information for each user, as incorrect info could disrupt event timelines in the user profile.
 
     CreateEventRequest:
       type: object
