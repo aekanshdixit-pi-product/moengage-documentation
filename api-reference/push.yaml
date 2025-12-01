@@ -13,7 +13,12 @@ info:
     We have made it easy for you to test the APIs. [Click here to view it in Postman](https://www.postman.com/moengage-dev/api-docs/collection/acmujor/moengage-transaction-push-api?action=share&source=copy-link&creator=5883765).
 
     # Authentication
-    A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key using SHA 256.
+    A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key. MoEngage uses the SHA 256 method to generate this hash. Python code is used to generate the signature for your test account, and use your account's app_id.
+    1. On the left navigation menu in the MoEngage dashboard, go to Settings > Account > APIs.
+    2. Copy the following details:
+        * **app_id**: Under Workspace ID (earlier app_id), click the copy icon to copy the app-id.
+        * **api_key**: In the API keys section, click the copy icon in the Push tile to copy the API key.
+        * **campaign_name**: Ensure the campaign name matches the one used in the request body.
 
     # FAQs
     **Does the Push API support silent notifications?**
@@ -47,7 +52,7 @@ paths:
       summary: Send Push Notification
       description: |
         Creates and sends a push notification campaign.
-       
+        
         Push API is used to
           * Create campaigns (targeting all users or a group of users) to send notifications.
           * Target a single user using a unique user attribute.
@@ -57,25 +62,30 @@ paths:
         We have made it easy for you to test the APIs. [Click here to view it in Postman](https://www.postman.com/moengage-dev/api-docs/collection/acmujor/moengage-transaction-push-api?action=share&source=copy-link&creator=5883765).
 
         ### Authentication
-       
+        
         A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key. MoEngage uses the SHA 256 method to generate this hash. Python code is used to generate the signature for your test account, and use your account's app_id.
 
         1. On the left navigation menu in the MoEngage dashboard, go to Settings > Account > APIs.
         2. Copy the following details:
         * app_id: Under Workspace ID (earlier app_id), click the copy icon to copy the app-id.
         * api_key: In the API keys section, click the copy icon in the Push tile to copy the API key.
-        3. campaign_name: Ensure the campaign name matches the one used in the request body. 
+        3. campaign_name: Ensure the campaign name matches the one used in the request body. 
 
         Python code to generate the signature for your test account, use the app_id that is appropriate for your account..
 
+        ### Request Header
+        | Key | Required | Sample Values | Description |
+        | --- | --- | --- | --- |
+        | Content-Type | Required | `{"Content-Type": "application/json"}` | Set the Content-Type header to application/json. |
+
         ### FAQs
-       
+        
         **Does the Push API support silent notifications?**
         No, MoEngage Push API doesn't support silent notifications.
 
         **Can I use HTML to format notification text?**
         Yes, the basic template supports HTML tags.
-        
+         
         ## Rate Limit
         **10,000 requests per minute**.
       x-code-samples:
@@ -903,6 +913,44 @@ components:
     CampaignDelivery:
       type: object
       required: [type]
+      description: |
+        This field helps decide when the campaign should be sent.
+        
+        ASAP:
+        ```json
+        // send campaign asap
+        "campaignDelivery": {
+            "type": "soon"
+          },
+        ```
+
+        Schedule Later:
+        ```json
+        // send campaign later, only for segmented or all users campaigns.
+        "campaignDelivery": {
+            "type": "later",
+            "date": "11/07/2016",
+            "time": "04:33 PM"
+          },
+        ```
+
+        Recurring Campaigns:
+        ```json
+        // send periodic campaign, only for segmented and all users campaigns.
+        "campaignDelivery": {
+            "type": "periodic",
+            "endDate": "11/07/2016",
+            "time": "04:55 PM",
+            "timezone": "Asia/Calcutta",
+            "repeatAfter": "1" // campaign will be recurring sent after every 1 day.
+          },
+        ```
+
+        Note:
+        * All notifications targeted to a single user will be sent as soon as possible (ASAP).
+        * Scheduling campaigns for Later or Periodic is applied only for segmented or All users campaigns.
+        * The timezone field can be used to pass the timezone for scheduled campaigns. This is not mandatory, and if it is not passed, the default timezone will be set to IST (and not UTC/GMT).
+        * For more information on allowed timezone values, refer [here](https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98).
       properties:
         type:
           type: string
@@ -938,6 +986,296 @@ components:
             * filter: Event attribute filter operator. This is mandatory.
             * value: Event attribute filter value.
             * type: Event attribute data type. This is mandatory.
+
+            **Without Event Attribute Filter**
+            Event attributes are optional. You can track a conversion goal just with an event name (without any event attribute). The following is a sample payload without the event attribute filter:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+            }
+            ```
+
+            **With String Event Attribute Filter**
+            The following are sample payloads with string event attribute filters:
+
+            With "is" operator:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+              "attrs": {
+                  "name": "product_sku",
+                  "filter": "is",
+                  "value": "10089712",
+                  "type": "string"
+                  }
+            }
+            ```
+
+            With "is not" operator:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+              "attrs": {
+                  "name": "product_sku",
+                  "filter": "is not",
+                  "value": "10089712",
+                  "type": "string"
+                  }
+            }
+            ```
+
+            With "contains" operator:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+              "attrs": {
+                  "name": "product_sku",
+                  "filter": "contains",
+                  "value": "10089712",
+                  "type": "string"
+                  }
+            }
+            ```
+            
+            With "does not contain" operator:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+              "attrs": {
+                  "name": "product_sku",
+                  "filter": "does not contain",
+                  "value": "10089712",
+                  "type": "string"
+                  }
+            }
+            ```
+
+            With "starts with" operator:
+            ```json
+            {
+              "name": "Added To Cart",    
+              "eventName": "AddedTocart", 
+              "attrs": {                  
+                  "name": "product_sku",  
+                  "filter": "starts with",         
+                  "value": "10089712",    
+                  "type": "string"        
+                  }
+            }
+            ```
+
+            With "does not start with" operator:
+            ```json
+            {
+              "name": "Added To Cart",    
+              "eventName": "AddedTocart", 
+              "attrs": {                  
+                  "name": "product_sku",  
+                  "filter": "does not start with",
+                  "value": "10089712",    
+                  "type": "string"        
+                  }
+            }
+            ```
+
+            With "ends with" operator:
+            ```json
+            {
+              "name": "Added To Cart",    
+              "eventName": "AddedTocart", 
+              "attrs": {                  
+                  "name": "product_sku",  
+                  "filter": "ends with",         
+                  "value": "10089712",    
+                  "type": "string"        
+                  }
+            }
+            ```
+
+            With "does not end with" operator:
+            ```json
+            {
+              "name": "Added To Cart",    
+              "eventName": "AddedTocart", 
+              "attrs": {                  
+                  "name": "product_sku",  
+                  "filter": "does not end with",
+                  "value": "10089712",    
+                  "type": "string"        
+                  }
+            }
+            ```
+
+            With "in the following" operator:
+            ```json
+            {
+              "name": "Added To Cart",    
+              "eventName": "AddedTocart", 
+              "attrs": {                  
+                  "name": "product_sku",  
+                  "filter": "in the following",
+                  "value": ["10089711", "10089712", "10089713",]
+                  "type": "string"        
+                  }
+            }
+            ```
+
+            With "not in the following" operator:
+            ```json
+            {
+              "name": "Added To Cart",   
+              "eventName": "AddedTocart",
+              "attrs": {                 
+                  "name": "product_sku",
+                  "filter": "not in the following",
+                  "value": ["10089711", "10089712", "10089713",],
+                  "type": "string"        
+                  }
+            }
+            ```
+
+            With "exists" operator:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+              "attrs": {                 
+                  "name": "product_sku", 
+                  "filter": "exists",    
+                  "type": "string"       
+                  }
+            }
+            ```
+
+            With "does not exist" operator:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+              "attrs": {                 
+                  "name": "product_sku", 
+                  "filter": "does not exist",
+                  "type": "string"        
+                  }
+            }
+            ```
+
+            **With Numeric/Double Event Attribute Filter**
+
+            With "is equal to" operator:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+              "attrs": {
+                  "name": "product_price",
+                  "filter": "is equal to",
+                  "value": 999,
+                  "type": "numeric"
+                  }
+            }
+            ```
+
+            With "is not equal to" operator:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+              "attrs": {                  
+                  "name": "product_price",
+                  "filter": "is not equal to",      
+                  "value": 999,
+                  "type": "numeric"       
+                  }
+            }
+            ```
+
+            With "is between" operator:
+            ```json
+            {
+              "name": "Added To Cart",    
+              "eventName": "AddedTocart", 
+              "attrs": {                  
+                  "name": "product_price",
+                  "filter": "is between",    
+                  "value": "899,999",
+                  "type": "numeric"
+                  }
+            }
+            ```
+
+            With "is not between" operator:
+            ```json
+            {
+              "name": "Added To Cart",            
+              "eventName": "AddedTocart",         
+              "attrs": {                          
+                  "name": "product_price",        
+                  "filter": "is not between",
+                  "value": "899,999",
+                  "type": "numeric"
+                  }
+            }
+            ```
+            
+            With "is greater than" operator:
+            ```json
+            {
+              "name": "Added To Cart",    
+              "eventName": "AddedTocart", 
+              "attrs": {                  
+                  "name": "product_price",  
+                  "filter": "is greater than",         
+                  "value": 999,
+                  "type": "numeric"
+                  }
+            }
+            ```
+
+            With "is less than" operator:
+            ```json
+            {
+              "name": "Added To Cart",    
+              "eventName": "AddedTocart", 
+              "attrs": {                  
+                  "name": "product_price",  
+                  "filter": "is less than",
+                  "value": 999,
+                  "type": "numeric"
+                  }
+            }
+            ```
+
+            With "exists" operator:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+              "attrs": {                 
+                  "name": "product_price", 
+                  "filter": "exists",    
+                  "type": "numeric"       
+                  }
+            }
+            ```
+
+            With "does not exist" operator:
+            ```json
+            {
+              "name": "Added To Cart",
+              "eventName": "AddedTocart",
+              "attrs": {                 
+                  "name": "product_price", 
+                  "filter": "does not exist",
+                  "type": "numeric"        
+                  }
+            }
+            ```
           properties:
             name: { type: string }
             filter: 
@@ -1109,7 +1447,13 @@ components:
         campaignTags: 
           type: array
           items: { type: string }
-          description: "Used to add more context to campaigns. Context can be descriptive names or campaign themes such as onboarding, retention, country, and all users. Tags can also be used to filter campaigns or identify the behaviors of users who received these campaigns. The list of tags should be passed in this field."
+          description: |
+            Used to add more context to campaigns. Context can be descriptive names or campaign themes such as onboarding, retention, country, and all users. Tags can also be used to filter campaigns or identify the behaviors of users who received these campaigns. The list of tags should be passed in this field.
+            
+            For example,
+            ```json
+            “campaignTags“ : [“Transactional“, “Accounts“]
+            ```
         signature: 
           type: string
           description: "This field denotes the signature that is required to verify whether the client is authorized to make the API call. For more information, refer to Generate Authentication Signature."
@@ -1170,6 +1514,52 @@ components:
             * You can pass a single conversion goal or multiple conversion goals.
             * If you are passing multiple conversion goals, the first conversion goal in the list is considered the primary conversion goal for the campaign.
             * A Push campaign supports a maximum of five conversion goals on its list.
+            
+            **Single Conversion Goals vs. Multiple Conversion Goals**
+
+            You can pass a single conversion goal or multiple conversion goals. If you are passing multiple conversion goals, the first conversion goal in the list is considered the primary conversion goal for the campaign. A Push campaign supports a maximum of five conversion goals on its list.
+
+            Single Conversion Goal:
+            ```json
+            "conversionGoals": [
+              {
+                "name": "Added To Cart",
+                "eventName": "AddedTocart",
+                "attrs": {
+                    "name": "product_sku",
+                    "filter": "is",
+                    "value": "10089712",
+                    "type": "string"
+                    }
+              }
+            ]
+            ```
+            
+            Multiple Conversion Goals:
+            ```json
+            "conversionGoals": [
+              {
+                "name": "Added To Cart",
+                "eventName": "AddedTocart",
+                "attrs": {
+                    "name": "product_sku",
+                    "filter": "is",
+                    "value": "10089712",
+                    "type": "string"
+                    }
+              },
+              {
+                "name": "Order Placed",
+                "eventName": "OrderSuccess",
+                "attrs": {
+                    "name": "product_price",
+                    "filter": "is equal to",
+                    "value": 999,
+                    "type": "numeric"
+                    }
+              }
+            ]
+            ```
         advancedSettings:
           $ref: '#/components/schemas/AdvancedSettings'
           description: "This object contains information about advanced settings. For more information, refer to [Advanced Settings](/hc/en-us/articles/32986034181268#h_01JGZRM6BSGJ9VS3YWKB21DYFW)."
@@ -1194,4 +1584,4 @@ components:
           description: "This field indicates the campaign status."
         Error_Message: { type: string, example: "Campaign Name not found" }
         responseId: { type: string, description: "This field indicates the response ID." }
-        requestId: { type: string, description: "This field indicates the request ID." } 
+        requestId: { type: string, description: "This field indicates the request ID." }
