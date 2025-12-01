@@ -895,9 +895,61 @@ paths:
              * Segmentation and campaign have moved all of the data from merged user to retained user.
            **Rate limit**
             The rate limit is 1000 user updates per minute.
+            ### Postman Collections
+              We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/3182294-3c80e7c5-32a1-4279-b1bb-566c7d4c5588?action=share&creator=3182294) to view it in Postman. 
+              ### FAQs
+
+            * **Will the merged user information be available after using this API?**
+          
+           No, the merged user will get deleted after calling this API. All the user attributes and devices of the merged user will be transferred to the retained user.
+
+           * **What will happen to the reachability of the retained user?**
+          
+           The reachability status of the user will be recalculated based on the devices present after merging the user.
+
+             * **Can any two users be merged?**
+          
+            Any registered user present in the MoEngage system can be merged with another registered user irrespective of the source of creation.
+
+           * **Should both users have a device attached to them before merging?**
+          
+           Not necessarily; we allow the merging of users with or without devices.
+
+          * **Is there any restriction on the number of times a user can be merged?**
+          
+           No.
+ 
+            * **Is there any restriction on the number of devices a merged/retained should have?**
+          
+             No.
+
+          * **What happens to the `merged_user` after the merge?**
+          
+          This user will get deleted, and if any devices are attached to this user, they will be associated with the `retained_user`, and all the events and user details of `merged_user` will reflect on the `retained_user`. A merge event `MOE_USER_MERGE_EVENT` will be added to the `merged_user` (who will only have the MoEngage ID now).
+
+        * **What happens to `retained_user` after the merge?**
+        
+            The `retained_user` will now have all the user, device, and event details of `merged_user` along with details of `retained_user`, `MOE_USER_MERGED` will be added to `retained_user`.
+
+     * **What happens if a user creation request comes with the same `ID` as the deleted user (which is deleted after the merge)?**
+    
+       We will create a new user with that `ID`, but the MoEngage `ID` of this user will be different as compared to the deleted user.
+
+       * **What happens to the reachability if both users do not have devices?**
+       
+          The user will not be reachable.
+
+       * **What is the SLA to see user details reflect after the merge?**
+       
+           The maximum SLA is 30 minutes.
+
+        * **How are events copied from the merged user to the retained user?**
+        
+         In the user profile, all events of the last 30 days are moved from the merged user to the retained user.
+          
       description: The Merge User API merges two users in MoEngage based on their ID. ID is a client-defined identifier for a user. This API can be used when multiple profiles have been created for a single user. For example, a user registered once with a mobile number and once with an email id can be merged. Duplicate users created due to integration or tech issues can also be merged.
       parameters:
-        - name: appId
+        - name: app_id
           in: query
           required: true
           description: 	This is the Workspace ID of your MoEngage account that has to be passed along with the request. You can find your Workspace ID at Settings > Account > APIs > Workspace ID.
