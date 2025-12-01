@@ -1470,6 +1470,102 @@ components:
             - type: boolean
           description: "Send at high priority (legacy flag)."
 
+    PushRequest:
+      type: object
+      required:
+        - appId
+        - campaignName
+        - signature
+        - targetPlatform
+        - targetAudience
+        - payload
+        - campaignDelivery
+      properties:
+        appId: 
+          type: string
+          description: "This field denotes the app ID that you must pass to create the campaign. You can find it by selecting Settings > Account > APIs -> Workspace ID (earlier app id) on the MoEngage dashboard. MoEngage recommends that you test API integration in the Test Environment. The App ID for TEST ACCOUNT is suffixed with _DEBUG."
+        campaignName: 
+          type: string
+          minLength: 5
+          description: |
+            This field denotes the campaign name. The campaign name should be unique for All Users and Custom Segment campaigns.
+            Note:
+            * API automatically creates a campaign with the given name. You need not create a campaign from the dashboard to use the name.
+            * For User type targetAudience API requests, reuse this campaign name for requests that should be clubbed in the same campaign.
+        campaignTags: 
+          type: array
+          items: { type: string }
+          description: |
+            Used to add more context to campaigns. Context can be descriptive names or campaign themes such as onboarding, retention, country, and all users. Tags can also be used to filter campaigns or identify the behaviors of users who received these campaigns. The list of tags should be passed in this field.
+            
+            For example,
+            ```json
+            “campaignTags“ : [“Transactional“, “Accounts“]
+            ```
+        signature: 
+          type: string
+          description: "This field denotes the signature that is required to verify whether the client is authorized to make the API call. For more information, refer to Generate Authentication Signature."
+        requestType: 
+          type: string
+          default: "push"
+          description: "The value of this key is used to indicate the intention of an API request. The default value is push."
+        targetPlatform:
+          type: array
+          items:
+            type: string
+            enum: [ANDROID, IOS, WEB]
+          description: "This field denotes the platform devices that are targeted by your campaign. The Push API allows you to target users on Android, iOS, and Web platforms. You can target one or more platforms. If you want to send Web (Chrome) push notifications through the API, you should choose Web as the platform."
+        targetAudience:
+          type: string
+          enum: ["All Users", "Custom Segment", "User"]
+          description: |
+            This field denotes the target segment for the campaign. Supported values are:
+            * All Users: Pass this value to target all users of your App/Website.
+            * Custom Segment: Pass this value to target pre-created user segments. Custom segments can be created using the MoEngage dashboard or [custom segment API](https://developers.moengage.com/hc/en-us/articles/13277936457748-Create-Custom-Segment). Note that the custom segment name should exactly match the name of the target segment.
+            * User: Pass this value to target a user with an attribute. It will target a maximum of 100 users of the associated targetUserAttributes definition.
+        customSegmentName:
+          type: string
+          description: "Required if targetAudience is 'Custom Segment'."
+        targetUserAttributes:
+          $ref: '#/components/schemas/TargetUserAttributes'
+          description: |
+            This object contains the target user attribute details. For more information, refer to [Target User Attributes](/hc/en-us/articles/32986034181268#h_01JGZQ07FC9P3RHKXYJ67AJ9QV).
+            Note:
+            * This value is required when the targetAudience value is User.
+            * For API requests where the target audience is a specific user, if a campaign with the given name already exists, existing campaign data corresponding to the given name will be used to send notifications.
+            * Any edits in other parts of campaign data except payload within the API request parameters will be ignored.
+            * If any changes are required in the campaign data, change the campaign name in the API request to create a new campaign.
+        payload:
+          $ref: '#/components/schemas/Payload'
+          description: |
+            This object contains the payload details. Supported values are:
+            * Android. For more information, refer to [Android](/hc/en-us/articles/32986034181268#h_01JGZQJ15BBPB56MCAPZTNKASC).
+            * iOS. For more information, refer to [IOS](/hc/en-us/articles/32986034181268#01JGZQRNMF624JYWRH4T882JPR).
+            * Web. For more information, refer to [Web](/hc/en-us/articles/32986034181268#01JGZQRQTMXFC01DWTJZJAT2TQ).
+        campaignDelivery:
+          $ref: '#/components/schemas/CampaignDelivery'
+          description: |
+            This field helps decide when the campaign should be sent.
+            Note:
+            * All notifications targeted to a single user will be sent as soon as possible (ASAP).
+            * Scheduling campaigns for Later or Periodic is applied only for segmented or All users campaigns.
+            * The timezone field can be used to pass the timezone for scheduled campaigns. This is not mandatory, and if it is not passed, the default timezone will be set to IST (and not UTC/GMT).
+            * For more information on allowed timezone values, refer [here](https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98).
+        conversionGoals:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/ConversionGoal'
+          description: |
+            This object contains the conversion goals details. For more information, refer to [Conversion Goals](/hc/en-us/articles/32986034181268#h_01JGZRHWD1CSMSH1PB0P1K80GN).
+            Note:
+            * You can pass a single conversion goal or multiple conversion goals.
+            * If you are passing multiple conversion goals, the first conversion goal in the list is considered the primary conversion goal for the campaign.
+            * A Push campaign supports a maximum of five conversion goals on its list.
+        advancedSettings:
+          $ref: '#/components/schemas/AdvancedSettings'
+          description: "This object contains information about advanced settings. For more information, refer to [Advanced Settings](/hc/en-us/articles/32986034181268#h_01JGZRM6BSGJ9VS3YWKB21DYFW)."
+
     PushSuccessResponse:
       type: object
       properties:
