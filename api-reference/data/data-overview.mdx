@@ -3,7 +3,7 @@ title: "Overview"
 description: "Data API facilitates sending events and user details from your servers to the MoEngage servers. "
 ---
 
-Data API is a collection of the following APIs:
+Data API is a collection of the follmmmowing APIs:
 
 - [Track User API](https://moengage.mintlify.app/api-reference/user/create-or-update-user)
 - Get User API
@@ -69,48 +69,58 @@ The request body contains the mandatory field called `customer_id`. `customer_id
 - Associate the events with the corresponding unique user profiles in MoEngage.
 
 On receiving a Data API request in MoEngage, the `customer_id` is used to verify if the user exists in MoEngage. If the user does not exist, a new user is created with the attributes or events.
+
 <Note>
-  * The maximum limit for the request body is 128 KB.
-  * Any string of more than one characters is allowed for `customer_id` except the following values - ['unknown', 'guest', 'null', '0', '1', 'true', 'false', 'user_attribute_unique_id', '(empty)', 'na', 'n/a', '', 'dummy_seller_code', 'user_id', 'id', 'customer_id', 'uid', 'userid', 'none', '-2', '-1', '2']
+  - The maximum limit for the request body is 128 KB.
+  - Any string of more than one characters is allowed for `customer_id` except the following values - ['unknown', 'guest', 'null', '0', '1', 'true', 'false', 'user_attribute_unique_id', '(empty)', 'na', 'n/a', '', 'dummy_seller_code', 'user_id', 'id', 'customer_id', 'uid', 'userid', 'none', '-2', '-1', '2']
 </Note>
+
 For example, a user created using the following request is visible in the dashboard user profile as displayed.
-## Sample Request Body 
+
+## Sample Request Body
+
 Below is a sample request body for the Create User API:
- ```json
+
+```json
 {
 "type": "customer",
 "customer_id": "USERID1234",
 "attributes": {
-    "first_name":"John",
-    "name":"John Smith",
-    "plan_expiry_date":"2020-05-31T00:00:00Z",
-    "super_user":true,
-    "user_persona":"browsers",
-    "platforms" : [{"platform":"ANDROID", "active":"true"}]
-    }
+   "first_name":"John",
+   "name":"John Smith",
+   "plan_expiry_date":"2020-05-31T00:00:00Z",
+   "super_user":true,
+   "user_persona":"browsers",
+   "platforms" : [{"platform":"ANDROID", "active":"true"}]
+   }
 }
 ```
+
 <Note>
-  You can not use "moe_" as a prefix while naming events, event attributes, or user attributes. It is a system prefix and using it might result in periodic blacklisting without prior communication.
+  You can not use "moe\_" as a prefix while naming events, event attributes, or user attributes. It is a system prefix and using it might result in periodic blacklisting without prior communication.
 </Note>
+
 ## Supported Datetime Formats
 
 You can pass the datetime in the following formats in the request body:
 
-| Datetime Format | Example |
-| :--- | :--- |
+| Datetime Format                              | Example              |
+| :------------------------------------------- | :------------------- |
 | `“datetime_format”:YYYY-MM-DD[T]HH:mm:ss[Z]` | 2019-03-12T17:36:05Z |
-| `“datetime_format”: "YYYY-MM-DD"` | 2022-01-22 |
+| `“datetime_format”: "YYYY-MM-DD"`            | 2022-01-22           |
 
 <Note>
   MoEngage performs the following validation on datetime formats before ingesting data into its system:
 
-  * Future and past date values are accepted and ingested.
-  * Any date values with incorrect calendar values (e.g., 2019-15-12 where 15 is not a valid month) are ingested as strings.
-  * Any datetime values incompatible with the formats mentioned above are converted to strings and then ingested.
+  - Future and past date values are accepted and ingested.
+  - Any date values with incorrect calendar values (e.g., 2019-15-12 where 15 is not a valid month) are ingested as strings.
+  - Any datetime values incompatible with the formats mentioned above are converted to strings and then ingested.
 </Note>
+
 ## Response
+
 Response to the Data API is a JSON object. On a successful data API request, you will receive the following response:
+
 ```json
 {
   "status": "success",
@@ -118,7 +128,9 @@ Response to the Data API is a JSON object. On a successful data API request, you
   "request_id": "kXwpDESb"
 }
 ```
+
 On a failed data API request, you will receive the following response:
+
 ```json
 {
   "status": "fail",
@@ -129,100 +141,109 @@ On a failed data API request, you will receive the following response:
   }
 }
 ```
+
 ## Response Codes
+
 The following status codes and associated error messages are returned when the request results in a fatal error.
-| Error Code | Type | Message | Description |
-| :--- | :--- | :--- | :--- |
-| 400 | Missing header value | The Content-Type Header is required | The header value for content type is missing |
-| 400 | Empty request body | A valid JSON document is required | The request body is empty |
-| 400 | Malformed JSON | Could not decode the request body. The JSON was incorrect or not encoded as UTF-8. | The request JSON is not formed correctly |
-| 400 | Blacklisted | Your account is blacklisted, Please contact MoEngage. | Your App is blacklisted in MoEngage |
-| 400 | InvalidParams | Given app_id is invalid. | The App ID is invalid. |
-| 400 | ParamsRequired | app_id is required in path/query params. | App ID is missing in the path or query params. |
-| 400 | Empty request body | A valid JSON document is required | The request body is empty. |
-| 400 | Body type is not JSON | A valid JSON document is required. | String Payload. |
-| 400 | MissingAttributeError | {{key}} is expected to be {{datatype}} | The specified attributes are invalid |
-| 401 | Authentication Required | Authentication Header Required | Authentication header is missing from the request. |
-| 401 | Authentication required | No identity information found | Authentication header is empty. |
-| 401 | Authentication required | Invalid identity information found | Failure to decode app_key and app_secret. |
-| 401 | Authentication required | APP_KEY missing in the authentication header | App_key is not present in the authentication header. |
-| 401 | Authentication required | APP_SECRET missing in the authentication header | App_secret is not present in the authentication header. |
-| 401 | Authentication required | App Secret key mismatch. Please login to the dashboard to verify key | App secret key is wrong. |
-| 401 | Authentication required | Invalid APP_ID used in Authentication Header | You have used an invalid APP ID in the authentication header. |
-| 403 | Account Suspended | Account Suspended | Your account is suspended. |
-| 403 | Account Temporarily Suspended | Account Temporarily Suspended | Your account is suspended temporarily. |
-| 409 | Authentication Mismatch | App key mismatch in params and authentication | App_key in parameters and authentication does not match. |
-| 409 | Authentication required | App Secret key is not set. Please login to the dashboard to set a key | App Secret not set. |
-| 413 | Payload too large | The payload can not exceed 128KB | Request payload size is too large. |
-| 415 | Unsupported Media Type | Unsupported Media Type | Unsupported media type. |
-| 429 | Rate Limit Exceeded | Rate Limits for User / Event exceeded | You have exceeded the rate limits (number of users or events per minute) defined for your MoEngage account. |
-| 5xx | Server Error | Any other exception | This response is returned when the system runs into an unexpected error. We recommend that you retry every 2 seconds for a maximum of 5 times in such cases. |
+
+| Error Code | Type                          | Message                                                                            | Description                                                                                                                                                  |
+| :--------- | :---------------------------- | :--------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400        | Missing header value          | The Content-Type Header is required                                                | The header value for content type is missing                                                                                                                 |
+| 400        | Empty request body            | A valid JSON document is required                                                  | The request body is empty                                                                                                                                    |
+| 400        | Malformed JSON                | Could not decode the request body. The JSON was incorrect or not encoded as UTF-8. | The request JSON is not formed correctly                                                                                                                     |
+| 400        | Blacklisted                   | Your account is blacklisted, Please contact MoEngage.                              | Your App is blacklisted in MoEngage                                                                                                                          |
+| 400        | InvalidParams                 | Given app_id is invalid.                                                           | The App ID is invalid.                                                                                                                                       |
+| 400        | ParamsRequired                | app_id is required in path/query params.                                           | App ID is missing in the path or query params.                                                                                                               |
+| 400        | Empty request body            | A valid JSON document is required                                                  | The request body is empty.                                                                                                                                   |
+| 400        | Body type is not JSON         | A valid JSON document is required.                                                 | String Payload.                                                                                                                                              |
+| 400        | MissingAttributeError         | {key} is expected to be {datatype}                                                 | The specified attributes are invalid                                                                                                                         |
+| 401        | Authentication Required       | Authentication Header Required                                                     | Authentication header is missing from the request.                                                                                                           |
+| 401        | Authentication required       | No identity information found                                                      | Authentication header is empty.                                                                                                                              |
+| 401        | Authentication required       | Invalid identity information found                                                 | Failure to decode app_key and app_secret.                                                                                                                    |
+| 401        | Authentication required       | APP_KEY missing in the authentication header                                       | App_key is not present in the authentication header.                                                                                                         |
+| 401        | Authentication required       | APP_SECRET missing in the authentication header                                    | App_secret is not present in the authentication header.                                                                                                      |
+| 401        | Authentication required       | App Secret key mismatch. Please login to the dashboard to verify key               | App secret key is wrong.                                                                                                                                     |
+| 401        | Authentication required       | Invalid APP_ID used in Authentication Header                                       | You have used an invalid APP ID in the authentication header.                                                                                                |
+| 403        | Account Suspended             | Account Suspended                                                                  | Your account is suspended.                                                                                                                                   |
+| 403        | Account Temporarily Suspended | Account Temporarily Suspended                                                      | Your account is suspended temporarily.                                                                                                                       |
+| 409        | Authentication Mismatch       | App key mismatch in params and authentication                                      | App_key in parameters and authentication does not match.                                                                                                     |
+| 409        | Authentication required       | App Secret key is not set. Please login to the dashboard to set a key              | App Secret not set.                                                                                                                                          |
+| 413        | Payload too large             | The payload can not exceed 128KB                                                   | Request payload size is too large.                                                                                                                           |
+| 415        | Unsupported Media Type        | Unsupported Media Type                                                             | Unsupported media type.                                                                                                                                      |
+| 429        | Rate Limit Exceeded           | Rate Limits for User / Event exceeded                                              | You have exceeded the rate limits (number of users or events per minute) defined for your MoEngage account.                                                  |
+| 5xx        | Server Error                  | Any other exception                                                                | This response is returned when the system runs into an unexpected error. We recommend that you retry every 2 seconds for a maximum of 5 times in such cases. |
+
 ## User Attributes
-| Key name | Display name | Fetch through Get User API | Update through Track User API | Create through Track User API |
-| :--- | :--- | :--- | :--- | :--- |
-| publisher_name | Publisher Name | yes | no | yes |
-| campaign_name | Campaign Name | yes | no | yes |
-| t_rev | LTV | yes | no | no |
-| t_trans | No of Conversions | yes | no | no |
-| moe_ip_city | Last Known City | yes | no | no |
-| moe_ip_pin | Last Known Pincode | yes | no | no |
-| moe_ip_subdivision | Last Known State | yes | no | no |
-| moe_ip_country | Last Known Country | yes | no | no |
-| moe_dtzo | User Timezone Offset (Mins) | yes | no | no |
-| u_s_c | No. of Sessions | yes | no | no |
-| u_l_a | Last Seen | yes | no | yes |
-| cr_t | First Seen | yes | no | yes |
-| u_mb | Mobile Number (Standard) | yes | yes | yes |
-| uid | ID | yes | yes | yes |
-| u_bd | Birthday | yes | yes | yes |
-| u_em | Email (Standard) | yes | yes | yes |
-| locale_language_display | Local Language | yes | no | no |
-| locale_country_display | Local Country | yes | no | no |
-| uninstall_time | Uninstall time | yes | no | no |
-| installed | Install Status | yes | no | no |
-| moe_cr_from | User Creation Source | yes | no | no |
-| u_n | Name | yes | yes | yes |
-| u_ln | Last Name | yes | yes | yes |
-| u_gd | Gender | yes | yes | yes |
-| u_fn | First Name | yes | yes | yes |
-| geo | Geolocation | yes | no | no |
-| moe_wa_subscription | WhatsApp Subscription Status | yes | yes | yes |
-| moe_em_unsub_categories | Email Unsubscribed Categories | yes | yes | yes |
-| moe_gaid | Google Advertising ID (Android) | yes | no | yes |
-| advertising_identifier | Advertising Identifier (iOS &Windows) | yes | no | yes |
-| web subscription url | Web Push Subscription Page URL | - | - | - |
-| moe_sub_w | Web Push Subscription Status | yes | yes | yes |
-| moe_w_ds | Browser Details | yes | no | no |
-| moe_mweb | Mobile User | yes | no | yes |
-| moe_i_ov | OS Version iOS | - | - | - |
-| moe_it | Creation Source | no | no | no |
-| moe_spam | Spam | yes | yes | yes |
-| moe_unsubscribe | Unsubscribe | yes | yes | yes |
-| moe_hard_bounce | Hard Bounce | yes | yes | yes |
-| moe_rsp_android | Reachability Push Android | yes | no | no |
-| moe_rsp_ios | Reachability Push iOS | yes | no | no |
-| moe_rsp_web | Reachability Push Web | yes | no | no |
-| moe_rsu | Reachability Push | yes | no | no |
-| moe_sms_subscription | SMS Subscription Status | yes | yes | yes |
-| moe_ds_bts_push_hour | Best time to send Push | yes | no | no |
-| moe_ds_bts_email_hour | Best time to Email | yes | no | no |
-| moe_ds_bts_sms_hour | Best time to send SMS | yes | no | no |
-| moe_ds_mpc_best_channel | Most Preferred Channel | yes | no | no |
+
+| Key name                | Display name                          | Fetch through Get User API | Update through Track User API | Create through Track User API |
+| :---------------------- | :------------------------------------ | :------------------------- | :---------------------------- | :---------------------------- |
+| publisher_name          | Publisher Name                        | yes                        | no                            | yes                           |
+| campaign_name           | Campaign Name                         | yes                        | no                            | yes                           |
+| t_rev                   | LTV                                   | yes                        | no                            | no                            |
+| t_trans                 | No of Conversions                     | yes                        | no                            | no                            |
+| moe_ip_city             | Last Known City                       | yes                        | no                            | no                            |
+| moe_ip_pin              | Last Known Pincode                    | yes                        | no                            | no                            |
+| moe_ip_subdivision      | Last Known State                      | yes                        | no                            | no                            |
+| moe_ip_country          | Last Known Country                    | yes                        | no                            | no                            |
+| moe_dtzo                | User Timezone Offset (Mins)           | yes                        | no                            | no                            |
+| u_s_c                   | No. of Sessions                       | yes                        | no                            | no                            |
+| u_l_a                   | Last Seen                             | yes                        | no                            | yes                           |
+| cr_t                    | First Seen                            | yes                        | no                            | yes                           |
+| u_mb                    | Mobile Number (Standard)              | yes                        | yes                           | yes                           |
+| uid                     | ID                                    | yes                        | yes                           | yes                           |
+| u_bd                    | Birthday                              | yes                        | yes                           | yes                           |
+| u_em                    | Email (Standard)                      | yes                        | yes                           | yes                           |
+| locale_language_display | Local Language                        | yes                        | no                            | no                            |
+| locale_country_display  | Local Country                         | yes                        | no                            | no                            |
+| uninstall_time          | Uninstall time                        | yes                        | no                            | no                            |
+| installed               | Install Status                        | yes                        | no                            | no                            |
+| moe_cr_from             | User Creation Source                  | yes                        | no                            | no                            |
+| u_n                     | Name                                  | yes                        | yes                           | yes                           |
+| u_ln                    | Last Name                             | yes                        | yes                           | yes                           |
+| u_gd                    | Gender                                | yes                        | yes                           | yes                           |
+| u_fn                    | First Name                            | yes                        | yes                           | yes                           |
+| geo                     | Geolocation                           | yes                        | no                            | no                            |
+| moe_wa_subscription     | WhatsApp Subscription Status          | yes                        | yes                           | yes                           |
+| moe_em_unsub_categories | Email Unsubscribed Categories         | yes                        | yes                           | yes                           |
+| moe_gaid                | Google Advertising ID (Android)       | yes                        | no                            | yes                           |
+| advertising_identifier  | Advertising Identifier (iOS &Windows) | yes                        | no                            | yes                           |
+| web subscription url    | Web Push Subscription Page URL        | -                          | -                             | -                             |
+| moe_sub_w               | Web Push Subscription Status          | yes                        | yes                           | yes                           |
+| moe_w_ds                | Browser Details                       | yes                        | no                            | no                            |
+| moe_mweb                | Mobile User                           | yes                        | no                            | yes                           |
+| moe_i_ov                | OS Version iOS                        | -                          | -                             | -                             |
+| moe_it                  | Creation Source                       | no                         | no                            | no                            |
+| moe_spam                | Spam                                  | yes                        | yes                           | yes                           |
+| moe_unsubscribe         | Unsubscribe                           | yes                        | yes                           | yes                           |
+| moe_hard_bounce         | Hard Bounce                           | yes                        | yes                           | yes                           |
+| moe_rsp_android         | Reachability Push Android             | yes                        | no                            | no                            |
+| moe_rsp_ios             | Reachability Push iOS                 | yes                        | no                            | no                            |
+| moe_rsp_web             | Reachability Push Web                 | yes                        | no                            | no                            |
+| moe_rsu                 | Reachability Push                     | yes                        | no                            | no                            |
+| moe_sms_subscription    | SMS Subscription Status               | yes                        | yes                           | yes                           |
+| moe_ds_bts_push_hour    | Best time to send Push                | yes                        | no                            | no                            |
+| moe_ds_bts_email_hour   | Best time to Email                    | yes                        | no                            | no                            |
+| moe_ds_bts_sms_hour     | Best time to send SMS                 | yes                        | no                            | no                            |
+| moe_ds_mpc_best_channel | Most Preferred Channel                | yes                        | no                            | no                            |
+
 ## Dashboard User Profile
+
 On sending data through the data API, it will be populated in the user profile as shown below:
 
 img
+
 ## Limits
+
 The Data API is designed to handle high volumes of data across our customer base. We enforce API limits to ensure responsible use of the API. The following table describes the recommended rate limits of the Data APIs:
-| API Name | Rate Limit | Description |
-| :--- | :--- | :--- |
-| Track User | 10,000 users/min | A single API request contains one or more user updates. Maintain a rate limit of 10,000 user updates per minute. |
-| Create Event | 30,000 events/min | A single API request contains one or more events. Maintain a rate limit of 30,000 events per minute. |
-| Track Device | 10,000 devices/min | A single API request contains one or more device updates. Maintain a rate limit of 10,000 device updates per minute. |
-| Bulk Import | 10,000 users/min 30,000 events/min | A single bulk import API contains users, devices, and events together. Send a maximum of 10,000 users and 30,000 events per minute across all API requests. |
+
+| API Name     | Rate Limit                         | Description                                                                                                                                                 |
+| :----------- | :--------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Track User   | 10,000 users/min                   | A single API request contains one or more user updates. Maintain a rate limit of 10,000 user updates per minute.                                            |
+| Create Event | 30,000 events/min                  | A single API request contains one or more events. Maintain a rate limit of 30,000 events per minute.                                                        |
+| Track Device | 10,000 devices/min                 | A single API request contains one or more device updates. Maintain a rate limit of 10,000 device updates per minute.                                        |
+| Bulk Import  | 10,000 users/min 30,000 events/min | A single bulk import API contains users, devices, and events together. Send a maximum of 10,000 users and 30,000 events per minute across all API requests. |
+
 <Note>
-
-* The values mentioned above are default limits. If your requirement exceeds these limits, you can get in touch with the MoEngage support team to increase the limits.
-* Make sure to adhere to the Fair Usage Policy (FUP) for high-frequency user data ingestion. This is mandatory to prevent disruption to data processing in your workspace. For more information, refer to the [Fair Usage Policy (FUP)](https://help.moengage.com/hc/en-us/articles/24151864954644-Fair-Usage-Policy-FUP).
-
+  - The values mentioned above are default limits. If your requirement exceeds these limits, you can get in touch with the MoEngage support team to increase the limits.
+  - Make sure to adhere to the Fair Usage Policy (FUP) for high-frequency user data ingestion. This is mandatory to prevent disruption to data processing in your workspace. For more information, refer to the [Fair Usage Policy (FUP)](https://help.moengage.com/hc/en-us/articles/24151864954644-Fair-Usage-Policy-FUP).
 </Note>
