@@ -467,7 +467,7 @@ paths:
       # - description: Detailed explanation. Use Markdown.
       description: |-
         Creates a new push campaign with specified content, audience, and delivery settings.
-        <br><br>*Rate limits*: 5/min, 25/hour, 100/day.
+        <br /><br />*Rate limits*: 5/min, 25/hour, 100/day.
 
       # - tags: Group related endpoints.
       tags:
