@@ -1,109 +1,83 @@
-title: "Content Blocks Overview" description: "Fetch, create, and update reusable content blocks programmatically using the MoEngage Content Block API."
+---
+title: "Content Blocks Overview"
+description: "Fetch, create, and manage reusable content blocks programmatically using the MoEngage Content Block API."
+---
 
 ## Overview
 
-Content blocks allow marketers to reuse the same content across multiple campaigns. For example, a block might be a repeatedly used header, footer, or designed call-to-action button.
+Content blocks allow marketers to reuse the same content across multiple campaigns. Instead of recreating standard elements for every message, you can create a block once—such as a header, footer, or a designed call-to-action button—and reference it everywhere.
 
-This API enables you to programmatically fetch, create, and update content blocks on your MoEngage dashboard, ensuring brand consistency and reducing manual effort across teams.
+This API enables you to programmatically fetch, create, and update these content blocks on your MoEngage dashboard. 
 
 <Info>
-  If this API is not enabled for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team to request enablement.
+  Content blocks support nested structures. You can include existing blocks within new ones to create complex, modular templates. [Read more about Content blocks in MoEngage](https://help.moengage.com/hc/en-us/articles/4414768369172-Content-blocks-).
 </Info>
 
-## Content Blocks API Endpoints
+## Content Block API Endpoints
 
-The Content Blocks API consists of the following operations:
+The Content Block API consists of the following operations:
 
-- Create Content Block
-- Update Content Block
-- Get Specific Content Blocks
-- Search Content Blocks
+- [Create Content Block](/api-reference/content-blocks/create)
+- [Update Content Block](/api-reference/content-blocks/update)
+- [Get Specific Content Blocks](/api-reference/content-blocks/get-by-ids)
+- [Search Content Blocks](/api-reference/content-blocks/search)
 
 ## Supported Content Types
 
-Type 
+| Content Type | Description |
+| :--- | :--- |
+| **HTML** | Rich text and code-based content, ideal for Email campaigns. |
+| **TEXT** | Plain text content, ideal for SMS or Push notifications. |
 
-| | | |
-| --- | --- | --- |
-| | | |
-| | | |
+## Data Center Configuration
 
-Description
+The API endpoint varies based on your MoEngage Data Center (DC). Replace `{dc}` in the base URL with your specific DC number (e.g., `api-01`, `api-02`, etc.).
 
-HTML
+**Base URL:** `https://api-0{dc}.moengage.com/v1/external/campaigns`
 
-Rich text or designed blocks using HTML tags.
-
-TEXT
-
-Plain text content for simple messages or SMS-style blocks.
-
-Content Block Status
-
-Status
-
-Description
-
-ACTIVE
-
-Block is available for use in active campaigns.
-
-DRAFT
-
-Block is under creation and not yet available for campaigns.
-
-ARCHIVED
-
-Block is no longer in use but preserved for history.
-
-Key Concepts
+## Notes
 
 <Note>
-  Nested Content Blocks: MoEngage supports nesting content blocks within each other. When creating or updating a block that contains other blocks, ensure you pass the names of the nested blocks in the content_block_used array to maintain proper dependency mapping.
+**Authentication:**
+All requests must include the `MOE-APPKEY` in the header. You can find your Workspace ID (App Key) in the MoEngage Dashboard under **Settings** -> **Account** -> **APIs**.
 </Note>
 
 <Note>
-  Team-Based Access: If your account uses Teams, passing team_ids is mandatory. This ensures the content block is available to the correct users within your organization. Refer to the Teams documentation for more details.
+**Teams & Permissions:**
+If your account has **Teams** enabled, passing `team_ids` is mandatory during creation to ensure the block is accessible to the correct users.
 </Note>
 
-FAQs
+## FAQs
 
-Management & Configuration
-
+### Managing Content Blocks
 <AccordionGroup>
+  <Accordion title="How do I use nested content blocks via API?">
+    When creating or updating a block, use the `content_block_used` array. Provide the names of the existing content blocks you are nesting within the new block. If not using nesting, pass an empty array: `[]`.
+  </Accordion>
+
   <Accordion title="What is the difference between content and raw_content?">
-    raw_content represents the original, non-personalized content provided during creation. The content field returned in search/get responses typically represents the processed version. When fetching specific blocks, you can use the is_raw_content_required flag to specifically retrieve the source content for further editing.
+    `raw_content` refers to the original, non-personalized content provided during creation. When fetching blocks by ID, you can set `is_raw_content_required` to `true` to retrieve this original version for editing purposes.
   </Accordion>
-  <Accordion title="How do I uniquely identify a content block?">
-    You can use the label field as a unique identifier for your content blocks. While the id is a system-generated MongoDB-style string, the label is often more readable for programmatic logic.
+
+  <Accordion title="Can I archive a content block via API?">
+    The API supports `ACTIVE` and `DRAFT` statuses during creation/update. While the search API can filter for `ARCHIVED` blocks, status transitions to 'Archived' should typically be managed via the MoEngage Dashboard.
   </Accordion>
-  <Accordion title="Can I use images in my content blocks?">
-    Yes. When creating a block, you can pass an array of image URIs in the images_used field. This helps in tracking asset dependencies within the MoEngage ecosystem.
+
+  <Accordion title="Can I search for blocks created by a specific user?">
+    Yes. The Search API allows you to filter results using the `updated_by` field, which accepts an array of user email addresses.
   </Accordion>
 </AccordionGroup>
 
-Search & Retrieval
-
+### Personalization & Images
 <AccordionGroup>
-  <Accordion title="Can I search for blocks updated by a specific user?">
-    Yes. The Search API allows you to filter by updated_by using an array of email addresses. This is useful for auditing changes made by specific team members.
+  <Accordion title="Does this API support personalization syntax?">
+    Yes. You can include Jinja personalization (user attributes, event attributes, etc.) within the `raw_content` string. The syntax is identical to what is supported in the MoEngage dashboard.
   </Accordion>
-  <Accordion title="Is it possible to fetch multiple specific blocks in one call?">
-    Yes. Use the Get Specific Content Blocks endpoint and pass a list of IDs in the ids array. This is more efficient than calling the API individually for every block.
-  </Accordion>
-  <Accordion title="How do I filter search results by status?">
-    You can provide an array of statuses (e.g., ["ACTIVE", "ARCHIVED"]) in the search filters to narrow down your results to only relevant blocks.
+
+  <Accordion title="How do I track which images are used in a block?">
+    The `images_used` field accepts an array of URIs. This allows you to programmatically associate specific image assets with a content block for better asset management.
   </Accordion>
 </AccordionGroup>
 
-Personalization
-
-<AccordionGroup>
-  <Accordion title="Can I include Jinja personalization in content blocks?">
-    Yes. You can include Jinja syntax for user attributes, event attributes, and more within the raw_content. When the block is eventually rendered within a campaign, MoEngage will process the Jinja logic.
-  </Accordion>
-</AccordionGroup>
-
-Postman Collections
-
-We have made it easy for you to test the APIs. Click here to view the MoEngage Postman workspace.
+## Postman Collections
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/folder/3182294-c560e43e-4e5e-4d1c-a100-f5f5070780b1) to view our official Postman collections.
