@@ -1,0 +1,85 @@
+---
+title: "Catalog Overview"
+description: "Manage product and item catalogs, define attributes, and handle bulk item ingestion using the MoEngage Catalog API."
+---
+
+## Overview
+The MoEngage Catalog API allows you to programmatically manage product and item catalogs. Use these endpoints to create new catalogs, define custom schemas, and perform bulk operations for ingesting, updating, or deleting items.
+
+<Info>
+  **Authentication Requirement:** This API requires **Basic Auth** (Workspace ID as username and API Key as password) AND the `MOE-APPKEY` header. Ensure both are provided for every request.
+</Info>
+
+## Catalog API Endpoints
+The Catalog API consists of the following operations:
+- [Create a New Catalog](/api-reference/catalog/createCatalog)
+- [Add Catalog Attributes](/api-reference/catalog/addCatalogAttributes)
+- [Ingest Items into the Catalog](/api-reference/catalog/ingestCatalogItems)
+- [Update Existing Items](/api-reference/catalog/updateCatalogItems)
+- [Delete Existing Items](/api-reference/catalog/deleteCatalogItems)
+
+## API Constraints & Limits
+| Feature | Limit |
+|---------|-------|
+| **Rate Limit** | 100 requests/minute OR 1000 requests/hour |
+| **Max Payload Size** | 5MB (requires `Content-Length` header) |
+| **Batch Size** | Max 50 items per Ingest/Update/Delete request |
+| **Max Attributes** | 50 attributes per catalog |
+| **Max Catalogs** | 35 catalogs per account |
+
+## Supported Data Types
+When defining attributes or ingesting items, ensure the values match these supported types:
+| Type | Description |
+|------|-------------|
+| `string` | Textual data |
+| `bool` | Boolean (true/false) |
+| `double` | Numeric/Floating point values |
+| `datetime` | Date and time format |
+| `geopoint` | Geographical coordinates |
+
+## Notes
+<Note>
+**Mandatory Attributes:**
+Every catalog item must include the following four mandatory attributes as strings:
+- `id`: The unique identifier for the item.
+- `title`: The name of the item.
+- `link`: The deep link or URL to the item page.
+- `image_link`: The URL of the primary product image.
+</Note>
+
+<Note>
+**Catalog ID Management:**
+The `catalog_id` returned upon successful creation is a UUID. You must store this ID as it is required as a path parameter for all subsequent item management requests.
+</Note>
+
+## FAQs
+
+### Catalog Management
+<AccordionGroup>
+  <Accordion title="What happens if I try to create a catalog with a name that already exists?">
+    The API will return a `409 Conflict` error with the error code `duplicate-catalog-name`. Catalog names must be unique within your workspace.
+  </Accordion>
+  <Accordion title="Can I add new attributes to a catalog after it has been created?">
+    Yes, you can use the **Add Catalog Attributes** (PATCH) endpoint. Note that if you send attributes that already exist in the schema, they will be ignored and listed in the `duplicate-item-attributes` array in the response.
+  </Accordion>
+  <Accordion title="What is the maximum number of custom attributes I can define?">
+    You can define up to 50 attributes per catalog, including the 4 mandatory attributes.
+  </Accordion>
+</AccordionGroup>
+
+### Item Ingestion & Updates
+<AccordionGroup>
+  <Accordion title="How does the API handle partial failures during bulk ingestion?">
+    The API returns a `200 OK` with a detailed breakdown. The response body will include a `valid` count and an `invalid` count with a `details` array specifying which `document_ids` failed and why (e.g., data type mismatch or missing attributes).
+  </Accordion>
+  <Accordion title="Can I update an item ID?">
+    No. The `id` is the primary key. To change an ID, you must delete the existing item and ingest it as a new item.
+  </Accordion>
+  <Accordion title="Is there a limit to how many items I can delete at once?">
+    Yes, the bulk-delete endpoint supports a maximum of 50 item IDs per request.
+  </Accordion>
+</AccordionGroup>
+
+## Postman Collections
+Test these endpoints immediately using our Postman collection. 
+[<button>View Postman Collection</button>](https://www.postman.com/moengage-dev/workspace/api-docs)
