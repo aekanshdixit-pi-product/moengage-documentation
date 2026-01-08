@@ -72,3 +72,49 @@ The response codes are shared in **wxyzab** format as described below: **w** - S
 - **y** - Request is considered for parallel request (parallel requests is indicated with 0 and fallback requests are indicated with 1)
 - **z** - Can this request be retried by you(0 indicates it cannot be retried with same details)
 - **ab** - Reason details for the error
+
+Below are the Category details:
+
+| Category Code | Details                           |
+| :------------ | :-------------------------------- |
+| 1             | Unauthorized                      |
+| 2             | Bad Request                       |
+| 4             | Internal Server Error / Ratelimit |
+
+The Reason details are given below with each Reason Code holding specific meanings:
+
+| Reason Code | Details                     |
+| :---------- | :-------------------------- |
+| 1           | Invalid Credentials         |
+| 2           | Invalid Alert ID            |
+| 3           | Missing Transaction ID      |
+| 4           | Duplicate Transaction ID    |
+| 5           | Long Transaction ID         |
+| 6           | Invalid Payload             |
+| 7           | Personalisation Attribute   |
+| 9           | Internal Server Error       |
+| 10          | Rate Limit                  |
+| 11          | Personalisation Failed      |
+| 12          | Invalid Recipient details   |
+| 13          | Vendor configuration errors |
+| 14          | Vendor not available        |
+| 15          | Vendor Payload Rejection    |
+| 16          | Unexpected Error Occurred   |
+| 17          | Invalid Origin Source       |
+
+### Payload Errors Before Accepting the API Request
+
+The list of the payload errors that can occur before accepting the API request and the equivalent response codes to be shared under HTTP status code **4xx** for different scenarios across each functionality is given below:
+
+| Payload Errors | Description | Scenarios | Response Codes | Resolution |
+| :--- | :--- | :--- | :--- | :--- |
+| **Authorization Failure** | This error occurs when invalid authorization details such as App Key (Workspace ID) or Password are shared. | No Auth values passed.<br />Incorrect Auth Values Passed<br />Incorrect Password shared.<br />No Auth & No Key Passed<br />No App key shared / Empty App Key<br />Incorrect App Key shared | `{"message": "Authorization Failed", "err_code": "UNAUTHORIZED"}` | Recheck the authorization details listed in Settings / Check if you passed the Test Alert ID on Live Endpoint. |
+| **Invalid Alert ID** | This error occurs when an invalid Alert ID or external reference name is shared. | Missing Alert ID<br />Alert ID &lt;24 characters<br />Alert ID > 24 Characters<br />Invalid Alert ID | `{"message": "Invalid Alert ID", "err_code": "BAD_REQUEST", "status_code": 120002}` | Recheck the Alert ID or external reference name listed on the Info page. |
+| **Invalid Transaction ID** | This error occurs when the Transaction ID is not shared. | Missing Transaction ID | `{"message": "Invalid Transaction ID", "err_code": "BAD_REQUEST", "status_code": 120003}` | Share the transaction ID using the key name `transaction_id` as part of the API Call. |
+| **Long Transaction ID** | This error occurs when the Transaction ID is invalid. | Long Transaction ID | `{"message": "Long Transaction ID", "err_code": "BAD_REQUEST", "status_code": 120004}` | Reduce the length of the Transaction ID to 50 characters. |
+| **Duplicate Transaction ID** | This error occurs when the currently shared Transaction ID matches the previous one in the last 5 minutes. | Duplicate Transaction ID | `{"message": "Duplicate Transaction ID", "err_code": "DUPLICATE_REQUEST_RECEIVED", "status_code": 120105}` | Add a unique Transaction ID. |
+| **Invalid Payload** | This error occurs when the payload is in incorrect JSON format or when incorrect Channel details are shared. | Invalid JSON / Invalid Class<br />Channel Attribute is incorrect / Channel details missing | `{"message": "Invalid Payload", "err_code": "BAD_REQUEST", "status_code": 120006}` | Recheck the JSON format and the Channel details.<br />Sample payload is available on our Info page. |
+| **Personalisation Attribute Max length** | This error occurs when the Personalization Attribute length is greater than 1500 characters. | - | `{"message": "Personalisation attribute limit exceeded - {x}", "err_code": "BAD_REQUEST", "status_code": 120007}` | Reduce the length of the Personalization Attribute to 1500 characters / payload size of &lt;100 KB |
+| **Invalid Recipient** | This error occurs when the recipient details like mobile number or email address are invalid. | - | `{"message": "Invalid Recipient", "err_code": "BAD_REQUEST", "status_code": 120012}` | Recheck the recipient details in the API call or the User Profile. |
+| **Internal Server Error** | This error occurs when MoEngage is not able to resolve the API request. | - | `{"message": "Unexpected error occurred", "err_code": "Internal Server Error", "status_code": 140109}` | Retry using the same API call with a different Transaction ID. |
+| **Rate Limit** | This error occurs when you cross the Rate Limit. | - | `{"message": "Too many requests", "err_code": "Rate Limit", "status_code": 140110}` | Make API calls within the Rate Limit. |
