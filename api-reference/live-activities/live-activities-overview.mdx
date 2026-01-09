@@ -1,0 +1,69 @@
+---
+title: "Live Activities Overview"
+description: "Initiate, update, and terminate shared real-time activities for iOS users using MoEngage Broadcast Live Activities."
+---
+
+## Overview
+
+Broadcast Live Activities enables brands to manage shared, real-time experiences for large audiences on iOS. This is ideal for live sporting events, election tracking, or breaking news where multiple users need to see the same real-time updates on their lock screens or Dynamic Island.
+
+<Info>
+  Live Activities can only be managed for push campaigns created with the **BROADCAST_LIVE_ACTIVITY** delivery type via the [Create Push Campaigns API](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns). These campaigns cannot be created through the MoEngage Dashboard UI.
+</Info>
+
+## Broadcast Live Activities Endpoints
+
+This API suite consists of the following operations:
+
+- [**Start Broadcast Live Activity**](/api-reference/live-activities/start): Initiates the shared activity and sends the initial content to the target audience.
+- [**Update Broadcast Live Activity**](/api-reference/live-activities/update): Pushes unified updates (e.g., score changes) to all subscribed devices.
+- [**End Broadcast Live Activity**](/api-reference/live-activities/end): Terminates the activity session across all devices.
+
+## Supported Channels & Platforms
+
+| Feature           | Platform Support         |
+| :---------------- | :----------------------- |
+| **Channel**       | Push                     |
+| **Platform**      | iOS (Requires iOS 16.1+) |
+| **Delivery Type** | BROADCAST_LIVE_ACTIVITY  |
+
+## Rate Limits
+
+To ensure system stability, the following rate limits are applied per workspace:
+
+| Endpoint            | Limit                                                      |
+| :------------------ | :--------------------------------------------------------- |
+| **Start Activity**  | 5 requests per minute                                      |
+| **Update Activity** | 500 requests per minute (Max 5/min per unique Activity ID) |
+| **End Activity**    | 500 requests per minute (Max 5/min per unique Activity ID) |
+
+## Important Notes
+
+<Note>
+  **Payload Size:** The maximum payload size for iOS Live Activity updates is **5120 bytes**. Exceeding this will result in a `413 Payload Too Large` error.
+</Note>
+
+<Note>
+  **Lifecycle Management:**
+
+  - **Stale Date:** Use this to indicate when content is no longer relevant without dismissing the activity.
+  - **Dismissal Date:** Ensure this is a future epoch timestamp. If set in the past, the activity will end immediately.
+</Note>
+
+## FAQs
+
+<AccordionGroup>
+  <Accordion title="Can I use this for Android?">
+    No. Live Activities are a native iOS feature. This API specifically targets iOS devices supporting the ActivityKit framework.
+  </Accordion>
+  <Accordion title="What is the difference between broadcast_live_activity_id and instance_id?">
+    The `broadcast_live_activity_id` refers to the overarching campaign ID created via the Push API. The `instance_id` is an optional field you can provide to track a specific session or prevent duplicate requests for the same event.
+  </Accordion>
+  <Accordion title="How do I personalize the content?">
+    Content is updated via the `content_state` JSON object. The keys within this object must match the `ContentState` struct defined in your iOS application code.
+  </Accordion>
+</AccordionGroup>
+
+## Postman Collection
+
+Test these endpoints quickly by importing our Postman collection: [View in Postman](https://www.postman.com/moengage-dev/api-docs/folder/etd05kq/start-live-activity)
