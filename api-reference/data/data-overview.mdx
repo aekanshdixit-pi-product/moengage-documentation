@@ -269,3 +269,85 @@ The Data API is designed to handle high volumes of data across our customer base
     Please use the [Delete User API](https://developers.moengage.com/hc/en-us/articles/19988085160980-Delete-User) to delete existing users in MoEngage.
   </Accordion>
 </AccordionGroup>
+
+### Get User
+
+<AccordionGroup>
+  <Accordion title="How do I know which users are available to export and which users are not available in MoEngage to export?" icon="sparkles">
+    All available users will be found in the `users` key, and users not available will be found in the `users_not_found` key. Please refer to the sample response in this doc.
+  </Accordion>
+  <Accordion title="What if I want to get all the user data available based on the user IDs without specifying the fields?" icon="sparkles">
+    If the `user_fields_to_export` is not passed, then all custom attributes and exportable standard attributes will be returned. For specific fields, `user_fields_to_export` needs to be passed along with the list of required fields.
+  </Accordion>
+</AccordionGroup>
+
+### Merge User
+
+<AccordionGroup>
+  <Accordion title="Will the merged user information be available after using this API?" icon="sparkles">
+    No, the merged user will get deleted after calling this API. All the user attributes and devices of the merged user will be transferred to the retained user.
+  </Accordion>
+  <Accordion title="What will happen to the reachability of the retained user?" icon="sparkles">
+    The reachability status of the user will be recalculated based on the devices present after merging the user.
+  </Accordion>
+  <Accordion title="Can any two users be merged?" icon="sparkles">
+    Any registered user present in the MoEngage system can be merged with another registered user irrespective of the source of creation.
+  </Accordion>
+  <Accordion title="Should both users have a device attached to them before merging?" icon="sparkles">
+    Not necessarily; we allow the merging of users with or without devices.
+  </Accordion>
+  <Accordion title="Is there any restriction on the number of times a user can be merged?" icon="sparkles">
+    No.
+  </Accordion>
+  <Accordion title="Is there any restriction on the number of devices a merged/retained user should have?" icon="sparkles">
+    No.
+  </Accordion>
+  <Accordion title="What happens to the merged_user after the merge?" icon="sparkles">
+    This user will get deleted, and if any devices are attached to this user, they will be associated with the `retained_user`. All events and user details of the `merged_user` will reflect on the `retained_user`. A merge event `MOE_USER_MERGE_EVENT` will be added to the `merged_user` (who will only have the MoEngage ID now).
+  </Accordion>
+  <Accordion title="What happens to the retained_user after the merge?" icon="sparkles">
+    The `retained_user` will now have all the user, device, and event details of the `merged_user` along with its own existing details. A `MOE_USER_MERGED` event will be added to the `retained_user`.
+  </Accordion>
+  <Accordion title="What happens if a user creation request comes with the same ID as the deleted user?" icon="sparkles">
+    We will create a new user with that ID, but the MoEngage ID of this user will be different compared to the deleted user.
+  </Accordion>
+  <Accordion title="What happens to the reachability if both users do not have devices?" icon="sparkles">
+    The user will not be reachable.
+  </Accordion>
+  <Accordion title="What is the SLA to see user details reflect after the merge?" icon="sparkles">
+    The maximum SLA is 30 minutes.
+  </Accordion>
+  <Accordion title="How are events copied from the merged user to the retained user?" icon="sparkles">
+    In the user profile, all events of the last 30 days are moved from the merged user to the retained user.
+  </Accordion>
+</AccordionGroup>
+
+### Delete User
+
+<AccordionGroup>
+  <Accordion title="Can you reverse a delete operation?" icon="sparkles">
+    There are no rollback mechanisms for undoing the delete action. Once the delete request is processed, the user is deleted from MoEngage.
+  </Accordion>
+  <Accordion title="Are the events of the users also deleted as well?" icon="sparkles">
+    No, the events corresponding to a user are not specifically deleted; only the user and the user attributes are deleted when the delete API request is processed.
+
+    However, once the user is deleted from MoEngage, the events corresponding to the user will not be accessible. For example, if an event is used in a segmentation query, the deleted user who executed that event will not be added to the calculated segment or campaign.
+  </Accordion>
+  <Accordion title="How do you check if a user has been deleted from MoEngage?" icon="sparkles">
+    Navigate to **Segment** -\> **Create Segment** on the MoEngage Dashboard. Type the unique identifier for the deleted user (ID, MoEngage ID, phone number, email, or any unique identifier you have configured). If the user has been deleted (hard delete), you will not see any search results. For more information about searching users, refer to [Search User in Segmentation].
+  </Accordion>
+</AccordionGroup>
+
+### Create Event
+
+<AccordionGroup>
+  <Accordion title="How to identify the events to a given user? What identifiers can I use?" icon="sparkles">
+    Events in the payload need to be mapped to a given user who has executed the event. You must use the Customer ID to identify the events mapped to a customer.
+  </Accordion>
+  <Accordion title="Can I send events for anonymous users?" icon="sparkles">
+    No, anonymous users can be tracked using MoEngage SDKs.
+  </Accordion>
+  <Accordion title="Can events be updated/modified?" icon="sparkles">
+    Events in MoEngage are immutable, meaning events can only be created; they cannot be updated or deleted.
+  </Accordion>
+</AccordionGroup>
