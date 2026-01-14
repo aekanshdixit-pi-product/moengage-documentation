@@ -2,31 +2,50 @@ openapi: 3.0.3
 info:
   title: MoEngage Catalog API
   description: |
-    This API allows for the management of catalogs, including creation, attribute management, and item ingestion, updates, and deletion.
-    Authentication is handled via Basic Auth, and all requests require a `MOE-APPKEY` header.
-    The API has a rate limit of 100 requests/minute or 1000 requests/hour, with a maximum payload size of 5MB.
+    This API allows for the management of product and item catalogs, including **creation**, **attribute definition**, and **item ingestion, updates, and deletion**.
+
+    Authentication is handled via **Basic Auth** (using your Workspace ID as username and API Key as password), and all requests additionally require the `MOE-APPKEY` header (Workspace ID).
+    
+    The API has a platform-wide rate limit of **100 requests/minute OR 1000 requests/hour**, with a maximum payload size of **5MB**.
+  x-mint:
+    content: |
+      #example 500 max #
   version: '1.0'
 servers:
   - url: 'https://api-{dc}.moengage.com/v1'
     variables:
       dc:
         default: '01'
-        description: 'The data center number for your account (e.g., 01, 02, 03).'
+        description: 'The data center number for your account (e.g., 01, 02, 03). Refer to the MoEngage documentation for mapping.'
 tags:
   - name: Catalog
-    description: Operations related to creating and managing catalog schemas.
+    description: Operations related to creating and managing catalog schemas (attributes).
   - name: Items
     description: Operations related to ingesting, updating, and deleting items within a catalog.
+security:
+  - basicAuth: [] # Basic Auth for API Key/Secret
+
 paths:
   /catalog:
     post:
       tags:
         - Catalog
-      summary: Create Catalog
+      summary: Create a New Catalog
       operationId: createCatalog
       description: |
-        Creates a new catalog with a unique name and specifies the necessary attributes along with their respective data types.
-        The catalog name must be unique.
+        This API allows you to create a new catalog with a unique name and specify the necessary attributes along with their respective data types.
+      x-mint:
+        content: |
+          ### Rate Limit Information
+          Request limit - 100/min OR 1000/hr.
+          Payload size limit - 5MB only when Content-Length header is provided.
+      parameters:
+        - name: MOE-APPKEY
+          in: header
+          description: "Your Workspace ID (earlier APP ID). This is a separate input field."
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -62,14 +81,54 @@ paths:
                 properties:
                   catalog_id:
                     type: string
-                    description: The unique ID for the newly created catalog.
+                    description: |
+                      The unique ID corresponding to a successful catalog creation.
+                      This ID must be stored by you and used as a path parameter
+                      for all subsequent item ingestion and modification requests.
                     example: "6a4d7b0f-9e3c-4b1a-8f6e-2d9c0b1a3e5d"
+              example:
+                catalog_id: "{{Catalog_id}}"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request - Validation or logic error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                duplicate-name:
+                  summary: Duplicate Catalog Name
+                  value:
+                    error-code: "duplicate-catalog-name"
+                    message: "Catalog name already exists. Please use a different name for your catalog and try again."
+                invalid-datatype:
+                  summary: Invalid Data Type
+                  value:
+                    error-code: "invalid-request"
+                    message: >
+                      The data type provided for some of the attributes is invalid.
+                      Provided value: <provided datatype> You can add attributes
+                      with valid data types - [bool, double, string, datetime, geopoint] only
+                missing-attributes:
+                  summary: Missing Mandatory Attributes
+                  value:
+                    error-code: "missing-mandatory-attributes"
+                    message: "You must include mandatory attributes: id, title, link, and image_link with string data type and try again. Invalid or absent attributes: <missing attributes>"
+                catalog-limit-exceeded:
+                  summary: Catalog Limit Exceeded
+                  value:
+                    error-code: "catalog-limit-exceeded"
+                    message: "You have exceeded the total limit of 35 catalogs for your account. You need to delete unused catalogs from the dashboard and try again."
+                attribute-limit-exceeded:
+                  summary: Attribute Limit Exceeded
+                  value:
+                    error-code: "attribute-limit-exceeded"
+                    message: "Your catalog has exceeded the maximum limit of 50 attributes per catalog. Please reduce the number of attributes and try again."
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound' # Reference added as requested
         '409':
           description: Conflict - A catalog with the provided name already exists.
           content:
@@ -80,7 +139,14 @@ paths:
                 error-code: "duplicate-catalog-name"
                 message: "Catalog name already exists. Please use a different name for your catalog and try again."
         '413':
-          $ref: '#/components/responses/PayloadTooLarge'
+          description: Payload Too Large - Attribute limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error-code: "too-many-attributes"
+                message: "Maximum allowed attributes is 50"
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /catalog/{catalog_id}/attributes:
@@ -90,8 +156,12 @@ paths:
       summary: Add Catalog Attributes
       operationId: addCatalogAttributes
       description: |
-        Adds new attributes to an existing catalog's schema. If any provided attributes already exist, they are ignored.
-        Up to 50 total attributes are allowed per catalog.
+        You can use this API to add new attributes to the catalog. If the API request contains attributes that already exist, they will not be added again.
+      x-mint:
+        content: |
+          ### Rate Limit Information
+          Request limit - 100/min OR 1000/hr.
+          Payload size limit - 5MB only when Content-Length header is provided.
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -119,7 +189,7 @@ paths:
                       type: "double"
       responses:
         '202':
-          description: Accepted. The request was processed. Some attributes might have been duplicates.
+          description: Accepted. The request was processed. The response contains a list of attributes that were already present and ignored.
           content:
             application/json:
               schema:
@@ -133,9 +203,21 @@ paths:
                     description: A list of attributes that already existed in the catalog and were ignored.
                     items:
                       type: string
-                    example: ["color"]
+                    example: ["colour", "weight"]
+              example:
+                success: true
+                duplicate-item-attributes:
+                  - colour
+                  - weight
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad Request - Attribute already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error-code: "attribute-exists"
+                message: "Attribute already exists in the catalog"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -143,16 +225,29 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '413':
-          $ref: '#/components/responses/PayloadTooLarge'
+          description: Payload Too Large - Maximum attributes exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error-code: "too-many-attributes"
+                message: "Maximum allowed attributes is 50"
         '429':
           $ref: '#/components/responses/TooManyRequests'
   /catalog/{catalog_id}/items:
     post:
       tags:
         - Items
-      summary: Ingest Catalog Items
+      summary: Ingest Items into the Catalog
       operationId: ingestCatalogItems
-      description: Adds new items to an existing catalog. A maximum of 50 items can be ingested per request.
+      description: |
+        You can use this API to ingest items into an existing catalog as long as the attributes provided during ingestion match the attributes provided during catalog creation.
+      x-mint:
+        content: |
+          ### Rate Limit Information
+          Request limit: 100/min OR 1000/hr. You can ingest up to 50 items per request.
+          Payload size limit: 5MB (only when Content-Length header is provided).
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -167,16 +262,44 @@ paths:
                 items:
                   type: array
                   maxItems: 50
-                  description: An array of item objects to add to the catalog.
+                  description: An array of item objects to add to the catalog. Each item must contain the mandatory attributes (`id`, `title`, `link`, `image_link`).
                   items:
                     $ref: '#/components/schemas/CatalogItem'
       responses:
         '200':
-          description: OK. The ingestion request was processed. The response body contains details on valid and invalid items.
+          description: OK. The ingestion request was processed. The response body contains details on valid and invalid item counts.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IngestUpdateResponse'
+              example:
+                message:
+                  valid:
+                    count: 1
+                  invalid:
+                    count: 8
+                    details:
+                      - error-id: duplicate-item-ids
+                        message: "Item ids within a catalog must be unique. Please ensure your request contains unique item ids for the given catalog and try again."
+                        count: 1
+                        document_ids:
+                          - '567890'
+                      - error-id: missing-mandatory-attributes
+                        message: "Your must include mandatory attributes: id, title, link, and image_link with string data type and try again."
+                        count: 1
+                        document_ids:
+                          - '567890'
+                      - error-id: invalid-datatype-attribute
+                        message: "The provided item attribute {attribute name} with value {attribute value} can't be converted to the data type {data type} as defined in the catalog schema."
+                        count: 1
+                        document_ids:
+                          - '7523675'
+                      - error-id: invalid-item-attribute
+                        message: "The provided item attribute is not part of the defined catalog schema. Please check your catalog schema and try again. Undefined attributes: shipping_price"
+                        count: 2
+                        document_ids:
+                          - '312'
+                          - '8291379'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -192,9 +315,15 @@ paths:
     patch:
       tags:
         - Items
-      summary: Update Catalog Items
+      summary: Update Existing Items in a Catalog
       operationId: updateCatalogItems
-      description: Updates existing items with new attribute values. A maximum of 50 items can be updated per request.
+      description: |
+        You can use this API to update items with new attribute values. Attributes must adhere to the data type defined and only 50 items are allowed to be updated in a single request.
+      x-mint:
+        content: |
+          ### Rate Limit Information
+          Request limit: 100/min OR 1000/hr. You can update up to 50 items per request.
+          Payload size limit: 5MB (only when Content-Length header is provided).
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -212,13 +341,39 @@ paths:
                   description: An array of item updates. Each object must contain the item `id` and the `attributes` to update.
                   items:
                     $ref: '#/components/schemas/ItemUpdate'
+            example:
+              items:
+                - id: Existing_item_ID
+                  attributes:
+                    attribute_name: updated_value
+                - id: test2
+                  attributes:
+                    price: 98
       responses:
         '200':
-          description: OK. The update request was processed. The response body contains details on valid and invalid items.
+          description: OK. The update request was processed. The response body contains details on valid and invalid item counts.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IngestUpdateResponse'
+              example:
+                message:
+                  valid:
+                    count: 1
+                  invalid:
+                    count: 8
+                    details:
+                      - error-id: item-not-found
+                        message: "Item with id %s not found in the catalog. Please check the item id and try again."
+                        count: 1
+                        document_ids:
+                          - '567890'
+                      - error-id: invalid-attributes
+                        message: "Some of the attributes are not defined in the catalog schema: (shipping_city)"
+                        count: 2
+                        document_ids:
+                          - '312'
+                          - '8291379'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -235,9 +390,15 @@ paths:
     post:
       tags:
         - Items
-      summary: Bulk Delete Catalog Items
+      summary: Delete Existing Items
       operationId: deleteCatalogItems
-      description: Deletes up to 50 existing items from a catalog in a single request.
+      description: |
+        You can use this API to delete existing items in a given catalog. Only 50 items are allowed to be deleted in a single request.
+      x-mint:
+        content: |
+          ### Rate Limit Information
+          Request limit: 100/min OR 1000/hr. You can delete up to 50 items per request.
+          Payload size limit: 5MB (only when Content-Length header is provided).
       parameters:
         - $ref: '#/components/parameters/CatalogIdPath'
       requestBody:
@@ -256,9 +417,12 @@ paths:
                   items:
                     type: string
                     example: "item_id_123"
+            example:
+              items:
+                - "{{item_ID}}"
       responses:
         '202':
-          description: Accepted. The delete request was processed successfully.
+          description: Accepted. The bulk delete request was processed successfully.
           content:
             application/json:
               schema:
@@ -279,6 +443,12 @@ paths:
                           count:
                             type: integer
                             description: The number of items that were not found and could not be deleted.
+              example:
+                message:
+                  valid:
+                    count: 0
+                  invalid:
+                    count: 10
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -291,24 +461,34 @@ paths:
           $ref: '#/components/responses/PayloadTooLarge'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-  parameters:
+      description: |
+        Basic Authentication sends a Base64-encoded string containing your username and password.
+        
+        You can obtain the username and password from the MoEngage Dashboard:
+        1.  Navigate to **Settings > Account > APIs**.
+        2.  **Username**: Copy the **Workspace ID**.
+        3.  **Password**: Copy the **Catalog API** key.
     AppKeyHeader:
-      name: MOE-APPKEY
+      type: apiKey
       in: header
-      required: true
-      description: The Workspace ID from your MoEngage dashboard.
-      schema:
-        type: string
+      name: MOE-APPKEY
+      description: |
+        This is the Workspace ID (earlier APP ID) of your MoEngage workspace. This header is mandatory for all requests.
+        
+        You can find your MoEngage Workspace ID in the MoEngage Dashboard:
+        **Settings > Account > APIs > Workspace ID**
+  parameters:
     CatalogIdPath:
       name: catalog_id
       in: path
       required: true
-      description: The unique identifier for the catalog.
+      description: The unique identifier for the catalog, obtained during catalog creation.
       schema:
         type: string
   schemas:
@@ -343,7 +523,13 @@ components:
         attributes:
           type: array
           maxItems: 50
-          description: An array defining the schema of attributes for this catalog. 'id', 'title', 'link', and 'image_link' are mandatory.
+          description: |
+            An array defining the schema of attributes for this catalog.
+            
+            **title** - name of the item (string)
+            **link** - weblink of the item (string)
+            **id** - unique ID of that represent this item item (string)
+            **image_link** - image source link of this item (string)
           items:
             $ref: '#/components/schemas/AttributeDefinition'
     CatalogItem:
@@ -356,14 +542,19 @@ components:
       properties:
         id:
           type: string
+          description: The unique identifier for the catalog item.
         title:
           type: string
+          description: The title or name of the catalog item.
         link:
           type: string
           format: uri
+          description: The deep link or URL to the item's page.
         image_link:
           type: string
           format: uri
+          description: The URL of the primary image for the item.
+      # Allows for all other user-defined attributes based on AttributeDefinition
       additionalProperties: true
       example:
         id: "item-sku-123"
@@ -371,8 +562,8 @@ components:
         link: "https://example.com/products/item-123"
         image_link: "https://example.com/images/item-123.jpg"
         brand_attribute: "Super Tech"
-        in_stock: 10
-        original_price: 19.99
+        in_stock: true
+        price: 19.99
     ItemUpdate:
       type: object
       required:
@@ -384,7 +575,10 @@ components:
           description: The unique ID of the item to update.
         attributes:
           type: object
-          description: A key-value map of attributes to update for the item.
+          description: |
+            A key-value map of attributes to update for the item. The keys
+            must match existing attributes in the catalog schema, and values
+            must match the defined data types.
           additionalProperties: true
           example:
             price: 24.99
@@ -423,17 +617,21 @@ components:
                     properties:
                       error-id:
                         type: string
+                        description: A unique ID indicating the type of ingestion/update failure.
                         example: "duplicate-item-ids"
                       message:
                         type: string
+                        description: The reason for the failure.
                         example: "Item ids within a catalog must be unique."
                       count:
                         type: integer
+                        description: The number of items that failed due to this specific error.
                         example: 1
                       document_ids:
                         type: array
                         items:
                           type: string
+                        description: The IDs of the items that failed.
                         example: ["item_id_xyz"]
   responses:
     BadRequest:
@@ -442,9 +640,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-          example:
-            error-code: "invalid-request"
-            message: "The data type provided for some of the attributes is invalid."
+          examples:
+            invalid-datatype:
+              value:
+                error-code: "invalid-request"
+                message: "The data type provided for some of the attributes is invalid."
+            invalid-json:
+              value:
+                error-code: "invalid-request"
+                message: "The request body is not a valid JSON. Please provide a valid JSON request body."
+            limit-exceeded:
+              value:
+                error-code: "invalid-request"
+                message: "items size should be greater than 0 and less than or equal to 50"
     Unauthorized:
       description: Unauthorized - The request does not have valid authentication credentials.
       content:
@@ -455,7 +663,7 @@ components:
             error-code: "request-unauthenticated"
             message: "Your request is unauthorized. Please verify your credentials and try again."
     Forbidden:
-      description: Forbidden - The client does not have access rights to the content.
+      description: Forbidden - The client does not have access rights to the Catalog APIs.
       content:
         application/json:
           schema:
@@ -464,7 +672,7 @@ components:
             error-code: "request-denied"
             message: "Your account does not have access to the Catalog APIs."
     NotFound:
-      description: Not Found - The specified resource could not be found.
+      description: Not Found - The specified resource (catalog) could not be found.
       content:
         application/json:
           schema:
@@ -482,19 +690,10 @@ components:
             error-code: "payload-size-exceeded"
             message: "Your payload size exceeds the 5MB limit. Please reduce the payload size and try again."
     TooManyRequests:
-      description: Too Many Requests - The rate limit for the API has been exceeded.
-      headers:
-        x-ratelimit-limit:
-          schema:
-            type: integer
-          description: The maximum number of requests permitted in the time window.
-        x-ratelimit-remaining:
-          schema:
-            type: integer
-          description: The number of requests remaining in the current window.
-        x-ratelimit-reset:
-          schema:
-            type: integer
-          description: The UTC epoch seconds at which the current window resets.
-security:
-  - basicAuth: []
+      description: |
+        Too Many Requests - The rate limit for the API has been exceeded.
+        
+        The following headers are returned in case of rate-limit breach:
+        * **x-ratelimit-limit (integer)**: The maximum number of requests that the consumer is permitted to make in a given time window.
+        * **x-ratelimit-remaining (integer)**: The number of requests remaining in the current rate limit window.
+        * **x-ratelimit-reset (integer)**: The time at which the current rate limit window resets in UTC epoch seconds.

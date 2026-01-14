@@ -1,0 +1,250 @@
+---
+title: "Campaigns Overview"
+description: "Create and manage Push and Email campaigns programmatically using the MoEngage Campaigns API."
+---
+
+## Overview
+
+The MoEngage Campaigns API allows you to create and manage Push and Email campaigns programmatically. Use these endpoints to automate campaign creation, update existing campaigns, control campaign status, and retrieve campaign details.
+
+<Info>
+If this API is not enabled for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team to request enablement.
+</Info>
+
+## Campaigns API Endpoints
+
+Campaigns API is a collection of the following APIs:
+
+- [Create Campaign](/api-reference/campaigns/campaigns#create_campaign)
+- [Update Campaign](/api-reference/campaigns/campaigns#update_campaign)
+- [Change Campaign Status](/api-reference/campaigns/campaigns#change_campaign_status)
+- [Search Campaigns](/api-reference/campaigns/campaigns#search_campaigns)
+- [Get Campaign Meta](/api-reference/campaigns/campaigns#get_campaign_meta)
+- [Get Child Campaigns](/api-reference/campaigns/campaigns#get_child_campaigns)
+- [Test Campaign](/api-reference/campaigns/campaigns#test_campaign)
+- [Personalized Preview](/api-reference/campaigns/campaigns#personalized_preview)
+
+## Supported Channels
+
+| Channel | Platforms |
+|---------|-----------|
+| **Push** | Android, iOS, Web |
+| **Email** | Email |
+
+## Supported Delivery Types
+
+| Delivery Type | Push | Email |
+|---------------|------|-------|
+| ONE_TIME | ✓ | ✓ |
+| PERIODIC | ✓ | ✓ |
+| EVENT_TRIGGERED | ✓ | ✓ |
+| BUSINESS_EVENT_TRIGGERED | ✓ | ✓ |
+| DEVICE_TRIGGERED | ✓ | ✗ |
+| LOCATION_TRIGGERED | ✓ | ✗ |
+| BROADCAST_LIVE_ACTIVITY | ✓ (iOS only) | ✗ |
+
+
+## Notes
+
+<Note>
+**Request ID Guidelines:**
+- After successful campaign creation, do not reuse the same `request_id` for **1 hour** (Push) or **1 day** (Email)
+- If campaign creation fails, you can immediately retry with the same `request_id`
+</Note>
+
+<Note>
+**Update Restrictions:**
+- You can only update campaigns created via the API, not campaigns created through the MoEngage Dashboard
+- Campaigns in **Stopped** or **Archived** state cannot be updated
+</Note>
+
+## FAQs
+
+### Create Email Campaign
+
+<AccordionGroup>
+  <Accordion title="How can I personalize the campaign created through this API?">
+    You can use user attributes, event attributes, product sets, content API, and content block for personalizing campaigns. The syntax of the personalization Jinja is the same as supported in the MoEngage dashboard.
+  </Accordion>
+  <Accordion title="Is there any way to ensure multiple campaigns with the same payload are not created?">
+    MoEngage dedups the campaign using the request ID. If the same request ID is passed twice in 24 hours, the second campaign creation will fail.
+  </Accordion>
+  <Accordion title="How are these campaigns displayed on the UI?">
+    Campaigns are displayed under the same delivery type with which the campaigns are created through this API. For example, One-Time, Periodic, and so on.
+  </Accordion>
+  <Accordion title="Can I pass template ID and HTML content together in the content object?">
+    No, only one of the two is required for creating the campaign. If both are passed, the campaign creation will display an error.
+  </Accordion>
+  <Accordion title="How do I create a campaign using a custom segment?">
+    To create a campaign that uses a custom segment, include the `segmentation_details` in your campaign creation request. Within `included_filters`, set the `filter_type` to "custom_segments" and provide the ID of your custom segment.
+
+    The following code snippet shows how to incorporate a custom segment:
+
+    ```json
+    "segmentation_details": {
+      "included_filters": {
+        "filter_operator": "and",
+        "filters": [
+          {
+            "filter_type": "custom_segments",
+            "name": "segment",
+            "id": "{{id}}"
+          }
+        ]
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Create Push Campaign
+
+<AccordionGroup>
+  <Accordion title="Can I create a Push campaign for just one platform?">
+    Yes. You can create a Push campaign for a single platform such as Android, iOS, or Web. You can also create campaigns for a combination of these platforms.
+  </Accordion>
+  <Accordion title="How do I get the template ID required in the Push campaign payload?">
+    Use the [Search Push Template API](/api-reference/templates/search-push-template) and pass a request parameter such as the template name, created by, or any other supported parameter to retrieve the template ID in the response.
+  </Accordion>
+  <Accordion title="How do I decide which fields to include in the content section?">
+    Select a template type, such as Stylized Basic, Timer, or any other available option. Then, refer to the template's requirements and include all fields marked as mandatory for that template type.
+  </Accordion>
+  <Accordion title="How do I create a campaign using a custom segment?">
+    To create a campaign that uses a custom segment, include the `segmentation_details` in your campaign creation request. Within `included_filters`, set the `filter_type` to "custom_segments" and provide the ID of your custom segment.
+
+    The following code snippet shows how to incorporate a custom segment:
+
+    ```json
+    "segmentation_details": {
+      "included_filters": {
+        "filter_operator": "and",
+        "filters": [
+          {
+            "filter_type": "custom_segments",
+            "name": "segment",
+            "id": "{{id}}"
+          }
+        ]
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Update Push Campaign
+
+<AccordionGroup>
+  <Accordion title="Can I change the template type in an active campaign?">
+    The template type can be modified for the required platforms, and new content needs to be provided for the updated template type.
+  </Accordion>
+  <Accordion title="Can I add or remove the platform in an active campaign?">
+    The platform can be added or removed during the update of the campaigns. You need to provide content for the new platform added to the campaign.
+  </Accordion>
+  <Accordion title="When does the updated content get started sending out to users?">
+    The updated campaign starts sending out as soon as changes are done, except for Event-triggered campaigns. In Event-triggered campaigns, details are cached and take up to 30 mins to send the updated campaign.
+  </Accordion>
+</AccordionGroup>
+
+### Update Email Campaign
+
+<AccordionGroup>
+  <Accordion title="Can I update the segmentation audience when the campaign is in Active state?">
+    No, you cannot update the segmentation audience after the campaign is in Active state. You can update the segmentation audience if the campaign is in Scheduled state or create a duplicate by stopping the existing campaign to pass new segmentation details.
+  </Accordion>
+  <Accordion title="When does the updated campaign start sending out to the users?">
+    The updated campaign starts sending out as soon as changes are done except for Event-triggered campaigns. In Event-triggered campaigns, details are cached and take up to 30 mins to send the updated campaign.
+  </Accordion>
+  <Accordion title="How can I fetch the campaign ID of the campaign to be updated?">
+    You must call the "GET" API by the campaign name, channel, or any other filters to fetch the campaign ID of the desired campaign. For more information, refer to [Search Campaigns](/api-reference/campaigns/campaigns#search_campaigns).
+  </Accordion>
+</AccordionGroup>
+
+### Search Campaigns - Push
+
+<AccordionGroup>
+  <Accordion title="Can I fetch flow campaign node information for the Push channel?">
+    Yes. To fetch flow node campaigns, you must pass the `include_child_campaigns` key value as `true`.
+  </Accordion>
+  <Accordion title="How do I identify which campaign is from a flow?">
+    Use the `flow_name` and `flow_id` keys in the response. These keys indicate that the campaign is part of a flow.
+  </Accordion>
+  <Accordion title="If I pass One_Time as an input to the API, which campaigns will be available in the response?">
+    The response will include all flow node campaigns, regardless of the flow delivery type, and Engage campaigns with a delivery type of `one_time`.
+  </Accordion>
+</AccordionGroup>
+
+### Search Campaigns - SMS
+
+<AccordionGroup>
+  <Accordion title="Can I fetch flow campaign node information for the SMS channel?">
+    Yes. To fetch flow node campaigns, you must pass the `include_child_campaigns` key value as `true`.
+  </Accordion>
+  <Accordion title="How do I identify which campaign is from a flow?">
+    Use the `flow_name` and `flow_id` keys in the response. These keys indicate that the campaign is part of a flow.
+  </Accordion>
+  <Accordion title="Can I fetch campaign information for a specific sender?">
+    No, we currently do not have any filter in the request body for the sender name.
+  </Accordion>
+  <Accordion title="Can I fetch archived campaign information?">
+    Yes. To fetch archived campaigns, you must pass the `include_archived_campaigns` key value as `true`.
+  </Accordion>
+</AccordionGroup>
+
+### Test Push Campaign
+
+<AccordionGroup>
+  <Accordion title="Can I send the test push to IDs that are not part of MoEngage?">
+    Yes, you can send the test campaign to any user by passing identifier as "Email". The campaign sent will not be personalized.
+  </Accordion>
+  <Accordion title="How does personalization work if I pass only a subset of user attribute values used under the content for personalization?">
+    The values passed under personalization details will be used for all users to whom the test campaign is to be sent and the remaining user attributes values will be picked up from the user profile.
+  </Accordion>
+</AccordionGroup>
+
+### Test Email Campaign
+
+<AccordionGroup>
+  <Accordion title="Can I send the test email to IDs that are not part of MoEngage?">
+    Yes, you can send the test campaign to any user by passing identifier as "Email". The campaign sent will not be personalized.
+  </Accordion>
+  <Accordion title="How does personalization work if I pass only a subset of user attribute values used under the content for personalization?">
+    The values passed under personalization details will be used for all users to whom the test campaign is to be sent and the remaining user attributes values will be picked up from the user profile.
+  </Accordion>
+</AccordionGroup>
+
+### Get Campaign Meta
+
+<AccordionGroup>
+  <Accordion title="Can I get the exact reachability of scheduled campaigns?">
+    No, reachability is an estimated value that may vary over time due to factors such as app installations, uninstalls, or changes in email subscription status.
+  </Accordion>
+  <Accordion title="Can reachability be refreshed with every API call?">
+    No, reachability is calculated once daily and cached for 24 hours. Multiple API calls within the same day will return the cached value.
+  </Accordion>
+</AccordionGroup>
+
+### Personalized Preview
+
+<AccordionGroup>
+  <Accordion title="Can I use a custom template in the Personalization Preview? If yes, what will the output be?">
+    Yes, you can use custom templates with the Personalization Preview. The API will personalize the content within the template based on the user identifier provided and return the personalized HTML as a response.
+  </Accordion>
+  <Accordion title="Can I use an event to personalize content in the Personalization Preview?">
+    Yes, you can pass event details as input to the API. Ensure the event name matches the one in your workspace.
+  </Accordion>
+</AccordionGroup>
+
+### Change Campaign Status
+
+<AccordionGroup>
+  <Accordion title="Can I stop the periodic campaign using this API?">
+    Periodic campaign only supports Pause and Resume actions of the campaign. You can stop only One-time campaigns.
+  </Accordion>
+  <Accordion title="Can I stop the One-time campaign that is in the sending state?">
+    No, after the One-time campaign moved to the Active state, you cannot stop it.
+  </Accordion>
+</AccordionGroup>
+
+## Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/folder/3182294-c560e43e-4e5e-4d1c-a100-f5f5070780b1?action=share&creator=3182294&ctx=documentation) to view the Postman collection.

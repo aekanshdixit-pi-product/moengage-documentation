@@ -1,88 +1,223 @@
 openapi: 3.0.3
 info:
-  title: MoEngage Coupon List API
+  title: Coupon List API 🏷️
   description: |
     API for managing coupon lists within the MoEngage system. This includes creating, fetching, updating, activating, archiving lists, uploading coupon files, managing files, and generating usage reports.
-    Authentication is via Basic Auth.
+    Authentication is via Basic Auth using your **Workspace ID** as username and an **API Key** as password.
   version: '1.0'
 servers:
-  - url: 'https://api-{dc}.moengage.com/v1'
+  - url: 'https://api-0{dc}.moengage.com/v1'
+    description: The MoEngage Coupon Management API endpoint. The **X** in the URL is replaced by the data center number (e.g., 1, 2, 3).
     variables:
       dc:
-        default: '01'
-        description: 'The data center number for your account (e.g., 01, 02, 03).'
+        default: '1'
+        description: The data center number (e.g., 1, 2, 3). Check the data center mapping page to find your value.
 tags:
   - name: Coupon Lists
-    description: Operations related to managing coupon lists (collections of coupon codes).
+    description: Operations related to defining, managing status (active/archive), and modifying coupon list metadata.
   - name: Coupon Files
-    description: Operations related to managing files containing coupon codes associated with a list.
+    description: Operations related to uploading coupon codes via files and checking/managing file processing status.
   - name: Reports
-    description: Operations related to generating reports for coupon lists.
+    description: Operations related to generating usage reports for coupon lists.
 paths:
   /coupon-list:
     post:
       tags:
         - Coupon Lists
-      summary: Create Coupon List
+      summary: Create a Coupon List
       operationId: createCouponList
       description: |
-        Creates a new coupon list definition. Coupons need to be added separately using the Upload Coupons API.
+        This API enables you to organize unique, single-use coupon codes within the system. It allows you to create and organize distinct lists for different coupon code categories.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            This API creates the coupon list with basic specifications only. The coupons should be added using [Upload the Coupons](/hc/en-us/articles/31560826909204) API to this coupon list before utilizing it in campaigns.
+          </Note>
+
+          ### Rate Limit
+          You can create 100 coupon lists per day.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateCouponListRequest'
-            example:
-              name: "signup_coupons_2024"
-              label: "Signup Coupons 2024"
-              created_by: "api_user@example.com"
-              email_alert_subscribers": ["ops@example.com"]
-              expires_at: "2024-12-31"
-              alert_conditions:
-                success_alert: true
-                failure_alert: true
-                expiry_alert:
-                  alert: true
-                  days_before: 7
-                coupon_shortage_alert:
-                  alert: true
-                  threshold_count: 100
       responses:
         '201':
-          description: Coupon list created successfully.
+          description: |
+            Success
+            Indicates that the request is successful and the coupon list creation request is accepted.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CouponList'
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: This field consists of the unique name of the coupon list corresponding to a successful coupon list creation request.
+                  label:
+                    type: string
+                    description: This field consists of the label name for the coupon list corresponding to a successful coupon list creation request.
+                  expires_at:
+                    type: string
+                    description: This field consists of the expiry date of the coupon list in yyyy-mm-dd format corresponding to a successful coupon list creation request.
+                  created_by:
+                    type: string
+                    description: This field consists of the user name who created the coupon list corresponding to a successful coupon list creation request.
+                  email_alert_subscribers:
+                    type: array
+                    items:
+                      type: string
+                    description: This field consists of the email address of the coupon list subscriber corresponding to a successful coupon list creation request.
+                  alert_conditions:
+                    type: object
+                    description: This field consists of the alert conditions and the statuses specified while creating the coupon list.
+                  status:
+                    type: string
+                    description: Once the coupon list creation request is accepted, the list status will show ACTIVE.
+                  _id:
+                    type: string
+                    description: This field contains the unique ID corresponding to a successful coupon list creation request. This ID is used as a parameter for fetching, updating, or archiving coupon lists.
+              example:
+                name: "Example Name"
+                label: "Sample Label"
+                expires_at: "2024-10-31T18:29:00"
+                created_by: "John"
+                email_alert_subscribers:
+                  - "john.doe@example.com"
+                alert_conditions:
+                  success_alert: true
+                  failure_alert: true
+                  expiry_alert:
+                    alert: true
+                    days_before: 1
+                  coupon_shortage_alert:
+                    alert: true
+                    threshold_count: 10
+                status: "ACTIVE"
+                _id: "6721d00eefc476c0f67e0d05"
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                duplicate_name:
+                  summary: Duplicate Name
+                  value:
+                    error:
+                      code: "duplicate-coupon-list-name"
+                      message: "The coupon list name already exists. Please enter a unique name and try again."
+                duplicate_label:
+                  summary: Duplicate Label
+                  value:
+                    error:
+                      code: "duplicate-coupon-list-label"
+                      message: "The coupon list label already exists. Please enter a unique label and try again."
+                missing_attributes:
+                  summary: Missing Attributes
+                  value:
+                    error:
+                      code: "missing-mandatory-attributes"
+                      message: "Missing mandatory key. Please verify and try again."
+                invalid_request:
+                  summary: Invalid Request
+                  value:
+                    error:
+                      code: "invalid-request"
+                      message: "The requested JSON is incorrect. Please verify and try again."
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Please verify your credentials and try again."
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Please contact the MoEngage team for further assistance."
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests - The rate limit for the API has been exceeded.
+            
+            The following headers are returned in case of rate-limit breach:
+            * `x-ratelimit-limit` (integer): The maximum number of requests that the consumer is permitted to make in a given time window.
+            * `x-ratelimit-remaining` (integer): The number of requests remaining in the current rate limit window.
+            * `x-ratelimit-reset` (integer): The time at which the current rate limit window resets in UTC epoch seconds.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
     get:
       tags:
         - Coupon Lists
       summary: Fetch All Coupon Lists
       operationId: fetchAllCouponLists
-      description: Retrieves all coupon lists in the workspace, optionally filtered by status. Defaults to ACTIVE status if not specified.
+      description: |
+        This API serves all created coupon lists in a specific workspace. By default, this API returns the coupon lists marked with an *ACTIVE* status. In return, it offers detailed specifications of the active coupon lists, respective configurations, statuses, expiry dates, and alert conditions, including on-time data on the total coupons added and those that are currently available. This ensures efficient management and accessibility of up-to-date coupon list information.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            There is no request body or content to send for this request except for the headers and parameters.
+          </Note>
+
+          ### Rate Limit
+          You can fetch 10,000 coupon lists per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - name: status
           in: query
           required: false
-          description: Filter lists by status. If omitted, returns all lists (or defaults to ACTIVE based on description).
+          description: |
+            This field contains an array of all the coupons with their respective attributes based on the following statuses you provide in the request parameter:
+            
+            * ACTIVE - to view only active coupon lists
+            * ARCHIVED - to view only archived coupon lists
+            * EXPIRED - to view only expired coupon lists
+            
+            **Note**: Not specifying any status will display all the existing coupon lists together.
           schema:
             type: string
             enum: [ACTIVE, ARCHIVED, EXPIRED]
       responses:
         '200':
-          description: Successfully retrieved coupon lists.
+          description: |
+            Success
+            Indicates that the request is successful and all the active and/or archived coupon lists are fetched.
           content:
             application/json:
               schema:
@@ -91,63 +226,252 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/CouponList'
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: This field consists of the unique name of the coupon list.
+                        label:
+                          type: string
+                          description: This field consists of the label name for the fetched coupon list.
+                        expires_at:
+                          type: string
+                          description: This field consists of the expiry date of the coupon list in yyyy-mm-dd format.
+                        status:
+                          type: string
+                          description: |
+                            This field shows one of the following statuses of the fetched coupon list:
+                            * ACTIVE
+                            * EXPIRED
+                            * ARCHIVED
+                        total_coupons:
+                          type: integer
+                          description: This field consists of the total number of coupons in the coupon list.
+                        created_at:
+                          type: string
+                          description: This field consists of the date and time the coupon list was created.
+                        updated_at:
+                          type: string
+                          description: This field consists of the date and time of the most recent update to the coupon list.
+                        email_alert_subscribers:
+                          type: string
+                          description: This field consists of the email address of the coupon list subscriber.
+                        alert_conditions:
+                          type: object
+                          description: This field consists of the alert conditions and their statuses specified while creating the coupon list.
+                        available_coupons:
+                          type: integer
+                          description: This field consists of the available number of coupons in coupon list.
+                        personalization_snippet:
+                          type: string
+                          description: This field consists of the personalization snippet of the coupon list.
+                        created_by:
+                          type: string
+                          description: This field consists of the user name who created the fetched coupon list.
+                        _id:
+                          type: string
+                          description: This field contains the unique ID corresponding to a successful coupon list fetch request. This ID is also used to update and archive coupon lists.
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /coupon-list/{coupon_list_id}:
-    get:
-      tags:
-        - Coupon Lists
-      summary: Fetch Coupon List
-      operationId: fetchCouponList
-      description: Retrieves the specifications and status of a specific coupon list by its ID.
-      parameters:
-        - $ref: '#/components/parameters/AppKeyHeader'
-        - $ref: '#/components/parameters/CouponListIdPath'
-      responses:
-        '200':
-          description: Coupon list details retrieved successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CouponList'
-        '400':
-          $ref: '#/components/responses/BadRequest' # Although not explicitly listed for 400, it's possible for invalid ID format
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Coupon list not found for the given ID.
+          description: Bad request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error:
-                  code: "coupon-list-not-found"
-                  message: "Coupon list with the specified ID was not found."
+                  code: "bad-request"
+                  message: "Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes."
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Verify your credentials and try again."
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
+
+  /coupon-list/{coupon_list_id}:
+    get:
+      tags:
+        - Coupon Lists
+      summary: Fetch Coupon List Details
+      operationId: fetchCouponList
+      description: |
+        This API allows you to retrieve the specifications of a particular coupon list. It includes information such as configurations, statuses, expiry dates, and alert conditions with real-time counts of added and currently available coupons. Using this API, you can easily access and manage critical data about individual coupon lists.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            There is no request body or content to send for this request except for headers and parameters.
+          </Note>
+
+          ### Rate Limit
+          You can fetch 10000 coupon lists per day.
+      parameters:
+        - $ref: '#/components/parameters/AppKeyHeader'
+        - $ref: '#/components/parameters/CouponListIdPath'
+      responses:
+        '200':
+          description: |
+            Success
+            Indicates that the request is successful and the coupon list is fetched.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: This field consists of the unique name of the coupon list.
+                  label:
+                    type: string
+                    description: This field consists of the label name for the fetched coupon list.
+                  expires_at:
+                    type: string
+                    description: This field consists of the expiry date of the coupon list in yyyy-mm-dd format.
+                  status:
+                    type: string
+                    description: |
+                      This field shows one of the following statuses of the fetched coupon list:
+                      * ACTIVE
+                      * EXPIRED
+                      * ARCHIVED
+                  total_coupons:
+                    type: integer
+                    description: This field consists of the total number of coupons in the coupon list.
+                  created_at:
+                    type: string
+                    description: This field consists of the date and time the coupon list was created.
+                  updated_at:
+                    type: string
+                    description: This field consists of the date and time of the most recent update to the coupon list.
+                  email_alert_subscribers:
+                    type: array
+                    items:
+                      type: string
+                    description: This field consists of the email address of the coupon list subscriber.
+                  alert_conditions:
+                    type: object
+                    description: This field consists of the alert conditions and their statuses specified while creating the coupon list.
+                  available_coupons:
+                    type: integer
+                    description: This field consists of the available number of coupons in coupon list.
+                  personalization_snippet:
+                    type: string
+                    description: This field consists of the personalization snippet of the coupon list.
+                  created_by:
+                    type: string
+                    description: This field consists of the user name who created the fetched coupon list.
+                  _id:
+                    type: string
+                    description: This field contains the unique ID corresponding to a successful coupon list fetch request. This ID is also used to update and archive coupon lists.
+              example:
+                name: "signup coupons"
+                label: "signup_coupons"
+                expires_at: "2024-10-26T18:29:00.000Z"
+                status: "ACTIVE"
+                total_coupons: 0
+                created_at: "2024-10-01T11:29:00.000Z"
+                updated_at: "2024-10-01T11:39:00.000Z"
+                email_alert_subscribers:
+                  - "john.doe@example.com"
+                alert_conditions:
+                  success_alert: true
+                  failure_alert: true
+                  expiry_alert:
+                    alert: true
+                    days_before: 100
+                  coupon_shortage_alert:
+                    alert: true
+                    threshold_count: 100
+                available_coupons: 0
+                personalization_snippet: "{{Coupons.CouponListName[signup_coupons]}}"
+                created_by: "test_user"
+                _id: "{{coupon_list_id}}"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "bad-request"
+                  message: "Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes."
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Verify your credentials and try again."
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
     patch:
       tags:
         - Coupon Lists
-      summary: Update Coupon List
+      summary: Update a Coupon List
       operationId: updateCouponList
       description: |
-        Modifies an existing coupon list's properties like name, expiry date, subscribers, and alert conditions.
-        Reactivates ARCHIVED or EXPIRED lists if the new expiry date is in the future.
+        This API allows users to modify existing coupon lists within a defined workspace. It facilitates changes to specifications like list name, expiry date, and alert settings, thereby promoting efficient coupon operations management.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            This API reactivates the *ARCHIVED* or *EXPIRED* coupon list upon modification, provided the list has a future expiration date.
+          </Note>
+
+          ### Rate Limit
+          You can update 100 coupon lists per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
@@ -156,38 +480,155 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateCouponListRequest'
-            example:
-              name: "signup_coupons_updated"
-              expires_at: "2025-12-31"
-              email_alert_subscribers": ["new_ops@example.com"]
-              alert_conditions:
-                coupon_shortage_alert:
-                  alert: true
-                  threshold_count: 50
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: This field contains the new name of the coupon list.
+                expires_at:
+                  type: string
+                  format: date
+                  description: This field contains the new date of the coupon list in yyyy-mm-dd format.
+                email_alert_subscribers:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+                  description: This field consists of the new email address of the coupon list subscriber. The subscriber will receive all the alerts on the coupon list in the email provided in this field.
+                alert_conditions:
+                  $ref: '#/components/schemas/AlertConditions'
+                  description: This object contains the updated details for the alert conditions.
       responses:
         '200':
-          description: Coupon list updated successfully. Returns the updated list details.
+          description: |
+            Success
+            Indicates that the request is successful and the coupon list update request is accepted.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CouponList'
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: This field consists of the updated name of the coupon list.
+                  label:
+                    type: string
+                    description: This field consists of the label name for the coupon list.
+                  expires_at:
+                    type: string
+                    description: This field contains the updated expiration date of the coupon list in yyyy-mm-dd format.
+                  status:
+                    type: string
+                    description: |
+                      This field consists of the status of the coupon list.
+                      
+                      **Note:** You can only update active coupon lists.
+                  total_coupons:
+                    type: integer
+                    description: This field consists of the total number of coupons in the coupon list.
+                  created_at:
+                    type: string
+                    description: This field consists of the date and time the coupon list was created.
+                  updated_at:
+                    type: string
+                    description: This field consists of the date and time of the most recent update to the coupon list.
+                  email_alert_subscribers:
+                    type: string
+                    description: This field contains the subscriber's updated email address on the coupon list.
+                  alert_conditions:
+                    type: object
+                    description: This field consists of the updated alert conditions and the statuses specified for the coupon list.
+                  available_coupons:
+                    type: integer
+                    description: This field consists of the available number of coupons in coupon list.
+                  created_by:
+                    type: string
+                    description: This field consists of the user name who created the coupon list.
+                  _id:
+                    type: string
+                    description: This field contains the unique ID of the coupon list requested for update. This ID is used in the params to fetch and archive coupon lists.
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                duplicate_name:
+                  summary: Duplicate Name
+                  value:
+                    error:
+                      code: "duplicate-coupon-list-name"
+                      message: "The coupon list name already exists. Please enter a unique name and try again."
+                duplicate_label:
+                  summary: Duplicate Label
+                  value:
+                    error:
+                      code: "duplicate-coupon-list-label"
+                      message: "The coupon list label already exists. Please enter a unique label and try again."
+                missing_attributes:
+                  summary: Missing Attributes
+                  value:
+                    error:
+                      code: "missing-mandatory-attributes"
+                      message: "Missing mandatory key ''. Please verify and try again."
+                invalid_request:
+                  summary: Invalid Request
+                  value:
+                    error:
+                      code: "invalid-request"
+                      message: "The requested JSON is incorrect. Please verify and try again."
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Verify your credentials and try again."
         '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-           description: Coupon list not found for the given ID.
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/ErrorResponse'
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests - The rate limit for the API has been exceeded.
+            
+            The following headers are returned in case of rate-limit breach:
+            * `x-ratelimit-limit` (integer): The maximum number of requests that the consumer is permitted to make in a given time window.
+            * `x-ratelimit-remaining` (integer): The number of requests remaining in the current rate limit window.
+            * `x-ratelimit-reset` (integer): The time at which the current rate limit window resets in UTC epoch seconds.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
 
   /coupon-list/{coupon_list_id}/activate:
     put:
@@ -195,7 +636,19 @@ paths:
         - Coupon Lists
       summary: Activate Coupon List
       operationId: activateCouponList
-      description: Reactivates an ARCHIVED coupon list, provided the expiry date is set to a future date. Requires providing a new expiry date.
+      description: |
+        This API reactivates archived coupon lists, provided the expiry date is in the future.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            * Only active coupon lists can be utilized in campaigns.
+            * If you need to modify the expiry date and activate a coupon list, you must use the [Update a Coupon List API](#operation/updateCouponList).
+          </Note>
+
+          ### Rate Limit
+          You can activate 100 coupon lists per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
@@ -211,65 +664,193 @@ paths:
                 expires_at:
                   type: string
                   format: date
-                  description: A new future expiry date for the coupon list (YYYY-MM-DD format).
-                  example: "2025-12-31"
+                  description: |
+                    Add a new expiry date for the coupon list in yyyy-mm-dd format.
+                    
+                    **Note:** Your request could fail if the mandatory attributes are absent from your payload.
       responses:
         '204':
-          description: Coupon list activated successfully. No content returned.
+          description: |
+            Success (No content)
+            Coupon list activation is successful.
         '400':
-          $ref: '#/components/responses/BadRequest' # e.g., if expires_at is in the past or list is already active/expired
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "bad-request"
+                  message: "Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes."
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Verify your credentials and try again."
         '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-           description: Coupon list not found for the given ID.
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/ErrorResponse'
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests - The rate limit for the API has been exceeded.
+            
+            The following headers are returned in case of rate-limit breach:
+            * `x-ratelimit-limit` (integer): The maximum number of requests that the consumer is permitted to make in a given time window.
+            * `x-ratelimit-remaining` (integer): The number of requests remaining in the current rate limit window.
+            * `x-ratelimit-reset` (integer): The time at which the current rate limit window resets in UTC epoch seconds.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
 
   /coupon-list/{coupon_list_id}/archive:
     put:
       tags:
         - Coupon Lists
-      summary: Archive Coupon List
+      summary: Archive a Coupon List
       operationId: archiveCouponList
-      description: Archives an active coupon list. Coupons within the list are deleted, and campaigns can no longer use it.
+      description: |
+        This API transitions an active coupon list to an archived status. Upon archival, the coupon codes within the list are deleted. Consequently, any campaigns that were previously dependent on this list will no longer be able to utilize the dynamic coupon allocation.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            Verify the usage of a given coupon list in active or planned campaigns before archiving it.
+          </Note>
+
+          ### Rate Limit
+          You can archive 100 coupon lists per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
       responses:
         '204':
-          description: Coupon list archived successfully. No content returned.
+          description: |
+            Success (No content)
+            The request is successful, and the coupon list is archived.
         '400':
-          $ref: '#/components/responses/BadRequest' # e.g., if list is already archived/expired
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "bad-request"
+                  message: "Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes."
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Please verify your credentials and try again."
         '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-           description: Coupon list not found for the given ID.
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/ErrorResponse'
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests - The rate limit for the API has been exceeded.
+            
+            The following headers are returned in case of rate-limit breach:
+            * `x-ratelimit-limit` (integer): The maximum number of requests that the consumer is permitted to make in a given time window.
+            * `x-ratelimit-remaining` (integer): The number of requests remaining in the current rate limit window.
+            * `x-ratelimit-reset` (integer): The time at which the current rate limit window resets in UTC epoch seconds.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
 
   /coupon-list/{coupon_list_id}/files:
     post:
       tags:
         - Coupon Files
-      summary: Upload Coupons via File URL
+      summary: Upload a Coupon File to the Coupon List
       operationId: uploadCouponFile
-      description: Adds coupons to a list by processing a file hosted at a given URL. Processing happens asynchronously.
+      description: |
+        Once a coupon list is created, coupons should be added to the list to be distributed through campaigns. If a coupon list has been running for some time, it may be running low after serving several campaigns.
+
+        Using this API, you can replenish an older list or populate a new list by providing the URL of a file containing the coupons, thereby enabling their distribution through various campaigns. These coupons can be provided through a file, and the API requires the URL where your coupon file is hosted.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            Upon API request, file processing begins, and the file status will be **PENDING** by default.
+            * For convenience, a callback URL can be set up to trigger when the file's processing is completed.
+            * The processing status can be checked using the **Fetch a Coupon File API** to get the status separately.
+          </Note>
+
+          ### Rate Limit
+          You can upload:
+          * 5 coupon files to a coupon list per minute or
+          * 50 coupon files to a coupon list per day
+
+          **Note:**
+          * **Payload size limit**: 64 MB for manual uploads or 100 MB for URL uploads.
+          * **Additional limits**: The maximum number of coupons per coupon list is 100 million.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
@@ -279,46 +860,160 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UploadCouponFileRequest'
-            example:
-              file_url: "https://example.com/path/to/coupons.csv"
-              name: "October Batch"
-              created_by": "uploader@example.com"
-              callback_url: "https://my-system.com/webhook/coupon-upload-status"
+              properties:
+                name:
+                  description: This field consists of the file name of the coupon list.
+                file_url:
+                  description: This field consists of the file path of the coupon list.
+                file_url_auth_username:
+                  type: string
+                  description: This field consists of the coupon file username.
+                file_url_auth_password:
+                  type: string
+                  description: This field consists of the coupon file password.
+                created_by:
+                  description: This field consists of the name of the subscriber who uploaded the coupon file.
+                callback_url:
+                  description: This field consists of the coupon file callback URL.
+            examples: {}
       responses:
         '201':
-          description: Coupon file upload request accepted. Processing is pending.
+          description: |
+            Success
+            The request was successful, and the coupon URL upload request was accepted.
+            
+            **Note**: The status of the URL upload is always PENDING.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CouponFile'
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: This field contains the coupon file name.
+                  file_url:
+                    type: string
+                    description: This field consists of the file path of the coupon list.
+                  created_by:
+                    type: string
+                    description: This field consists of the name of the subscriber who uploaded the coupon file.
+                  status:
+                    type: string
+                    description: |
+                      Once the coupon URL upload request is accepted, the response displays the following status:
+                      * PENDING - The URL is waiting for approval.
+                      
+                      **Note:** To know the status of the coupon upload, you need to trigger the **Fetch a Coupon File API**.
+                  coupons_list_id:
+                    type: string
+                    description: This field contains the coupon list ID that you have requested to upload the coupon file to.
+                  _id:
+                    type: string
+                    description: This field contains the coupon file ID.
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_json:
+                  summary: Invalid JSON
+                  value:
+                    error:
+                      code: "invalid-request"
+                      message: "The requested JSON is incorrect. Please verify and try again."
+                empty_file_url:
+                  summary: Empty File URL
+                  value:
+                    error:
+                      code: "invalid-request"
+                      message: "The 'file_url' can not be empty. Please provide the coupon file url and try again."
+                multiple_file_urls:
+                  summary: Multiple File URLs
+                  value:
+                    error:
+                      code: "invalid-request"
+                      message: "Multiple file urls are not permitted. Please select one file url and try again."
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Please verify your credentials and try again."
         '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-           description: Coupon list not found for the given ID.
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/ErrorResponse'
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Please contact the MoEngage team for further assistance."
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests - The rate limit for the API has been exceeded.
+            
+            The following headers are returned in case of rate-limit breach:
+            * `x-ratelimit-limit` (integer): The maximum number of requests that the consumer is permitted to make in a given time window.
+            * `x-ratelimit-remaining` (integer): The number of requests remaining in the current rate limit window.
+            * `x-ratelimit-reset` (integer): The time at which the current rate limit window resets in UTC epoch seconds.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
     get:
       tags:
         - Coupon Files
-      summary: Fetch All Coupon Files in List
+      summary: Fetch All Coupon Files From Coupon List
       operationId: fetchAllCouponFiles
-      description: Retrieves details of all coupon files added to a specific coupon list.
+      description: |
+        This API allows you to retrieve the details of each file in the given coupon list that is added and not deleted. The information retrieved will include the file's status, the number of coupons added from each file, and the respective file's addition date, thereby providing a comprehensive breakdown of each file's information for improved management and tracking.
+      x-mint:
+        content: |
+          <Note>
+            There is no request body or content to send for this request except for headers.
+          </Note>
+
+          ### Rate Limit
+          You can fetch 10,000 coupon files from coupon lists per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
-        - $ref: '#/components/parameters/CouponListIdPath'
+        - name: coupon_list_id
+          in: path
+          required: true
+          description: The unique identifier for the coupon list.
+          schema:
+            type: string
       responses:
         '200':
-          description: Successfully retrieved list of coupon files.
+          description: |
+            Success
+            Indicates that the request was successful and the coupon files have been fetched.
           content:
             application/json:
               schema:
@@ -327,87 +1022,297 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/CouponFile'
+                      type: object
+                      properties:
+                        coupon_list_id:
+                          type: string
+                          description: This field contains the coupon list ID from which you fetched the coupon files.
+                        name:
+                          type: string
+                          description: This field contains the coupon file name.
+                        status:
+                          type: string
+                          description: |
+                            This field shows one of the following statuses of the fetched coupon files:
+                            * PENDING
+                        file_url:
+                          type: string
+                          description: This field consists of the file path of the coupon list.
+                        created_at:
+                          type: string
+                          description: This field consists of the date and time the coupon file was created.
+                        updated_at:
+                          type: string
+                          description: This field consists of the date and time of the most recent update to the coupon file.
+                        created_by:
+                          type: string
+                          description: This field consists of the name of the subscriber who uploaded the coupon file.
+                        _id:
+                          type: string
+                          description: This field contains the unique ID corresponding to a successful coupon file fetch request. This ID is also used to update and archive coupon files from the coupon list.
+                        added_coupons:
+                          type: integer
+                          description: This field consists of the available number of coupons added to the coupon list.
+                        callback_url:
+                          type: string
+                          description: This field consists of the callback URL.
         '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-           description: Coupon list not found for the given ID.
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /coupon-list/{coupon_list_id}/files/{file_id}:
-    get:
-      tags:
-        - Coupon Files
-      summary: Fetch Coupon File Details
-      operationId: fetchCouponFile
-      description: Retrieves details of a specific coupon file within a coupon list, including its processing status and counts.
-      parameters:
-        - $ref: '#/components/parameters/AppKeyHeader'
-        - $ref: '#/components/parameters/CouponListIdPath'
-        - $ref: '#/components/parameters/FileIdPath'
-      responses:
-        '200':
-          description: Coupon file details retrieved successfully.
+          description: Bad request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CouponFile'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-           description: Coupon list or file not found.
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/ErrorResponse'
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests - The rate limit for the API has been exceeded.
+            
+            The following headers are returned in case of rate-limit breach:
+            * `x-ratelimit-limit` (integer): The maximum number of requests that the consumer is permitted to make in a given time window.
+            * `x-ratelimit-remaining` (integer): The number of requests remaining in the current rate limit window.
+            * `x-ratelimit-reset` (integer): The time at which the current rate limit window resets in UTC epoch seconds.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
-    delete:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /coupon-list/{coupon_list_id}/files/{coupon_file_id}:
+    get:
       tags:
         - Coupon Files
-      summary: Delete Coupon File
-      operationId: deleteCouponFile
-      description: Removes a specific coupon file from a coupon list (e.g., if uploaded incorrectly).
+      summary: Fetch a Coupon File from Coupon List
+      operationId: fetchCouponFile
+      description: |
+        This API allows you to retrieve the details of a particular coupon file added to a given coupon list. This includes information such as file status, the number of added coupons, and the file addition date.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            There is no request body or content to send for this request except for headers.
+          </Note>
+
+          ### Rate Limit
+          You can fetch 10,000 coupon files from a coupon list per day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
-        - $ref: '#/components/parameters/FileIdPath' # Note: Doc uses {{coupon_file_id}} in path
+        - $ref: '#/components/parameters/CouponFileIdPath'
+      responses:
+        '200':
+          description: |
+            Success
+            Indicates that the request was successful and the coupon file was fetched.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  coupon_list_id:
+                    type: string
+                    description: This field contains the coupon list ID from which you fetched the coupon file.
+                  name:
+                    type: string
+                    description: This field contains the coupon file name.
+                  status:
+                    type: string
+                    description: |
+                      This field shows one of the following statuses of the fetched coupon file:
+                      * PENDING
+                  file_url:
+                    type: string
+                    description: This field consists of the file path of the coupon list.
+                  created_by:
+                    type: string
+                    description: This field consists of the name of the subscriber who uploaded the coupon file.
+                  created_at:
+                    type: string
+                    description: This field consists of the date and time the coupon file was created.
+                  updated_at:
+                    type: string
+                    description: This field consists of the date and time of the most recent update to the coupon file.
+                  _id:
+                    type: string
+                    description: This field contains the unique ID corresponding to a successful coupon file fetch request. This ID is also used to update and archive coupon files from the coupon list.
+                  added_coupons:
+                    type: integer
+                    description: This field consists of the available number of coupons added to the coupon list.
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "bad-request"
+                  message: "Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes."
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Please verify your credentials and try again."
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
+        '429':
+          description: |
+            Too Many Requests - The rate limit for the API has been exceeded.
+            
+            The following headers are returned in case of rate-limit breach:
+            * `x-ratelimit-limit` (integer): The maximum number of requests that the consumer is permitted to make in a given time window.
+            * `x-ratelimit-remaining` (integer): The number of requests remaining in the current rate limit window.
+            * `x-ratelimit-reset` (integer): The time at which the current rate limit window resets in UTC epoch seconds.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
+    delete:
+      tags:
+        - Coupon Files
+      summary: Delete a Coupon File from the Coupon List
+      operationId: deleteCouponFile
+      description: |
+        This API allows you to remove a specific coupon file from a coupon list. It is useful in scenarios where a test file or incorrect file is inadvertently uploaded, thereby ensuring the accuracy and effectiveness of your coupon list management.
+      x-mint:
+        content: |
+          <Note>
+            **Information**
+            
+            There is no request body or content to send for this request except for headers.
+          </Note>
+
+          ### Rate Limit
+          You can delete:
+          * 5 coupon files per minute or
+          * 50 coupon files per day
+      parameters:
+        - $ref: '#/components/parameters/AppKeyHeader'
+        - $ref: '#/components/parameters/CouponListIdPath'
+        - $ref: '#/components/parameters/CouponFileIdPath'
       responses:
         '204':
-          description: Coupon file deleted successfully. No content returned.
+          description: |
+            Success (No content)
+            The request is successful, and the coupon file is deleted.
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "invalid-request"
+                  message: "The requested JSON is incorrect. Please verify and try again."
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Please verify your credentials and try again."
         '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-           description: Coupon list or file not found.
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/ErrorResponse'
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests - The rate limit for the API has been exceeded.
+            
+            The following headers are returned in case of rate-limit breach:
+            * `x-ratelimit-limit` (integer): The maximum number of requests that the consumer is permitted to make in a given time window.
+            * `x-ratelimit-remaining` (integer): The number of requests remaining in the current rate limit window.
+            * `x-ratelimit-reset` (integer): The time at which the current rate limit window resets in UTC epoch seconds.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
 
   /coupon-list/{coupon_list_id}/usage-report:
     post:
@@ -415,7 +1320,14 @@ paths:
         - Reports
       summary: Generate Usage Report
       operationId: generateUsageReport
-      description: Generates a usage report for a coupon list within a specified date range and sends it to the provided email addresses.
+      description: |
+        This API produces a detailed usage report for a specific coupon list, providing details on which user received which coupon from which locale or variation of which campaign at what time. After it is generated, this report is delivered directly to the requested email addresses. Using this API, a comprehensive analysis of critical data and coupon usage trends can be conducted efficiently.
+      x-mint:
+        content: |
+          ### Rate Limit
+          You can generate:
+          * 5 usage reports of coupon list per minute or
+          * 50 usage reports of coupon list per day
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/CouponListIdPath'
@@ -425,31 +1337,28 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - start_date
-                - end_date
-                - email_subscribers
+              required: [start_date, end_date, email_subscribers]
               properties:
                 start_date:
                   type: string
                   format: date
-                  description: Start date for the report (YYYY-MM-DD).
-                  example: "2024-11-01"
+                  description: This field consists of the start date of the coupon list usage report in `yyyy-mm-dd` format.
                 end_date:
                   type: string
                   format: date
-                  description: End date for the report (YYYY-MM-DD).
-                  example: "2024-11-21"
+                  description: This field consists of the end date of the coupon list usage report in `yyyy-mm-dd` format.
                 email_subscribers:
                   type: array
-                  description: List of email addresses to receive the report.
                   items:
                     type: string
                     format: email
-                  example: ["reports@example.com", "manager@example.com"]
+                  description: This field consists of the email address of the coupon list subscribers who will receive the report.
+            examples: {}
       responses:
         '200':
-          description: Usage report generation request accepted.
+          description: |
+            Success
+            Indicates that the request is successful and the coupon list usage report request is accepted.
           content:
             application/json:
               schema:
@@ -457,36 +1366,103 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "The usage report for the CouponListName coupons is being processed and will be sent to email alert subscribers shortly."
+                    description: The following is the success message indicating the report is being processed.
+              example:
+                message: "The usage report for the {{coupon list name}} coupons is being processed and will be sent to email alert subscribers shortly."
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                start_date_invalid:
+                  summary: Start Date Invalid
+                  value:
+                    error:
+                      code: "invalid-request"
+                      message: "The start date cannot be earlier than the coupon list creation date. Please verify your dates and try again."
+                end_date_invalid:
+                  summary: End Date Invalid
+                  value:
+                    error:
+                      code: "invalid-request"
+                      message: "The end date cannot be set in the future. Please verify the dates and try again."
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-unauthenticated"
+                  message: "Your request is unauthorized. Please verify your credentials and try again."
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "request-forbidden"
+                  message: "Your account does not have access to the Coupon Management features. Please contact the MoEngage team for further assistance."
         '404':
-           description: Coupon list not found for the given ID.
-           content:
-             application/json:
-               schema:
-                 $ref: '#/components/schemas/ErrorResponse'
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "coupon-list-not-found"
+                  message: "The specified coupon list ID was not found. Please verify the ID and try again."
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: |
+            Too Many Requests - The rate limit for the API has been exceeded.
+            
+            The following headers are returned in case of rate-limit breach:
+            * `x-ratelimit-limit` (integer): The maximum number of requests that the consumer is permitted to make in a given time window.
+            * `x-ratelimit-remaining` (integer): The number of requests remaining in the current rate limit window.
+            * `x-ratelimit-reset` (integer): The time at which the current rate limit window resets in UTC epoch seconds.
+          headers:
+            x-ratelimit-limit:
+              schema:
+                type: integer
+              description: The maximum number of requests that the consumer is permitted to make in a given time window.
+            x-ratelimit-remaining:
+              schema:
+                type: integer
+              description: The number of requests remaining in the current rate limit window.
+            x-ratelimit-reset:
+              schema:
+                type: integer
+              description: The time at which the current rate limit window resets in UTC epoch seconds.
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "unexpected-error"
+                  message: "Something went wrong with your request. Please contact the MoEngage team for further assistance."
 
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-      description: 'Uses **Workspace ID** as username and **API Key** (from Campaign/Business Events/Custom Templates/Catalog API tile) as password.'
+      description: 'Uses **Workspace ID** as username and **API Key** as password.'
   parameters:
     AppKeyHeader:
       name: MOE-APPKEY
       in: header
       required: true
-      description: Your MoEngage Workspace ID.
+      description: |
+        This is the workspace ID (earlier APP ID) of your MoEngage workspace. The MOE-APPKEY has to be passed in the request. You can find your MoEngage Workspace ID in the MoEngage Dashboard: **Settings** -> **Account** -> **APIs** -> **Workspace ID (earlier app id)**.
       schema:
         type: string
     CouponListIdPath:
@@ -496,240 +1472,165 @@ components:
       description: The unique identifier for the coupon list.
       schema:
         type: string
-    FileIdPath:
-      name: file_id # Assuming standard practice, though docs use {{coupon_file_id}}
+    CouponFileIdPath:
+      name: coupon_file_id
       in: path
       required: true
-      description: The unique identifier for the coupon file within the list.
+      description: The unique identifier for the coupon file.
       schema:
         type: string
   schemas:
     AlertConditions:
       type: object
+      description: Configuration for various alert triggers.
       properties:
-        success_alert:
+        success_alert: 
           type: boolean
-          description: Send alert on successful coupon upload.
-        failure_alert:
+          description: Indicates whether to send an alert on success.
+        failure_alert: 
           type: boolean
-          description: Send alert on failed coupon upload.
+          description: Indicates whether to send an alert on failure.
         coupon_shortage_alert:
           type: object
-          properties:
-            alert:
+          description: Configuration for the coupon shortage alert.
+          properties: 
+            alert: 
               type: boolean
-              description: Enable alert when available coupons fall below threshold.
-            threshold_count:
+              description: Indicates whether to enable the coupon shortage alert.
+            threshold_count: 
               type: integer
-              description: The number of available coupons below which to trigger the alert.
+              description: The minimum count of coupons remaining to trigger the alert.
         expiry_alert:
           type: object
-          properties:
-            alert:
+          description: Configuration for the expiry alert.
+          properties: 
+            alert: 
               type: boolean
-              description: Enable alert before the coupon list expires.
-            days_before:
-              type: integer
-              description: How many days before expiry to send the alert.
+              description: Indicates whether to enable the expiry alert.
+            days_before: 
+              type: integer 
+              description: Number of days before expiry to trigger the alert.
     CreateCouponListRequest:
       type: object
-      required:
-        - name
-        - label
-        - expires_at
-        - created_by
+      required: [name, label, expires_at, created_by]
       properties:
         name:
           type: string
-          description: Unique name for the coupon list.
+          description: This field consists of the coupon list's unique name.
         label:
           type: string
-          description: Label name for the coupon list (must also be unique according to error messages).
+          description: This field consists of the label name for the coupon list.
         expires_at:
           type: string
           format: date
-          description: Expiry date for the list (YYYY-MM-DD). Cannot be in the past.
+          description: This field consists of the date the coupon list expires in yyyy-mm-dd format.
         email_alert_subscribers:
           type: array
-          items:
-            type: string
-            format: email
-          description: List of email addresses to receive alerts.
-          nullable: true
+          items: { type: string, format: email }
+          description: This field consists of the email address of the coupon list subscriber. The subscriber will receive all the alerts on the coupon list in the email provided in this field.
         created_by:
           type: string
-          description: Email or identifier of the user creating the list.
+          description: This field consists of the user name who requests to create the coupon list.
         alert_conditions:
           $ref: '#/components/schemas/AlertConditions'
-          nullable: true
+          description: This object contains the details and types of alert conditions.
     UpdateCouponListRequest:
       type: object
       properties:
-        name:
-          type: string
-          description: New unique name for the coupon list.
-        expires_at:
-          type: string
-          format: date
-          description: New expiry date for the list (YYYY-MM-DD). Cannot be in the past.
-        email_alert_subscribers:
-          type: array
-          items:
-            type: string
-            format: email
-          description: New list of email addresses to receive alerts.
-          nullable: true
-        alert_conditions:
-          $ref: '#/components/schemas/AlertConditions'
-          nullable: true
+        name: { type: string }
+        expires_at: { type: string, format: date }
+        email_alert_subscribers: { type: array, items: { type: string, format: email } }
+        alert_conditions: { $ref: '#/components/schemas/AlertConditions' }
     CouponList:
       type: object
       properties:
-        _id:
-          type: string
-          description: Unique identifier for the coupon list.
-        name:
-          type: string
-          description: Name of the coupon list.
-        label:
-          type: string
-          description: Label of the coupon list.
-        expires_at:
-          type: string
-          format: date-time # Assuming it returns datetime based on example
-          description: Expiry date and time of the list.
-        created_by:
-          type: string
-          description: Identifier of the user who created the list.
-        email_alert_subscribers:
-          type: array
-          items:
-            type: string
-            format: email
-          description: List of email addresses receiving alerts.
-        alert_conditions:
-          $ref: '#/components/schemas/AlertConditions'
-        status:
-          type: string
-          enum: [ACTIVE, EXPIRED, ARCHIVED]
-          description: Current status of the coupon list.
-        total_coupons:
-          type: integer
-          description: Total number of coupons ever added to this list.
-        available_coupons:
-          type: integer
-          description: Number of currently available (unassigned) coupons.
-        created_at:
-          type: string
-          format: date-time
-          description: Timestamp when the list was created.
-        updated_at:
-          type: string
-          format: date-time
-          description: Timestamp when the list was last updated.
-        personalization_snippet:
-          type: string
-          description: Jinja snippet to use in campaigns for personalization.
-          example: "{{Coupons.CouponListName[signup_coupons]}}"
+        _id: { type: string }
+        name: { type: string }
+        label: { type: string }
+        expires_at: { type: string, format: date-time }
+        status: { type: string, enum: [ACTIVE, EXPIRED, ARCHIVED] }
+        total_coupons: { type: integer }
+        available_coupons: { type: integer }
     UploadCouponFileRequest:
       type: object
-      required:
-        - file_url
+      required: [file_url]
       properties:
-        name:
-          type: string
-          description: Optional name for this specific file upload.
-          nullable: true
-        file_url:
-          type: string
-          format: url
-          description: Publicly accessible URL of the CSV file containing coupon codes.
-        file_url_auth_username:
-          type: string
-          description: Username for basic authentication if the file URL requires it.
-          nullable: true
-        file_url_auth_password:
-          type: string
-          description: Password for basic authentication if the file URL requires it.
-          nullable: true
-        created_by:
-          type: string
-          description: Email or identifier of the user uploading the file.
-          nullable: true
-        callback_url:
-          type: string
-          format: url
-          description: URL to be called back upon completion (success/failure) of file processing.
-          nullable: true
+        name: { type: string }
+        file_url: { type: string, format: url }
+        file_url_auth_username: { type: string }
+        file_url_auth_password: { type: string }
+        created_by: { type: string }
+        callback_url: { type: string, format: url }
     CouponFile:
       type: object
       properties:
-        _id:
-          type: string
-          description: Unique identifier for the coupon file upload record.
+        _id: { type: string }
+        name: { type: string }
+        status: { type: string }
+        added_coupons: { type: integer }
+        file_url: { type: string }
+    FetchCouponFilesResponseItem:
+      type: object
+      description: Representation of a coupon file in the response.
+      properties:
         coupon_list_id:
           type: string
-          description: ID of the coupon list this file belongs to.
+          description: This field contains the coupon list ID from which you fetched the coupon files.
         name:
           type: string
-          description: Name assigned to the file upload.
-          nullable: true
-        file_url:
-          type: string
-          format: url
-          description: The URL from which the coupons were uploaded.
-        created_by:
-          type: string
-          description: Identifier of the user who uploaded the file.
-          nullable: true
+          description: This field contains the coupon file name.
         status:
           type: string
-          enum: [PENDING, PROCESSING, SUCCESSFUL, FAILED] # Guessed statuses based on context
-          description: Processing status of the uploaded file.
-        added_coupons:
-          type: integer
-          description: Number of coupons successfully added from this file.
+          description: |
+            This field shows one of the following statuses of the fetched coupon files:
+            * PENDING
+        file_url:
+          type: string
+          description: This field consists of the file path of the coupon list.
         created_at:
           type: string
-          format: date-time
-          description: Timestamp when the file upload was requested.
+          description: This field consists of the date and time the coupon file was created.
         updated_at:
           type: string
-          format: date-time
-          description: Timestamp when the file status was last updated.
+          description: This field consists of the date and time of the most recent update to the coupon file.
+        created_by:
+          type: string
+          description: This field consists of the name of the subscriber who uploaded the coupon file.
+        _id:
+          type: string
+          description: This field contains the unique ID corresponding to a successful coupon file fetch request. This ID is also used to update and archive coupon files from the coupon list.
+        added_coupons:
+          type: integer
+          description: This field consists of the available number of coupons added to the coupon list.
         callback_url:
           type: string
-          format: url
-          description: The callback URL provided during upload.
-          nullable: true
-        # Potentially add fields for failure reasons if available
+          description: This field consists of the callback URL.
     Error:
       type: object
       properties:
         code:
           type: string
-          description: Machine-readable error code.
+          description: Each error codes are unique and serve as a shorthand representation for the type of error, providing a quick reference that can be used to diagnose, troubleshoot, and address the problem based on a predefined set of error conditions.
         message:
           type: string
-          description: Human-readable error message.
+          description: Along with the error code, a detailed message is also provided in the response, describing the specifics of the request failure and the nature of the error.
     ErrorResponse:
       type: object
       properties:
-        error:
-          $ref: '#/components/schemas/Error'
+        error: { $ref: '#/components/schemas/Error' }
   responses:
     BadRequest:
-      description: Bad Request. Invalid input, missing fields, duplicate names/labels, date errors, etc.
+      description: Bad Request
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             error:
-              code: "duplicate-coupon-list-name"
-              message: "The coupon list name already exists. Please enter a unique name and try again."
+              code: "bad-request"
+              message: "Possible issues include duplicates, such as coupon list names, invalid data types, or missing mandatory attributes."
     Unauthorized:
-      description: Unauthorized. Invalid authentication credentials.
+      description: Unauthorized
       content:
         application/json:
           schema:
@@ -737,9 +1638,9 @@ components:
           example:
             error:
               code: "request-unauthenticated"
-              message: "Your request is unauthorized. Please verify your credentials and try again."
+              message: "Your request is unauthorized. Verify your credentials and try again."
     Forbidden:
-      description: Forbidden. Access to Coupon Management features denied.
+      description: Forbidden
       content:
         application/json:
           schema:
@@ -747,29 +1648,38 @@ components:
           example:
             error:
               code: "request-forbidden"
-              message: "Your account does not have access to the Coupon Management features."
-    TooManyRequests:
-      description: Too Many Requests. Rate limit exceeded.
-      headers:
-        x-ratelimit-limit:
-          schema: { type: integer }
-          description: The request limit per time window.
-        x-ratelimit-remaining:
-          schema: { type: integer }
-          description: The remaining requests in the current window.
-        x-ratelimit-reset:
-          schema: { type: integer }
-          description: UTC epoch seconds when the limit resets.
+              message: "Your account does not have access to the Coupon Management features. Contact the MoEngage team for further assistance."
+    NotFound:
+      description: Not Found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             error:
-              code: "too-many-requests"
-              message: "Rate limit exceeded."
+              code: "not-found"
+              message: "The requested resource was not found."
+    TooManyRequests:
+      description: |
+        The following headers are returned in case of rate-limit breach:
+        * `x-ratelimit-limit` (integer) - The maximum number of requests that the consumer is permitted to make in a given time window.
+        * `x-ratelimit-remaining` (integer) - The number of requests remaining in the current rate limit window.
+        * `x-ratelimit-reset` (integer) - The time at which the current rate limit window resets in UTC epoch seconds.
+      headers:
+        x-ratelimit-limit:
+          schema:
+            type: integer
+          description: The maximum number of requests that the consumer is permitted to make in a given time window.
+        x-ratelimit-remaining:
+          schema:
+            type: integer
+          description: The number of requests remaining in the current rate limit window.
+        x-ratelimit-reset:
+          schema:
+            type: integer
+          description: The time at which the current rate limit window resets in UTC epoch seconds.
     InternalServerError:
-      description: Internal Server Error. Unexpected system error.
+      description: Internal Server Error
       content:
         application/json:
           schema:
@@ -777,6 +1687,6 @@ components:
           example:
             error:
               code: "unexpected-error"
-              message: "Something went wrong with your request. Contact the MoEngage team."
+              message: "Something went wrong with your request. Contact the MoEngage team for further assistance."
 security:
   - basicAuth: []

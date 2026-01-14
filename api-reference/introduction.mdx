@@ -1,114 +1,383 @@
 ---
-title: "MoEngage API Reference"
-description: "Your complete guide to integrating with the MoEngage APIs. Automate workflows, manage catalogs, and retrieve campaign data."
+title: "API Overview"
+description: "Your complete guide to integrating with MoEngage APIs. Send campaigns, manage users, track events, and power personalized customer engagement."
 ---
 
-# MoEngage API Reference
+Welcome to the MoEngage API reference. Build powerful integrations to automate campaigns, sync user data, manage product catalogs, and deliver personalized experiences at scale.
 
-Welcome to the MoEngage API reference. This is your central hub for all the resources you need to interact with the MoEngage platform programmatically. Our APIs enable you to automate workflows, manage your product catalogs, retrieve campaign data, and integrate MoEngage's powerful features into your applications.
-
-## Available APIs
-
-Our REST APIs are designed to be predictable, intuitive, and developer-friendly. Get started by exploring our primary API collections below:
+## API Categories
 
 <CardGroup cols={2}>
-  <Card title="Catalog API" icon="book-open" href="/api-reference/catalog">
-    Manage your product catalogs with comprehensive operations including creating catalogs, adding attributes, and ingesting or updating products in bulk.
+  <Card title="Data" icon="database" href="/api-reference/overview-data">
+    Create and update users, track events, manage devices, and import data in bulk.
   </Card>
-  <Card title="Campaigns API" icon="chart-simple" href="/api-reference/campaigns">
-    Programmatically search and retrieve details for your SMS campaigns, using advanced filters for status, creation date, audience segments, and more.
+  <Card title="Campaigns" icon="paper-plane" href="/api-reference/post-campaigns">
+    Create and manage Push and Email campaigns programmatically.
   </Card>
-  <Card title="Business Events API" icon="calendar-check" href="/api-reference/business-events">
-    Track and manage business events to trigger personalized campaigns and analyze user behavior patterns across your application.
+  <Card title="Push" icon="bell" href="/api-reference/post-transactionsendpush">
+    Send transactional and targeted push notifications to Android, iOS, and Web.
   </Card>
-  <Card title="Content Blocks API" icon="puzzle-piece" href="/api-reference/content-blocks">
-    Create, manage, and organize reusable content blocks for your campaigns, ensuring consistency and efficiency across your messaging.
+  <Card title="Inform" icon="message" href="/api-reference/post-alertssend">
+    Send transactional alerts across SMS, Email, and Push channels.
+  </Card>
+  <Card title="Catalog" icon="box" href="/api-reference/post-catalog">
+    Manage product catalogs for recommendations and personalization.
+  </Card>
+  <Card title="Cards" icon="rectangle-history" href="/api-reference/post-cardsfetch">
+    Fetch and manage App Inbox cards for users.
+  </Card>
+  <Card title="Custom Segments" icon="users" href="/api-reference/post-v2-custom-segments-file-segment">
+    Create and manage file-based and filter-based user segments.
+  </Card>
+  <Card title="Business Events" icon="calendar-check" href="/api-reference/post-business_event">
+    Create and trigger business events to power automated campaigns.
   </Card>
 </CardGroup>
 
-## Getting Started
+---
 
-### Prerequisites
+## Data Centers
 
-Before you begin, ensure you have:
-- A MoEngage account with API access enabled
-- Your API credentials (App ID and API Key)
-- Basic understanding of REST APIs and JSON
+MoEngage maintains multiple data centers. You are assigned to a specific data center when you sign up. You can identify your data center from your Dashboard URL.
 
-### Base URL
+| Data Center | Dashboard URL                       | REST API Host                 |
+| ----------- | ----------------------------------- | ----------------------------- |
+| DC-01       | `https://dashboard-01.moengage.com` | `https://api-01.moengage.com` |
+| DC-02       | `https://dashboard-02.moengage.com` | `https://api-02.moengage.com` |
+| DC-03       | `https://dashboard-03.moengage.com` | `https://api-03.moengage.com` |
+| DC-04       | `https://dashboard-04.moengage.com` | `https://api-04.moengage.com` |
+| DC-05       | `https://dashboard-05.moengage.com` | `https://api-05.moengage.com` |
+| DC-06       | `https://dashboard-06.moengage.com` | `https://api-06.moengage.com` |
 
-All API requests should be made to:
+### Choosing a Data Center
+
+If you have data privacy requirements to store user data in a specific geographical region:
+
+- **US region**: Sign up with DC-01 or DC-04
+- **EU region**: Sign up with DC-02
+- **India region**: Sign up with DC-03
+- **Singapore region**: Sign up with DC-05
+- **Indonesia region**: Sign up with DC-06
+
+<Warning>
+  Once data is captured in a workspace, it cannot be migrated to a different data center. Always use the REST API endpoint matching your registered data center.
+</Warning>
+
+---
+
+## Base URL
+
+All API requests are made to:
+
 ```
-https://api-01.moengage.com/v1/
+https://api-{dc}.moengage.com
 ```
+
+Replace `{dc}` with your data center number (e.g., `01`, `02`, `03`). You can identify your data center from your Dashboard URL.
+
+<Note>
+  Each API may have additional path segments (e.g., `/v1`, `/core-services/v1`). Refer to the specific API documentation for the complete endpoint path.
+</Note>
+
+---
 
 ## Authentication
 
-All MoEngage APIs are authenticated using a combination of Basic Authentication and a custom `MOE-APPKEY` header.
+All MoEngage APIs use **Basic Authentication** combined with a **MOE-APPKEY** header.
 
 ### Required Headers
 
 ```http
-Authorization: Basic <base64_encoded_credentials>
-MOE-APPKEY: <your_app_key>
+Authorization: Basic {base64_encoded_credentials}
+MOE-APPKEY: {your_workspace_id}
 Content-Type: application/json
+```
+
+### Generating Credentials
+
+The `Authorization` header value is a Base64 encoding of `workspace_id:api_key`.
+
+```bash
+# Example: Encoding credentials
+echo -n "YOUR_WORKSPACE_ID:YOUR_API_KEY" | base64
 ```
 
 ### Getting Your Credentials
 
-You can find your API credentials in the MoEngage Dashboard:
-1. Navigate to **Settings** → **Account** → **APIs**
-2. Copy your **App ID** and **API Key**
-3. Use these credentials to authenticate your requests
+1. Log in to the [MoEngage Dashboard](https://dashboard.moengage.com)
+2. Navigate to **Settings** → **Account** → **APIs**
+3. Copy your **Workspace ID** and the relevant **API Key**
 
-For detailed authentication examples, please see the authentication section within each API endpoint.
+### API Keys by Feature
 
-## Rate Limits
+Different APIs require different API keys from your dashboard:
 
-Our APIs are rate-limited to ensure fair usage and optimal performance:
-- **Standard endpoints**: 1000 requests per hour
-- **Bulk operations**: 100 requests per hour
-- **Real-time endpoints**: 5000 requests per hour
+| API         | API Key Location (Settings → Account → APIs)          |
+| ----------- | ----------------------------------------------------- |
+| Data        | Data API Key                                          |
+| Push        | Push API Key                                          |
+| Inform      | Inform API Key                                        |
+| Campaigns   | Campaign report/Business events/Custom templates tile |
+| Catalog     | Campaign report/Business events/Custom templates tile |
+| Personalize | Personalize API Key                                   |
 
-Rate limit headers are included in all responses to help you manage your usage.
+---
 
-## Error Handling
+## Quick Start
 
-All API responses follow a consistent error format:
+Now that you have your credentials, make your first API request. This example creates a user profile using the Data API.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api-01.moengage.com/v1/customer/YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -u "YOUR_WORKSPACE_ID:YOUR_DATA_API_KEY" \
+  -d '{
+    "type": "customer",
+    "customer_id": "john@example.com",
+    "attributes": {
+      "name": "John Doe",
+      "u_em": "john@example.com",
+      "platforms": [
+        {
+          "platform": "ANDROID",
+          "active": "true"
+        }
+      ]
+    }
+  }'
+```
+
+
+```python Python
+import requests
+import base64
+
+workspace_id = "YOUR_WORKSPACE_ID"
+api_key = "YOUR_DATA_API_KEY"
+
+credentials = base64.b64encode(f"{workspace_id}:{api_key}".encode()).decode()
+
+response = requests.post(
+    f"https://api-01.moengage.com/v1/customer/{workspace_id}",
+    headers={
+        "Content-Type": "application/json",
+        "Authorization": f"Basic {credentials}"
+    },
+    json={
+        "type": "customer",
+        "customer_id": "john@example.com",
+        "attributes": {
+            "name": "John Doe",
+            "u_em": "john@example.com"
+        }
+    }
+)
+
+print(response.json())
+```
+
+
+```javascript JavaScript
+const workspaceId = "YOUR_WORKSPACE_ID";
+const apiKey = "YOUR_DATA_API_KEY";
+const credentials = btoa(`${workspaceId}:${apiKey}`);
+
+fetch(`https://api-01.moengage.com/v1/customer/${workspaceId}`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Basic ${credentials}`
+  },
+  body: JSON.stringify({
+    type: "customer",
+    customer_id: "john@example.com",
+    attributes: {
+      name: "John Doe",
+      u_em: "john@example.com"
+    }
+  })
+})
+.then(res => res.json())
+.then(data => console.log(data));
+```
+
+</CodeGroup>
+
+<Info>
+  Replace `api-01` with your data center's API host (e.g., `api-02`, `api-03`).
+</Info>
+
+**Expected Response:**
 
 ```json
 {
-  "status": "error",
+  "status": "success",
+  "message": "Your request has been accepted and will be processed soon."
+}
+```
+
+---
+
+## Rate Limits
+
+Rate limits vary by API. Headers are included in responses to help you manage usage.
+
+| API                          | Rate Limit                                             |
+| ---------------------------- | ------------------------------------------------------ |
+| **Campaigns API**            | 5 requests/min, 25 requests/hour, 100 requests/day     |
+| **Catalog API**              | 100 requests/min or 1,000 requests/hour                |
+| **Campaign Stats API**       | 100 requests/min/workspace                             |
+| **Custom Segments (Filter)** | 50 requests/min, 200 requests/hour, 1,000 requests/day |
+| **Custom Segments (File)**   | 10 operations/hour, 100 operations/day                 |
+
+### Rate Limit Response Headers
+
+```http
+x-ratelimit-limit: 100
+x-ratelimit-remaining: 95
+x-ratelimit-reset: 1699574400
+```
+
+### Payload Size Limits
+
+| API                    | Max Payload Size |
+| ---------------------- | ---------------- |
+| Catalog API            | 5 MB             |
+| Recommendations API    | 1 MB             |
+| Bulk Import API        | 100 KB           |
+| Custom Segments (File) | 150 MB per file  |
+
+---
+
+## Error Handling
+
+All APIs return consistent error responses.
+
+### Standard Error Format
+
+```json
+{
+  "status": "fail",
   "error": {
-    "code": "INVALID_REQUEST",
     "message": "The request parameters are invalid",
-    "details": "Additional error details if available"
+    "type": "Bad Request",
+    "request_id": "abc123xyz"
   }
 }
 ```
 
-Common HTTP status codes:
-- `200` - Success
-- `400` - Bad Request
-- `401` - Unauthorized
-- `403` - Forbidden
-- `404` - Not Found
-- `429` - Rate Limit Exceeded
-- `500` - Internal Server Error
+### HTTP Status Codes
 
-## SDKs and Libraries
+| Code  | Description                        |
+| ----- | ---------------------------------- |
+| `200` | Success                            |
+| `201` | Created                            |
+| `202` | Accepted (async processing)        |
+| `400` | Bad Request - Invalid parameters   |
+| `401` | Unauthorized - Invalid credentials |
+| `403` | Forbidden - Access denied          |
+| `404` | Not Found - Resource doesn't exist |
+| `409` | Conflict - Duplicate resource      |
+| `413` | Payload Too Large                  |
+| `429` | Rate Limit Exceeded                |
+| `500` | Internal Server Error              |
 
-We provide official SDKs for popular programming languages to simplify integration:
+---
 
-- **JavaScript/Node.js**: `npm install moengage-node`
-- **Python**: `pip install moengage-python`
-- **Java**: Available via Maven Central
-- **PHP**: Available via Composer
+## Key Endpoints Reference
+
+### Data APIs
+
+| Method | Endpoint                     | Description                  |
+| ------ | ---------------------------- | ---------------------------- |
+| `POST` | `/customer/{Workspace_ID}`   | Create or update user        |
+| `POST` | `/customers/export`          | Get user details             |
+| `POST` | `/customer/merge`            | Merge two users              |
+| `POST` | `/customer/delete/bulk`      | Delete users in bulk         |
+| `POST` | `/event/{Workspace_ID}`      | Track user events            |
+| `POST` | `/device/{appId}`            | Create or update device      |
+| `POST` | `/transition/{Workspace_ID}` | Bulk import users and events |
+
+### Campaigns & Messaging
+
+| Method | Endpoint                | Description                               |
+| ------ | ----------------------- | ----------------------------------------- |
+| `POST` | `/campaigns`            | Create Push or Email campaign             |
+| `POST` | `/transaction/sendpush` | Send push notification                    |
+| `POST` | `/alerts/send`          | Send transactional alert (SMS/Email/Push) |
+
+### Catalog
+
+| Method  | Endpoint                                  | Description            |
+| ------- | ----------------------------------------- | ---------------------- |
+| `POST`  | `/catalog`                                | Create catalog         |
+| `PATCH` | `/catalog/{catalog_id}/attributes`        | Add catalog attributes |
+| `POST`  | `/catalog/{catalog_id}/items`             | Ingest catalog items   |
+| `PATCH` | `/catalog/{catalog_id}/items`             | Update catalog items   |
+| `POST`  | `/catalog/{catalog_id}/items/bulk-delete` | Delete catalog items   |
+
+### Templates
+
+| Method | Endpoint                         | Description              |
+| ------ | -------------------------------- | ------------------------ |
+| `POST` | `/custom-templates/push`         | Create Push template     |
+| `PUT`  | `/custom-templates/push`         | Update Push template     |
+| `POST` | `/custom-templates/push/search`  | Search Push templates    |
+| `POST` | `/custom-templates/sms`          | Create SMS template      |
+| `PUT`  | `/custom-templates/sms`          | Update SMS template      |
+| `POST` | `/custom-templates/sms/search`   | Search SMS templates     |
+| `POST` | `/custom-templates/inapp`        | Create In-App template   |
+| `PUT`  | `/custom-templates/inapp`        | Update In-App template   |
+| `POST` | `/custom-templates/inapp/search` | Search In-App templates  |
+| `POST` | `/custom-templates/osm`          | Create OSM template      |
+| `PUT`  | `/custom-templates/osm`          | Update OSM template      |
+| `POST` | `/custom-templates/osm/search`   | Search OSM templates     |
+| `POST` | `/email-templates`               | Create Email template    |
+| `PUT`  | `/email-templates/{template_id}` | Update Email template    |
+| `GET`  | `/email-templates`               | Get all Email templates  |
+| `GET`  | `/email-templates/{template_id}` | Get Email template by ID |
+
+### Content Blocks
+
+| Method | Endpoint                     | Description               |
+| ------ | ---------------------------- | ------------------------- |
+| `POST` | `/content-blocks`            | Create content block      |
+| `PUT`  | `/content-blocks`            | Update content block      |
+| `POST` | `/content-blocks/get-by-ids` | Get content blocks by IDs |
+| `POST` | `/content-blocks/search`     | Search content blocks     |
+
+### Segments & Audiences
+
+| Method | Endpoint                           | Description           |
+| ------ | ---------------------------------- | --------------------- |
+| `POST` | `/v2/custom-segments/file-segment` | Create file segment   |
+| `POST` | `/v3/custom-segments/`             | Create filter segment |
+| `GET`  | `/v3/custom-segments`              | List custom segments  |
+| `GET`  | `/v3/custom-segments/{id}`         | Get segment by ID     |
+
+### Business Events
+
+| Method | Endpoint                  | Description            |
+| ------ | ------------------------- | ---------------------- |
+| `POST` | `/business_event`         | Create business event  |
+| `POST` | `/business_event/trigger` | Trigger business event |
+| `POST` | `/business_event/search`  | Search business events |
+
+### Live Activities (iOS)
+
+| Method | Endpoint                          | Description          |
+| ------ | --------------------------------- | -------------------- |
+| `POST` | `/live-activity/broadcast/start`  | Start Live Activity  |
+| `POST` | `/live-activity/broadcast/update` | Update Live Activity |
+| `POST` | `/live-activity/broadcast/end`    | End Live Activity    |
+
+---
 
 ## Support
 
-Need help? We're here to assist:
-- 📚 **Documentation**: Browse our comprehensive guides
-- 💬 **Community**: Join our developer community
-- 🎫 **Support**: Contact our technical support team
-- 📧 **Email**: api-support@moengage.com
+Need help with the API?
+
+- **Help Center**: [help.moengage.com](https://help.moengage.com/hc/en-us)
+- **Support**: Contact your Customer Success Manager or reach out via the dashboard

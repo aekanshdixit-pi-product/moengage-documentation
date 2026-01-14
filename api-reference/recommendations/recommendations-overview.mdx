@@ -1,0 +1,83 @@
+---
+title: "Recommendations Overview"
+description: "Fetch recommendation metadata and retrieve personalized item results programmatically using the MoEngage Recommendation API."
+---
+
+## Overview
+The MoEngage Recommendation API allows you to programmatically interact with your recommendation engines. You can retrieve the configuration metadata of a specific recommendation setup or fetch the actual recommended items for a specific user based on various models like "Similar Items," "Frequently Bought Together," or "Trending."
+
+<Info>
+If this API is not enabled for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team to request enablement.
+</Info>
+
+## Recommendation API Endpoints
+The Recommendation API consists of the following endpoints:
+- [Fetch Recommendation Metadata](/api-reference/recommendations/recommendations#fetch_metadata) - Get configuration details, status, and logic.
+- [Fetch Recommendation Results](/api-reference/recommendations/recommendations#fetch_results) - Retrieve personalized items for a user.
+
+## Supported Recommendation Types
+The following recommendation models are supported across the API:
+
+| Recommendation Type | Description | Requires `item_id`? |
+| :--- | :--- | :--- |
+| **user_action** | Based on specific user behaviors. | No |
+| **item_attribute** | Based on item properties. | No |
+| **similar_item** | Items similar to a specific anchor item. | **Yes** |
+| **frequently_viewed_together** | Cross-sell based on views. | **Yes** |
+| **frequently_bought_together** | Cross-sell based on purchases. | **Yes** |
+| **trending_item** | Popular items across the workspace. | No |
+| **user_personalization** | Tailored specifically to user preferences. | No |
+| **catalog_alert** | Notifications based on catalog changes. | No |
+
+## Rate Limits
+The API enforces different rate limits depending on the operation:
+
+| Endpoint | Limit |
+| :--- | :--- |
+| **Fetch Metadata** (GET) | 1,000 requests per minute |
+| **Fetch Results** (POST) | 10,000 requests per minute |
+
+## Implementation Notes
+<Note>
+**Authentication Details:**
+Authentication is handled via **Basic Auth**. You must encode `username:password` in Base64.
+- **Username**: Found under **Settings > Account > APIs > Workspace ID**.
+- **Password**: Use the API key from your **Catalog API** tile in the dashboard.
+</Note>
+
+<Note>
+**Data Center Configuration:**
+Ensure you use the correct Data Center (DC) in your base URL (e.g., `api-01.moengage.com` or `api-03.moengage.com`). Check your dashboard URL to identify your DC number.
+</Note>
+
+## FAQs
+
+### General Recommendation Questions
+<AccordionGroup>
+  <Accordion title="How do I find my Recommendation ID?">
+    The `recommendations_id` is a unique identifier generated when you create a recommendation in the MoEngage Recommendation module. You can find this ID on the individual recommendation's overview page in the MoEngage Dashboard.
+  </Accordion>
+  <Accordion title="Why should I use the 'include_fields' parameter?">
+    By default, the API returns all attributes associated with an item in the catalog. For catalogs with many attributes, this can significantly increase response size and latency. Specifying only the fields you need (e.g., `["title", "price", "image_link"]`) improves performance.
+  </Accordion>
+  <Accordion title="What is the MOE-APPKEY?">
+    The `MOE-APPKEY` is your MoEngage Workspace ID. It is required in the header of every request. You can find it under **Settings > Account > APIs > Workspace ID**.
+  </Accordion>
+</AccordionGroup>
+
+### Fetching Results
+<AccordionGroup>
+  <Accordion title="When is the item_id mandatory in the request body?">
+    The `item_id` acts as an anchor for collaborative filtering models. It is mandatory when the `RECOMMENDATION-TYPE` is set to `similar_item`, `frequently_viewed_together`, or `frequently_bought_together`.
+  </Accordion>
+  <Accordion title="Can I fetch results for a user who doesn't exist in MoEngage yet?">
+    The API requires a valid `user_id`. If the user is unknown or hasn't had any interactions recorded, the recommendation engine may return default items (like trending items) or an empty list depending on your "fallback" settings in the dashboard.
+  </Accordion>
+  <Accordion title="What happens if the payload size exceeds 1MB?">
+    The API will return a `413 Request Entity Too Large` error. This usually happens if the `include_fields` list is excessively long or if a very high number of items are requested (if applicable).
+  </Accordion>
+</AccordionGroup>
+
+## Postman Collections
+Test the Recommendation APIs immediately using our Postman collection.
+[View Postman Collection](https://www.postman.com/moengage-dev/workspace/api-docs/)

@@ -1,19 +1,27 @@
 openapi: 3.1.0
 info:
   title: Email Templates API V2
-  version: 1.0.0
+  version: v1.0
   description: |
-    The Email Templates API allows you to create, update, and search for email templates within MoEngage. 
-    
-    These templates can be edited in the Froala editor (custom HTML editor) on the MoEngage Dashboard.
+    The Create Email Template API can be used to create an email template in MoEngage. This API helps you upload templates created outside the MoEngage ecosystem to MoEngage and use them for campaign creation. The uploaded templates can be edited in the Froala editor (custom HTML editor) on the MoEngage Dashboard.
 
+    <Note>
+    **Note**
+
+    Templates created using this API cannot be used in the Drag and Drop Editor in the MoEngage Dashboard. They are supported only for the Custom HTML Editor (Froala Editor).
+    </Note>
 servers:
   - url: https://api-0{dc}.moengage.com/v1.0
     description: MoEngage API Server
     variables:
       dc:
         default: "1"
-        description: "Your Data Center number (e.g., 1, 2, 3). You can find this in your MoEngage Dashboard URL or settings."
+        description: |
+          Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+        enum:
+          - "1"
+          - "2"
+          - "3"
 
 components:
   securitySchemes:
@@ -21,11 +29,19 @@ components:
       type: http
       scheme: basic
       description: |
-        Basic Authentication using your Workspace ID (Username) and API Key (Password).
-        Header format: `Authorization: Basic <Base64_ENCODED_WORKSPACEID_APIKEY>`
+        The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+        
+        `{"Authorization: Basic Base64_ENCODED_WORKSPACEID_APIKEY=="}`
+        
+        The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+        1. Navigate to **Settings -> Account -> APIs**.
+        2. Copy the following details:
+           * Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+           * Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+        3. Use these details to authenticate the API requests.
 
   schemas:
-    # Reusable Error Schema
+    # Common Error Structure based on HTML
     ErrorResponse:
       type: object
       properties:
@@ -34,26 +50,29 @@ components:
           properties:
             code:
               type: string
-              description: A brief explanation of the error (e.g., "400 Bad Request").
+              description: "This field contains the error code that provides a brief explanation of the error and is a String. For example, 400 - Bad Request, 401- Authentication required, and so on."
             message:
               type: string
-              description: Description of why the request failed.
-            request_id:
-              type: string
-              description: Unique identifier for the request.
+              description: "This field describes why the request has failed and is a String."
             details:
               type: array
+              description: "This is a List of the error details objects."
               items:
                 type: object
                 properties:
                   code:
                     type: string
+                    description: "Descriptive Error Code"
                   target:
                     type: string
+                    description: "Denotes the field causing the issue or a brief description of the error message in some cases"
                   message:
                     type: string
+                    description: "Descriptive Error Message"
+            request_id:
+              type: string
+              description: "This field contains the unique id pertaining to the request."
 
-    # Reusable Basic Details Object
     BasicDetails:
       type: object
       required:
@@ -64,32 +83,40 @@ components:
       properties:
         email_content:
           type: string
-          description: The HTML content of the email.
+          description: This field contains the title of the message.
         subject:
           type: string
-          description: The subject line of the email campaign.
+          description: |
+            This field contains the subject of the email campaign.
+            **Example**: "End of Season Sale!"
         attachments:
           type: array
           description: |
-            Array of URLs to be included as attachments. 
-            * Max 10 attachments.
-            * Only valid URLs (https).
-            * Max size 6MB per file, 20MB total.
-            * forbidden extensions: .dmg, .exe, .xls, .ddl, .class, .obj, .int, .gnt, .o, .so, .lbr, .net
+            This field contains the attachments to be included in the email.
+            
+            **Note**:
+            * Only URLs can be added as part of Email attachments.
+            * A maximum of ten attachments are allowed.
+            * The URL should start with https and end with a valid extension. The following extensions are not allowed: .dmg, .exe, .xls, .ddl, .class, .obj, .int, .gnt, .o, .so, .lbr, and .net
+            * Individual attachments should be less than 6 MB, and the total size of the attachments should be less than 20 MB.
           items:
             type: string
             format: uri
+            example: "https://app-cdn.moengage.com/assets/LogoThumbnail.jpg"
         thumbnail_url:
           type: string
-          description: Image URL used to generate a preview in the Dashboard.
+          description: This field contains the image URL used to generate a preview in the Imported API Templates section on the MoEngage dashboard.
         sender_name:
           type: string
-          description: The name displayed in the recipient's inbox.
+          description: |
+            This field contains the name that is displayed in the inboxes of your recipients. Sender names are one of the first things people see when you send them an email.
+            **Example**: "sender_name": "Your Brand Name"
         preview_text:
           type: string
-          description: Text that appears below the subject line in the inbox.
+          description: |
+            This field contains the preview text, the text that appears below the subject line in the inbox.
+            Example: "preview_text": "Let Your Summer Look Shine"
 
-    # Reusable Meta Info Object
     MetaInfo:
       type: object
       required:
@@ -100,31 +127,30 @@ components:
       properties:
         template_id:
           type: string
-          description: Unique ID for the template (generated by you).
+          description: This field contains the ID for the template and is unique. This ID should be generated by you and will be used for updating or retrieving the template using the template APIs.
         template_name:
           type: string
-          description: Name of the template.
+          description: This field contains the name of the template. This value should be generated by you and would be used for identifying the template.
         template_version:
           type: string
-          description: Version string of the template (generated by you).
+          description: This field contains the version of the template and is unique. This value should be generated by you and would be used for tracking the template's version.
         created_by:
           type: string
-          description: Email ID or identifier of the creator.
-        updated_by:
-          type: string
-          description: Email ID or identifier of the updater.
+          description: This field contains details about who created the template. This value should be generated by you. For example, you can pass the email id of the user creating the template here.
         locale:
           type: string
-          description: Locale associated with the template (e.g., from MoEngage Advanced Settings).
+          description: |
+            This field contains the locale to be associated with the template.
+            These are the locales available in the MoEngage Dashboard at **Settings > Advanced settings > Locales**.
         variation:
           type: integer
-          description: Variation of the template (Max 5 variations).
+          description: This field contains the variation of the template. You can add a maximum of five variations to each template.
         group_id:
           type: string
           description: |
-            Group ID. 
-            * **Parent**: Not required (external_template_id acts as group_id).
-            * **Child**: Pass the Group ID of the parent.
+            This field contains the group ID of the template.
+            * Parent template: A parent template is the "default" template with which you can associate child templates. You need not pass a Group ID for a parent template. The "external_template_id" generated for the parent template acts as its group ID.
+            * Child template: Pass the Group ID of the parent (default) template with which you want to associate the child template.
 
 security:
   - basicAuth: []
@@ -138,9 +164,39 @@ paths:
     post:
       summary: Create Email Template
       description: |
-        Upload email templates created outside the MoEngage ecosystem. These templates can be used for campaign creation and edited via the Froala editor.
+        The Create Email Template API can be used to create an email template in MoEngage. This API helps you upload templates created outside the MoEngage ecosystem to MoEngage and use them for campaign creation. The uploaded templates can be edited in the Froala editor (custom HTML editor) on the MoEngage Dashboard.
+      operationId: createEmailTemplate
       tags:
         - Email Templates
+      x-mint:
+        content: |
+          ### Rate Limit
+          The rate limit is 100 RPM. You can upload a maximum of 10000 templates per channel.
+
+          ### FAQs
+          <AccordionGroup>
+            <Accordion title="How do I access templates created using this API on the MoEngage Dashboard?">
+              You can access templates created using the Create Email Template API in the **Imported API Templates** tab in the second step of campaign creation in the MoEngage Dashboard.
+              
+            </Accordion>
+            <Accordion title="Can I create multiple templates with the same name?">
+              Yes, you can create multiple templates with the same name, provided they have different versions.
+            </Accordion>
+          </AccordionGroup>
+      parameters:
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            default: application/json
+          description: Set the Content-Type header to application/json.
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: "This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication."
       requestBody:
         required: true
         content:
@@ -156,26 +212,44 @@ paths:
                 meta_info:
                   $ref: '#/components/schemas/MetaInfo'
             examples:
-              parent_template:
-                summary: Parent Template Example
+              Parent Template in a Template Group:
+                summary: Parent Template in a Template Group
                 value:
                   basic_details:
                     subject: "Email_Subject"
                     email_content: "<!DOCTYPE html><html><head><title>My Short HTML</title></head><body><h1>Hello, World!</h1><p>This is a simple HTML example.</p></body></html>"
-                    thumbnail_url: "https://example.com/thumbnail.jpg"
+                    thumbnail_url: "{{template_thumbnail_thumbnail_url}}"
                     sender_name: "Sender_Name"
                     preview_text: "Preview_text"
                     attachments: []
                   meta_info:
                     created_by: "john.doe@example.com"
-                    template_id: "template_id_1"
-                    template_name: "template_name"
-                    template_version: "1.0"
-                    locale: "en_US"
+                    template_id: "{{template_id_1}}"
+                    template_name: "{{template_name}}"
+                    template_version: "{{template_version}}"
+                    locale: "{{Locale_name}}"
                     variation: 1
+              Associated Templates in the Same Template Group:
+                summary: Associated Templates in the Same Template Group
+                value:
+                  basic_details:
+                    subject: "Email_Subject"
+                    email_content: "<!DOCTYPE html><html><head><title>My Short HTML</title></head><body><h1>Hello, World!</h1><p>This is a simple HTML example.</p></body></html>"
+                    thumbnail_url: "{{template_thumbnail_image_url}}"
+                    sender_name: "Sender_Name"
+                    preview_text: "Preview_text"
+                    attachments: []
+                  meta_info:
+                    created_by: "john.doe@example.com"
+                    template_id: "{{template_id_2}}"
+                    template_name: "{{template_name}}"
+                    template_version: "{{template_version}}"
+                    locale: "{{Locale_name}}"
+                    variation: 2
+                    group_id: "{{external_template_id_of_parent_template}}"
       responses:
         '200':
-          description: Success
+          description: This response is returned when the request is processed successfully.
           content:
             application/json:
               schema:
@@ -183,29 +257,403 @@ paths:
                 properties:
                   external_template_id:
                     type: string
-                    description: Unique template ID corresponding to the successful creation.
+                    description: |
+                      This field contains the unique template id corresponding to a successful template creation request and needs to be stored by you. This template id would be used for searching a specific template and updating it.
+                      For a parent (default) template, the generated "external_template_id" acts as its group ID.
               examples:
                 success:
                   value:
                     external_template_id: "d05a44f0-a7cf-471a-bcb6-63054800a367"
         '400':
-          description: Bad Request (Missing parameters, duplicates, invalid data)
+          description: This response is returned when the required parameters are missing from the request, or when the provided parameters are invalid, or when a template already exists with the same version, name, or id.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation_failure:
+                  value:
+                    error:
+                      code: "400 Bad Request"
+                      message: "Validation failed because of invalid request data"
+                      details:
+                        - code: "MissingValue"
+                          target: "template_id"
+                          message: "template_id value is too short"
+                      request_id: "LMwPhRMB"
+                duplicate_request:
+                  value:
+                    error:
+                      code: "400 Bad Request"
+                      message: "Duplicate - template_id and template_version"
+                      details:
+                        - code: "InvalidValue"
+                          target: "Duplicate - template_id and template_version"
+                          message: "template_id:EndOfSeasonSale template_version:10 is already present."
+                      request_id: "cLCcgLQj"
+                limit_breach:
+                  value:
+                    error:
+                      code: "400 Bad Request"
+                      message: "Maximum Template limit exceeded"
+                      details:
+                        - code: "NotSupported"
+                          target: "Maximum Template limit exceeded"
+                          message: "You have already created maximum allowed template allowed for client"
+                      request_id: "eLeZXIlW"
         '401':
-          description: Authorization Failure
+          description: This response is returned when the authorization parameters are missing in the HTTP Auth Header.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                auth_fail:
+                  value:
+                    title: "Authentication required"
+                    description: "MOE-APPKEY missing in Authentication Header"
+        '415':
+          description: This response is returned when the header Content-Type is not provided/is not supported.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  description:
+                    type: string
+              examples:
+                unsupported:
+                  value:
+                    title: "Unsupported media type"
+                    description: "Content type is not supported"
         '429':
-          description: Rate Limit Breach (Limit is 100 RPM)
-    
+          description: This response is returned when the number of requests per minute has exceeded the rate limit, or the number of templates has exceeded the allowed quota per channel.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                rate_limit:
+                  value:
+                    response_id: "OUUkHvcn"
+                    type: "custom_template"
+                    error:
+                      code: "Too Many Requests"
+                      message: "API rate limit breached. Current limit: n/m mins"
+        '500':
+          description: This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  message:
+                    type: string
+              examples:
+                server_error:
+                  value:
+                    title: "Internal Server Error"
+                    message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+
+  /custom-templates/email/search:
+    post:
+      summary: Search Email Template
+      description: |
+        The Search Email Template API can be used to look up the email templates created in your MoEngage account.
+
+        <Note>
+        **Note**
+
+        We are introducing mandatory pagination, effective November 15, 2025, all calls to this API must include the following two parameters:
+        * `page`: The page number of the results you wish to fetch.
+        * `entries`: The number of templates to return per page, with a maximum value of 15.
+
+        Please update all integrations to include these parameters. API requests submitted without them after the effective date will result in an error and fail to execute.
+        </Note>
+      operationId: searchEmailTemplate
+      tags:
+        - Email Templates
+      x-mint:
+        content: |
+          ### Rate Limit
+          The rate limit is 100 RPM.
+
+          ### Note
+          1. You can send empty filters to fetch all the email templates.
+          2. You can send only `template_ids` if you want specific older versions of the email template. In other cases, you will receive the latest version of the template.
+          3. By default, the `is_default_template_of_group` flag is set to "true" for the default (parent) template and "false" for child templates.
+      parameters:
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            default: application/json
+          description: Set the Content-Type header to application/json.
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: "This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  description: This field contains the index of the pages to be returned in the search result.
+                entries:
+                  type: integer
+                  description: This field contains the number of entries per page in the search result.
+                template_name:
+                  type: string
+                  description: This field indicates the name of the template. When this value is specified, the template that matches the name specified in this field will be returned.
+                template_source:
+                  type: array
+                  items:
+                    type: string
+                  description: This field indicates the template source that created the template. For example ["API", "MOENGAGE"]. When specified, the templates whose source matches that specified in this list will be returned.
+                template_version:
+                  type: string
+                  description: This field indicates the template version. When specified, the template whose template version matches that specified in this field will be returned.
+                template_id:
+                  type: string
+                  description: This field indicates the template id. When specified, the template whose template id matches that specified in this field will be returned.
+                template_type:
+                  type: array
+                  items:
+                    type: string
+                  description: |
+                    This field indicates whether the template is a custom one or a pre-built one.
+                    Allowed values: CUSTOM, PRE_BUILT.
+                    When specified, the templates whose template type matches that specified in this list will be returned.
+                created_by:
+                  type: array
+                  items:
+                    type: string
+                  description: |
+                    This field indicates the user who created the template. When specified, the templates for which the created_by user information matches that specified in this list will be returned.
+                    Example: ["user1@moengage.com", "user2@moengage.com"]
+                updated_by:
+                  type: array
+                  items:
+                    type: string
+                  description: |
+                    This field indicates the user who updated the template. When specified, the templates for which the updated_by user information matches that specified in this list will be returned.
+                    Example: ["user1@moengage.com", "user2@moengage.com"]
+                sort_params:
+                  type: array
+                  items:
+                    type: object
+                  description: |
+                    This field indicates the sorting parameters for the search result and the sort order.
+                    Example: "sort_params":[{"template_name": "ASCENDING","last_modified_date": "ASCENDING","last_modified_by": "ASCENDING"}]
+                external_template_ids:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      external_template_id:
+                        type: string
+                      version:
+                        type: integer
+                  description: |
+                    This field indicates the list of the template ids and their versions that must be fetched. When this value is specified, the template that matches the id and version specified in this field will be returned.
+                group_id:
+                  type: string
+                  description: |
+                    This field indicates the group ID of the parent template.
+                    Pass the Group ID of the parent (default) template of the group to fetch all templates associated with that group.
+                    The "external_template_id" generated for the parent template acts as its group ID.
+                is_grouped_response:
+                  type: boolean
+                  description: |
+                    If the value is "true", this API fetches only the default template data, including additional fields such as unique locale count, unique variations, total templates in the group, and all individual templates that are not part of any group.
+                    If the value is "false", this API will fetch all individual templates and their template data.
+                is_count_required:
+                  type: boolean
+                  description: If the value is "true", this API fetches total templates of the same request to support pagination on the UI.
+      responses:
+        '200':
+          description: This response is returned when the request is processed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    description: |
+                      This field contains the list of email templates that satisfy the search criteria.
+                      For information about the template, refer to Basic Details and Meta Info.
+                    items:
+                      type: object
+                      properties:
+                        external_template_id:
+                          type: string
+                        version:
+                          type: integer
+                        meta_info:
+                          $ref: '#/components/schemas/MetaInfo'
+                        basic_details:
+                          $ref: '#/components/schemas/BasicDetails'
+                        created_by:
+                          type: string
+                        created_at:
+                          type: string
+                        updated_by:
+                          type: string
+                        updated_at:
+                          type: string
+                  error:
+                    type: object
+                    description: This field contains the reason for the request's failure.
+                    properties:
+                      code:
+                        type: string
+                        description: This field contains the error code that provides a brief explanation of the error and is a String.
+                      message:
+                        type: string
+                        description: This field describes why the request has failed and is a String.
+                      details:
+                        type: array
+                        description: This is a List of the error details objects.
+                        items:
+                          type: object
+                      request_id:
+                        type: string
+                        description: This field contains the unique id pertaining to the request.
+              examples:
+                success:
+                  value:
+                    data:
+                      - external_template_id: "{{external_template_id}}"
+                        version: 2
+                        basic_details:
+                          email_content: "<!DOCTYPE html><html><head><title>Sample Webpage</title></head><body><h1>Welcome to My Sample Webpage 1</h1><p>This is a small example of an HTML webpage.</p><p>Below is an unordered list:</p><ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul><p>Here's an image:</p><img src=\"https://example.com/sample-image.jpg\" alt=\"Sample Image\"><p>Visit our <a href=\"https://www.example.com\">website</a> for more information.</p></body></html>"
+                          subject: "Hi, Test subject 1"
+                          attachments: []
+                          thumbnail_url: "https://img.freepik.com/free-vector/bright-yellow-sunflower-design-decorations_1308-130330.jpg"
+                          sender_name: "test sender 1"
+                        meta_info:
+                          template_id: "{{template_id}}"
+                          template_name: "test_template_1"
+                          template_version: "0"
+                          created_by: "user1@moengage.com"
+        '400':
+          description: This response is returned when the required parameters are missing from the request, when the provided parameters are invalid, or when a template already exists with the same version, name, or ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_field:
+                  value:
+                    error:
+                      code: "400 Bad Request"
+                      message: "Invalid Field Value"
+                      details:
+                        - code: "InvalidValue"
+                          target: ["template_name", "created_by"]
+                          message: "Some of the field values are invalid"
+                      request_id: "{{request_id}}"
+        '401':
+          description: This response is returned when the authorization parameters are missing in the HTTP Auth Header.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                auth_fail:
+                  value:
+                    error:
+                      code: "401 Unauthorized"
+                      message: "Authentication required"
+                      details:
+                        - code: "InvalidValue"
+                          target: "APP_ID"
+                          message: "Invalid APP_ID is provided."
+                      request_id: "{{request_id}}"
+        '429':
+          description: This response is returned when the number of requests per minute has exceeded the rate limit.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response_id:
+                    type: string
+                  type:
+                    type: string
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+              examples:
+                rate_limit:
+                  value:
+                    response_id: "{{response_id}}"
+                    type: "custom_template"
+                    error:
+                      code: "Too Many Requests"
+                      message: "API rate limit breached. Current limit: n/m mins"
+        '500':
+          description: This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  message:
+                    type: string
+              examples:
+                server_error:
+                  value:
+                    title: "Internal Server Error"
+                    message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+
+  
     put:
       summary: Update Email Template
       description: |
-        Update an existing email template by specifying its `external_template_id`. 
-        You can choose to update active campaigns or create a new version.
+        This API can be used to update an email template by specifying its external template id. You can specify whether the updated version of the template can be used in active campaigns in the request.
+      operationId: updateEmailTemplate
       tags:
         - Email Templates
+      x-mint:
+        content: |
+          ### Rate Limit
+          The rate limit is 100 RPM.
+          
+          ### Version Limit
+          You can have a maximum of 15 versions for a template.
+      parameters:
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            default: application/json
+          description: Set the Content-Type header to application/json.
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: "This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication."
       requestBody:
         required: true
         content:
@@ -219,40 +667,23 @@ paths:
               properties:
                 external_template_id:
                   type: string
-                  description: The unique identifier generated during template creation.
+                  description: This field contains the unique identifier that is generated during the creation of the template.
                 update_campaigns:
                   type: boolean
-                  default: false
                   description: |
-                    If `true`, updates all campaigns currently using this template to the new version.
-                    If `false`, a new version is created but existing campaigns remain unchanged.
+                    This field contains a flag that is used to update all the campaigns that are currently using the template being updated to the newer version(that is being updated in this request). The default value for this flag is false.
+                    
+                    When the update_campaigns flag is true, all the campaigns running with this template will get updated to the latest version of the template, and when it is false, the new version of the template will be created, but there will be no change made to the template used in the existing campaigns.
                 update_latest_version:
                   type: boolean
-                  description: If `true`, does not create a new version but updates the content of the current version.
+                  description: If the value is "true," this API does not create a new version of the template but only updates its contents.
                 basic_details:
                   $ref: '#/components/schemas/BasicDetails'
                 meta_info:
                   $ref: '#/components/schemas/MetaInfo'
-            examples:
-              update_template:
-                summary: Update Template Example
-                value:
-                  basic_details:
-                    email_content: "<html>...updated content...</html>"
-                    subject: "Test subject"
-                    attachments: []
-                    thumbnail_url: "https://example.com/image.jpg"
-                    sender_name: "Test sender"
-                    preview_text: "Sample preview text"
-                  meta_info:
-                    template_name: "test_template"
-                    updated_by: "user1@moengage.com"
-                    template_version: "2.0"
-                  update_campaigns: false
-                  external_template_id: "d05a44f0-a7cf-471a-bcb6-63054800a367"
       responses:
         '200':
-          description: Success
+          description: This response is returned when the request is processed successfully.
           content:
             application/json:
               schema:
@@ -260,130 +691,97 @@ paths:
                 properties:
                   external_template_id:
                     type: string
+                    description: This field contains the unique template id corresponding to a successful template updation request.
+              examples:
+                success:
+                  value:
+                    external_template_id: "d05a44f0-a7cf-471a-bcb6-63054800a367"
         '400':
-          description: Bad Request (Invalid template ID, missing values)
+          description: This response is returned when the required parameters are missing from the request or when the provided parameters are invalid.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
-  /custom-templates/email/search:
-    post:
-      summary: Search Email Template
-      description: |
-        Look up email templates created in your MoEngage account.
-        
-        **Note:** Mandatory pagination applies. Calls must include `page` and `entries`.
-      tags:
-        - Email Templates
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                page:
-                  type: integer
-                  description: Page number of results to fetch.
-                entries:
-                  type: integer
-                  description: Number of templates per page (Max 15).
-                template_name:
-                  type: string
-                  description: Partial search allowed.
-                template_source:
-                  type: array
-                  items:
-                    type: string
-                  example: ["API", "MOENGAGE"]
-                template_version:
-                  type: string
-                template_id:
-                  type: string
-                template_type:
-                  type: array
-                  items:
-                    type: string
-                    enum: [CUSTOM, PRE_BUILT]
-                created_by:
-                  type: array
-                  items:
-                    type: string
-                    format: email
-                updated_by:
-                  type: array
-                  items:
-                    type: string
-                    format: email
-                group_id:
-                  type: string
-                  description: Group ID of the parent template.
-                is_grouped_response:
-                  type: boolean
-                  description: If true, fetches only default template data and stats.
-                is_count_required:
-                  type: boolean
-                  description: If true, returns total count to support UI pagination.
-                sort_params:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties:
-                      type: string
-                      enum: [ASCENDING, DESCENDING]
-                external_template_ids:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      external_template_id:
-                        type: string
-                      version:
-                        type: integer
-            examples:
-              search_filter:
-                summary: Search with Filters
-                value:
-                  page: 1
-                  entries: 10
-                  template_name: "SALE"
-                  template_source: ["API"]
-                  template_type: ["CUSTOM"]
-                  sort_params: 
-                    - last_modified_date: "DESCENDING"
-      responses:
-        '200':
-          description: Success
+              examples:
+                invalid_id:
+                  value:
+                    error:
+                      code: "400 Bad Request"
+                      message: "Invalid template id"
+                      details:
+                        - code: "MissingValue"
+                          target: "9925c8"
+                          message: "9925c8 is invalid template id."
+                      request_id: "12345requestid"
+                limit_breach:
+                  value:
+                    error:
+                      code: "400 Bad Request"
+                      message: "Maximum Template limit exceeded"
+                      details:
+                        - code: "NotSupported"
+                          target: "Maximum Template limit exceeded"
+                          message: "You have already created maximum allowed template allowed for client"
+                      request_id: "eLeZXIlW"
+        '401':
+          description: This response is returned when the authorization parameters are missing in the HTTP Auth Header.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        external_template_id:
-                          type: string
-                        version:
-                          type: integer
-                        basic_details:
-                          $ref: '#/components/schemas/BasicDetails'
-                        meta_info:
-                          $ref: '#/components/schemas/MetaInfo'
-                        created_by:
-                          type: string
-                        created_at:
-                          type: string
-                        updated_by:
-                          type: string
-                        updated_at:
-                          type: string
-        '400':
-          description: Bad Request
+                  title:
+                    type: string
+                  description:
+                    type: string
+              examples:
+                auth_fail:
+                  value:
+                    title: "Authentication required"
+                    description: "MOE-APPKEY missing in Authentication Header"
+        '415':
+          description: This response is returned when the header Content-Type is not provided/is not supported.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  description:
+                    type: string
+              examples:
+                unsupported:
+                  value:
+                    title: "Unsupported media type"
+                    description: "Content type is not supported"
+        '429':
+          description: This response is returned when the number of requests per minute has exceeded the rate limit, or the number of templates has exceeded the allowed quota per channel.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                rate_limit:
+                  value:
+                    response_id: "response_id_example"
+                    type: "custom_template"
+                    error:
+                      code: "Too Many Requests"
+                      message: "API rate limit breached. Current limit: n/m mins"
+        '500':
+          description: This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  message:
+                    type: string
+              examples:
+                server_error:
+                  value:
+                    title: "Internal Server Error"
+                    message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"

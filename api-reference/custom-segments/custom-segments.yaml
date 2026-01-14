@@ -22,11 +22,60 @@ servers:
           - '05'
 tags:
   - name: Custom Segments - File
-    description: Manage segments created from user files (CSVs).
+    description: |
+      If you need to create segments by importing a large number of users, we recommend utilising the File segment API. This API allows you to easily generate a file segment by initiating a call to the file segment API endpoint. To proceed, you will need to compile a CSV file containing the relevant users (ensuring that the users are already present in MoEngage). It is essential to provide the public path of the file, which allows for downloading and identification of users in order to successfully create the file segment.
+      
+      Use the Custom File Segment API to:
+      * Create a new Custom File Segment
+      * Add Users to an existing Custom Segment
+      * Remove Users from an existing Custom Segment
+      * Replace Users from an existing Custom Segment
+   
   - name: Custom Segments - Lifecycle
-    description: Archive and unarchive custom segments.
+    description: |
+      Archiving and unarchiving through APIs makes it easy to retrieve and reuse custom segments whenever required for purposes such as A/B testing, maintaining regulatory compliance, and improving system performance.
+      
+      You can access the archived segments and utilize them to analyze and market campaigns without the need to recreate them from scratch.
+    x-mint:
+      content: |
+        
+        <Warning>
+          Archived segments will not be shown beyond 180 days.
+        </Warning>
   - name: Custom Segments - Filters
-    description: Create, read, update, and list filter-based custom segments.
+    description: |
+      If you need to create a segment based on the events or actions performed by your users on your application or website, the recommended approach is to use the filter segment API. With this API, you can create a custom segment by specifying the desired filter conditions.
+      
+      The filter segment API supports various operations, including create, update, get, and list, allowing you to effectively manage your segments based on specific criteria.
+    x-mint:
+      content: |
+        ## Authentication
+        Authentication is performed using Basic Auth. You must also provide the `MOE-APPKEY` header.
+        
+        ## Request Headers
+        
+        | Key | Required | Description |
+        | :--- | :--- | :--- |
+        | `Content-Type` | Yes | Set to `application/json`. |
+        | `Authorization` | Yes | Basic Auth. `{"Authorization": "Basic Base64_ENCODED_WORKSPACEID_APIKEY="}` |
+        | `MOE-APPKEY` | Yes | Your MoEngage App ID. Found in Settings -> Account -> APIs -> App ID. |
+        
+        ## FAQs
+        
+        <AccordionGroup>
+          <Accordion title="How can I generate the payload for custom segment creation?">
+            You can simply generate the payload from the MoEngage dashboard. Log in to the MoEngage dashboard and navigate to the **Test & Debug** -> **Segment Payload section**. Choose your filters and click on **Generate Payload**.
+          </Accordion>
+          <Accordion title="How do I get the id of a custom segment I created earlier but didn't save?">
+            You can use the LIST Custom Segment API with the name query param filter to get the id of the custom segment.
+          </Accordion>
+          <Accordion title="Why am I getting 409 Conflict even with a different name?">
+              Both the name and the definition of a custom segment are unique. If the definition of the custom segment in the request matches an existing segment, we return a conflict 409 error.
+          </Accordion>
+          <Accordion title="How do I know which existing segment is conflicting?">
+            In the case of 409 Conflict, we return a conflicting name/id in the response payload. You can check the payload to get the existing custom segment with the same definition.
+          </Accordion>
+        </AccordionGroup>
 security:
   - basicAuth: []
 paths:
@@ -37,10 +86,54 @@ paths:
       summary: Create File Segment
       description: Creates a new Custom File Segment from a CSV file URL.
       operationId: createFileSegment
+      parameters:
+        - name: Content-Type
+          in: header
+          description: Select the file content type.
+          required: true
+          schema:
+            type: string
+            default: text/csv
+            enum:
+              - text/csv
+              - application/csv
+              - application/vnd.ms-excel
+              - text/plain
+              - application/octet-stream
+              - binary/octet-stream
+        - name: Database
+          in: header
+          description: Set the database from which the data is available (MOE-DBNAME).
+          required: false
+          schema:
+            type: string
       x-mint:
         content: |
+         <Note>
+         If your file is private, you should whitelist [these IPs](https://help.moengage.com/hc/en-us/articles/35329024618772-A-Guide-to-MoEngage-IP-Whitelisting-Mechanism#h_01JNGJNR5F141E7KRK89YW1X8H) to provide access only to MoEngage for the file.
+         </Note>
+         
+         Check the data center and API endpoint [mapping page here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+         
+         ## Limits
+         
+         <Note>The limit of 1000 custom file segments is calculated only for the file segments that are active. Most of our customers utilize only 30-40% of this limit at any given point.</Note>
+         
+         | Rate Limit Name | Rate Limit |
+         | :--- | :--- |
+         | total active segment | The limit of the total number of active custom segments at a time for a client is 1000. |
+         | file_segment ops per hour | The total number of file segment operations (create/add/remove) per hour per client allowed is 10. |
+         | file_segment ops per day | The total number of file segment operations (create/add/remove) per day per client allowed is 100. |
+         | file_segment users per day | The total number of users uploaded via the File segment is limited to 2 million per day. (This limit is customizable, please get in touch with support) |
+         | file_size_limit | The size of the file from which the segment is created/updated. For each request, the file size limit is 150 MB. |
+         
           <Note>
-            **CSV File Requirements:**
+           ## Notes
+           ### Limits
+           * Breaching the limits will reject the request.
+           * Per hour and per day limits will consider the calculation based on the last hour and last 24 hrs respectively.
+          
+            ### CSV File Requirements
             * The attribute names should be separated by new lines.
             * CSV should be a single column and less than 150MB.
             * Values should not end with a comma (e.g., `abcd` not `abcd,`).
@@ -48,9 +141,12 @@ paths:
             * File should not have empty rows or columns.
             * A user attribute value must uniquely identify a single user.
             * [Sample File Link](https://app-cdn.moengage.com/assets/Sample_GAIDs.csv)
+         
+            ### Segment Processing & Availability
+          
+            As soon as the request is received at the MoEngage system, MoEngage creates a custom segment with zero users. After this, the file is processed and users are added to the custom segment. If the created custom segment is queried in between the file processing, it will show zero or partial user count.
           </Note>
-      parameters:
-        - $ref: '#/components/parameters/DatabaseHeader'
+
       requestBody:
         description: Configuration for the new file segment.
         required: true
@@ -67,8 +163,71 @@ paths:
               emails: ["user1@example.com", "user2@example.com"]
               expiry_time: 30
       responses:
+        '200':
+          description: Everything worked as expected.
+          content:
+            application/json:
+              example: "No example response body available for this status code."
         '202':
-          $ref: '#/components/responses/202_FileSegmentAccepted'
+          description: Request accepted for processing.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ApiResponseSuccessV2'
+                  - $ref: '#/components/schemas/CallbackV2'
+              examples:
+                api_response:
+                  summary: API Response - Success
+                  description: Immediate response from the API when the request is accepted.
+                  value:
+                    message: "File-segment creation request accepted"
+                    success: true
+                    cs_name: "custom_segment_unique_name"
+                callback_success:
+                  summary: Callback - Success
+                  description: Callback sent to your callback_url when segment processing completes successfully.
+                  value:
+                    db_name: "test_db"
+                    segment_name: "test_segment_name"
+                    request_id: "d5a263c4ef1198ae3d8496c0460f570f"
+                    values_found: 80
+                    values_processed: 70
+                    user_count: 60
+                    status: 201
+        '400':
+          description: Bad Request. Request not accepted due to missing a required parameter. The reason is passed in the description field.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ApiErrorV2'
+                  - $ref: '#/components/schemas/CallbackV2'
+              examples:
+                api_invalid_request:
+                  summary: API Response - Invalid Request
+                  description: Immediate response from the API when the request is invalid.
+                  value:
+                    title: "Invalid Request"
+                    description: "<message>"
+                callback_file_size:
+                  summary: Callback - Failure (File Size)
+                  description: Callback sent to your callback_url when file size exceeds the limit.
+                  value:
+                    db_name: "test_db"
+                    segment_name: "test_segment_name"
+                    request_id: "d5a263c4ef1198ae3d8496c0460f570f"
+                    status: 400
+                    error_message: "File size cannot be greater than 150MB. Created custom_segment contains 0 users."
+                callback_download_failed:
+                  summary: Callback - Failure (Download Failed)
+                  description: Callback sent to your callback_url when file download fails.
+                  value:
+                    db_name: "test_db"
+                    segment_name: "test_segment_name"
+                    request_id: "d5a263c4ef1198ae3d8496c0460f570f"
+                    status: 400
+                    error_message: "File download failed. Created custom_segment contains 0 users."
         '401':
           $ref: '#/components/responses/401_FileSegmentError'
         '409':
@@ -76,7 +235,43 @@ paths:
         '429':
           $ref: '#/components/responses/429_FileSegmentRateLimit'
         '500':
-          $ref: '#/components/responses/5XX_FileSegmentError'
+          description: Server Errors. Something went wrong on MoEngage.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ApiErrorV2'
+                  - $ref: '#/components/schemas/CallbackV2'
+              examples:
+                api_internal_error:
+                  summary: API Response - Internal Server Error
+                  description: Immediate response from the API when an internal server error occurs.
+                  value:
+                    title: "Internal Server Error"
+                callback_internal_error:
+                  summary: Callback - Failure (Internal Server Error)
+                  description: Callback sent to your callback_url when segment processing encounters an internal error.
+                  value:
+                    db_name: "test_db"
+                    segment_name: "test_segment_name"
+                    request_id: "d5a263c4ef1198ae3d8496c0460f570f"
+                    status: 500
+                    error_message: "Internal Server Error. Contact MoEngage Team."
+        '502':
+          description: Bad Gateway. Something went wrong on MoEngage.
+          content:
+            application/json:
+              example: "No example response body available for this status code."
+        '503':
+          description: Service Unavailable. Something went wrong on MoEngage.
+          content:
+            application/json:
+              example: "No example response body available for this status code."
+        '504':
+          description: Gateway Timeout. Something went wrong on MoEngage.
+          content:
+            application/json:
+              example: "No example response body available for this status code."
       callbacks:
         segmentCreationCallback:
           $ref: '#/components/callbacks/segmentProcessingCallback'
@@ -88,7 +283,26 @@ paths:
       description: Adds a list of users from a CSV file to an existing file segment.
       operationId: addUsersToFileSegment
       parameters:
-        - $ref: '#/components/parameters/DatabaseHeader'
+        - name: Content-Type
+          in: header
+          description: Select the file content type.
+          required: true
+          schema:
+            type: string
+            default: text/csv
+            enum:
+              - text/csv
+              - application/csv
+              - application/vnd.ms-excel
+              - text/plain
+              - application/octet-stream
+              - binary/octet-stream
+        - name: Database
+          in: header
+          description: Set the database from which the data is available (MOE-DBNAME).
+          required: false
+          schema:
+            type: string
       requestBody:
         description: Details of the segment to update and the file URL of users to add.
         required: true
@@ -105,9 +319,24 @@ paths:
               emails: ["user1@example.com"]
       responses:
         '202':
-          $ref: '#/components/responses/202_FileSegmentAccepted'
+          description: Request accepted for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccessV2'
+              example:
+                message: "File-segment user-add request accepted"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '400':
-          $ref: '#/components/responses/400_FileSegmentError'
+          description: Bad Request. Invalid payload format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Invalid Request"
+                description: "<message>"
         '401':
           $ref: '#/components/responses/401_FileSegmentError'
         '404':
@@ -115,10 +344,13 @@ paths:
         '429':
           $ref: '#/components/responses/429_FileSegmentRateLimit'
         '500':
-          $ref: '#/components/responses/5XX_FileSegmentError'
-      callbacks:
-        segmentUpdateCallback:
-          $ref: '#/components/callbacks/segmentProcessingCallback'
+          description: Server Errors. Something went wrong on MoEngage.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Internal Server Error"
   /v2/custom-segments/file-segment/remove-users:
     put:
       tags:
@@ -127,7 +359,26 @@ paths:
       description: Removes a list of users from a CSV file from an existing file segment.
       operationId: removeUsersFromFileSegment
       parameters:
-        - $ref: '#/components/parameters/DatabaseHeader'
+        - name: Content-Type
+          in: header
+          description: Select the file content type.
+          required: true
+          schema:
+            type: string
+            default: text/csv
+            enum:
+              - text/csv
+              - application/csv
+              - application/vnd.ms-excel
+              - text/plain
+              - application/octet-stream
+              - binary/octet-stream
+        - name: Database
+          in: header
+          description: Set the database from which the data is available (MOE-DBNAME).
+          required: false
+          schema:
+            type: string
       requestBody:
         description: Details of the segment to update and the file URL of users to remove.
         required: true
@@ -144,9 +395,24 @@ paths:
               emails: ["user1@example.com"]
       responses:
         '202':
-          $ref: '#/components/responses/202_FileSegmentAccepted'
+          description: Request accepted for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccessV2'
+              example:
+                message: "File-segment user-remove request accepted"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '400':
-          $ref: '#/components/responses/400_FileSegmentError'
+          description: Bad Request. Invalid payload format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Invalid Request"
+                description: "<message>"
         '401':
           $ref: '#/components/responses/401_FileSegmentError'
         '404':
@@ -154,10 +420,13 @@ paths:
         '429':
           $ref: '#/components/responses/429_FileSegmentRateLimit'
         '500':
-          $ref: '#/components/responses/5XX_FileSegmentError'
-      callbacks:
-        segmentUpdateCallback:
-          $ref: '#/components/callbacks/segmentProcessingCallback'
+          description: Server Errors. Something went wrong on MoEngage.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Internal Server Error"
   /v2/custom-segments/file-segment/replace:
     put:
       tags:
@@ -165,14 +434,33 @@ paths:
       summary: Replace users from File Segment
       description: Replaces all users in an existing file segment with a new list of users from a CSV file.
       operationId: replaceUsersInFileSegment
+      parameters:
+        - name: Content-Type
+          in: header
+          description: Select the file content type.
+          required: true
+          schema:
+            type: string
+            default: text/csv
+            enum:
+              - text/csv
+              - application/csv
+              - application/vnd.ms-excel
+              - text/plain
+              - application/octet-stream
+              - binary/octet-stream
+        - name: Database
+          in: header
+          description: Set the database from which the data is available (MOE-DBNAME).
+          required: false
+          schema:
+            type: string
       x-mint:
         content: |
           <Note>
             * This API drops all existing users from the custom segment and adds the new users provided in the `file_url`.
             * Only the newly added users are counted towards the daily `file_segment_user` limit.
           </Note>
-      parameters:
-        - $ref: '#/components/parameters/DatabaseHeader'
       requestBody:
         description: Details of the segment to update and the file URL of users to replace with.
         required: true
@@ -189,9 +477,24 @@ paths:
               emails: ["user1@example.com"]
       responses:
         '202':
-          $ref: '#/components/responses/202_FileSegmentAccepted'
+          description: Request accepted for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccessV2'
+              example:
+                message: "File-segment user-replace request accepted"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '400':
-          $ref: '#/components/responses/400_FileSegmentError'
+          description: Bad Request. Invalid payload format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Invalid Request"
+                description: "<message>"
         '401':
           $ref: '#/components/responses/401_FileSegmentError'
         '404':
@@ -199,24 +502,25 @@ paths:
         '429':
           $ref: '#/components/responses/429_FileSegmentRateLimit'
         '500':
-          $ref: '#/components/responses/5XX_FileSegmentError'
-      callbacks:
-        segmentUpdateCallback:
-          $ref: '#/components/callbacks/segmentProcessingCallback'
+          description: Server Errors. Something went wrong on MoEngage.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorV2'
+              example:
+                title: "Internal Server Error"
   /v2/custom-segments/archive:
     patch:
       tags:
         - Custom Segments - Lifecycle
       summary: Archive Custom Segment
-      description: Archives an existing custom segment (File or Filter).
+      description: Archives an existing custom segment (File or Filter). Archiving and unarchiving through APIs makes it easy to retrieve and reuse custom segments whenever required for purposes such as A/B testing, maintaining regulatory compliance, and improving system performance. You can access the archived segments and utilize them to analyze and market campaigns without the need to recreate them from scratch.
       operationId: archiveCustomSegment
       x-mint:
         content: |
           <Warning>
             Archived segments will not be shown beyond 180 days.
           </Warning>
-      parameters:
-        - $ref: '#/components/parameters/DatabaseHeader'
       requestBody:
         description: The name of the custom segment to be archived.
         required: true
@@ -233,12 +537,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccessV2'
-              examples:
-                success:
-                  value:
-                    message: "Successfully archived the custom segment"
-                    success": true
-                    cs_name": "custom_segment_unique_name"
+              example:
+                message: "Successfully archived the custom segment"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '400':
           $ref: '#/components/responses/400_FileSegmentError'
         '401':
@@ -251,11 +553,9 @@ paths:
     patch:
       tags:
         - Custom Segments - Lifecycle
-      summary: UnArchive Custom Segment
+      summary: Unarchive Custom Segment
       description: Unarchives an existing custom segment, making it active again.
       operationId: unarchiveCustomSegment
-      parameters:
-        - $ref: '#/components/parameters/DatabaseHeader'
       requestBody:
         description: The name of the custom segment to be unarchived.
         required: true
@@ -272,12 +572,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccessV2'
-              examples:
-                success:
-                  value:
-                    message: "Successfully unarchived the custom segment"
-                    success": true
-                    cs_name": "custom_segment_unique_name"
+              example:
+                message: "Successfully unarchived the custom segment"
+                success: true
+                cs_name: "custom_segment_unique_name"
         '400':
           $ref: '#/components/responses/400_FileSegmentError'
         '401':
@@ -293,7 +591,18 @@ paths:
       summary: List Custom Segments
       description: Lists all custom segments. Can optionally filter by an exact name match.
       operationId: listCustomSegments
+      x-mint:
+        content: |
+          **Rate Limit**
+          The rate limit is 50 request/minute, 200 requests/hour, and 1000 requests/day.
       parameters:
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example: application/json
+          description: Set the Content-Type header to application/json.
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/SegmentNameQuery'
       responses:
@@ -304,10 +613,9 @@ paths:
         '401':
           $ref: '#/components/responses/401_FilterSegmentError'
         '429':
-          $ref: '#/components/responses/429_FilterSegmentError'
+          $ref: '#/components/responses/429_FilterSegmentRateLimitOnly'
         '500':
           $ref: '#/components/responses/500_FilterSegmentError'
-  /v3/custom-segments/:
     post:
       tags:
         - Custom Segments - Filters
@@ -316,10 +624,20 @@ paths:
       operationId: createFilterSegment
       x-mint:
         content: |
-          <Note>
-            To simplify request generation, you can specify filters in the MoEngage dashboard and generate the payload.
-            Navigate to **Test & Debug** -> **Segment Payload** to build your filter query and get the JSON payload.
-          </Note>
+          ## Generate Request from Dashboard
+          
+          
+          
+          To simplify the request generation, MoEngage has added an option in the dashboard where you can specify filters as per your requirement and generate the payload.
+          
+          1. Login to the MoEngage dashboard.
+          2. Click on **Test & Debug** at the bottom left in the side panel.
+          3. Click on **Segment Payload**.
+          4. Specify the name for your segment payload and provide the required filters.
+          5. Click on the **Generate payload** button.
+          
+          **Rate Limit**
+          The rate limit is 50 request/minute, 200 requests/hour, and 1000 requests/day.
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
       requestBody:
@@ -331,16 +649,16 @@ paths:
               $ref: '#/components/schemas/FilterSegmentRequestV3'
             example:
               name: "segment_example_name"
-              included_filters":
+              included_filters:
                 filter_operator: "and"
-                filters":
-                  - filter_type": "user_attributes"
+                filters:
+                  - filter_type: "user_attributes"
                     name: "Name"
-                    data_type": "string"
-                    operator": "in"
-                    value": ["Chandan", "Kumar"]
-                    negate": false
-                    case_sensitive": false
+                    data_type: "string"
+                    operator: "in"
+                    value: ["Chandan", "Kumar"]
+                    negate: false
+                    case_sensitive: false
       responses:
         '201':
           $ref: '#/components/responses/201_SegmentCreatedV3'
@@ -363,7 +681,18 @@ paths:
       summary: Get Custom Segment by ID
       description: Fetches a specific custom segment (File or Filter) by its ID.
       operationId: getCustomSegment
+      x-mint:
+        content: |
+          **Rate Limit**
+          The rate limit is 100 requests/minute, 1000 requests/hour, and 4000 requests/day.
       parameters:
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            example: application/json
+          description: Set the Content-Type header to application/json.
         - $ref: '#/components/parameters/AppKeyHeader'
         - $ref: '#/components/parameters/SegmentIdPath'
       responses:
@@ -374,7 +703,7 @@ paths:
         '401':
           $ref: '#/components/responses/401_FilterSegmentError'
         '429':
-          $ref: '#/components/responses/429_FilterSegmentError'
+          $ref: '#/components/responses/429_FilterSegmentRateLimitOnly'
         '500':
           $ref: '#/components/responses/500_FilterSegmentError'
     patch:
@@ -395,17 +724,17 @@ paths:
               $ref: '#/components/schemas/FilterSegmentUpdateRequestV3'
             example:
               name: "segment_example_name_updated"
-              included_filters":
+              included_filters:
                 filter_operator: "and"
-                filters":
-                  - filter_type": "user_attributes"
+                filters:
+                  - filter_type: "user_attributes"
                     name: "Name"
-                    data_type": "string"
-                    operator": "in"
-                    value": ["chandan"]
-                    negate": false
-                    case_sensitive": false
-              updated_by": "admin@example.com"
+                    data_type: "string"
+                    operator: "in"
+                    value: ["chandan"]
+                    negate: false
+                    case_sensitive: false
+              updated_by: "admin@example.com"
       responses:
         '200':
           $ref: '#/components/responses/200_SegmentUpdatedV3'
@@ -491,9 +820,11 @@ components:
       properties:
         message:
           type: string
+          description: The status message of the request.
         success:
           type: boolean
           example: true
+          description: Indicates if the request was accepted.
         cs_name:
           type: string
           description: The unique name of the custom segment being processed.
@@ -503,41 +834,43 @@ components:
         title:
           type: string
           description: A short title for the error.
-        description:
-          type: string
-          description: A detailed description of what went wrong.
-    CallbackSuccessV2:
+    CallbackV2:
       type: object
+      description: The payload sent to the callback URL. The structure depends on the processing status.
       properties:
         db_name:
           type: string
+          description: The database name.
+          example: "test_db"
         segment_name:
           type: string
+          description: The name of the segment.
+          example: "test_segment_name"
         request_id:
           type: string
+          description: The unique ID of the request.
+          example: "d5a263c4ef1198ae3d8496c0460f570f"
+        status:
+          type: integer
+          description: The HTTP status code indicating the outcome (e.g., 201 for success, 400/500 for failure).
+          example: 201
         values_found:
           type: integer
+          description: (Success only) Total number of identifiers found in the file.
         values_processed:
           type: integer
+          description: (Success only) Number of identifiers successfully processed.
         user_count:
           type: integer
-        status:
-          type: integer
-          example: 201
-    CallbackErrorV2:
-      type: object
-      properties:
-        db_name:
-          type: string
-        segment_name:
-          type: string
-        request_id:
-          type: string
-        status:
-          type: integer
-          example: 400
+          description: (Success only) Number of users added to the segment.
         error_message:
           type: string
+          description: (Failure only) A description of the error.
+      required:
+        - db_name
+        - segment_name
+        - request_id
+        - status
     # --- V3 Schemas ---
     FilterGroupV3:
       type: object
@@ -559,9 +892,22 @@ components:
       oneOf:
         - $ref: '#/components/schemas/AttributeFilterV3'
         - $ref: '#/components/schemas/ActionFilterV3'
+      discriminator:
+        propertyName: filter_type
+        mapping:
+          user_attributes: '#/components/schemas/AttributeFilterV3'
+          actions: '#/components/schemas/ActionFilterV3'
     AttributeFilterV3:
+      title: Attribute Filters
       type: object
-      description: A filter based on a user or event attribute.
+      description: |
+        A filter based on a user or event attribute.
+        
+        **Allowed Operators per Data Type:**
+        * **bool:** is, exists
+        * **double:** in, between, lessThan, greaterThan, exists
+        * **string:** in, contains, containsInTheFollowing, startWithInTheFollowing, endsWithInTheFollowing, exists, is
+        * **datetime:** inTheLast, on, between, before, after, inTheNext, exists, today
       properties:
         filter_type:
           type: string
@@ -576,7 +922,7 @@ components:
           enum: [string, double, datetime, bool]
         operator:
           type: string
-          description: The comparison operator.
+          description: The comparison operator. Allowed values depend on `data_type`.
           enum: [is, exists, in, between, lessThan, greaterThan, contains, containsInTheFollowing, startWithInTheFollowing, endsWithInTheFollowing, inTheLast, on, before, after, inTheNext, today]
         value:
           description: The value to compare against. Type depends on `data_type` and `operator`. For 'in' operator, this should be an array.
@@ -607,7 +953,24 @@ components:
         - name
         - data_type
         - operator
+    ActionAttributeFilterGroupV3:
+      type: object
+      description: A logical grouping of attribute filters for action-based filtering.
+      properties:
+        filter_operator:
+          type: string
+          description: The logical operator to combine the attribute filters.
+          enum: [and, or]
+        filters:
+          type: array
+          description: Array of attribute filters to apply to the event's attributes.
+          items:
+            $ref: '#/components/schemas/AttributeFilterV3'
+      required:
+        - filter_operator
+        - filters
     ActionFilterV3:
+      title: Action-based Filters
       type: object
       description: A filter based on a user action (event).
       properties:
@@ -617,18 +980,20 @@ components:
           enum: [actions]
         action_name:
           type: string
-          description: The internal name of the event.
+          description: The internal name of the event/action.
         attributes:
-          $ref: '#/components/schemas/FilterGroupV3'
+          $ref: '#/components/schemas/ActionAttributeFilterGroupV3'
           description: Additional filters to apply to the event's attributes.
         executed:
           type: boolean
           description: Whether the action should have been performed (true) or not (false).
         execution:
           type: object
+          description: Specifies how many times the event must have been performed.
           properties:
             type:
               type: string
+              description: The type of comparison for the execution count.
               enum: [atleast, exactly, atmost, firstTime, lastTime]
             count:
               type: integer
@@ -639,12 +1004,15 @@ components:
             - count
         primary_time_range:
           type: object
+          description: The time range during which the event should have been performed.
           properties:
             type:
               type: string
+              description: The type of time range comparison.
               enum: [on, inTheLast, before, after, between]
             value_type:
               type: string
+              description: Whether the time range is absolute (specific datetime) or relative (last N days/weeks/months).
               enum: [absolute, relative_past]
             value:
               type: string
@@ -654,6 +1022,7 @@ components:
               description: The end datetime for the 'between' operator (ISO 8601).
             period_unit:
               type: string
+              description: The unit of time for relative time ranges.
               enum: [days, weeks, months]
           required:
             - type
@@ -668,127 +1037,184 @@ components:
         - primary_time_range
     FilterSegmentRequestV3:
       type: object
+      description: Request schema for creating a filter-based custom segment.
       properties:
         name:
           type: string
           description: A unique name for the custom segment.
         included_filters:
+          description: The filtering criteria used for segmentation. Users satisfying this set of filters will be part of the segment.
           $ref: '#/components/schemas/FilterGroupV3'
       required:
         - name
         - included_filters
     FilterSegmentUpdateRequestV3:
       type: object
+      description: Request schema for updating an existing filter-based custom segment.
       properties:
         name:
           type: string
           description: A new unique name for the custom segment.
         included_filters:
+          description: The updated filtering criteria for the segment. Users satisfying this set of filters will be part of the segment.
           $ref: '#/components/schemas/FilterGroupV3'
         updated_by:
           type: string
           format: email
-          description: Email of the user performing the update.
+          description: Email of the user performing the update (e.g., admin@companyemail.com).
       required:
         - included_filters
     FilterSegmentDataV3:
       type: object
+      description: Detailed information about a custom segment.
       properties:
         name:
           type: string
+          description: The name of the custom segment.
         id:
           type: string
+          description: The unique identifier of the custom segment.
         created_time:
           type: string
           format: date-time
+          description: The timestamp when the custom segment was created (ISO 8601 format).
         updated_time:
           type: string
           format: date-time
+          description: The timestamp when the custom segment was last updated (ISO 8601 format). The updated time can change due to internally running services.
         type:
           type: string
+          description: The type of the custom segment. This is used for internal classification. Fixed value for filter-based segments.
           example: ELASTIC_SEARCH
         source:
           type: string
+          description: The source of custom segment creation. Fixed value for API-created segments.
           example: API
         description:
           type: string
+          description: A textual description summarizing the custom segment definition.
         included_filters:
+          description: The filter criteria used for this custom segment.
           $ref: '#/components/schemas/FilterGroupV3'
     FilterSegmentResponseV3:
       type: object
+      description: Response schema for filter segment operations (create/update).
       properties:
         data:
+          description: Information about the custom segment.
           $ref: '#/components/schemas/FilterSegmentDataV3'
         response_id:
           type: string
+          description: A unique identifier for this API response.
         type:
           type: string
+          description: The type of resource referenced in the response.
           example: custom_segment
     SegmentListItemV3:
       type: object
+      description: Summary information about a custom segment in a list.
       properties:
         name:
           type: string
+          description: The name of the custom segment.
         id:
           type: string
+          description: The unique identifier of the custom segment.
         created_time:
           type: string
           format: date-time
+          description: The timestamp when the custom segment was created (ISO 8601 format).
         type:
           type: string
+          description: The type of the custom segment. This is used for internal classification.
           example: ELASTIC_SEARCH
         source:
           type: string
+          description: The source of custom segment creation.
           example: API
     SegmentListResponseV3:
       type: object
+      description: Response schema for listing custom segments.
       properties:
         data:
           type: array
+          description: Array of custom segments matching the query criteria.
           items:
             $ref: '#/components/schemas/SegmentListItemV3'
         response_id:
           type: string
+          description: A unique identifier for this API response.
         type:
           type: string
+          description: The type of resource referenced in the response.
           example: custom_segment
     ErrorDataV3:
       type: object
+      description: Error details for client errors (4xx).
       properties:
         code:
           type: string
+          description: A short error code that provides a brief explanation of the error (e.g., 'Invalid Request', 'Authentication required').
         message:
           type: string
+          description: A detailed error message describing why the request failed.
         existing_cs_name:
           type: string
+          description: (Conflict errors only) The name of the existing custom segment that conflicts with the request.
         existing_cs_id:
           type: string
+          description: (Conflict errors only) The ID of the existing custom segment that conflicts with the request.
         actual_count:
           type: integer
+          description: (Rate limit errors only) The actual count of segments or requests.
         limit:
           type: integer
+          description: (Rate limit errors only) The maximum allowed limit.
       required:
         - code
         - message
     ErrorResponseV3:
       type: object
+      description: Error response schema for client errors (4xx).
       properties:
         response_id:
           type: string
+          description: A unique identifier for this API response.
         type:
           type: string
+          description: The type of resource referenced in the response.
           example: custom_segment
         error:
+          description: Details about the error that occurred.
           $ref: '#/components/schemas/ErrorDataV3'
+    ServerErrorDataV3:
+      type: object
+      description: Error details for server errors (5xx).
+      properties:
+        code:
+          type: string
+          description: A short error code indicating the type of server error (e.g., 'Internal Server Error').
+        message:
+          type: string
+          description: A detailed error message. For server errors, this typically advises contacting MoEngage support.
+      required:
+        - code
+        - message
+    ServerErrorResponseV3:
+      type: object
+      description: Error response schema for server errors (5xx).
+      properties:
+        response_id:
+          type: string
+          description: A unique identifier for this API response.
+        type:
+          type: string
+          description: The type of resource referenced in the response.
+          example: custom_segment
+        error:
+          description: Details about the server error that occurred.
+          $ref: '#/components/schemas/ServerErrorDataV3'
   parameters:
-    # --- V2 Parameters ---
-    DatabaseHeader:
-      name: Database
-      in: header
-      description: Set the database from which the data is available (e.g., MOE-DBNAME).
-      required: true
-      schema:
-        type: string
     # --- V3 Parameters ---
     AppKeyHeader:
       name: MOE-APPKEY
@@ -829,17 +1255,17 @@ components:
               value:
                 message: "File-segment user-add request accepted"
                 success: true
-                cs_name": "custom_segment_unique_name"
+                cs_name: "custom_segment_unique_name"
             remove:
               value:
                 message: "File-segment user-remove request accepted"
                 success: true
-                cs_name": "custom_segment_unique_name"
+                cs_name: "custom_segment_unique_name"
             replace:
               value:
                 message: "File-segment user-replace request accepted"
                 success: true
-                cs_name": "custom_segment_unique_name"
+                cs_name: "custom_segment_unique_name"
     '400_FileSegmentError':
       description: Bad Request. Invalid payload format.
       content:
@@ -857,7 +1283,7 @@ components:
             $ref: '#/components/schemas/ApiErrorV2'
           example:
             title: "Authentication required"
-            description": "<message>"
+            description: "<message>"
     '404_FileSegmentNotFound':
       description: Entity Not Found. The custom segment name does not exist.
       content:
@@ -884,19 +1310,18 @@ components:
             $ref: '#/components/schemas/ApiErrorV2'
           example:
             title: "Too Many Requests"
-            description": "<appropriate message>"
+            description: "<appropriate message>"
     '5XX_FileSegmentError':
-      description: Server Errors. Something went wrong on MoEngage's end.
+      description: Server Errors. Something went wrong on MoEngage.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiErrorV2'
           example:
             title: "Internal Server Error"
-            description: "..."
     # --- V3 Responses ---
     '200_SegmentListV3':
-      description: Successful retrieval of custom segments.
+      description: Successful retrieval of custom segments. Returns a list of custom segments matching the query criteria. An empty list is returned if no segments match.
       content:
         application/json:
           schema:
@@ -905,13 +1330,13 @@ components:
             data:
               - name: "api_test_7"
                 id: "6388a97a02adb9071ca84ce9"
-                created_time": "2022-12-01T13:17:46.409000"
+                created_time: "2022-12-01T13:17:46.409000"
                 type: "ELASTIC_SEARCH"
                 source: "API"
-            response_id": "WYanfieM"
+            response_id: "WYanfieM"
             type: "custom_segment"
     '200_SegmentUpdatedV3':
-      description: Custom segment updated successfully.
+      description: Custom segment updated successfully. Returns the updated segment details including the new filter definition and metadata.
       content:
         application/json:
           schema:
@@ -924,14 +1349,36 @@ components:
               updated_time: "2022-12-20T06:21:44.160000"
               type: "ELASTIC_SEARCH"
               source: "API"
-              description": "Subscription Status 19Dec_7  is active  (case insensitive) AND Has executed Email Sent atleast 1 time in-between Feb 15, 2023 and Feb 24, 2023"
+              description: "Subscription Status 19Dec_7  is active  (case insensitive) AND Has executed Email Sent atleast 1 time in-between Feb 15, 2023 and Feb 24, 2023"
               included_filters:
                 filter_operator: "and"
-                filters": []
+                filters:
+                  - filter_type: "user_attributes"
+                    name: "Subscription Status 19Dec_7"
+                    data_type: "string"
+                    operator: "in"
+                    value: "active"
+                    negate: false
+                    case_sensitive: false
+                  - filter_type: "actions"
+                    attributes:
+                      filter_operator: "and"
+                      filters: []
+                    executed: true
+                    primary_time_range:
+                      type: "between"
+                      value: "2023-02-15T00:00:00.000Z"
+                      value1: "2023-02-24T23:59:59.999Z"
+                      value_type: "absolute"
+                      period_unit: "days"
+                    action_name: "MOE_EMAIL_SENT"
+                    execution:
+                      count: 1
+                      type: "atleast"
             response_id: "cNjnTEJw"
             type: "custom_segment"
     '201_SegmentCreatedV3':
-      description: Custom segment created successfully.
+      description: Custom segment created successfully. Returns the newly created segment details including its unique ID, filter definition, and metadata.
       content:
         application/json:
           schema:
@@ -944,14 +1391,36 @@ components:
               updated_time: "2022-12-20T06:21:44.160000"
               type: "ELASTIC_SEARCH"
               source: "API"
-              description": "Subscription Status 19Dec_7  is active  (case insensitive) AND Has executed Email Sent atleast 1 time in-between Jan 05, 2021 and Jan 08, 2021"
-              included_filters":
+              description: "Subscription Status 19Dec_7  is active  (case insensitive) AND Has executed Email Sent atleast 1 time in-between Jan 05, 2021 and Jan 08, 2021"
+              included_filters:
                 filter_operator: "and"
-                filters": []
+                filters:
+                  - filter_type: "user_attributes"
+                    name: "Subscription Status 19Dec_7"
+                    data_type: "string"
+                    operator: "in"
+                    value: ["active"]
+                    negate: false
+                    case_sensitive: false
+                  - filter_type: "actions"
+                    attributes:
+                      filter_operator: "and"
+                      filters: []
+                    executed: true
+                    primary_time_range:
+                      type: "between"
+                      value: "2023-02-15T00:00:00.000Z"
+                      value1: "2023-02-24T23:59:59.999Z"
+                      value_type: "absolute"
+                      period_unit: "days"
+                    action_name: "MOE_EMAIL_SENT"
+                    execution:
+                      count: 1
+                      type: "atleast"
             response_id: "cNjnTEJw"
             type: "custom_segment"
     '400_FilterSegmentError':
-      description: Bad Request
+      description: Bad Request. The request is invalid due to missing required parameters, invalid parameter format, or malformed request body.
       content:
         application/json:
           schema:
@@ -964,7 +1433,7 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Invalid request"
-                  message": "Invalid request format. Please check the documentation to ensure that the request has been formed correctly."
+                  message: "Invalid request format. Please check the documentation to ensure that the request has been formed correctly."
             invalidName:
               summary: Invalid Segment Name
               value:
@@ -972,7 +1441,7 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Invalid Request"
-                  message": "Invalid request. Please ensure that the filters are correct and the custom-segment name doesn't contain HTML characters/only whitespaces."
+                  message: "Invalid request. Please ensure that the filters are correct and the custom-segment name doesn't contain HTML characters/only whitespaces."
             invalidAppKey:
               summary: Invalid App Key/DB Name
               value:
@@ -980,9 +1449,9 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Request Error"
-                  message": "MoEngage Client not found. Please check values for headers - MOE-APPKEY or MOE-DBNAME"
+                  message: "MoEngage Client not found. Please check values for headers - MOE-APPKEY or MOE-DBNAME"
     '401_FilterSegmentError':
-      description: Authentication Failure
+      description: Authentication Failure. The request failed authentication due to incorrect APP_KEY, APP_SECRET, or Authorization header.
       content:
         application/json:
           schema:
@@ -995,7 +1464,7 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Authentication required"
-                  message": "APP_SECRET key mismatch. Please login to the dashboard to verify key"
+                  message: "APP_SECRET key mismatch. Please login to the dashboard to verify key"
             invalidAppKey:
               summary: Invalid APP_KEY in Auth
               value:
@@ -1003,9 +1472,9 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Authentication required"
-                  message": "Invalid APP_KEY used in Authentication Header"
+                  message: "Invalid APP_KEY used in Authentication Header"
     '403_FilterSegmentError':
-      description: Forbidden Operation
+      description: Forbidden Operation. The requested operation is not allowed for this type of segment (e.g., updating file segments, archived segments, or internally created segments).
       content:
         application/json:
           schema:
@@ -1017,7 +1486,7 @@ components:
               code: "Forbidden operation"
               message: "Update isn't supported for file-segments, internally created custom-segments, custom-segments imported from Analyze and archived custom-segments."
     '404_FilterSegmentError':
-      description: Entity Not Found
+      description: Entity Not Found. The custom segment with the specified ID or name does not exist.
       content:
         application/json:
           schema:
@@ -1029,7 +1498,7 @@ components:
               code: "Entity Not Found"
               message: "Custom segment not found with the given id: 638a051185b6b50a018cacc"
     '409_FilterSegmentError':
-      description: Conflict / Resource Not Created
+      description: Conflict / Resource Not Created. A custom segment with the same name or filter definition already exists. Both the name and definition must be unique.
       content:
         application/json:
           schema:
@@ -1042,7 +1511,7 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Resource not created"
-                  message": "Another custom-segment already exists with the same name: api_test_8. Please change the custom-segment name."
+                  message: "Another custom-segment already exists with the same name: api_test_8. Please change the custom-segment name."
             filterExists:
               summary: Filters Already Exist
               value:
@@ -1050,11 +1519,11 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Resource not created"
-                  message": "Another custom-segment already exists containing the given filters: api_test_multiple_cs2_re. Please reuse the same or update the filters"
-                  existing_cs_name": "api_test_multiple_cs2_re"
-                  existing_cs_id": "63a017e8d2460ae81a05bf5e"
+                  message: "Another custom-segment already exists containing the given filters: api_test_multiple_cs2_re. Please reuse the same or update the filters"
+                  existing_cs_name: "api_test_multiple_cs2_re"
+                  existing_cs_id: "63a017e8d2460ae81a05bf5e"
     '412_FilterSegmentError':
-      description: Precondition Failed (Cyclic Entity)
+      description: Precondition Failed (Cyclic Entity). A circular reference was detected in the custom segment definition.
       content:
         application/json:
           schema:
@@ -1066,7 +1535,7 @@ components:
               code: "Cyclic Entity"
               message: "Circular reference detected in the custom segment definition."
     '413_FilterSegmentError':
-      description: Payload Too Large / Query Too Complex
+      description: Payload Too Large / Query Too Complex. The segment definition exceeds allowed limits (nesting levels, number of segments referenced, or total query size).
       content:
         application/json:
           schema:
@@ -1079,7 +1548,7 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Query has too many nesting levels"
-                  message": "The query has more than n levels of nesting. Please reduce the segment nesting."
+                  message: "The query has more than n levels of nesting. Please reduce the segment nesting."
             tooManySegments:
               summary: Too Many Segments in Query
               value:
@@ -1087,7 +1556,7 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Too many segments in a query"
-                  message": "The query has more than n custom segments. Please reduce the custom segments."
+                  message: "The query has more than n custom segments. Please reduce the custom segments."
             queryLengthExceeded:
               summary: Query Length Limit Exceeded
               value:
@@ -1095,9 +1564,9 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Query length limit exceeded"
-                  message": "The query is too large to execute. Please reduce the filters."
+                  message: "The query is too large to execute. Please reduce the filters."
     '429_FilterSegmentError':
-      description: Too Many Requests
+      description: Too Many Requests. The API rate limit has been exceeded, or the total number of active segments has reached the maximum allowed limit.
       content:
         application/json:
           schema:
@@ -1110,7 +1579,7 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Too Many Requests"
-                  message": "API rate limit breached. Current limit: n/m mins"
+                  message: "API rate limit breached. Current limit: n/m mins"
             activeSegmentLimit:
               summary: Active Segment Limit Breached
               value:
@@ -1118,15 +1587,27 @@ components:
                 type: "custom_segment"
                 error:
                   code: "Too Many Requests"
-                  message": "Total active segments limit breached. Request rejected!"
-                  actual_count": 1001
-                  limit": 1000
-    '500_FilterSegmentError':
-      description: Internal Server Error
+                  message: "Total active segments limit breached. Request rejected!"
+                  actual_count: 1001
+                  limit: 1000
+    '429_FilterSegmentRateLimitOnly':
+      description: Too Many Requests. The API rate limit has been exceeded.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponseV3'
+          example:
+            response_id: "OUUkHvcn"
+            type: "custom_segment"
+            error:
+              code: "Too Many Requests"
+              message: "API rate limit breached. Current limit: n/m mins"
+    '500_FilterSegmentError':
+      description: Internal Server Error. An unexpected error occurred on the MoEngage server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServerErrorResponseV3'
           example:
             response_id: "HKWwUkvM"
             type: "custom_segment"
@@ -1141,31 +1622,11 @@ components:
           description: A webhook sent to your `callback_url` when a v2 file segment processing job is complete.
           requestBody:
             description: Result of the segment processing job.
+            required: true
             content:
               application/json:
                 schema:
-                  oneOf:
-                    - $ref: '#/components/schemas/CallbackSuccessV2'
-                    - $ref: '#/components/schemas/CallbackErrorV2'
-                examples:
-                  success:
-                    summary: Success Callback
-                    value:
-                      db_name: "test_db"
-                      segment_name": "test_segment_name"
-                      request_id": "d5a263c4ef1198ae3d8496c0460f570f"
-                      values_found": 80
-                      values_processed": 70
-                      user_count": 60
-                      status": 201
-                  failure_file_size:
-                    summary: Failure (File Size Limit)
-                    value:
-                      db_name: "test_db"
-                      segment_name": "test_segment_name"
-                      request_id": "d5a263c4ef1198ae3d8496c0460f570f"
-                      status": 400
-                      error_message": "File size cannot be greater than 150MB. Created custom_segment contains 0 users."
+                  $ref: '#/components/schemas/CallbackV2'
           responses:
             '200':
               description: OK. Acknowledges receipt of the callback. Your endpoint should return this.

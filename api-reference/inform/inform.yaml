@@ -13,30 +13,34 @@ servers:
     variables:
       dc:
         default: '1'
-        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, etc.'
+        description: 'The ‘dc’ in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number and replace the value of ‘dc’ in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage). Your MoEngage Data Center (DC) can be 1, 2, 3, 4,5, 6.' 
         enum:
           - '1'
           - '2'
           - '3'
           - '4'
+          - '5'
+          - '6' 
   - url: 'https://sandbox-api-0{dc}.moengage.com/v1.0'
     description: Test/Sandbox Alerts Endpoint
     variables:
       dc:
         default: '1'
-        description: 'Your MoEngage Data Center (DC). Can be 1, 2, 3, etc.'
+        description: 'The ‘dc’ in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number and replace the value of ‘dc’ in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage). Your MoEngage Data Center (DC) can be 1, 2, 3, 4,5, 6. '
         enum:
           - '1'
           - '2'
           - '3'
           - '4'
+          - '5'
+          - '6'
 paths:
   /alerts/send:
     post:
       tags:
         - Transactional Alerts
       summary: Send Transactional Alert
-      description: This API sends a transactional alert to a user on one or more channels using a pre-configured Alert ID or Alert Reference Name. Use the Live endpoint for production and the Test/Sandbox endpoint for testing.
+      description: "Inform facilitates a unified messaging infrastructure across multiple channels with a single API for building and managing transactional alerts."
       security:
         - basicAuth: []
           moeAppKey: []
@@ -48,83 +52,132 @@ paths:
             schema:
               $ref: '#/components/schemas/InformRequest'
             examples:
+              singleChannelWithoutPersonalization:
+                summary: Single Channel (SMS) without Personalization
+                value:
+                  alert_id: "636b77e6e2cf83277195fb60"
+                  alert_reference_name: "Demo_ID"
+                  user_id: "USER_12345"
+                  transaction_id: "TXN_ABCDEF123"
+                  payloads:
+                    SMS:
+                      recipient: "1234567890"
+              multichannelWithoutPersonalization:
+                summary: Multichannel Without Personalization
+                value:
+                  alert_id: "636b77e6e2cf83277195fb60"
+                  alert_reference_name: "Demo_ID"
+                  user_id: "USER_ID"
+                  transaction_id: "YOUR_TRANSACTION_ID_VAL_HERE"
+                  payloads:
+                    PUSH:
+                      recipient: "<push-token>"
+                    EMAIL:
+                      recipient: "john.doe@moengage.com"
+              singleChannelWithPersonalization: 
+                summary: Single Channel With Personalization (SMS)
+                value:
+                  alert_id: "636b77e6e2cf83277195fb60"
+                  alert_reference_name: "Demo_ID"
+                  user_id: "USER_ID"
+                  transaction_id: "YOUR_TRANSACTION_ID_VAL_HERE"
+                  payloads:
+                    SMS:
+                      recipient: "123456789"
+                      personalized_attributes:
+                        firstname: "YOUR_firstname_ATTRIBUTE_VAL_HERE"
+                        orderid: "YOUR_orderid_ATTRIBUTE_VAL_HERE"
+                        deliverydate: "YOUR_deliverydate_ATTRIBUTE_VAL_HERE"
+                        deliveryslot_starttime: "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE"
+                        deliveryslot_endtime: "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
               multiChannelWithPersonalization:
                 summary: Multi-Channel with Personalization
                 value:
-                  alert_id": "636b77e6e2cf83277195fb60"
-                  alert_reference_name": "Demo_ID"
-                  user_id": "USER_12345"
-                  transaction_id": "TXN_987654321"
-                  payloads":
-                    PUSH":
-                      recipient": "<push-token>"
-                      personalized_attributes":
-                        firstname": "John"
-                        orderid": "ORD_554433"
-                    EMAIL":
-                      recipient": "john.doe@moengage.com"
-                      personalized_attributes":
-                        firstname": "John"
-                        orderid": "ORD_554433"
-              singleChannelNoPersonalization:
-                summary: Single Channel (SMS) without Personalization
-                value:
-                  alert_id": "636b77e6e2cf83277195fb60"
-                  alert_reference_name": "Demo_ID"
-                  user_id": "USER_12345"
-                  transaction_id": "TXN_ABCDEF123"
-                  payloads":
-                    SMS":
-                      recipient": "1234567890"
+                  alert_id: "636b77e6e2cf83277195fb60"
+                  alert_reference_name: "Demo_ID"
+                  user_id: "USER_12345"
+                  transaction_id: "TXN_987654321"
+                  payloads:
+                    PUSH:
+                      recipient: "<push-token>"
+                      personalized_attributes:
+                        firstname: "John"
+                        orderid: "ORD_554433"
+                    EMAIL:
+                      recipient: "john.doe@moengage.com"
+                      personalized_attributes:
+                        firstname: "John"
+                        orderid: "ORD_554433"
+              
       responses:
         '200':
-          description: Request has been received and processed. The response body contains the status for the overall request and for each individual channel, which may include channel-specific errors.
+          description: Request has been received and processed. The response body contains the status for the overall request and for each individual channel.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformSuccessResponse'
         '400':
-          description: Bad Request. Invalid payload format, incorrect JSON, invalid or missing Alert ID, or invalid channel configuration.
+          description: Bad Request. Invalid payload format, incorrect JSON, or invalid Alert ID.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
+              example:
+                message: "Invalid Alert ID"
+                err_code: "BAD_REQUEST"
+                status_code: 120002
         '401':
-          description: Unauthorized. Invalid authentication credentials (App Key, Basic Auth, or API Secret).
+          description: Unauthorized. Invalid authentication credentials.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
+              example:
+                message: "Invalid App Key or Basic Auth"
+                err_code: "UNAUTHORIZED"
+                status_code: 120001
         '409':
-          description: Duplicate Request. A request with the same `transaction_id` was received within the last 5 minutes.
+          description: Duplicate Request. A request with the same transaction_id was received recently.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
+              example:
+                message: "Duplicate Transaction ID detected"
+                err_code: "DUPLICATE_REQUEST"
+                status_code: 120009
         '429':
-          description: Rate Limit Reached. The number of requests per minute has exceeded the allowed limit.
+          description: Rate Limit Reached.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
+              example:
+                message: "Too many requests"
+                err_code: "RATE_LIMIT_EXCEEDED"
+                status_code: 120029
         '500':
-          description: Internal Server Error. An unexpected error occurred.
+          description: Internal Server Error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/InformErrorResponse'
+              example:
+                message: "Internal Server Error"
+                err_code: "INTERNAL_ERROR"
+                status_code: 120500
 
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-      description: Basic Authentication using Workspace ID as username and Inform API Key as password.
+      description: This is the authentication parameter, used for access control, must be passed along with the request.
     moeAppKey:
       type: apiKey
       in: header
       name: MOE-APPKEY
-      description: Your MoEngage Workspace ID.
+      description: This is the Workspace ID (or App ID) of your MoEngage account and needs to be passed along with the request. You can find your MoEngage APP ID in the MoEngage Dashboard API Settings.
 
   schemas:
     PayloadChannel:
@@ -138,7 +191,7 @@ components:
         personalized_attributes:
           type: object
           additionalProperties: true
-          description: A key-value map of attributes for personalizing the message template.
+          description: Key-value map for personalization.
         sender_attributes:
           type: array
           items:
@@ -150,7 +203,6 @@ components:
             type: string
             format: byte
             description: 'A map where keys are attachment identifiers (defined in the template) and values are Base64-encoded strings of the attachment content.'
-
     InformRequest:
       type: object
       required:
@@ -159,20 +211,19 @@ components:
       properties:
         alert_id:
           type: string
-          description: The unique ID of the Live or Test Alert. Either this or `alert_reference_name` is mandatory.
+          description: This field uniquely identifies the Alert to be sent to the user. For the staging endpoint, use the test alert id and for the live endpoint, use the alert id. For more information, refer to [Live and Test Alerts](#live-vs-test-environments).
         alert_reference_name:
           type: string
-          description: The reference name for the Alert. Can be used as an alternative to `alert_id`.
+          description: This field is used to identify the Alert using your reference Name and can be used to identify the alert as an alternative to Alert ID.
         user_id:
           type: string
-          description: Optional unique user identifier to map channel events back to a user profile in MoEngage.
+          description: This is the unique user identifier information you maintain. This information should be passed in the request to facilitate the mapping of the channel events back to the user profile to which this user_id is associated in MoEngage.
         transaction_id:
           type: string
-          maxLength: 50
-          description: A unique identifier for the transaction to support idempotency. Duplicate requests with the same ID within 5 minutes will be rejected.
+          description: This is the unique identifier denoting the transaction for which the Alert is being sent to the user. This information is maintained by the brand and is passed in the request. The maximum length allowed for this field is 50 characters.
         payloads:
           type: object
-          description: An object where keys are the channel names (SMS, EMAIL, PUSH) and values contain the recipient and personalization data. At least one channel is required.
+          description: The payload contains the following channel-level information for all the configured channels.
           properties:
             SMS:
               $ref: '#/components/schemas/PayloadChannel'
@@ -206,15 +257,13 @@ components:
         PUSH:
           $ref: '#/components/schemas/ChannelStatus'
 
+    # FIX: Removed hardcoded examples from here so the specific response examples take precedence
     InformErrorResponse:
       type: object
       properties:
         message:
           type: string
-          example: "Invalid Alert ID"
         err_code:
           type: string
-          example: "BAD_REQUEST"
         status_code:
           type: integer
-          example: 120002
