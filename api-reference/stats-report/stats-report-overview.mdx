@@ -30,9 +30,7 @@ This suite is divided into two primary functional areas:
 
   - **Stats API**: Limited to **100 requests per minute** per workspace.
   - **Report Retention**: Generated reports are available for download for **7 days** before they expire.
-</Note>
 
-<Note>
   **Date Range Restrictions:**
 
   - When fetching stats, the difference between `start_date` and `end_date` must not exceed **30 days**.
@@ -68,6 +66,18 @@ The Report API requires a custom `Signature` header generated via: `SHA256(Api_I
   <Accordion title="Can I fetch stats for a specific locale or variation?">
     Yes. The response object is nested by Platform \> Locale \> Variation, allowing you to see granular performance for A/B tests and localized content.
   </Accordion>
+  <Accordion title="What will the API response be if I pass the start date alone?">
+    If only the start date is passed without the end date, the API will return an error response. Both the start and end dates are required to retrieve the desired response.
+  </Accordion>
+  <Accordion title="If I pass the start and end dates without any campaign ID, will I also get the child campaign stats?">
+    When providing the start and end dates without any campaign ID, the API will return the stats for both the parent and child campaigns. The stats will be available for the specified time period.
+  </Accordion>
+  <Accordion title="How do we identify the stats belonging to the parent campaign in the response?">
+    To identify the stats belonging to the parent campaign in the API response, you can use the "Campaign Details and Reachability" API. This API should be called with all the campaign IDs included in the request. The parent campaign ID field will not be available for the parent campaign, allowing you to distinguish it from the child campaigns.
+  </Accordion>
+  <Accordion title="How can the parent-child relationship between campaigns be found?">
+    Campaign Details and Reachability APIs will allow you to relate child campaigns to their parent campaigns.
+  </Accordion>
 </AccordionGroup>
 
 ### Campaign Reports
@@ -82,8 +92,17 @@ The Report API requires a custom `Signature` header generated via: `SHA256(Api_I
   <Accordion title="How do I verify if my signature implementation is correct?">
     Verify that your concatenation uses the pipe character (`|`) exactly as shown: `APPID|FILENAME|SECRETKEY`. Ensure the resulting string is encoded in UTF-8 before hashing with SHA256.
   </Accordion>
+  <Accordion title="Why am I not receiving any response for the selected date?">
+    Campaigns might not be available to run on the selected date to fetch the report, which could result in an error message.
+  </Accordion>
+  <Accordion title="Can I retrieve the report file whenever needed?">
+    The reports generated will expire in 7 days from the date of creation.
+  </Accordion>
+  <Accordion title="What is the maximum number of days that I can choose to generate reports?">
+    You can generate reports for up to 90 days.
+  </Accordion>
 </AccordionGroup>
 
 ## Postman Collections
 
-Test your integration and verify your signature logic using our Postman collection. [View Postman Collection →](https://www.postman.com/moengage-dev/workspace/api-docs/)
+Test your integration and verify your signature logic using our Postman collection. [View Postman Collection](https://www.postman.com/moengage-dev/api-docs/collection/s8t1ta0/moengage-campaign-stats-api) →
