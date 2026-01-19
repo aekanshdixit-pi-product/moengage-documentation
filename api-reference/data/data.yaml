@@ -2696,8 +2696,23 @@ paths:
       tags:
         - Tracking
       summary: Track App Install
-      description: Provides MoEngage with install attribution data.
+      description: |
+        Install attribution tracking is a great way to improve your initial relationship with your user. Knowing how, where, and even more importantly, why a user installs your app allows you to get a better understanding of who your user is and how you should introduce them to your app.
+
+        You can use our APIs to seamlessly provide MoEngage with install data. These APIs allow you to track the install attribution data in MoEngage, which you can then use to enhance your marketing automation campaigns on MoEngage.
+
+        # Postman Collections
+        We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/xupp3dy/moengage-install-tracking-api) to view it in Postman.
       security: []
+      x-code-samples:
+        - lang: Bash
+          label: Android
+          source: |
+            curl -L -g -X GET 'https://api-0X.moengage.com/v1/installInfo?src=<partner_name>&appAttributionKey=<ENTER_ATTRIBUTION_KEY_HERE>&appId=<ENTER_Workspace_ID_HERE>&campaign_name=<campaign_name_of_install>&publisher_name=<publisher_name_of_install>&advertising_id=<device_GAID>'
+        - lang: Bash
+          label: iOS
+          source: |
+            curl -L -g -X GET 'https://api-0X.moengage.com/v1/installInfo?src=<partner_name>&appAttributionKey=<ENTER_ATTRIBUTION_KEY_HERE>&appId=<ENTER_Workspace_ID_HERE>&campaign_name=<campaign_name_of_install>&publisher_name=<publisher_name_of_install>&idfv=<device_idfv>'
       parameters:
         - name: publisher_name
           in: query
@@ -2711,6 +2726,7 @@ paths:
           description: Campaign name of the install.
         - name: src
           in: query
+          required: true
           schema:
             type: string
           description: Partner name.
@@ -2719,45 +2735,112 @@ paths:
           required: true
           schema:
             type: string
-          description: Workspace ID of your MoEngage account.
+          description: |
+            This is your MoEngage account's Workspace ID that must be included in the request. You can find your Workspace ID in the following navigation on the dashboard:
+            
+            Revamped UI: **Settings > Account > APIs > Workspace ID**
         - name: advertising_id
           in: query
           schema:
             type: string
-          description: Google Advertising ID (GAID) of the device (Android only).
+          description: Google Advertising ID of the device on which the install was detected (for Android only).
         - name: idfv
           in: query
           schema:
             type: string
-          description: Identifier for Vendors (IDFV) of the iOS device (iOS only).
+          description: IDFV of the iOS device on which the install was detected (for iOS only).
         - name: appAttributionKey
           in: query
           required: true
           schema:
             type: string
-          description: Found on the MoEngage dashboard under Settings > Analytics > Acquisition Tracking.
+          description: Available on the MoEngage dashboard by navigating to **Settings > Analytics > Acquisition Tracking > Attribution Key**.
       responses:
         '200':
-          description: Install information received.
+          description: |
+            **Success**
+            This response is returned when the request is processed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccess'
         '400':
-          description: Bad request, missing required parameters.
+          description: |
+            **Bad Request**
+            This response is returned when the required parameters are missing from the request, attributes are not found, and incorrect values are passed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '401':
+          description: |
+            **Unauthorized**
+            This response is returned when the request does not have valid authentication credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+        '403':
+          description: |
+            **Account Blocked**
+            This response is returned when your MoEngage account is suspended or blocked.
+        '413':
+          description: |
+            **Payload Size Exceeded**
+            This response is returned when the payload size exceeds 128 KB.
+        '415':
+          description: |
+            **Unsupported Media Type**
+            This response is returned when the content type is not supported.
+        '429':
+          description: |
+            **Rate Limit Breach**
+            This response is returned when the number of requests has exceeded the rate limit.
+        '500':
+          description: |
+            **Internal Server Error**
+            This response is returned when the system runs into an unexpected error.
 
-  # SECTION 5: UTILITIES
   /integrations/authentication:
     post:
       tags:
         - Utilities
-      summary: Test API Connection
-      description: Validates if the provided MoEngage endpoint details (Workspace ID, Data Key) are correct and accessible.
+      summary: Test Connection API
+      description: |
+        The Test Connection API allows you to validate if the entered endpoint details are valid. The API verifies if the provided endpoint URL, workspace ID an data key is accessible and responds without any errors.
+      parameters:
+        - name: MOE-APPKEY
+          in: header
+          required: true
+          description: "This is your MoEngage account's data API keythat has to be passed along with the request. You can find it at **Settings** -> **Account** -> **APIs** -> **API Keys** -> **Data**."
+          schema:
+            type: string
+            example: "{MoEngage data API key}"
+        - name: Authorization
+          in: header
+          required: true
+          description: "This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to Authentication."
+          schema:
+            type: string
+            example: "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="
       requestBody:
         required: true
+        description: Set the Content-Type header to application/json.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/TestConnectionRequest'
+            examples:
+               cURL_Body:
+                value:
+                  app_id: "********"
+                  app_secret: "**********"
+                  source: "test"
+                  region: "01"
       responses:
         '200':
-          description: Authentication successful.
+          description: |
+            Success. This response is returned when the request is processed successfully.
           content:
             application/json:
               schema:
@@ -2765,16 +2848,51 @@ paths:
                 properties:
                   status:
                     type: string
+                    description: |
+                      This field contains the status of the request and denotes whether it was successful or not.
+                      **Example**: "status": "success", "status": "error"
                     example: success
                   app_name:
                     type: string
+                    description: This field contains the workspace name of your MoEngage workspace
                     example: PI-Prod-DC01
+              example:
+                status: "success"
+                app_name: "PI-Prod-DC01"
         '401':
-          description: Authentication failed.
+          description: |
+            Authorization Failure. This response is returned when the authorization parameters are missing in the HTTP Auth Header.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: This field denotes the overall outcome of the API request (e.g., "success" or "fail"), allowing the client to quickly determine if the operation was completed as expected.
+                    example: fail
+                  error:
+                    type: object
+                    description: This field denotes a container object that holds specific technical details and context regarding the failure when the status is returned as "fail".
+                    properties:
+                      message:
+                        type: string
+                        description: This field denotes a human-readable description explaining the specific cause of the error, intended to help the developer or end-user understand what went wrong (e.g., "Missing required parameter").
+                        example: "App Secret key mismatch. Please login to the dashboard to verify key"
+                      type:
+                        type: string
+                        description: This field denotes a machine-readable classification or category of the error (e.g., validation_error, authentication_error), which allows the client application to programmatically handle specific error scenarios.
+                        example: "Authentication required"
+                      request_id:
+                        type: string
+                        description: This field denotes a unique identifier assigned to this specific API transaction.
+                        example: "kKcQUqvo"
+              example:
+                status: "fail"
+                error:
+                  message: "App Secret key mismatch. Please login to the dashboard to verify key"
+                  type: "Authentication required"
+                  request_id: "kKcQUqvo"
 
   # SECTION 6: FILE IMPORT
   /fileimports/trigger/{schedule_id}:
