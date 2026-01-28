@@ -2,3 +2,111 @@
 title: 'Custom Proxy Domain - iOS'
 ---
 
+<p>
+  In today's privacy-focused digital landscape, many users employ ad blockers or
+  private DNS services. These tools often block network requests to known third-party
+  domains, including analytics and engagement platforms. When these requests are
+  blocked, you lose critical data visibility, and your users may not receive in-app
+  messages or push notifications.
+</p>
+<p>
+  To ensure reliable campaign delivery and campaign performance, MoEngage offers
+  the <strong>Custom Proxy Domain</strong> feature. This allows you to route MoEngage
+  SDK traffic through a subdomain of your own primary domain (e.g.,
+  <code>data.yourcompany.com</code>). Because the traffic appears as first-party
+  communication, it bypasses common ad-blocking lists.
+</p>
+<h2 id="onboarding-process">Onboarding Process</h2>
+<p>
+  Setting up a Custom Proxy Domain requires a one-time DNS delegation process between
+  your team and MoEngage.
+</p>
+<div class="callout callout--info">
+  <figure class="wysiwyg-table wysiwyg-table-align-left">
+    <table>
+      <tbody>
+        <tr>
+          <td class="callout-image">
+            <span class="material-symbols-outlined">lightbulb</span>
+          </td>
+          <td class="callout-content">
+            <p class="callout__title">
+              <strong>Prerequisite</strong>
+            </p>
+            <p>
+              Before updating your SDK code, you must complete the
+              DNS delegation setup. For a detailed guide on picking
+              a domain and configuring NS records, refer to
+              <a href="https://help.moengage.com/hc/en-us/articles/45199793953300-DNS-Delegation-for-Custom-Subdomains" target="_blank" rel="noopener noreferrer">DNS Delegation</a>.
+            </p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </figure>
+</div>
+<h3 id="step-1">Step 1: Choose a Subdomain</h3>
+<p>
+  Select a subdomain that is short and does not contain keywords typically flagged
+  by filters (e.g., avoid "tracking", "ads", or "moengage").
+</p>
+<h3 id="step-2">Step 2: Request DNS Delegation</h3>
+<p>
+  Reach out to your MoEngage Customer Success Manager (CSM) or
+  <a href="https://help.moengage.com" target="_blank" rel="noopener noreferrer">raise a support ticket</a>
+  to initiate the request. Provide your chosen subdomain.
+</p>
+<h3 id="step-3">Step 3: Configure NS Records</h3>
+<p>
+  MoEngage will provide you with a list of Name Server (NS) records. You must add
+  these records to your DNS provider's configuration for the chosen subdomain.
+</p>
+<h2 id="implementation">Implementation</h2>
+<p>
+  Once the DNS delegation is verified, update your SDK initialization logic. The
+  SDK will dynamically rewrite all MoEngage endpoints (API calls and CDN assets)
+  to use your custom proxy domain.
+</p>
+<h3 id="update-configuration">Update MoEngage Configuration</h3>
+<div class="tabs tabs--colored-1">
+  <div class="tabs-menu">
+    <span class="tabs-link is-active">Swift</span>
+    <span class="tabs-link">Objective-C</span>
+  </div>
+  <div class="tab">
+    <pre class="wysiwyg-code-block"><code class="language-swift">import MoEngageSDK
+
+let sdkConfig = MoEngageSDKConfig(appId: "YOUR_Workspace_ID", dataCenter: DATA_CENTER)
+sdkConfig.customBaseDomain = "CUSTOM_DOMAIN"
+#if DEBUG
+MoEngage.sharedInstance.initializeDefaultTestInstance(sdkConfig)
+#else
+MoEngage.sharedInstance.initializeDefaultLiveInstance(sdkConfig)
+#endif</code></pre>
+  </div>
+  <div class="tab">
+    <pre class="wysiwyg-code-block"><code class="language-objectivec">@import MoEngageSDK;
+
+MoEngageSDKConfig* sdkConfig = [[MoEngageSDKConfig alloc] initWithAppId:@"YOUR_Workspace_ID" dataCenter: DATA_CENTER];
+sdkConfig.customBaseDomain = @"CUSTOM_DOMAIN";
+#ifdef DEBUG
+[[MoEngage sharedInstance] initializeDefaultTestInstance:sdkConfig];
+#else
+[[MoEngage sharedInstance] initializeDefaultLiveInstance:sdkConfig];
+#endif</code></pre>
+  </div>
+</div>
+<h2 id="best-practices">Best Practices and Validation</h2>
+<ol>
+  <li data-list-item-id="ec321ba536cde8353d499301d0c60a206">
+    <strong>Domain Selection:</strong> Keep your subdomain string short (5-8
+    characters).
+  </li>
+  <li data-list-item-id="ee6bf9166dece0a75e3f6adad47795815">
+    <strong>Network Logs:</strong> Verify that requests start with your custom
+    subdomain (e.g., <code>sdk-01.data.example.com</code>).
+  </li>
+  <li data-list-item-id="e35f6430f3a713dc3a9dac807d382dd61">
+    <strong>Asset Loading:</strong> Ensure images in campaigns load correctly.
+  </li>
+</ol>
