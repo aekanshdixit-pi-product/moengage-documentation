@@ -89,29 +89,7 @@ paths:
              "platforms" : [{"platform":"iOS", "active":"true"}]
              }
            }'
-          ```
-          **Postman Collections**
-           
-          We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/3182294-d7b7056d-9745-495d-bb61-7e3d87b64b39?action=share&creator=3182294) to view it in Postman.
-          
-          **FAQs**
-           
-           * **How do we reduce the 5xx errors because of too many requests per second/minute?**
-           
-          Please attempt exponential backoff of requests to ensure there is no data loss due to 5xx errors.
-
-           * **How do I know if my user data has been ingested into MoEngage?**
-           
-          Getting a 200 status code as a response from MoEngage only indicates that the users in your API payload have been accepted for processing. It does not ensure that the users sent to MoEngage have been successfully ingested.
-            Although, this happens very rarely and you can search for newly ingested users in: `Segment > Create Segment > Search for users using their IDs`
-
-          * **Can I use this API to also export users?**
-           
-          Please use the [Get User API](https://moengage.mintlify.app/api/user/get-user-details) to export the users.
-
-          * **Can I use this API to delete users from MoEngage?**
-          
-          Please use the [Delete User API](https://moengage.mintlify.app/api/user/delete-users-in-bulk) to delete existing users in MoEngage.         
+          ```       
           
       description: "This API helps add or update users and user properties in MoEngage."
       parameters:
@@ -450,23 +428,9 @@ paths:
       x-mint:
         content: |
           
-          ### Rate Limit
+          #### Rate Limit
           The rate limit is 20 users per payload and 1000 users per minute.
          
-          
-          **Postman Collections**
-           
-          We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/fdgezz6/moengage-get-user-api) to view it in Postman.
-          
-          ### FAQs
-
-           * **How do I know which users are available to export and which users are not available in MoEngage to export?**
-    
-           All available users will be found in the `users` key, and users not available will be found in the `users_not_found` key. Please refer to the sample response in this doc.
-
-           * **What if I want to get all the user data available based on the user ids without specifying the fields?**
-             
-          If the `user_fields_to_export` is not passed, then all the custom attributes and exportable standard attributes will be passed. For specific fields, `user_fields_to_export` needs to be passed along with the required fields.
             
       description: This API facilitates the retrieval of information of users by specifying the user ids.
       parameters:
@@ -880,60 +844,6 @@ paths:
            **Rate limit**
           
             The rate limit is 1000 user updates per minute.
-          
-          **Postman Collections**
-          
-              We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/3182294-3c80e7c5-32a1-4279-b1bb-566c7d4c5588?action=share&creator=3182294) to view it in Postman. 
-          
-            **FAQs**
-
-            * **Will the merged user information be available after using this API?**
-          
-           No, the merged user will get deleted after calling this API. All the user attributes and devices of the merged user will be transferred to the retained user.
-
-           * **What will happen to the reachability of the retained user?**
-          
-           The reachability status of the user will be recalculated based on the devices present after merging the user.
-
-             * **Can any two users be merged?**
-          
-            Any registered user present in the MoEngage system can be merged with another registered user irrespective of the source of creation.
-
-           * **Should both users have a device attached to them before merging?**
-          
-           Not necessarily; we allow the merging of users with or without devices.
-
-          * **Is there any restriction on the number of times a user can be merged?**
-          
-           No.
- 
-            * **Is there any restriction on the number of devices a merged/retained should have?**
-          
-             No.
-
-          * **What happens to the `merged_user` after the merge?**
-          
-          This user will get deleted, and if any devices are attached to this user, they will be associated with the `retained_user`, and all the events and user details of `merged_user` will reflect on the `retained_user`. A merge event `MOE_USER_MERGE_EVENT` will be added to the `merged_user` (who will only have the MoEngage ID now).
-
-             * **What happens to `retained_user` after the merge?**
-        
-            The `retained_user` will now have all the user, device, and event details of `merged_user` along with details of `retained_user`, `MOE_USER_MERGED` will be added to `retained_user`.
-
-          * **What happens if a user creation request comes with the same `ID` as the deleted user (which is deleted after the merge)?**
-    
-            We will create a new user with that `ID`, but the MoEngage `ID` of this user will be different as compared to the deleted user.
-
-            * **What happens to the reachability if both users do not have devices?**
-       
-          The user will not be reachable.
-
-           * **What is the SLA to see user details reflect after the merge?**
-       
-           The maximum SLA is 30 minutes.
-
-            * **How are events copied from the merged user to the retained user?**
-        
-          In the user profile, all events of the last 30 days are moved from the merged user to the retained user.
           
       description: The Merge User API merges two users in MoEngage based on their ID. ID is a client-defined identifier for a user. This API can be used when multiple profiles have been created for a single user. For example, a user registered once with a mobile number and once with an email id can be merged. Duplicate users created due to integration or tech issues can also be merged.
       parameters:
@@ -1372,27 +1282,10 @@ paths:
       summary: Delete Users in Bulk
       x-mint:
         content: |
-          ### Rate Limit
+          #### Rate Limit
         
                The rate limit is 1 user per payload per request. You can run 5000 requests per minute.
         
-           ### Postman Collections
-        
-              We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/request/3182294-b591486a-58b1-4920-ad5f-db6dd5da92f1) to view it in Postman. 
-
-             ### FAQs
-
-                * **Can you reverse a delete operation?**
-       
-             There are no rollback mechanisms for undoing the delete action. Once the delete request is processed, the user is deleted from MoEngage.
-
-             * **Are the events of the users also deleted as well?**
-       
-             No, the events corresponding to a user are not specifically deleted; only the user and the user attributes are deleted when the delete API request is processed. However, once the user is deleted from MoEngage, the events corresponding to the user will not be accessible, i.e., if the event is used in a segmentation query the deleted user who had executed the event will not be added to the calculated segment or campaign.
-
-             * **How do you check if a user has been deleted from MoEngage?**
-         
-            Navigate to `Segment` -> `Create Segment` on the MoEngage Dashboard. Type the unique identifier for the deleted user (the unique identifier could be the ID, MoEngage ID, phone number, email, or any unique identifier that you've configured). If the user has been deleted (hard delete), you will not be able to get any search results. For more information about searching users, refer to [Search User in Segmentation](https://help.moengage.com/hc/en-us/articles/206169646-Create-Segments#01G2PMG9GXFXRYJQ5JRJHC4V60).
       description: |
         This API can be used to delete users in MoEngage. Users cannot be retrieved once deleted. Users deleted (hard delete) using this API will be deleted after a default buffer of 24 hours. During this buffer period, the user will still be active in MoEngage and will be visible in Segments, Analytics, and Campaigns. Users can be updated in the buffer period.After the buffer elapses, the user is hard-deleted from MoEngage. If a user with the same unique identifiers as the deleted one is created in MoEngage (through APIs or imports), they will be created again in MoEngage.
         
@@ -2028,29 +1921,14 @@ paths:
       x-mint:
         content: |
         
-          ### Use Cases
+          #### Use Cases
 
           - Create a new device for an existing user
           - Create new device properties for an existing user
           - Update the device properties of the existing user
 
-          ### Rate Limit
+          #### Rate Limit
            You can track 10,000 devices per minute. 
-          ### Postman Collections
-              We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/request/h1uwiz8/4-device-api) to view it in Postman. 
-           ### FAQs
-
-           * **How to identify the events to a given user? What identifiers can I use?**
-        
-          Events in the payload need to be mapped to a given user who has executed the event. You must use the Customer ID to identify the events mapped to a customer.
-
-             * **Can I send events for anonymous users?**
-        
-           No, anonymous users can be tracked using MoEngage SDKs.
-
-              * **Can events be updated/modified?**
-        
-              Events in MoEngage are immutable, i.e., events can only be created, they cannot be updated or deleted.
          
       description: This API helps add or update devices and device properties in MoEngage.
       parameters:
@@ -2377,10 +2255,8 @@ paths:
       description: The Device Opt-out API blocks or unblocks specific devices from receiving push notifications triggered from MoEngage. To prevent push notifications from reaching a specific user or all devices associated with a user, call the API to block them. This is useful for reasons such as device theft or fraudulent activity. For example, if a device is stolen, you can use this API to block it in MoEngage, ensuring that any scheduled push notifications with sensitive content do not get delivered. You can also use the API to unblock a device if it is recovered.
       x-mint:
         content: |
-            ### Rate Limit
+            #### Rate Limit
             1000 API requests per min.
-             ### Postman Collections
-              We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/wiq33oa/moengage-device-block-api?action=share&creator=9636111) to view it in Postman.
               
       parameters:
         - name: app_id
@@ -2701,8 +2577,6 @@ paths:
 
         You can use our APIs to seamlessly provide MoEngage with install data. These APIs allow you to track the install attribution data in MoEngage, which you can then use to enhance your marketing automation campaigns on MoEngage.
 
-        # Postman Collections
-        We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/xupp3dy/moengage-install-tracking-api) to view it in Postman.
       security: []
       x-code-samples:
         - lang: Bash
@@ -2917,18 +2791,9 @@ paths:
       description: This API can be used to trigger scheduled file imports. Periodic imports can be triggered to run using this API if the import has not expired and is in any of the following states- Scheduled, Successful, Partially Successful, and Failed.
       x-mint:
         content: |
-          ### Rate Limit
+          #### Rate Limit
               This API can be triggered once in every five minutes for a specific schedule_id. A Bad request response (400) response will be sent if this is exceeded.
            
-          ### Postman Collections
-           
-          We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/u3yt8gn/moengage-file-imports-trigger-api?action=share&creator=3182294) to view it in Postman. 
-
-          ### FAQs
-
-           * **Does the trigger API change the import schedule?**
-          
-           No, the schedule still remains the same as originally set up in the MoEngage Dashboard.
       parameters:
         - name: schedule_id
           in: path
@@ -3147,10 +3012,9 @@ paths:
       description: This API fetches the status at an import level. It can fetch the status of multiple imports but not the status of the files within the import.
       x-mint:
         content: |
-          ### Rate Limit
+          #### Rate Limit
                You can create 50 requests per minute.
-          ### Postman Collections
-              We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/mzt9mgo/moengage-status-and-run-history-api) to view it in Postman. 
+ 
       parameters:
         - name: MOE-APPKEY
           in: header
@@ -3386,10 +3250,9 @@ paths:
       description: This API fetches the file processing status of each file contained in an import. The API request must contain either the import _name or the import_id. If you are not sure of the import-id or the import_name, you can use the Import Details API to get the import details, which can be further used in the Import File Run History API.
       x-mint:
         content: |
-          ### Rate Limit
+          #### Rate Limit
                You can create 50 requests per minute.
-          ### Postman Collections
-              We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/mzt9mgo/moengage-status-and-run-history-api?action=share&creator=3182294) to view it in Postman. 
+
       parameters:
         - name: MOE-APPKEY
           in: header
