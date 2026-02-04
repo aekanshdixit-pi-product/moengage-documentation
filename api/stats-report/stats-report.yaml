@@ -28,18 +28,11 @@ paths:
       description: |
         This API fetches data at the platform level and provides data for all types of campaigns.
         
-        The API request will be authenticated through Basic Authentication. You can obtain the username (Workspace ID) and password (API Key) details from the MoEngage Dashboard.
       x-mint:
         content: |
           <Note>
             **Rate Limit**: This API provides all version stats, and the call rate is limited to **100 API calls per minute** per workspace.
           </Note>
-
-          ### Authentication Details
-          
-          Navigate to **Settings > Account > APIs** in your dashboard.
-          1. **Username**: Under **Workspace ID**, click the copy icon.
-          2. **Password**: In the **API keys** section, copy the **Campaign report** API key.
       operationId: getCampaignStats
       security:
         - basicAuth: []
@@ -184,10 +177,15 @@ paths:
       description: |
         Campaign Report API lets you download campaign reports for any specific date range. You can fetch reports for one-time and periodic campaigns.
         
-        **Important**: Successful API requests automatically download the report file.
       x-mint:
         content: |
-          ### Generating the Signature
+          
+          #### Limits
+          - **Expiry**: The generated reports will expire in **7 days** from the date of creation.
+          
+          - **Max Range**: You can generate reports for up to **90 days**.
+          
+          #### Generating the Signature
           A unique signature must be passed in the headers to verify the caller's authenticity. 
           
           The signature is `SHA256(Api_ID + "|" + FILENAME + "|" + SECRET_KEY)`.
@@ -202,14 +200,6 @@ paths:
           # Now Signature is hexdigest of sha256 of Signature_Key
           Signature = sha256(Signature_Key.encode('utf-8')).hexdigest()
           ```
-
-          <Warning>
-          **Expiry**: The generated reports will expire in **7 days** from the date of creation.
-          </Warning>
-          
-          <Note>
-          **Max Range**: You can generate reports for up to **90 days**.
-          </Note>
       operationId: downloadCampaignReport
       security:
         - apiKeySignature: []
@@ -272,7 +262,7 @@ components:
       type: apiKey
       in: header
       name: Signature
-      description: 'Custom SHA256 Signature.'
+      description: 'Custom SHA256 Signature. Refer [here](/api/campaign-reports/download-campaign-report#generating-the-signature)'.
 
   requestBodies:
     CampaignStatsRequest:
