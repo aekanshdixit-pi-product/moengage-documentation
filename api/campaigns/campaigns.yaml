@@ -326,7 +326,7 @@ components:
           description: |
             Whether to include child campaigns (flow nodes and periodic children).
             
-            Set to `true` to fetch details of periodic child campaigns and flow campaign nodes.
+            Set to `true` to fetch details of periodic child campaigns and flow campaign nodes. Flow campaigns can be identified by the presence of `flow_id` and `flow_name` in the response.
           default: false
         include_archive_campaigns:
           type: boolean
@@ -3237,11 +3237,7 @@ paths:
             If this API is not enabled for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team to request enablement.
           </Info>        
           #### Rate Limits
-          You can create 5 campaigns per minute, 25 campaigns per hour, and 100 campaigns per day.
-        
-          <Note>
-          After successful campaign creation, do not reuse the same request_id for 1 hour (Push) or 1 day (Email).
-          </Note>         
+          You can create 5 campaigns per minute, 25 campaigns per hour, and 100 campaigns per day.        
           
       tags:
         - Create Campaigns
@@ -3433,26 +3429,24 @@ paths:
       description: |
         This API updates an existing Push or Email campaign in MoEngage. You can only update campaigns created via the API, not campaigns created through the MoEngage dashboard.
       x-mint:
-        content: |
-          <Note>
-          **Notes**
-          - You cannot update campaigns when in **Stopped** or **Archived** state.
-          - For Event-Triggered campaigns, updated content is cached and takes up to 30 minutes to take effect.
-          </Note>
-        
+        content: |        
           <Warning>
           **Update Restrictions**
         
-          **For Scheduled Campaigns**
+          You cannot update campaigns when in **Stopped** or **Archived** state.
+
+          For **Scheduled Campaigns**
           - You can edit all fields **except scheduling type** for One-Time campaigns.
           - You can edit all fields **except scheduling type** for Periodic/Event-Triggered campaigns if no instance has been sent yet.
         
-          **For Active Campaigns**, you cannot edit the following fields:
+          For **Active Campaigns**, you cannot edit the following fields:
           - Trigger Condition
           - Segmentation Details
           - Conversion Goal Details
           - Scheduling Type
           - Scheduling Start Date
+
+          For **Event-Triggered campaigns**, updated content is cached and takes up to 30 minutes to take effect.
           </Warning>
         
       tags:
@@ -3564,8 +3558,6 @@ paths:
       requestBody:
         description: |
           Provide the search criteria and pagination parameters for finding campaigns.
-          **Note**: To fetch flow campaign nodes, set `include_child_campaigns` to `true`. Flow campaigns can be identified by the presence of `flow_id` and `flow_name` in the response.
-
         required: true
         content:
           application/json:
