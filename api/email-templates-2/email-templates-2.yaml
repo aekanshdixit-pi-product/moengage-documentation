@@ -331,6 +331,150 @@ paths:
                     title: "Internal Server Error"
                     message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
 
+    put:
+      summary: Update Email Template
+      description: |
+        This API updates an email template by specifying its external template ID. You can specify whether the updated version of the template can be used in active campaigns in the request.
+      operationId: updateEmailTemplate
+      tags:
+        - Email Templates
+      x-mint:
+        content: |
+          #### Rate Limit
+          The rate limit is 100 Requests Per Minute.
+          
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - external_template_id
+                - basic_details
+                - meta_info
+              properties:
+                external_template_id:
+                  type: string
+                  description: This field contains the unique identifier that is generated during the creation of the template.
+                update_campaigns:
+                  type: boolean
+                  description: |
+                    This field contains a flag that is used to update all the campaigns that are currently using the template being updated to the newer version(that is being updated in this request). The default value for this flag is false.
+                    
+                    When the update_campaigns flag is true, all the campaigns running with this template will get updated to the latest version of the template, and when it is false, the new version of the template will be created, but there will be no change made to the template used in the existing campaigns.
+                update_latest_version:
+                  type: boolean
+                  description: If the value is "true," this API does not create a new version of the template but only updates its contents.
+                basic_details:
+                  $ref: '#/components/schemas/BasicDetails'
+                meta_info:
+                  $ref: '#/components/schemas/MetaInfo'
+      responses:
+        '200':
+          description: This response is returned when the request is processed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  external_template_id:
+                    type: string
+                    description: This field contains the unique template id corresponding to a successful template updation request.
+              examples:
+                success:
+                  value:
+                    external_template_id: "d05a44f0-a7cf-471a-bcb6-63054800a367"
+        '400':
+          description: This response is returned when the required parameters are missing from the request or when the provided parameters are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_id:
+                  value:
+                    error:
+                      code: "400 Bad Request"
+                      message: "Invalid template id"
+                      details:
+                        - code: "MissingValue"
+                          target: "9925c8"
+                          message: "9925c8 is invalid template id."
+                      request_id: "12345requestid"
+                limit_breach:
+                  value:
+                    error:
+                      code: "400 Bad Request"
+                      message: "Maximum Template limit exceeded"
+                      details:
+                        - code: "NotSupported"
+                          target: "Maximum Template limit exceeded"
+                          message: "You have already created maximum allowed template allowed for client"
+                      request_id: "eLeZXIlW"
+        '401':
+          description: This response is returned when the authorization parameters are missing in the HTTP Auth Header.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  description:
+                    type: string
+              examples:
+                auth_fail:
+                  value:
+                    title: "Authentication required"
+                    description: "MOE-APPKEY missing in Authentication Header"
+        '415':
+          description: This response is returned when the header Content-Type is not provided/is not supported.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  description:
+                    type: string
+              examples:
+                unsupported:
+                  value:
+                    title: "Unsupported media type"
+                    description: "Content type is not supported"
+        '429':
+          description: This response is returned when the number of requests per minute has exceeded the rate limit, or the number of templates has exceeded the allowed quota per channel.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                rate_limit:
+                  value:
+                    response_id: "response_id_example"
+                    type: "custom_template"
+                    error:
+                      code: "Too Many Requests"
+                      message: "API rate limit breached. Current limit: n/m mins"
+        '500':
+          description: This response is returned when the system runs into an unexpected error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  message:
+                    type: string
+              examples:
+                server_error:
+                  value:
+                    title: "Internal Server Error"
+                    message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+
   /custom-templates/email/search:
     post:
       summary: Search Email Template
@@ -569,151 +713,6 @@ paths:
                 rate_limit:
                   value:
                     response_id: "{{response_id}}"
-                    type: "custom_template"
-                    error:
-                      code: "Too Many Requests"
-                      message: "API rate limit breached. Current limit: n/m mins"
-        '500':
-          description: This response is returned when the system runs into an unexpected error.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  title:
-                    type: string
-                  message:
-                    type: string
-              examples:
-                server_error:
-                  value:
-                    title: "Internal Server Error"
-                    message: "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
-
-  
-    put:
-      summary: Update Email Template
-      description: |
-        This API updates an email template by specifying its external template ID. You can specify whether the updated version of the template can be used in active campaigns in the request.
-      operationId: updateEmailTemplate
-      tags:
-        - Email Templates
-      x-mint:
-        content: |
-          #### Rate Limit
-          The rate limit is 100 Requests Per Minute.
-          
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - external_template_id
-                - basic_details
-                - meta_info
-              properties:
-                external_template_id:
-                  type: string
-                  description: This field contains the unique identifier that is generated during the creation of the template.
-                update_campaigns:
-                  type: boolean
-                  description: |
-                    This field contains a flag that is used to update all the campaigns that are currently using the template being updated to the newer version(that is being updated in this request). The default value for this flag is false.
-                    
-                    When the update_campaigns flag is true, all the campaigns running with this template will get updated to the latest version of the template, and when it is false, the new version of the template will be created, but there will be no change made to the template used in the existing campaigns.
-                update_latest_version:
-                  type: boolean
-                  description: If the value is "true," this API does not create a new version of the template but only updates its contents.
-                basic_details:
-                  $ref: '#/components/schemas/BasicDetails'
-                meta_info:
-                  $ref: '#/components/schemas/MetaInfo'
-      responses:
-        '200':
-          description: This response is returned when the request is processed successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  external_template_id:
-                    type: string
-                    description: This field contains the unique template id corresponding to a successful template updation request.
-              examples:
-                success:
-                  value:
-                    external_template_id: "d05a44f0-a7cf-471a-bcb6-63054800a367"
-        '400':
-          description: This response is returned when the required parameters are missing from the request or when the provided parameters are invalid.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                invalid_id:
-                  value:
-                    error:
-                      code: "400 Bad Request"
-                      message: "Invalid template id"
-                      details:
-                        - code: "MissingValue"
-                          target: "9925c8"
-                          message: "9925c8 is invalid template id."
-                      request_id: "12345requestid"
-                limit_breach:
-                  value:
-                    error:
-                      code: "400 Bad Request"
-                      message: "Maximum Template limit exceeded"
-                      details:
-                        - code: "NotSupported"
-                          target: "Maximum Template limit exceeded"
-                          message: "You have already created maximum allowed template allowed for client"
-                      request_id: "eLeZXIlW"
-        '401':
-          description: This response is returned when the authorization parameters are missing in the HTTP Auth Header.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  title:
-                    type: string
-                  description:
-                    type: string
-              examples:
-                auth_fail:
-                  value:
-                    title: "Authentication required"
-                    description: "MOE-APPKEY missing in Authentication Header"
-        '415':
-          description: This response is returned when the header Content-Type is not provided/is not supported.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  title:
-                    type: string
-                  description:
-                    type: string
-              examples:
-                unsupported:
-                  value:
-                    title: "Unsupported media type"
-                    description: "Content type is not supported"
-        '429':
-          description: This response is returned when the number of requests per minute has exceeded the rate limit, or the number of templates has exceeded the allowed quota per channel.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                rate_limit:
-                  value:
-                    response_id: "response_id_example"
                     type: "custom_template"
                     error:
                       code: "Too Many Requests"
