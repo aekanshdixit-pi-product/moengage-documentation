@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: MoEngage Catalog API
   description: |
-    This API allows for the management of product and item catalogs, including **creation**, **attribute definition**, and **item ingestion, updates, and deletion**.
+    This API allows for the management of product and item catalogs, including **creation**, **attribute definition**, **item ingestion, updates, deletion**, and **retrieval**.
 
     Authentication is handled via **Basic Auth** (using your Workspace ID as username and API Key as password), and all requests additionally require the `MOE-APPKEY` header (Workspace ID).
     
@@ -495,6 +495,117 @@ paths:
           $ref: '#/components/responses/PayloadTooLarge'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+  /catalog/{catalog_id}/items/search:
+    post:
+      tags:
+        - Items
+      summary: Get Item Details
+      operationId: getItemDetails
+      description: |
+        This API enables you to retrieve item attribute details for catalog items using their unique item IDs. The attributes can include the title, price, category, link, image_link, and the respective creation date.
+      x-mint:
+        content: |
+          #### Rate Limit
+
+          - Request limit: 100/min OR 1000/hr. You can request up to 50 items per request.
+
+          - Payload size limit: 5 MB only if the Content-Length header is provided.
+
+          <Note>
+          The limit is a COMBINED limit across all Catalog APIs for a specific user.
+          </Note>
+
+          #### FAQs
+
+          <AccordionGroup>
+            <Accordion title="What are the error codes?">
+              Each error code is a uniquely defined shorthand representation for the type of error, providing a quick reference that can be used to diagnose, troubleshoot, and address the problem based on a predefined set of error conditions.
+            </Accordion>
+            <Accordion title="Can I change the data type of an attribute once an API catalog is created?">
+              No, the data type cannot be changed once an attribute has been defined in the catalog. You can add a new attribute to the catalog using the [Add new catalog attribute API](/api-reference/catalog/add-catalog-attributes) with a different data type as needed.
+            </Accordion>
+          </AccordionGroup>
+
+          #### Postman Collections
+
+          We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-5ed66f3b-a0cd-4c96-ab1b-9f7927f47c4b?action=share&creator=3182294) to view it in Postman.
+      parameters:
+        - name: MOE-APPKEY
+          in: header
+          description: "This is the Workspace ID of your MoEngage account that must be passed with the request. You can find it in the MoEngage dashboard at **Settings** > **Account** > **APIs** > **Workspace ID (earlier app id)**."
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/CatalogIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+              properties:
+                items:
+                  type: array
+                  maxItems: 50
+                  description: |
+                    A list of unique IDs (strings) that represent the items you want to fetch. This field accepts a maximum of **50 item IDs** per request. If the count exceeds this limit, the request results in an error.
+
+                    **Note**: The request may fail if mandatory attributes are missing from the item configuration.
+                  items:
+                    type: string
+                  example:
+                    - "P001"
+                    - "P002"
+                    - "P003"
+                    - "P004"
+            example:
+              items:
+                - "P001"
+                - "P002"
+                - "P003"
+                - "P004"
+      responses:
+        '200':
+          description: Items retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetItemDetailsResponse'
+              example:
+                items:
+                  - catalog_id: "{{catalog_id}}"
+                    feed_id: "{{feed_id}}"
+                    title: "string"
+                    description: "string"
+                    link: "https://link.in/"
+                    image_link: "https://link.in/"
+                    price_currency: "USD"
+                    creation_date: "2024-05-10T07:03:00.180000"
+                    last_updated: "2024-05-10T07:03:00.180000"
+                    product_id: "string"
+                    price: 29.99
+                    date: "2022-04-05T00:00:00"
+        '400':
+          description: Bad Request - Invalid request format or item count validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error-code: "invalid-request"
+                message: "Item count should be greater than 0 and less than or equal to 50"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
 components:
   securitySchemes:
@@ -614,6 +725,58 @@ components:
           example:
             price: 24.99
             in_stock: false
+    GetItemDetailsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          description: A list of catalog item objects matching the requested item IDs.
+          items:
+            type: object
+            properties:
+              catalog_id:
+                type: string
+                description: The unique identifier for the catalog.
+              feed_id:
+                type: string
+                description: The feed ID associated with the item.
+              title:
+                type: string
+                description: The title or name of the catalog item.
+              description:
+                type: string
+                description: The description of the catalog item.
+              link:
+                type: string
+                format: uri
+                description: The deep link or URL to the item's page.
+              image_link:
+                type: string
+                format: uri
+                description: The URL of the primary image for the item.
+              price_currency:
+                type: string
+                description: The ISO 4217 currency code for the item price.
+              creation_date:
+                type: string
+                format: date-time
+                description: The date and time when the item was created.
+              last_updated:
+                type: string
+                format: date-time
+                description: The date and time when the item was last updated.
+              product_id:
+                type: string
+                description: The product ID of the item.
+              price:
+                type: number
+                format: double
+                description: The price of the item.
+              date:
+                type: string
+                format: date-time
+                description: A date attribute associated with the item.
+            additionalProperties: true
     Error:
       type: object
       properties:
