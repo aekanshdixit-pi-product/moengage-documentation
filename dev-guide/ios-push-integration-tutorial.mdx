@@ -1,0 +1,505 @@
+---
+title: "iOS Push Notifications"
+description: "Step-by-step instructions for integrating the MoEngage iOS SDK to send, receive, and track rich push notifications."
+---
+
+This article provides step-by-step instructions for integrating the MoEngage iOS SDK, enabling your application to send, receive, and track rich push notifications. By following these instructions, you will implement a comprehensive setup that supports rich media content, including images and GIFs, and ensures reliable analytics.
+
+This article covers the following essential topics:
+
+* **Setting up the Notification Service Extension (NSE)**: Enable rich media content (images, GIFs) and reliable impression tracking across all app states.
+* **Configuring the AppDelegate**: Implement push notification registration, device token handling, and user interaction callbacks.
+* **Validating the Integration**: Follow a process to test notification delivery, rich media display, and analytics tracking.
+* **Implementing Advanced Features**: Enhance notifications with custom push templates, actionable buttons, and badge count control.
+
+<Info>
+  **Prerequisites**
+
+  To enable push notifications:
+  1. **Integrate the MoEngage iOS SDK**: Use CocoaPods, Swift Package Manager (SPM), or manual framework import as detailed in the [MoEngage documentation](https://developers.moengage.com/hc/en-us/sections/6993218591636-Basic).
+  2. **Configure APNs credentials in the MoEngage UI**:
+      * MoEngage requires either an APNs Authentication Key (.p8) or an [APNs Certificate](https://developers.moengage.com/hc/en-us/articles/4403944011028-APNS-Certificate-PEM-file) (.pem) to communicate with Apple Push Notification Service (APNs).
+      * **Recommendation**: Use an APNs Authentication Key because it is non-expiring. Refer to the [APNs Authentication Key Setup Guide](https://developers.moengage.com/hc/en-us/articles/8484447635348-APNS-Authentication-Key#apns-certificate--0-0).
+  3. Ensure you have added **Push Notifications** capability in the main target by navigating to **Target** -> **Signing & Capabilities**.
+</Info>
+
+## Step 1: Implement Notification Service Extension (NSE)
+
+NSE enables rich push notifications (including images, video, and GIFs) and tracks notification impressions across all app states.
+
+<Steps>
+  <Step title="Create NSE Target">
+    1. In Xcode, navigate to **File** > **New** > **Target**… > **Notification Service Extension**.
+    2. Enter a name for your NSE target.
+    
+    
+  </Step>
+
+  <Step title="Integrate MoEngageRichNotification">
+    <Tabs>
+      <Tab title="SPM (Swift Package Manager)">
+        To install the `MoEngageRichNotification` through SPM, perform the following steps:
+
+        1. Navigate to **File** > **Add Package**.
+        2. Enter the appropriate repository URL:
+            * `https://github.com/moengage/apple-sdk.git` (for MoEngage-iOS-SDK versions 9.23.0 and above)
+            * `https://github.com/moengage/MoEngage-iOS-SDK.git` (for other versions)
+        3. Select the master branch or your desired version.
+        4. Click **Add Package**.
+        5. Target the installed package to your NSE file.
+      </Tab>
+      <Tab title="CocoaPods">
+        <Warning>
+          **Information**
+          CocoaPods is being deprecated. MoEngage recommends using Swift Package Manager for all new integrations. For more info, refer [here](https://developers.moengage.com/hc/en-us/articles/4403900743828-SDK-Integration).
+        </Warning>
+
+        Add the following to your `Podfile`:
+
+        ```ruby
+        target 'YourApp' do
+              use_frameworks!
+              pod 'MoEngage-iOS-SDK'
+        end
+
+        target 'MoEngageNotificationService' do
+              use_frameworks!
+              pod 'MoEngage-iOS-SDK/RichNotification'
+        end
+        ```
+
+        Then run:
+
+        ```shell
+        pod repo update
+        pod install
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Set up App Group">
+    To set up an App Group for seamless communication between your main app and NSE, perform the following steps:
+
+    1. **Enable App Groups**:
+        * For both your main application target and your NSE target, navigate to **Signing and Capabilities**.
+        * Click **+ Capability** and select **App Groups**.
+        
+        
+
+    2. **Create App Group ID**:
+        * Create a new App Group ID (for example, `group.com.yourcompany.appname`).
+        * **Crucially**, ensure this exact App Group ID is enabled for both the main app and the NSE targets.
+
+    3. **Update AppDelegate**:
+       Modify your `AppDelegate.swift` in your iOS application to set the App Group ID as shown below:
+
+       <Tabs>
+         <Tab title="Swift">
+           ```swift
+           // In your main AppDelegate.swift - didFinishLaunchingWithOptions
+           let sdkConfig = MoEngageSDKConfig(appId: "YOUR_APP_ID", dataCenter: .data_center_01)
+           sdkConfig.appGroupId = "group.com.yourcompany.appname" // Your App Group ID
+           ```
+         </Tab>
+         <Tab title="Objective-C">
+           ```objectivec
+           MoEngageSDKConfig *sdkConfig = [[MoEngageSDKConfig alloc] initWithAppId:@"YOUR_APP_ID" dataCenter:MoEngageDataCenterData_center_01];
+           sdkConfig.appGroupID = @"group.com.yourcompany.appname"; // Add your App Group ID here
+           [[MoEngage sharedInstance] initializeDefaultTestInstance:sdkConfig];
+           ```
+         </Tab>
+       </Tabs>
+  </Step>
+
+  <Step title="Configure the NSE Code">
+    Replace the entire content of the generated `NotificationService.swift` file with the following:
+
+    <Tabs>
+      <Tab title="Swift">
+        ```swift
+        import UserNotifications
+        import MoEngageRichNotification
+            class NotificationService: UNNotificationServiceExtension {
+
+            var contentHandler: ((UNNotificationContent) -> Void)?
+            var bestAttemptContent: UNMutableNotificationContent?
+
+            override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
+                self.contentHandler = contentHandler
+                bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
+
+               //Tell the MoEngage SDK about the App Group ID
+                MoEngageSDKRichNotification.setAppGroupID("group.com.yourcompany.appname")
+                
+                // Step 2: Pass the notification to the MoEngage SDK
+                // The SDK will download rich media and track the impression before calling your completion handler
+                MoEngageSDKRichNotification.handle(richNotificationRequest: request, withContentHandler: contentHandler)
+            }
+        }
+        ```
+      </Tab>
+      <Tab title="Objective-C">
+        ```objectivec
+        #import <UserNotifications/UserNotifications.h>
+        @import  MoEngageRichNotification;
+
+        @interface NotificationService ()
+        @property (nonatomic, strong) void (^contentHandler)(UNNotificationContent *contentToDeliver);
+        @property (nonatomic, strong) UNMutableNotificationContent *bestAttemptContent;
+        @end
+
+        @implementation NotificationService
+
+        - (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler {
+          
+          @try {
+            self.contentHandler = contentHandler;
+            self.bestAttemptContent = [request.content mutableCopy];
+            [MoEngageSDKRichNotification setAppGroupID:@"group.com.yourcompany.appname"];
+            [MoEngageSDKRichNotification handleWithRichNotificationRequest: request withContentHandler:contentHandler];
+          } @catch (NSException *exception) {
+            NSLog(@"MoEngage : exception : %@",exception);
+          }
+        }
+        @end
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+## Step 2: Implement Push Handling in AppDelegate
+
+Integrate push notification registration and token management within your `AppDelegate` to ensure proper communication with Apple Push Notification service (APNs) and MoEngage. This setup allows MoEngage to effectively map APNs tokens with your users.
+
+### Choose a Notification Registration Method
+
+To register for remote notifications at launch, call exactly one of the following methods based on your desired user experience:
+
+* **Standard Notifications (Direct Opt-In)**: Presents a system prompt for permission to deliver full notifications with banners and sounds upon user approval. Calling `registerForRemoteNotification()` displays a permission pop-up to the user if they are not already opted in.
+* **Provisional Notifications (Quiet Opt-In)**: Delivers notifications silently to the Notification Center without an initial prompt, allowing the user to opt into full delivery later.
+
+For more information, refer to [iOS Push Permission and Reachability](https://help.moengage.com/hc/en-us/articles/22865898059668-iOS-Push-Permission-and-Reachability#h_01HBT39SSW9ZXJ705WSD2DKYPP).
+
+<Tabs>
+  <Tab title="Provisional + Standard Push">
+    <Tabs>
+      <Tab title="Swift">
+        ```swift
+        import UIKit
+        import MoEngageSDK
+        import UserNotifications
+        @main
+        class AppDelegate: UIResponder, UIApplicationDelegate {
+            func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+
+        // method to use provisional push            
+        MoEngageSDKMessaging.sharedInstance.registerForRemoteProvisionalNotification()
+        return true
+            }
+        }
+
+        // To display standard notifications later in the user's journey, call the following method after the app starts.
+        MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification()
+        ```
+      </Tab>
+      <Tab title="Objective-C">
+        ```objectivec
+        #import AppDelegate.h
+        #import UIKiUIKit.h
+        #import MoEngageSDK/MoEngageSDKMessaging.h
+        @implementation AppDelegate
+        - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+
+        // method to use provisional push
+        [[MoEngageSDKMessaging sharedInstance] registerForRemoteProvisionalNotificationWithCategories:nil andUserNotificationCenterDelegate:nil];
+
+        return YES;
+        }
+        @end
+
+        // To display standard notifications later in the user's journey, call the following method after the app starts.
+        [[MoEngageSDKMessaging sharedInstance] registerForRemoteNotificationWithCategories:nil andUserNotificationCenterDelegate:nil]; 
+        ```
+      </Tab>
+    </Tabs>
+  </Tab>
+  <Tab title="Standard Push Only">
+    To register for standard push notifications, use the following MoEngage SDK code:
+    <Tabs>
+      <Tab title="Swift">
+        ```swift
+        import UIKit
+        import MoEngageSDK
+        import UserNotifications
+        @main
+        class AppDelegate: UIResponder, UIApplicationDelegate {
+        func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+              MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification()
+              return true
+            }
+        }
+        ```
+      </Tab>
+      <Tab title="Objective-C">
+        ```objectivec
+        #import AppDelegate.h
+        #import UIKiUIKit.h
+        #import MoEngageSDK/MoEngageSDKMessaging.h
+        @implementation AppDelegate
+        - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+            
+           // Override point for customization after application launch.
+           [[MoEngageSDKMessaging sharedInstance] registerForRemoteNotificationWithCategories:nil andUserNotificationCenterDelegate:nil];
+           return YES;
+        }
+        @end
+        ```
+      </Tab>
+    </Tabs>
+  </Tab>
+</Tabs>
+
+### App Delegate Method Swizzling
+
+App Delegate Method Swizzling, a runtime technique utilized by the MoEngage SDK, streamlines integration by automating push notification callback handling within the AppDelegate. The MoEngage SDK enables Method Swizzling by default to offer the quickest and most straightforward initial integration experience.
+
+To ensure maximum compatibility in applications that use other push-enabled SDKs, MoEngage provides a manual forwarding method. If you encounter conflicts, MoEngage recommends disabling the default Method Swizzling in the SDK settings.
+
+This manual approach requires you to forward the push payload directly to our SDK, giving you explicit control and ensuring that critical features like foreground notifications, click tracking, and deep links function reliably across all services.
+
+<Accordion title="How to resolve App Delegate Swizzling conflicts?">
+  To resolve conflicts, disable MoEngage's App Delegate Swizzling and manually forward push notification callbacks to the SDK.
+
+  1. **Disable Swizzling**:
+     Add the following entry to your `Info.plist` file:
+
+     ```xml
+     <key>MoEngageAppDelegateProxyEnabled</key>
+     false
+     ```
+
+  2. **Manual forwarding in AppDelegate**:
+     After disabling swizzling, implement the following code within your `AppDelegate.swift` file to manually pass notification events to the MoEngage SDK:
+
+  <Tabs>
+    <Tab title="Swift">
+      ```swift
+      import UIKit
+      import MoEngageSDK
+      import UserNotifications
+      class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+          // Set up MoEngage SDK and notification delegates when the app launches.
+          func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+              // Set the UNUserNotificationCenter delegate to enable handling notification-related events.
+              UNUserNotificationCenter.current().delegate = self
+
+              // Register for push notifications. This prompts the user for permission and gets the device token from Apple.
+              // Below code you can ignore if you don't want prompt on app launch and want to use provisional push in starting of app and further at some instance in app you can prompt for permission.
+                MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification(withCategories: nil, andUserNotificationCenterDelegate: self)
+
+                  
+              // This is for requesting provisional authorization for notifications.
+              // Use only if MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification() is not used on app launch
+              MoEngageSDKMessaging.sharedInstance.registerForRemoteProvisionalNotification(withCategories: nil,
+              andUserNotificationCenterDelegate: self)
+              
+              return true
+          }
+
+                  
+          // Called after a successful push token registration with Apple. Pass the token to MoEngage.
+          func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+              // Essential: Pass the device token to MoEngage to enable sending push campaigns.
+              MoEngageSDKMessaging.sharedInstance.setPushToken(deviceToken)
+          }
+
+                  
+          // Handles user interaction with a notification (e.g., a tap).
+          func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+              // Forward the notification response to MoEngage for automatic click tracking, deep linking, and rich landing page handling.
+              MoEngageSDKMessaging.sharedInstance.userNotificationCenter(center, didReceive: response)
+
+              completionHandler()
+          }
+
+          // Handles notifications that are received while the app is in the foreground.
+          func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+              // Decide how the notification should be presented in the foreground (e.g., with a banner and sound).
+              if #available(iOS 14.0, *) {
+                  completionHandler([.sound, .badge, .banner, .list])
+              } else {
+                  completionHandler([.alert, .sound, .badge])
+              }
+
+          }
+
+        // This method is called if push token registration fails.
+          func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+            
+             // Forward the registration failure to the MoEngage SDK. This helps in tracking and diagnosing push delivery issues.
+             MoEngageSDKMessaging.sharedInstance.didFailToRegisterForPush()
+        }
+      ```
+    </Tab>
+    <Tab title="Objective-C">
+      ```objectivec
+      #import <UIKit/UIKit.h>
+      #import <MoEngageSDK/MoEngageSDK.h>
+      #import <UserNotifications/UserNotifications.h>
+
+      @interface AppDelegate : UIResponder <UIApplicationDelegate, UNUserNotificationCenterDelegate>
+      @end
+      @implementation AppDelegate
+      - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+
+      // Other app setup code...
+      [UNUserNotificationCenter currentNotificationCenter].delegate = self;
+      [[MoEngageSDKMessaging sharedInstance] registerForRemoteNotificationWithCategories:nil andUserNotificationCenterDelegate:self];
+      return YES;
+      }
+
+      // Forward the device token
+      - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+      [[MoEngageSDKMessaging sharedInstance] setPushToken:deviceToken];
+
+      // Forward to other SDKs if necessary
+      }
+
+      // Forward notification clicks/responses
+
+      - (void)userNotificationCenter:(UNUserNotificationCenter *)center
+      didReceiveNotificationResponse:(UNNotificationResponse *)response
+      withCompletionHandler:(void (^)(void))completionHandler {
+      [[MoEngageSDKMessaging sharedInstance] userNotificationCenter:center didReceive:response];
+
+      // Forward to other SDKs if necessary
+      completionHandler();
+      }
+
+      - (void)userNotificationCenter:(UNUserNotificationCenter *)center
+      willPresentNotification:(UNNotification *)notification
+      withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
+       if (@available(iOS 14.0, *)) {
+          completionHandler(UNNotificationPresentationOptionBanner | UNNotificationPresentationOptionList | UNNotificationPresentationOptionSound | UNNotificationPresentationOptionBadge);
+        } else {
+          completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionBadge | UNNotificationPresentationOptionSound);
+        }
+      }
+      @end
+      ```
+    </Tab>
+  </Tabs>
+</Accordion>
+
+## Step 3: Validate Notifications
+
+To ensure your MoEngage iOS Push Notification integration is fully functional, perform the following validation steps:
+
+### Verify Dashboard Configuration
+
+Before sending a test notification, first verify the integration status on your MoEngage dashboard.
+Navigate to the iOS Push section of your profile and confirm the following:
+
+
+
+* The integration status icon is green.
+* For provisional authorization, the **Opt-In Status** is *Unknown*.
+* For standard permission, the **Opt-In Status** is *True*.
+
+For more information, refer to [iOS Push Notifications Integration Validation](/hc/en-us/articles/360052433591).
+
+### Test Notification Delivery and Display
+
+Send a Test Notification: From your MoEngage dashboard, create and send a test push notification that includes rich media (e.g., an image, GIF, or video).
+
+* **Observe Device Behavior**:
+    * **Foreground**: When your application is active (in the foreground), the notification should be displayed as a banner and accompanied by a sound.
+    * **Background**: If your application is in the background, the notification should still be delivered to the device and appear in the notification center.
+    * **Killed State**: Even when your application is force-closed or not running, the notification must be delivered and visible in the notification center.
+    * **Rich Media Rendering**: Verify that the rich media content within the notification (for example, the image) renders correctly across all app states (foreground, background, killed).
+
+### Tracking and Analytics Verification
+
+* **Access Campaign Analytics**: Navigate to the analytics section of the push notification campaign you just sent within the MoEngage UI.
+* **Validate Impressions**: Confirm that the "Impressions" metric for your campaign is incrementing. This indicates that the MoEngage SDK is successfully tracking when notifications are delivered and displayed on the device.
+
+You have successfully integrated MoEngage iOS Push Notifications, encompassing:
+* **Standard and Provisional Push Registration**: Correct handling of user consent for push notifications.
+* **Reliable Delivery**: Notifications are delivered and tracked in all application states: foreground, background, and killed.
+* **Rich Media Support**: Enhanced notification experiences via the NSE, allowing for visually engaging content.
+* **Comprehensive Tracking**: Accurate click and impression tracking across all app states, facilitated by the NSE, providing valuable campaign performance data.
+
+## Optional Features
+
+After basic push notifications are implemented, enhance them with the following features.
+
+### Push Templates
+
+Create interactive, visually rich notifications by implementing two app extensions:
+
+* **Notification Service Extension**: Intercepts and modifies the notification payload before it is displayed. Use this to download and attach rich media, such as images or GIFs.
+* [**Notification Content Extension**](https://developers.moengage.com/hc/en-us/articles/4403956104084-Push-templates): Renders a custom UI for the notification. Use this to create interactive experiences, such as image carousels or custom layouts.
+
+### Actionable Buttons
+
+Embed buttons within a notification to allow users to perform tasks directly from the notification interface, such as "Reply" or "Archive." For more information, refer [here](https://developers.moengage.com/hc/en-us/articles/4403961980308-Actionable-Notifications).
+
+### Configure Push Notification Badge Behavior
+
+With `disableBadgeReset(true)` enabled, the SDK won't reset the badge to 0 on app launch. Instead, clicking a notification decrements the badge by 1, maintaining accurate counts when multiple notifications are present. Add the code snippet below post SDK initialization in `AppDelegate.swift` file:
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        
+        MoEngageSDKMessaging.sharedInstance.disableBadgeReset(true)
+
+        return true
+    }
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKMessaging sharedInstance] disableBadgeReset:YES];
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+Adhering to these best practices will ensure a robust and reliable push notification experience for your users and accurate data for your campaigns.
+
+* **Test across all app states (Foreground, Background, Killed)**: This ensures consistent notification delivery, correct rich media rendering, and accurate tracking regardless of how the user is interacting with their device.
+* **If using provisional push, verify settings**: Confirm the device's notification settings show *Deliver Quietly* initially. Request the standard push permission and allow it. Then, go to **Settings** to confirm that the permission status is *Authorized*.
+* **Validate rich media URLs**: Always check image/video URLs to prevent broken media displays and ensure the NSE can successfully attach content to your notifications.
+
+## FAQs
+
+<AccordionGroup>
+  <Accordion title="Why are my push notification clicks not being tracked, or why are my deep links not opening?">
+    These symptoms typically indicate a "swizzling conflict" in your AppDelegate. This can happen if another third-party SDK is also managing push notification callbacks. To resolve this, you can disable MoEngage's automatic swizzling and implement manual forwarding instead. Refer to the detailed instructions for the correct implementation.
+  </Accordion>
+
+  <Accordion title="Why is rich media (images, GIFs) not showing in my notifications, or why is impression tracking failing?">
+    This issue is commonly caused by an incorrect configuration of the NSE. Verify these three key areas:
+    * **NSE Target Configuration:** Ensure the `MoEngageNotificationService` target is correctly added to your project and is properly configured.
+    * **App Group ID:** Confirm that the same App Group ID is enabled for both your main app and the NSE target, and that it has been correctly set in your code.
+    * **Media URL Reachability:** Check that the URLs for your images, GIFs, or videos are public and accessible. A broken URL will prevent the media from being downloaded and displayed.
+    * Ensure the deployment target of the extension matches the main app.
+  </Accordion>
+
+  <Accordion title="Why are push notifications not being delivered?">
+    Verify the Bundle ID in Xcode matches the MoEngage UI. Ensure the APNs environment (Development or Production) matches the uploaded certificate type. Confirm your APNs certificate or auth key is valid. Test on a physical device; push notifications do not work on simulators.
+  </Accordion>
+
+  <Accordion title="Why is the didRegisterForRemoteNotificationsWithDeviceToken delegate method not called?">
+    Enable the Push Notifications capability in Xcode. Check for a stable internet connection and ensure no MDM or VPN profiles are blocking APNs ports. Verify another SDK is not intercepting APNs delegate callbacks.
+  </Accordion>
+
+  <Accordion title="Why are provisional push notifications not appearing?">
+    Avoid requesting both standard and provisional authorization at launch. In the device's Settings for your app, confirm "Deliver Quietly" is not enabled. By design, provisional notifications are delivered silently to the Notification Center without an alert or sound.
+  </Accordion>
+</AccordionGroup>
