@@ -1,0 +1,1605 @@
+---
+title: "Push API"
+description: ""
+---
+
+# Overview
+
+Push API is used to:
+
+* Create campaigns (targeting all users or a group of users) to send notifications.
+* Target a single user using a unique user attribute.
+* Personalize payload for each user.
+
+<Info>
+Ensure you select the API that corresponds to your specific use case:
+
+* Transactional: For system-triggered events (e.g., OTPs, status updates), use the [Push API](https://developers.moengage.com/hc/en-us/articles/4404548252820).
+* Non-Transactional: For marketing, promotions, and broadcast messages, MoEngage highly recommends you to use the [Push Campaigns API](https://developers.moengage.com/hc/en-us/articles/38466364097044).
+</Info>
+
+# API Endpoint
+
+Method: **POST**
+
+<CodeGroup>
+```json API Endpoint
+https://pushapi-0X.moengage.com/v2/transaction/sendpush
+```
+
+</CodeGroup>
+
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Generate Authentication Signature
+
+A signature is required to verify whether the client is authorized to make the API call. It is generated from a hash of the campaign name, app ID, and API key. MoEngage uses the SHA 256 method to generate this hash. Python code is used to generate the signature for your test account, and use your account's app\_id.
+
+1. On the left navigation menu in the MoEngage dashboard, go to **Settings** > **Account** > **APIs**.
+2. Copy the following details:
+	1. app\_id: Under Workspace ID (earlier app\_id), click the copy icon to copy the app-id.
+	2. api\_key: In the API keys section, click the copy icon in the **Push** tile to copy the API key.
+3. campaign\_name: Ensure the campaign name matches the one used in the request body.
+
+![pushapiiii.png](43508615249940)
+
+Python code to generate the signature for your test account, use the app\_id that is appropriate for your account.
+
+<CodeGroup>
+```python Python 3.x
+from hashlib import sha256
+app_id = "{{Your Workspace ID}}"
+campaign_name = "{{your campaign name}}"
+api_key = "{{your push api key}}"
+signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+signature = sha256(signature_key.encode('utf-8')).hexdigest()
+print(signature)
+```
+
+```python Python 2.x
+from hashlib import sha256
+app_id = "{{Your Workspace ID}}" 
+campaign_name = "{{your campaign name}}"
+api_key = "{{your push api key}}" 
+signature_key = app_id+'|'+ campaign_name+'|'+ api_key
+signature = sha256(signature_key).hexdigest()
+print(signature)
+```
+
+</CodeGroup>
+
+Generated Signature:
+
+<CodeGroup>
+``` Signature
+Generated Signature: 
+{{Signature}}
+```
+
+</CodeGroup>
+
+ 
+
+# Request Header
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Content-Type | Required | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+
+# Request Body
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| appId | Required | String | This field denotes the app ID that you must pass to create the campaign. You can find it by selecting **Settings** > **Account** > **APIs** -> **Workspace ID (earlier app id)** on the MoEngage dashboard. MoEngage recommends that you test API integration in the Test Environment. The App ID for TEST ACCOUNT is suffixed with *\_DEBUG*. |
+| campaignName | Required | String | This field denotes the campaign name. The campaign name should be unique for *All Users* and *Custom Segment* campaigns.   **Note**:   * API automatically creates a campaign with the given name. You need not create a campaign from the dashboard to use the name. * For User type *targetAudience* API requests, reuse this campaign name for requests that should be clubbed in the same campaign. |
+| campaignTags | Optional | String | Used to add more context to campaigns. Context can be descriptive names or campaign themes such as onboarding, retention, country, and all users. Tags can also be used to filter campaigns or identify the behaviors of users who received these campaigns. The list of tags should be passed in this field.   For example,   
+```
+“campaignTags“ : [“Transactional“, “Accounts“]
+```
+ |
+| signature | Required | String | This field denotes the signature that is required to verify whether the client is authorized to make the API call. For more information, refer to [Generate Authentication Signature](#h_01JE80MEWTZQ2H5B8Q75R8DG3N). |
+| requestType | Optional | String | The value of this key is used to indicate the intention of an API request. The default value is *push*. |
+| targetPlatform | Required | List | This field denotes the platform devices that are targeted by your campaign. The Push API allows you to target users on Android, iOS, and Web platforms. You can target one or more platforms. If you want to send Web (Chrome) push notifications through the API, you should choose *Web* as the platform. |
+| targetAudience | Required | String | This field denotes the target segment for the campaign. Supported values are:   * *All Users*: Pass this value to target all users of your App/Website. * *Custom Segment*: Pass this value to target pre-created user segments. Custom segments can be created using the MoEngage dashboard or [custom segment API](https://developers.moengage.com/hc/en-us/articles/13277936457748-Create-Custom-Segment). Note that the custom segment name should exactly match the name of the target segment. * *User*: Pass this value to target a user with an attribute. It will target a maximum of 100 users of the associated **targetUserAttributes** definition. |
+| targetUserAttributes | Optional | JSON Object | This object contains the target user attribute details. For more information, refer to [Target User Attributes](#h_01JGZQ07FC9P3RHKXYJ67AJ9QV).   **Note**:   * This value is required when the **targetAudience** value is *User*. * For API requests where the target audience is a specific user, if a campaign with the given name already exists, existing campaign data corresponding to the given name will be used to send notifications. * Any edits in other parts of campaign data except payload within the API request parameters will be ignored. * If any changes are required in the campaign data, change the campaign name in the API request to create a new campaign. |
+| payload | Required | JSON Object | This object contains the payload details. Supported values are:    * Android. For more information, refer to [Android](#h_01JGZQJ15BBPB56MCAPZTNKASC). * iOS. For more information, refer to [IOS](#01JGZQRNMF624JYWRH4T882JPR). * Web. For more information, refer to [Web](#01JGZQRQTMXFC01DWTJZJAT2TQ). |
+| campaignDelivery | Required | String | This field helps decide when the campaign should be sent.   **Note**:    * All notifications targeted to a single user will be sent as soon as possible (ASAP). * Scheduling campaigns for Later or Periodic is applied only for segmented or *All users* campaigns. * The **timezone** field can be used to pass the timezone for scheduled campaigns. This is not mandatory, and if it is not passed, the default timezone will be set to IST (and not UTC/GMT). * For more information on allowed timezone values, refer [here](https://gist.github.com/mjrulesamrat/0c1f7de951d3c508fb3a20b4b0b33a98).   
+<CodeGroup>
+``` ASAP
+// send campaign asap
+"campaignDelivery": {
+    "type": "soon"
+  },
+```
+
+``` Schedule Later
+// send campaign later, only for segmented or all users campaigns.
+"campaignDelivery": {
+    "type": "later",
+    "date": "11/07/2016",
+    "time": "04:33 PM"
+  },
+```
+
+``` Recurring Campaigns
+// send periodic campaign, only for segmented and all users campaigns.
+"campaignDelivery": {
+    "type": "periodic",
+    "endDate": "11/07/2016",
+    "time": "04:55 PM",
+    "timezone": "Asia/Calcutta",
+    "repeatAfter": "1" // campaign will be recurring sent after every 1 day.
+  },
+```
+
+</CodeGroup>
+ |
+| conversionGoals | Optional | JSON Object | This object contains the conversion goals details. For more information, refer to [Conversion Goals](#h_01JGZRHWD1CSMSH1PB0P1K80GN).   **Note**:   * You can pass a single conversion goal or multiple conversion goals. * If you are passing multiple conversion goals, the first conversion goal in the list is considered the primary conversion goal for the campaign. * A Push campaign supports a maximum of five conversion goals on its list. |
+| advancedSettings | Optional | JSON Object | This object contains information about advanced settings. For more information, refer to [Advanced Settings](#h_01JGZRM6BSGJ9VS3YWKB21DYFW). |
+
+## Target User Attributes
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| attribute | Optional | String | This field denotes a unique identifier or characteristic of an entity or object used to specify the target users. This value is required when the **targetAudience** value is *User*. Other fields used are:   * for unique ID: USER\_ATTRIBUTE\_UNIQUE\_ID * for email:  USER\_ATTRIBUTE\_USER\_EMAIL * For mobile number: USER\_ATTRIBUTE\_USER\_MOBILE * for Google Advertising identifier: MOE\_GAID * for iOS Identifier for advertising: ADVERTISING\_IDENTIFIER * for device push token: PUSH\_ID (the same key is used for Android GCM ID, iOS push token) |
+| comparisonParameter | Optional | String | This field denotes a condition or operator that compares the user attributes against a specific value. Supported values are:   * The "is" query type * The "in" query type   **Note**: The maximum number of parameters that can be added while using the "in" comparisonParameter is 50. This value is required when the **targetAudience** value is *User*. |
+| attributeValue | Optional | String | This field denotes the actual value assigned to an attribute, which is used for comparison or filtering. This value is required when the **targetAudience** value is *User*. |
+| isCustom | Optional | Boolean | This field denotes whether a custom attribute has been added. For custom attributes, targeting is done on any custom attribute with the available fields. Set the key "isCustom" to true. |
+
+### Android
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| groupKey | Optional | String | This field denotes the group key used to identify and categorize related push notifications.   **Note**:   * Ensure you use the same group key for all push notifications you want to group. * MoEngage automatically modifies the group key to ensure it does not exceed the 45-character limit. MoEngage removes non-Latin scripts, special characters, and spaces to restrict the key composition to ASCII characters exclusively. |
+| collapseReplaceKey | Optional | String | This field denotes the update key used to identify and update related push notifications. Ensure you use the same update key for all push notifications intended to update each other. |
+| message | Required | String | This field denotes the main content or text to be displayed in the notification/message. |
+| title | Required | String | This field denotes the headline or subject of the notification/message. |
+| channel\_Id | Optional | String | This field denotes the channel identifier for the campaign. |
+| summary | Optional | String | This field denotes the brief summary or condensed version of the content. Typically displayed in collapsed notifications. |
+| richContent | Optional | list | An object or HTML string containing rich text, images, or other multimedia to enhance the message. Supported values are: * Coupon * Image * Sound |
+| defaultAction | Optional | list | This helps you define the default action triggered when the user interacts with the notification. |
+| additionalActions | Optional | list | This object contains a list of extra actions or buttons that the user can perform, providing more functionality for the notification. Supported actions are:    * Call * Snooze * Copy * Share   A maximum of two additional action buttons can be used at a time. |
+| fallback | Optional | JSON Object | This JSON object contains the fallback values for the values mentioned above. |
+
+### iOS
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| groupKey | Optional | String | This field denotes the group key used to identify and categorize related push notifications.   **Note**:   * Ensure you use the same group key for all push notifications you want to group. * MoEngage automatically modifies the group key to ensure it does not exceed the 45-character limit. MoEngage removes non-Latin scripts, special characters, and spaces to restrict the key composition to ASCII characters exclusively. |
+| collapseReplaceKey | Optional | String | This field denotes the update key used to identify and update related push notifications. Ensure you use the same update key for all push notifications intended to update each other. |
+| message | Required | String | This field denotes the primary text or body of the notification/message. |
+| title | Required | String | This field denotes the title or subject line of the notification/message. |
+| subtitle | Optional | String | This field denotes the subtitle of the notification/message. |
+| enableIosBadge | Optional | Boolean | This field specifies whether a notification should automatically update the iOS app’s badge count with push notifications. Supported values are 'true' and 'false'. |
+| richContent | Optional | list | This field denotes a resource, such as an image or multimedia attachment, to provide additional visual or interactive elements. Supported contents are:   * GIF * Coupon * Sound * Image * Audio * Video   Image, video, and audio are only supported after iOS-10.   To use emoticons (emojis), just copy-paste it where required (for example, ❤️ )   **Note**: Image, video, and audio can not be used together. |
+| defaultAction | Optional | list | This object contains a set of default actions associated with the notifications. Supported values are:   * Navigation * Richlanding * Deeplinking |
+| additionalActions | Optional | list | This object contains a set of supplementary actions or buttons associated with the notification, enabling users to perform specific tasks. You can add only one category for additional actions. |
+| fallback | Optional | JSON Object | This JSON object contains the fallback values for the values mentioned above. |
+
+### Web
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| message | Required | String | This field denotes the main text content or notification body displayed to users. |
+| title | Required | String | This field denotes the subject or heading of the notification. |
+| redirectURL | Required | String | This field denotes the URL to which the user will be redirected upon interacting with the notification. |
+| iconURL | Required | String | This field denotes the URL of an icon image representing the notification, usually displayed alongside the title and message. |
+| imageURL | Optional | String | This field denotes the URL of an additional image to be shown in the notification, providing further context or visual appeal. |
+| autoDismiss | Optional | Boolean | This field specifies whether to dismiss the notification automatically after 8 seconds. |
+
+## Conversion Goals
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| name | Required | String | This field denotes the readable name of the conversion goal for the Campaign Info. |
+| eventName | Required | String | This field denotes the actual event name. |
+| attrs | Optional | Array | This field denotes the event attribute filters. It contains the following elements:   * *name*: Event attribute name. This is mandatory. * *filter*: Event attribute filter operator. This is mandatory. * *value*: Event attribute filter value. * *type*: Event attribute data type. This is mandatory.   The following are the supported filter types:     \| String Event Attribute Filter Operators \| Number or Double Event Attribute Filter Operators \| \| --- \| --- \| \| * is * is not * contains * does not contain * starts with * does not start with * ends with * does not end with * in the following * not in the following * exists * does not exist  \| * is equal to * is not equal to * is between * is not between * is less than * is greater than * exists * does not exist  \| | String Event Attribute Filter Operators | Number or Double Event Attribute Filter Operators | * is * is not * contains * does not contain * starts with * does not start with * ends with * does not end with * in the following * not in the following * exists * does not exist | * is equal to * is not equal to * is between * is not between * is less than * is greater than * exists * does not exist |
+| String Event Attribute Filter Operators | Number or Double Event Attribute Filter Operators |
+| * is * is not * contains * does not contain * starts with * does not start with * ends with * does not end with * in the following * not in the following * exists * does not exist | * is equal to * is not equal to * is between * is not between * is less than * is greater than * exists * does not exist |
+
+### conversionGoals
+
+The following are sample payloads for the conversionGoals key:
+
+**Single Conversion Goals vs. Multiple Conversion Goals**
+
+You can pass a single conversion goal or multiple conversion goals. If you are passing multiple conversion goals, the first conversion goal in the list is considered the primary conversion goal for the campaign. A Push campaign supports a maximum of five conversion goals on its list.
+
+<CodeGroup>
+``` Single Conversion Goal
+"conversionGoals": [
+  {
+    "name": "Added To Cart",
+    "eventName": "AddedTocart",
+    "attrs": {
+        "name": "product_sku",
+        "filter": "is",
+        "value": "10089712",
+        "type": "string"
+        }
+  }
+]
+```
+
+``` Multiple Conversion Goals
+"conversionGoals": [
+  {
+    "name": "Added To Cart",
+    "eventName": "AddedTocart",
+    "attrs": {
+        "name": "product_sku",
+        "filter": "is",
+        "value": "10089712",
+        "type": "string"
+        }
+  },
+  {
+    "name": "Order Placed",
+    "eventName": "OrderSuccess",
+    "attrs": {
+        "name": "product_price",
+        "filter": "is equal to",
+        "value": 999,
+        "type": "numeric"
+        }
+  }
+]
+```
+
+</CodeGroup>
+
+**Without Event Attribute Filter**
+
+Event attributes are optional. You can track a conversion goal just with an event name (without any event attribute). The following is a sample payload without the event attribute filter:
+
+<CodeGroup>
+```json JSON
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+}
+```
+
+</CodeGroup>
+
+**With String Event Attribute Filter**
+
+The following are sample payloads with string event attribute filters:
+
+<CodeGroup>
+```json With "is" operator
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+  "attrs": {
+      "name": "product_sku",
+      "filter": "is",
+      "value": "10089712",
+      "type": "string"
+      }
+}
+```
+
+```json With "is not" operator
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+  "attrs": {
+      "name": "product_sku",
+      "filter": "is not",
+      "value": "10089712",
+      "type": "string"
+      }
+}
+```
+
+</CodeGroup>
+
+<CodeGroup>
+```json With "contains" operator
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+  "attrs": {
+      "name": "product_sku",
+      "filter": "contains",
+      "value": "10089712",
+      "type": "string"
+      }
+}
+```
+
+```json With "does not contain" operator
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+  "attrs": {
+      "name": "product_sku",
+      "filter": "does not contain",
+      "value": "10089712",
+      "type": "string"
+      }
+}
+```
+
+</CodeGroup>
+
+<CodeGroup>
+```json With "starts with" operator
+{
+  "name": "Added To Cart",    
+  "eventName": "AddedTocart", 
+  "attrs": {                  
+      "name": "product_sku",  
+      "filter": "starts with",         
+      "value": "10089712",    
+      "type": "string"        
+      }
+}
+```
+
+```json With "does not start with" operator
+{
+  "name": "Added To Cart",    
+  "eventName": "AddedTocart", 
+  "attrs": {                  
+      "name": "product_sku",  
+      "filter": "does not start with",
+      "value": "10089712",    
+      "type": "string"        
+      }
+}
+```
+
+</CodeGroup>
+
+<CodeGroup>
+```json With "ends with" operator
+{
+  "name": "Added To Cart",    
+  "eventName": "AddedTocart", 
+  "attrs": {                  
+      "name": "product_sku",  
+      "filter": "ends with",         
+      "value": "10089712",    
+      "type": "string"        
+      }
+}
+```
+
+```json With "does not end with" operator
+{
+  "name": "Added To Cart",    
+  "eventName": "AddedTocart", 
+  "attrs": {                  
+      "name": "product_sku",  
+      "filter": "does not end with",
+      "value": "10089712",    
+      "type": "string"        
+      }
+}
+```
+
+</CodeGroup>
+
+<CodeGroup>
+```json With "in the following" operator
+{
+  "name": "Added To Cart",    
+  "eventName": "AddedTocart", 
+  "attrs": {                  
+      "name": "product_sku",  
+      "filter": "in the following",
+      "value": ["10089711", "10089712", "10089713",]
+      "type": "string"        
+      }
+}
+```
+
+```json With "not in the following" operator
+{
+  "name": "Added To Cart",   
+  "eventName": "AddedTocart",
+  "attrs": {                
+      "name": "product_sku",
+      "filter": "not in the following",
+      "value": ["10089711", "10089712", "10089713",],
+      "type": "string"        
+      }
+}
+```
+
+</CodeGroup>
+
+<CodeGroup>
+```json With "exists" operator
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+  "attrs": {                 
+      "name": "product_sku", 
+      "filter": "exists",    
+      "type": "string"       
+      }
+}
+```
+
+```json With "does not exist" operator
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+  "attrs": {                 
+      "name": "product_sku", 
+      "filter": "does not exist",
+      "type": "string"        
+      }
+}
+```
+
+</CodeGroup>
+
+**Note**: The “value“ key is not present here.
+
+**With Numeric/Double Event Attribute Filter**
+
+<CodeGroup>
+```json With "is equal to" operator
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+  "attrs": {
+      "name": "product_price",
+      "filter": "is equal to",
+      "value": 999,
+      "type": "numeric"
+      }
+}
+```
+
+```json With "is not equal to" operator
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+  "attrs": {                  
+      "name": "product_price",
+      "filter": "is not equal to",     
+      "value": 999,
+      "type": "numeric"      
+      }
+}
+```
+
+</CodeGroup>
+
+<CodeGroup>
+```json With "is between" operator
+{
+  "name": "Added To Cart",    
+  "eventName": "AddedTocart", 
+  "attrs": {                  
+      "name": "product_price",
+      "filter": "is between",   
+      "value": "899,999",
+      "type": "numeric"
+      }
+}
+```
+
+```json With "is not between" operator
+{
+  "name": "Added To Cart",            
+  "eventName": "AddedTocart",         
+  "attrs": {                          
+      "name": "product_price",        
+      "filter": "is not between",
+      "value": "899,999",
+      "type": "numeric"
+      }
+}
+```
+
+</CodeGroup>
+
+**Note**: The “value“ key has a comma-separated string value.
+
+<CodeGroup>
+```json With "is greater than" operator
+{
+  "name": "Added To Cart",    
+  "eventName": "AddedTocart", 
+  "attrs": {                  
+      "name": "product_price",  
+      "filter": "is greater than",         
+      "value": 999,
+      "type": "numeric"
+      }
+}
+```
+
+```json With "is less than" operator
+{
+  "name": "Added To Cart",    
+  "eventName": "AddedTocart", 
+  "attrs": {                  
+      "name": "product_price",  
+      "filter": "is less than",
+      "value": 999,
+      "type": "numeric"
+      }
+}
+```
+
+</CodeGroup>
+
+<CodeGroup>
+```json With "exists" operator
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+  "attrs": {                 
+      "name": "product_price", 
+      "filter": "exists",    
+      "type": "numeric"       
+      }
+}
+```
+
+```json With "does not exist" operator
+{
+  "name": "Added To Cart",
+  "eventName": "AddedTocart",
+  "attrs": {                 
+      "name": "product_price", 
+      "filter": "does not exist",
+      "type": "numeric"        
+      }
+}
+```
+
+</CodeGroup>
+
+**Note**: The “value“ key is not present here.
+
+## Advanced Settings
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| ttl | Optional | JSON Object | This field denotes the duration for which the push notification service keeps a push message before it's discarded if it can't be delivered. If not delivered, Push Services (GCM/WEB) retry to send the message until the TTL (in minutes) does not expire. Send ‘0’ if it is not applicable to you. After the TTL has expired, push notifications will not be shown to the user. The default value for TTL is 36 hours and applies only to Android push or Web push notifications. |
+| ignoreFC | Optional | String | This field denotes if the ignoreFC is enabled. Supported values are:   * true * false   **Note**: This field is case-sensitive. When passing the value in the request, follow the case as described in the allowed values above.   * "true" value: Bypasses frequency capping set on the dashboard and sends the notifications to everyone in the target segment. * "false" value: Applies the frequency capping set on the dashboard and does not send the notification after the limit is reached. * If the key is not present, it will be treated as ignoreFC="false." While testing your API, ensure that you set this flag as "true"; otherwise, you might not receive a few notifications. |
+| countFC | Optional | String | This field denotes if the countFC is enabled. Supported values are:   * true * false   Values are "true" or "false" only when ignoreFC value is set to true.   * "true" value - Only Push campaigns are counted in the frequency cap count. * "false" value - Push campaigns are not counted in the frequency cap count. |
+| notificationPrioritySettings | Optional | JSON Object | This field denotes whether the notification priority settings are configured. Supported values are "true" or "false" only for Android push / Web push notifications. It uses the GCM/FCM flag to send time-critical messages with high priority and drains the user's device battery more than normal messages. This object contains information about notification priority settings. For more information, refer to [notificationPrioritySettings](#h_01JJ3VXZZQ1Z4N9VVNGWGE6B9J). |
+| pushAmp+ | Optional | String | This field denotes whether the pushAmp+ is enabled. Supported values are "true" or "false." For more information about Push Amp+, refer to [Push Amp+ help documentation](https://help.moengage.com/hc/en-us/articles/360039754532-Push-Amplification-Plus-and-Delivery-Impact). |
+| preCacheSegment | Optional | String | This field denotes whether the preCacheSegment is enabled. Supported values are "true" or "false." Applicable for scheduled and periodic campaigns. If enabled, pre-caches the segmentation and improves campaign sending time. For caching, it is recommended that the campaign be created at least 2 hours before the scheduled time. |
+| campaignThrottleTime | Optional | Intg | This field denotes if the campaign throttle time is configured. Push throttling allows you to control the rate of sending a push notification. The value to be passed can be between 1 and 360 (minutes). |
+| campaignThrottleRpm | Optional | Intg | The default throughput for the Push API is 100K RPM. You can send either of the key-value pairs in the Push API payload between campaignThrottleRpm and campaignThrottleTime. Both of the key-value pairs are optional.   * If you send both, the value for campaignThrottleRpm takes precedence over the value for campaignThrottleTime. * If you send either of them, the value you send is considered. * If you do not send any of them, the value defined in settings is considered (the **Limit to** <> **Push notifications per minute** setting at **Settings** > **Channels** > **Delivery controls** > **Throttling** > **Campaign Throttling Limits** > **Push**). If the RPM value is defined in settings, the defined value is considered. * If the RPM value is not defined in settings, the default RPM for Push channel (that is, 100K) is enforced.   For personalized campaigns, the maximum RPM value MoEngage supports is 250K. |
+| useJinjaPersonalization | Optional | String | This field denotes whether Jinja personalization can be used in the payload. Values are "true" or "false." A boolean value is used to indicate if Jinja personalization is applied to the message payloads. It is recommended that this personalization format be used. For example, you can add the following Jinja code to personalize the user name.   "title": "Hello {{UserAttribute['userName']}}" |
+| ignoreMinimumDelay | Optional | String | This field denotes whether *ignore minimum delay* is enabled. Supported values are "true" or "false." This is a boolean value to indicate if the Client level Minimum Delay setting should be applied for the campaign. The default value is true, if this field is not passed in the API. |
+| inboxExpiry | Optional | Integer | This field specifies the expiry value for the push notification in hours. |
+| iOSTargetDevice | Optional | String | Supported values are:   * apns\_device\_default\_push * apns\_device\_provisional\_push * apns\_device\_non\_provisional\_push |
+| deliverWhenActive | Optional | String | This field specifies whether the push notifications will be delivered when the device is in an active state. supported value: "true" and "false". |
+| bypassDND | Optional | Boolean | This field specifies whether to deliver the notification immediately, bypassing device restrictions such as battery optimizations or low-power modes. |
+
+### notificationPrioritySettings
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| Android | Optional | String | This field denotes the notification priority configured for Android devices for this campaign.   Supported values are:   * High * Low |
+| iOS | Optional | Integer | This field denotes the notification priority configured for iOS devices for this campaign. Supported values are:   * 1 * 5 * 10 |
+
+# Response Codes
+
+ 
+
+| Status Code | Request State | Error | Description |
+| --- | --- | --- | --- |
+| 200 | Success | NA | This response is returned when the request is processed successfully. |
+| Invalid Request Type | This response is returned when an invalid request type is passed, that is, other than *push*. |
+| Invalid appId | This response is returned when no dashboard exists for the given app ID. |
+| appId is not present | This response is returned when appID is missing in the request. |
+| Please specify a campaign name of more than or equal to 5 characters | This response is returned when the campaign name is less than 5 characters. |
+| Request limit exceed. | This response is returned when the dashboard is blocked for push API. |
+| Campaign name is missing | This response is returned when the campaign name is missing in the request. |
+| Signature is missing | This response is returned when the signature is missing in the request for Push API. |
+| Signature is not verified | This response is returned when the signature is incorrect. Verify the app key and campaign name while generating signature. |
+| key is Mandatory | This response is returned when the key is missing from the payload. |
+| Campaign With this name already exists. For targetAudience type All User or Custom Segment you can't create campaign with same campaign previous name | This response is returned when the campaign name already exists. Try a new campaign name. |
+| key is not of Type List | This response is returned when the key contains a value that is not supported. |
+| value is not a allowed value. Allowed values for this field are : example | This response is returned when the key contains a value that is not supported. |
+| Failed to get all whitelisted event list | This response is returned when failed to get all whitelisted action from the data-team management team. |
+| Custom Segment Name: s\_name not found in our database.Please verify same on Dashboard | This response is returned when the defined custom segment is not found in the MoEngage database. |
+| error or set isCustom to True. | This response is returned when the defined user attribute is not among the allowed types when the is\_custom is set to false. |
+| Selected Attribution window is not within limits (1 - 36 hours) | This response is returned when the Selected attribution window is not within limits (1 - 36 hours). |
+| Error parsing parameters | This response is returned when some value in the payload fails in parsing. |
+| 401 | Failure | Unauthorised | This response is returned when an incorrect JSON format is passed. |
+| 404 | Failure | Not Found | This response is returned when an invalid endpoint is passed. |
+| 500 | Failure | Internal Server Error | This response is returned when an internal server error occurs. Please contact your CSM or raise a ticket. |
+
+# Sample cURL Request
+
+<CodeGroup>
+```json cURL
+curl --location 'https://pushapi-0X.moengage.com/v2/transaction/sendpush'
+--header 'Content-Type: application/json' \
+	--data '{
+	    "appId": "{{your Workspace ID}}",
+	    "campaignName": "{{your campaign name}}",
+	    "signature": "{{Signature}}",
+	    "requestType": "push",
+	    "targetPlatform": [
+              "ANDROID",
+              "IOS",
+              "WEB"
+            ],
+	    "targetAudience": "User",
+	    "targetUserAttributes": {
+	        "attribute": "USER_ATTRIBUTE_USER_EMAIL",
+	        "comparisonParameter": "is",
+	        "attributeValue": "abc@example.com"
+	    },
+	    "payload": {
+	        "ANDROID": {
+	            "groupKey": "thisisgroupkey",
+	            "collapseReplaceKey": "this is update key",
+	            "message": "this is message",
+	            "title": "this is title",
+	            "summary": "this is summary",
+	            "richContent": [
+	                {
+	                    "type": "image",
+	                    "value": "https://images.iimg.in/c"
+	                },
+	                {
+	                    "type": "gif",
+	                    "value": "sun-18283_256.gif"
+	                }
+	            ],
+	            "defaultAction": {
+	                "type": "richlanding",
+	                "value": "https://www.moengage.com"
+	            },
+	            "additionalActions": [
+	                {
+	                    "type": "call",
+	                    "value": "123123",
+	                    "name": "call button",
+	                    "iconURL": "abc"
+	                }
+	            ]
+	        },
+	        "IOS": {
+	            "groupKey": "thisisgroupkey",
+	            "collapseReplaceKey": "this is update key",
+	            "message": "this is ios message",
+	            "title": "this is ios title",
+	            "richContent": [
+	                {
+	                    "type": "sound",
+	                    "value": "custSound4.wav"
+	                }
+	            ],
+	            "additionalActions": [
+	                {
+	                    "category": "INVITE_CATEGORY"
+	                }
+	            ]
+	        },
+	        "WEB": {
+	            "message": "this is web message",
+	            "title": "this is web title",
+	            "redirectURL": "https://www.google.com",
+	            "iconURL": "sbc.jpeg",
+	            "imageURL": "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg"
+	        }
+	    },
+	    "campaignDelivery": {
+	        "type": "soon"
+	    },
+	    "conversionGoals": [
+	        {
+	            "name": "amount1",
+	            "eventName": "AddedTocart",
+	            "attrs": {
+	                "filter": "is between",
+	                "name": "amount",
+	                "value": "10,100",
+	                "type": "numeric"
+	            }
+	        }
+	    ],
+	    "advancedSettings": {
+	        "ttl": {
+	            "ANDROID": 12,
+	            "WEB": 24
+	        },
+	        "ignoreFC": false,
+	        "sendAtHighPriority": true,
+	        "inboxExpiry": 360
+	    }
+	}'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<CodeGroup>
+```json Response
+{
+      "requestId": "{{requestId}}",
+      "responseId": "{{responseId}}",
+      "cid": "{{cid}}",
+      "status": "Success"
+      }
+```
+
+</CodeGroup>
+
+# Response Body
+
+| Key | Values | Description |
+| --- | --- | --- |
+| requestId | string | This field indicates the request ID. |
+| responseId | string | This field indicates the response ID. |
+| cid | string | This field indicates the campaign ID. |
+| status | string | This field indicates the campaign status. |
+
+# Response Code Structure
+
+<CodeGroup>
+``` Success
+{
+      "requestId": "{{requestId}}",
+      "responseId": "{{responseId}}",
+      "cid": "{{cid}}",
+      "status": "Success"
+      }
+```
+
+``` Failure-200
+{
+    'responseId': response_id,
+    'Error_Message': error_msg,
+    'status': 'Fail',
+    'Payload error': error_msg
+    }
+```
+
+``` 500
+{
+      "code":500,
+      "status":"error",
+      "reason":"There seems to be an error. We are working to fix this.",
+      "reference" : reference
+      }
+```
+
+``` 401
+[]
+```
+
+``` 404
+{
+    "code": 404,
+    "status": "error",
+    "reason": "Page not found. Please recheck the URL"
+}
+```
+
+</CodeGroup>
+
+# Rate Limit
+
+You can create 10000 requests per minute.
+
+# Sample Payloads Examples
+
+Here are the sample payloads across different platforms (Android, iOS, and Web).
+
+## Example 1
+
+<Tabs>
+  <Tab title="Android app">
+    ```
+    "ANDROID": {
+          "message": "Message", // Message of the push notification
+          "title": "Title", // Title of the push notification 
+      		"channel_id": "ChannelId", // Channel id of push notification (Optional)
+          "richContent": [ //List of rich content items. Android push notifications have support  Image, Coupon and Sound. One single notifcation can support all combinations of these three types of rich content.
+            {
+              "type": "image",
+              "value": "https://images.iimg.in/c" 
+            },
+            {
+              "type": "coupon", 
+              "value": "free" // when user click notifications, this code will be copied.
+            },
+            {
+              "type": "sound",
+              "value": "tring"
+            }
+          ],
+          "defaultAction": { // Default action when user click on notifications. 
+            "type": "richlanding", // Type of the default action
+            "value": "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 ",
+            "kvPairs" :{ // additional key value pairs to be passed while sending notification.
+            		"key1" : "value1",
+            		"Key2" : "value2"
+             }
+          },
+          "additionalActions": [ // List of action buttons. Maximum 2 buttons are allowed.
+            {
+              "type": "call",// action type
+              "value": "12345678", // respective value
+              "name": "Call button", // action name, displayed on notification
+              "iconURL": "abc" // url for icon to be displayed
+            },
+            {
+              "type": "copy", // action type
+              "value": "12345678", // respective value
+              "name": "Copy button", // action name, displayed on notification
+              "iconURL": "abc" // icon url
+            }
+          ],
+          "fallback": { // Complete replica of the android dict, in case a personalization is failed, this message content will be sent.
+          }
+        },
+    ```
+  </Tab>
+  <Tab title="iOS app">
+    ```
+    "IOS": {
+          "message": "Message",  // message
+          "title": "Tittle", // title
+          "subtitle": "Subtitle", // subtitle
+          "enableIosBadge": true //BadgeCount
+          "richContent": [ // rich content
+            {
+              "type": "sound",
+              "value": "custSound4.wav"
+            },
+            {
+              "type": "coupon",
+              "value": "free"
+            },
+            {
+              "type": "image",
+              "value": "xyz.jpg"
+            }
+          ],
+          "additionalActions": [ (optional)// action buttons defined in the application; Just need to mention category here.
+            {
+              "category": "INVITE_CATEGORY"
+            }
+          ],
+         "defaultAction": { (optional) // default action when user click on notification.
+              "type": "navigation",
+              "value": "",
+            	"kvPairs" :{ // additional key value pairs to be passed while sending notification.
+            			"key1" : "value1",
+            			"Key2" : "value2"
+               }
+            },
+          "fallback": { // fall back payload in case there is personalization failure
+            "message": "fallback ios", // fallback message
+            "title": "title", // fallback title
+            "richContent": [ // fallback rich content
+              {
+                "type": "coupon",
+                "value": "iOS" //This value of coupon code will be copied when user click the notification
+              }
+            ],
+            "additionalActions": [ // fallback action buttons
+              {
+                "category": "INVITE_CATEGORY"
+              }
+            ]
+          }
+        },
+    ```
+  </Tab>
+  <Tab title="web (Chrome Push)">
+    ```
+    "WEB": {
+      "message": "Message", // Message
+      "title": "Title", // title
+      "redirectURL": "https://www.google.com", // URL on which user should be redirected on click.
+      "iconURL":"https://app.moengage.com/v3/images/favicon.ico", // URL for the icon to be displayed, only https urls are supported
+      "imageURL": "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg", // url for image to be displayes in message, only https urls are supported
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Tab 4">
+
+  </Tab>
+</Tabs>
+
+## Example 2
+
+This is a sample payload to target all users for each platform and also all platforms.
+
+<CodeGroup>
+``` Android app
+{
+  "appId": "XXXXXXXXXXXXXXXXXXXXXXXX",
+  "campaignName": "Test Push", // Name of the campaign.
+  "campaignTags": ["Transactional"],
+  "signature": "{{Signature}}",
+  "requestType": "push", // Type of request (push)
+  "targetPlatform": [
+    "ANDROID"
+  ],
+  "targetAudience": "All Users",
+  "payload": {
+    "ANDROID": { // Android Payload, detailed is described above
+      "message": "Android Message",
+      "title": "Android Message Title",
+      "Summary": "Android Summary",
+      "richContent": [
+        {
+          "type": "image",
+          "value": "https://images.iimg.in/c"
+        },
+        {
+          "type": "coupon",
+          "value": "free"
+        },
+        {
+          "type": "sound",
+          "value": "tring"
+        }
+      ],
+      "defaultAction": {
+        "type": "richlanding",
+        "value": "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
+      },
+      "additionalActions": [
+        {
+          "type": "call",
+          "value": "12345678",
+          "name": "Call button",
+          "iconURL": "abc"
+        },
+        {
+          "type": "copy",
+          "value": "12345678",
+          "name": "Copy button",
+          "iconURL": "abc"
+        }
+      ]
+    }
+  },
+  "campaignDelivery": { 
+    "type": "soon", //values can be - soon/later/periodic; if later/periodic, please provide respective values as well.
+  },
+  "conversionGoals": [
+    {
+      "name": "amount 1",
+      "eventName": "AddedTocart",
+      "attrs": {
+        "filter": "is between",
+        "name": "amount",
+        "value": "10,100",
+        "type": "numeric"
+      }
+    }
+  ],
+  "advancedSettings": {
+    "ttl": {
+      "ANDROID": 12 // the ttl for both Android and iOS platforms are tracked in ANDROID field. 
+    },
+    "ignoreFC": "false",
+    "sendAtHighPriority": "true",
+    "inboxExpiry": 360  //in hours
+
+  }
+}
+```
+
+``` iOS app
+{
+  "appId": "XXXXXXXXXXXXXXXXXXXXXXXX",
+  "campaignName": "Test Push", // Name of the campaign.
+  "campaignTags": ["Promotional"],
+  "signature": "{{Signature}}",
+  "requestType": "push", // Type of request (push/status)
+  "targetPlatform": [
+    "IOS"
+  ],
+  "targetAudience": "All Users",
+  "payload": {
+    "IOS": {
+      "message": "iOS Message",
+      "title": "iOS Message Title",
+      "richContent": [
+        {
+          "type": "sound",
+          "value": "custSound4.wav"
+        }
+      ],
+      "additionalActions": [
+        {
+          "category": "INVITE_CATEGORY"
+        }
+      ]
+    }
+  },
+  "campaignDelivery": {
+    "type": "soon",//values can be - soon/later/periodic; if later/periodic, please provide respective values as well.
+  },
+  "conversionGoals": [
+    {
+      "name": "amount 1",
+      "eventName": "AddedTocart",
+      "attrs": {
+        "filter": "is between",
+        "name": "amount",
+        "value": "10,100",
+        "type": "numeric"
+      }
+    }
+  ],
+  "advancedSettings": {
+    "ignoreFC": "false"
+  },
+  "inboxExpiry": 360  //in hours
+
+}
+```
+
+``` web (Chrome Push)
+{
+  "appId": "XXXXXXXXXXXXXXXXXXXXXXXX",
+  "campaignName": "Test Push",// Name of the campaign.
+  "signature": "{{Signature}}",
+  "requestType": "push", // Type of request (push/status)
+  "targetPlatform": [
+    "WEB"
+  ],
+  "targetAudience": "All Users",
+  "payload": {
+    "WEB": {
+      "message": "Web Message",
+      "title": "Web Message Title",
+      "redirectURL": "https://www.google.com",
+      "iconURL": "sbc.jpeg",
+      "imageURL": "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg",
+      "fallback": {}
+    }
+  },
+  "campaignDelivery": {
+    "type": "soon",//values can be - soon/later/periodic; if later/periodic, please provide respective values as well.
+  },
+  "conversionGoals": [
+    {
+      "name": "amount 1",
+      "eventName": "AddedTocart",
+      "attrs": {
+        "filter": "is between",
+        "name": "amount",
+        "value": "10,100",
+        "type": "numeric"
+      }
+    }
+  ],
+  "advancedSettings": {
+    "ttl": {
+      "WEB": 24
+    },
+    "ignoreFC": "false",
+    "sendAtHighPriority": "true"
+  }
+}
+```
+
+``` Across all platforms
+{
+  "appId": "XXXXXXXXXXXXXXXXXXXXXXXX",
+  "campaignName": "Test Push",// Name of the campaign.
+  "signature": "{{Signature}}",
+  "requestType": "push",// Type of request (push/status)
+  "targetPlatform": [
+    "ANDROID",
+    "IOS",
+    "WEB"
+  ],
+  "targetAudience": "All Users",
+  "payload": {
+    "ANDROID": {
+      "message": "Android Message",
+      "title": "Android Message Title",
+      "Summary": "summary",
+      "richContent": [
+        {
+          "type": "image",
+          "value": "https://images.iimg.in/c"
+        },
+        {
+          "type": "coupon",
+          "value": "free"
+        },
+        {
+          "type": "sound",
+          "value": "tring"
+        }
+      ],
+      "defaultAction": {
+        "type": "richlanding",
+        "value": "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
+      },
+      "additionalActions": [
+        {
+          "type": "call",
+          "value": "12345678",
+          "name": "Call button",
+          "iconURL": "abc"
+        },
+        {
+          "type": "copy",
+          "value": "12345678",
+          "name": "Copy button",
+          "iconURL": "abc"
+        }
+      ]
+    },
+    "IOS": {
+      "message": "iOS Message",
+      "title": "iOS Message Tittle",
+      "richContent": [
+        {
+          "type": "sound",
+          "value": "custSound4.wav"
+        }
+      ],
+      "additionalActions": [
+        {
+          "category": "INVITE_CATEGORY"
+        }
+      ]
+    },
+    "WEB": {
+      "message": "Web Message",
+      "title": "Web Message Title",
+      "redirectURL": "https://www.google.com",
+      "iconURL": "sbc.jpeg",
+      "imageURL": "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg",
+    }
+  },
+  "campaignDelivery": {
+    "type": "soon",
+  },
+  "conversionGoals": [
+    {
+      "name": "amount 1",
+      "eventName": "AddedTocart",
+      "attrs": {
+        "filter": "is between",
+        "name": "amount",
+        "value": "10,100",
+        "type": "numeric"
+      }
+    }
+  ],
+  "advancedSettings": {
+    "ttl": {
+      "ANDROID": 12, // the ttl for both Android and iOS platforms are tracked in ANDROID field. 
+      "WEB": 24
+    },
+    "ignoreFC": "false",
+    "sendAtHighPriority": "true"
+  }
+}
+```
+
+</CodeGroup>
+
+## Example 3
+
+This example shows different payloads to target different segments of users.
+
+<CodeGroup>
+``` Target Single User
+{
+  "appId": "XXXXXXXXXXXXXXXXXXXXXXXX",
+  "campaignName": "Test Push", // Reuse this campaign name for requests that should be clubbed in the same campaign.
+  "signature": "{{Signature}}",
+  "requestType": "push", // Type of request (push)
+  "targetPlatform": [
+    "ANDROID"
+  ],
+  "targetAudience": "User",
+  "targetUserAttributes":{
+    "attribute": "USER_ATTRIBUTE_USER_EMAIL",
+    "comparisonParameter": "is",
+    "attributeValue": "abc@example.com"
+  },
+  "payload": {
+    "ANDROID": { // Android Payload, detailed is described above
+      "message": "Android Message",
+      "title": "Android Message Title",
+      "Summary": "Android Summary",
+      "richContent": [
+        {
+          "type": "image",
+          "value": "https://images.iimg.in/c"
+        },
+        {
+          "type": "coupon",
+          "value": "free"
+        },
+        {
+          "type": "sound",
+          "value": "tring"
+        }
+      ],
+      "defaultAction": {
+        "type": "richlanding",
+        "value": "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
+      },
+      "additionalActions": [
+        {
+          "type": "call",
+          "value": "12345678",
+          "name": "Call button",
+          "iconURL": "abc"
+        },
+        {
+          "type": "copy",
+          "value": "12345678",
+          "name": "Copy button",
+          "iconURL": "abc"
+        }
+      ]
+    }
+  },
+  "campaignDelivery": { 
+    "type": "soon" //values can be - soon/later/periodic; if later/periodic, please provide respective values as well.
+  },
+  "conversionGoals": [
+    {
+      "name": "amount 1",
+      "eventName": "AddedTocart",
+      "attrs": {
+        "filter": "is between",
+        "name": "amount",
+        "value": "10,100",
+        "type": "numeric"
+      }
+    }
+  ],
+  "advancedSettings": {
+    "ttl": {
+      "ANDROID": 12 // the ttl for both Android and iOS platforms are tracked in ANDROID field. 
+    },
+    "ignoreFC": "false",
+    "sendAtHighPriority": "true",
+    "inboxExpiry": 360  //in hours
+
+  }
+}
+```
+
+``` Target Custom Segment
+{
+  "appId": "XXXXXXXXXXXXXXXXXXXXXXXX",
+  "campaignName": "Test Push",
+  "signature": "{{Signature}}",
+  "requestType": "push",
+  "targetPlatform": [
+    "ANDROID",
+    "IOS",
+    "WEB"
+  ],
+  "targetAudience": "Custom Segment",
+  "customSegmentName": "Android_TranV2",
+  "payload": {
+    "ANDROID": {
+      "message": "testing txn v2",
+      "title": "testing txn v2",
+      "Summary":"summary",
+      "richContent": [
+        {
+          "type": "image",
+          "value": "https://images.iimg.in/c"
+        },
+        {
+          "type": "coupon",
+          "value": "free"
+        },
+        {
+          "type": "sound",
+          "value": "tring"
+        }
+      ],
+      "defaultAction": {
+        "type": "richlanding",
+        "value": "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
+      },
+      "additionalActions": [
+        {
+          "type": "call",
+          "value": "12345678",
+          "name": "Call button",
+          "iconURL": "abc"
+        },
+        {
+          "type": "copy",
+          "value": "12345678",
+          "name": "Copy button",
+          "iconURL": "abc"
+        }
+      ]
+    },
+    "IOS": {
+      "message": "7th",
+      "title": "Test Case custom segment5",
+      "richContent": [
+        {
+          "type": "sound",
+          "value": "custSound4.wav"
+        }
+      ],
+      "additionalActions": [
+        {
+          "category": "INVITE_CATEGORY"
+        }
+      ]
+    },
+    "WEB": {
+      "message": "Test Case WEB",
+      "title": "Test Case WEB",
+      "redirectURL": "https://www.google.com",
+      "iconURL": "sbc.jpeg",
+     "imageURL": "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg",
+    }
+  },
+  "campaignDelivery": {
+    "type": "soon"
+  },
+  "conversionGoals": [
+    {
+      "name": "amount 1",
+      "eventName": "AddedTocart",
+      "attrs": {
+        "filter": "is between",
+        "name": "amount",
+        "value": "10,100",
+        "type": "numeric"
+      }
+    }
+  ],
+  "advancedSettings": {
+    "ttl": {
+      "ANDROID": 12, // the ttl for both Android and iOS platforms are tracked in ANDROID field. 
+      "WEB": 24
+    },
+    "ignoreFC": "false",
+    "sendAtHighPriority": "true",
+    "inboxExpiry": 360  //in hours
+
+  }
+}
+```
+
+``` Custom Attribute
+{
+	  "appId": "XXXXXXXXXXXXXXXXXXXXXXXX",
+	  "campaignName": "Test Push", // Name of the campaign.
+	  "signature": "{{Signature}}",
+	  "requestType": "push", // Type of request (push)
+	  "targetPlatform": [
+	    "ANDROID"
+	  ],
+	"targetAudience": "User",
+  "targetUserAttributes": {
+    "attribute": "user",
+    "comparisonParameter": "is",
+    "attributeValue": "user",
+    "isCustom":true
+  },
+	  "payload": {
+	    "ANDROID": { // Android Payload, detailed is described above
+	      "message": "Android Message",
+	      "title": "Android Message Title",
+	      "Summary": "Android Summary",
+	      "richContent": [
+	        {
+	          "type": "image",
+	          "value": "https://images.iimg.in/c"
+	        },
+	        {
+	          "type": "coupon",
+	          "value": "free"
+	        },
+	        {
+	          "type": "sound",
+	          "value": "tring"
+	        }
+	      ],
+	      "defaultAction": {
+	        "type": "richlanding",
+	        "value": "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
+	      },
+	      "additionalActions": [
+	        {
+	          "type": "call",
+	          "value": "12345678",
+	          "name": "Call button",
+	          "iconURL": "abc"
+	        },
+	        {
+	          "type": "copy",
+	          "value": "12345678",
+	          "name": "Copy button",
+	          "iconURL": "abc"
+	        }
+	      ]
+	    }
+	  },
+	  "campaignDelivery": { 
+	    "type": "soon" //values can be - soon/later/periodic; if later/periodic, please provide respective values as well.
+	  },
+	  "conversionGoals": [
+	    {
+	      "name": "amount 1",
+	      "eventName": "AddedTocart",
+	      "attrs": {
+	        "filter": "is between",
+	        "name": "amount",
+	        "value": "10,100",
+	        "type": "numeric"
+	      }
+	    }
+	  ],
+	  "advancedSettings": {
+	    "ttl": {
+	      "ANDROID": 12 // the ttl for both Android and iOS platforms are tracked in ANDROID field. 
+	    },
+	    "ignoreFC": "false",
+	    "sendAtHighPriority": "true",
+	    "inboxExpiry": 360  //in hours
+	 
+	  }
+	}
+```
+
+``` Target All Users
+{
+  "appId": "XXXXXXXXXXXXXXXXXXXXXXXX",
+  "campaignName": "Test Push",
+  "signature": "{{Signature}}",
+  "requestType": "push",
+  "targetPlatform": [
+    "ANDROID",
+    "IOS",
+    "WEB"
+  ],
+  "targetAudience": "All Users",
+  "payload": {
+    "ANDROID": {
+      "message": "gp 7th nov",
+      "title": "7th nov",
+      "richContent": [
+        {
+          "type": "image",
+          "value": "https://images.iimg.in/c"
+        },
+        {
+          "type": "coupon",
+          "value": "free"
+        },
+        {
+          "type": "sound",
+          "value": "tring"
+        }
+      ],
+      "defaultAction": {
+        "type": "richlanding",
+        "value": "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8 "
+      },
+      "additionalActions": [
+        {
+          "type": "call",
+          "value": "12345678",
+          "name": "Call button",
+          "iconURL": "abc"
+        },
+        {
+          "type": "copy",
+          "value": "12345678",
+          "name": "Copy button",
+          "iconURL": "abc"
+        }
+      ]
+    },
+    "IOS": {
+      "message": "7th",
+      "title": "Test Case custom segment5",
+      "richContent": [
+        {
+          "type": "sound",
+          "value": "custSound4.wav"
+        }
+      ],
+      "additionalActions": [
+        {
+          "category": "INVITE_CATEGORY"
+        }
+      ]
+    },
+    "WEB": {
+      "message": "Test Case WEB",
+      "title": "Test Case WEB",
+      "redirectURL": "https://www.google.com",
+      "iconURL": "sbc.jpeg",
+        "imageURL": "https://cdn.dribbble.com/users/146881/screenshots/1180383/despicable_me_1x.jpg",
+    }
+  },
+  "campaignDelivery": {
+    "type": "soon"
+  },
+  "conversionGoals": [
+    {
+      "name": "amount 1",
+      "eventName": "AddedTocart",
+      "attrs": {
+        "filter": "is between",
+        "name": "amount",
+        "value": "10,100",
+        "type": "numeric"
+      }
+    }
+  ],
+  "advancedSettings": {
+    "ttl": {
+      "ANDROID": 12, // the ttl for both Android and iOS platforms are tracked in ANDROID field. 
+      "WEB": 24
+    },
+    "ignoreFC": "false",
+    "sendAtHighPriority": "true",
+    "inboxExpiry": 360  //in hours
+
+  }
+}
+```
+
+</CodeGroup>
+
+## Example 4
+
+This payload describes the sample for the push API response payload.
+
+<CodeGroup>
+``` Sample Response
+// sample success push response payload
+{
+ "status": "Success",// shows valid request and accepted for processing
+ "responseId": "{response ID}",
+ "requestId": "",
+ "cid": "{cid}"
+}
+
+// sample failure push response payload
+{
+ "status": "Fail", // shows invalid request
+ "Error_Message": "Campaign Name not found", // reason of failure
+ "responseId": "{response ID}",
+ "requestId": "", 
+}
+```
+
+</CodeGroup>
+
+# Postman Collection
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/collection/acmujor/moengage-transaction-push-api?action=share&source=copy-link&creator=5883765) to view it in Postman.
+
+# FAQs
+
+arrow\_drop\_down  **Does the Push API support silent notifications?**
+
+No, MoEngage Push API doesn't support silent notifications.
+
+arrow\_drop\_down  **Can I use HTML to format notification text?**
+
+Yes, the basic template supports HTML tags.

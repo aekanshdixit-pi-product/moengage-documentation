@@ -1,0 +1,433 @@
+---
+title: "Test a Email Campaign"
+description: ""
+---
+
+You can use the Test Campaign API to test a campaign in MoEngage.
+
+<Info>
+* Currently, you can use this API to test Email campaigns only.
+* You can test only those Email campaigns that are created using the [Create Campaigns API](https://developers.moengage.com/hc/en-us/articles/27896715162516).
+</Info>
+
+# API Endpoint
+
+<CodeGroup>
+``` API Endpoint
+POST https://api-0X.moengage.com/core-services/v1/campaigns/test
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username: password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization": "Basic Base64\_ENCODED\_APPKEY\_APIKEY"}
+
+You can obtain the username and password details from the MoEngage Dashboard.
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Campaign report/Business events/Custom templates** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Content-Type | Required | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Required | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed in the request. To generate the authentication header, refer to [Authentication](https://developers.moengage.com/hc/en-us/articles/27896715162516#01GQRA6BGSEKV3P4EV4SK51F5J). |
+| MOE-APPKEY | Required | {“MOE-APPKEY”: “Workspace ID”} | This is the workspace ID (earlier APP ID) of your MoEngage workspace. The MOE-APPKEY has to be passed in the request. You can find your MoEngage Workspace ID in the MoEngage Dashboard: **Settings** -> **Account** -> **APIs** -> **Workspace ID (earlier app id)**   **For more information, refer to [Authentication](https://developers.moengage.com/hc/en-us/articles/27896715162516#01GQRA6BGSEKV3P4EV4SK51F5J).** |
+
+# Request Body
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| request\_id | Required | String | This field denotes the request ID for which the campaign is tested. |
+| channel | Required | String | This field denotes the type of channel. |
+| basic\_details | Required | JSON Object | This object contains the basic details of the campaign. For more information, refer to [Basic Details](https://developers.moengage.com/hc/en-us/articles/27896715162516-Create-Campaigns-API#h_01J1EWBTJC1Y9FR5BGZHV8D2KZ). |
+| connector | Required | JSON Object | This object contains the connector details. For more information, refer to [Connector Details](https://developers.moengage.com/hc/en-us/articles/27896715162516-Create-Campaigns#h_01J20Z05389ZKS9NWSEW7DVKGY). |
+| campaign\_content | Required | JSON Object | This object contains the campaign content. For more information, refer to [Campaign Content](https://developers.moengage.com/hc/en-us/articles/27896715162516-Create-Campaigns-API#h_01J1C0SSCPE1XXY91TDFQ99AV4). |
+| utm\_params | Optional | JSON Object | This object contains the UTM parameters details. For more information, refer to [UTM Parameters](https://developers.moengage.com/hc/en-us/articles/27896715162516#h_01J1C0SSCPPZ5DT3ST1C1SR0TY). |
+| personalization\_details | Optional | JSON Object | This object contains the personalization details. For more information, refer to [Personalization Details](#h_01J1EWKYX4K5F3E7H1QV40CYJY) |
+| test\_campaign\_meta | Required | JSON Object | This object contains the test campaign meta details. For more information, refer to [Meta Info](#h_01J1EWMTQTDG2A8BW34VRJMBQX) |
+
+## Personalization Details
+
+<Info>
+* When you pass personalization details in the personalization\_details object of this API, MoEngage uses those details to personalize the user attributes or event attributes present in the content instead of the attributes present in the user profile.
+* You can use this API only for 10 users at a time.
+* The same personalization details are used across all users. For example, you pass the first name as Dave in personalization details, you have used the first name in the content, and there are 10 users. In this case, all 10 users will get the same first name (Dave).
+</Info>
+
+The personalization\_details JSON object contains the following information:
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| user\_attributes | Optional | JSON Object | This object contains personalization details for user attributes. |
+| event\_attributes | Optional | JSON Object | This object contains personalization details for event attributes. |
+
+## Meta Info
+
+The meta\_info JSON object contains the following information:
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| identifier | Required | String | This field denotes the identifier. Supported values are:   * EMAIL * ID * CUSTOM\_SEGMENT * MOBILE\_NUMBER |
+| identifier\_values | Required | Array | This field denotes the identifier values.   **Note**: If you pass an email ID as identifier, your content will not be personalized using the data present in user profile. |
+| locale\_name | Optional | String | This field denotes the locale name. |
+| variation | Optional | String | This field denotes the number of variations. |
+
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| message | JSON Object | This field contains a brief description of the request status in the case of success. For more information, refer to [Response Codes](#01GQRA6BGS399F7XK2GNS51WTQ). |
+| error | JSON Object | This field contains the reason for the request's failure.   Structure:    "error": {       "code": "<error\_code>",        "message": "<error\_message>",       "target": "<target>",       "details": [            {                "target": "<target>",                "message": "<error\_message>"             }       ],       "request\_id": "<request\_id>"       }   }   The error object contains the following fields:   * code - This field is of String type and contains the error code that provides a brief explanation of the error. For example, 400 - Bad Request, 401- Authentication required, and so on. This field is present in the response only in the case of errors. * message - This field is of String type and describes why the request has failed. * details - This object provides the error details and contains the following information: 	+ target - This field is of String type and denotes the target of the error. 	+ message - This field is of String type and describes why the request has failed. * request\_id: This field denotes the request ID. |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. This JSON object has the following structure:   * data - This object contains the data. For more information, refer to [Data](#h_01J1SDMPND1AW53GMTSP3D8EFF). * message - This field contains the success message. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request, or when the provided parameters are invalid, or when a template already exists with the same version, name, or id. |
+| 401 | Authentication Failure | This response is returned when the authorization parameters are missing in the HTTP Auth Header. |
+| 500 | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+
+## Data
+
+| Key | Values | Description |
+| --- | --- | --- |
+| user\_identifier(custom segment) | JSON Object | This object contains the user ID (custom segment). It has the following fields:   * status - String * failure\_reason (if any) - String |
+| email\_id | JSON Object | This object contains the email ID. It has the following fields:   * status - String * failure\_reason (if any) - String |
+| UID | JSON Object | This object contains the unique ID. It has the following fields:   * status - String * failure\_reason (if any) - String |
+
+# Sample cURL Request
+
+The following are codes to test:
+
+* Campaigns with with locate and variation
+* Campaigns with with personalization
+
+<CodeGroup>
+``` Locale and Variation
+curl --location 'https://api-0X.moengage.com/core-services/v1/campaigns/test' \
+--header 'MOE-APPKEY: {{Workspace_ID or APP_ID}}' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic {{Authorization_Key}}' \
+--data-raw '{
+    "request_id": "uuid2",
+    "channel": "EMAIL",
+    "basic_details": {
+        "name": "Test campaign",
+        "team": "TestTeam",
+        "tags": [
+            "all users",
+            "activation"
+        ],
+        "user_attribute_identifier": "MOE_EMAIL_ID",
+        "subscription_category": "k8s_sanithy",
+        "business_event": "",
+        "content_type": "PROMOTIONAL"
+    },
+    "connector": {
+        "connector_type": "SENDGRID",
+        "connector_name": "Sample_Connector"
+    },
+    "campaign_content": {
+        "content": {
+            "Default": {
+                "variation_1": {
+                    "email": {
+                        "attachments": [
+                            {
+                                "file_type": "URL",
+                                "url": "https://www.google.com"
+                            }
+                        ],
+                        "bcc_ids": [],
+                        "cc_ids": [],
+                        "from_address": "john.doe@example.com",
+                        "html_content": "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title></title><style>\n \n body table{\n border-collapse: collapse;\n }\n\n body table td, body table th{\n border: 1px solid rgb(221, 221, 221);\n }\n\n \t\t\t</style></head><body aria-disabled=\"false\" data-gr-ext-installed=\"\" data-new-gr-c-s-check-loaded=\"14.1184.0\" data-new-gr-c-s-loaded=\"14.1184.0\"><p> <a href=\"https://www.earlysalary.com/products/instant-cash/\">linkper</a></p></body></html>",
+                        "preview_text": "personalization_details",
+                        "reply_to_address": "john.doe@example.com",
+                        "sender_name": "personalization_details",
+                        "subject": "personalization_details"
+                    }
+                },
+                "variation_2": {
+                    "email": {
+                        "attachments": [
+                            {
+                                "file_type": "URL",
+                                "url": "https://www.google.com"
+                            }
+                        ],
+                        "bcc_ids": [],
+                        "cc_ids": [],
+                        "from_address": "john.doe@example.com",
+                        "html_content": "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title></title><style>\n \n body table{\n border-collapse: collapse;\n }\n\n body table td, body table th{\n border: 1px solid rgb(221, 221, 221);\n }\n\n \t\t\t</style></head><body aria-disabled=\"false\" data-gr-ext-installed=\"\" data-new-gr-c-s-check-loaded=\"14.1184.0\" data-new-gr-c-s-loaded=\"14.1184.0\"><p> <a href=\"https://www.earlysalary.com/products/instant-cash/\">linkper</a></p></body></html>",
+                        "preview_text": "personalization_details",
+                        "reply_to_address": "john.doe@example.com",
+                        "sender_name": "personalization_details",
+                        "subject": "personalization_details"
+                    }
+                }
+            },
+            "revivallocale": {
+                "variation_1": {
+                    "email": {
+                        "attachments": [
+                            {
+                                "file_type": "URL",
+                                "url": "https://www.google.com"
+                            }
+                        ],
+                        "bcc_ids": [],
+                        "cc_ids": [],
+                        "from_address": "john.doe@example.com",
+                        "html_content": "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title></title><style>\n \n body table{\n border-collapse: collapse;\n }\n\n body table td, body table th{\n border: 1px solid rgb(221, 221, 221);\n }\n\n \t\t\t</style></head><body aria-disabled=\"false\" data-gr-ext-installed=\"\" data-new-gr-c-s-check-loaded=\"14.1184.0\" data-new-gr-c-s-loaded=\"14.1184.0\"><p> <a href=\"https://www.earlysalary.com/products/instant-cash/\">linkper</a></p></body></html>",
+                        "preview_text": "personalization_details",
+                        "reply_to_address": "john.doe@example.com",
+                        "sender_name": "personalization_details",
+                        "subject": "personalization_details"
+                    }
+                },
+                "variation_2": {
+                    "email": {
+                        "attachments": [
+                            {
+                                "file_type": "URL",
+                                "url": "https://www.google.com"
+                            }
+                        ],
+                        "bcc_ids": [],
+                        "cc_ids": [],
+                        "from_address": "john.doe@example.com",
+                        "html_content": "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title></title><style>\n \n body table{\n border-collapse: collapse;\n }\n\n body table td, body table th{\n border: 1px solid rgb(221, 221, 221);\n }\n\n \t\t\t</style></head><body aria-disabled=\"false\" data-gr-ext-installed=\"\" data-new-gr-c-s-check-loaded=\"14.1184.0\" data-new-gr-c-s-loaded=\"14.1184.0\"><p> <a href=\"https://www.earlysalary.com/products/instant-cash/\">linkper</a></p></body></html>",
+                        "preview_text": "personalization_details",
+                        "reply_to_address": "john.doe@example.com",
+                        "sender_name": "personalization_details",
+                        "subject": "personalization_details"
+                    }
+                }
+            },
+            "utm_params": {
+                "utm_source": "Moengage",
+                "utm_medium": "{{Campaign Channel}}",
+                "utm_campaign": "{{Campaign Id}}!{{Campaign Delivery Type}}",
+                "utm_content": "{{Campaign Tags id}}",
+                "utm_campaign_ID": "{{Campaign Id}}",
+                "utm_locale": "{{Locale Name}}",
+                "utm_var": "{{Variation Name}} test",
+                "utm_custom": "custom"
+            },
+            "personalization_details": {
+                "user_attributes": {
+                    "pers_attr_1": {},
+                    "pers_attr_2": {},
+                    "pers_attr_3": {}
+                },
+                "event_attributes": {
+                    "pers_attr_1": {},
+                    "pers_attr_2": {},
+                    "pers_attr_3": {}
+                }
+            },
+            "test_campaign_meta": {
+                "identifier": "EMAIL",
+                "identifier_values": [
+                    "john.doe@example.com",
+                    "harry.doe@example.com",
+                    "nick.doe@example.com"
+                ],
+                "locale_name": "revivallocale",
+                "variation": "variation_2"
+            }
+        }
+    }}'
+```
+
+``` Personalization
+curl --location 'https://api-0X.moengage.com/core-services/v1/campaigns/test' \
+--header 'MOE-APPKEY: {{Workspace_ID or APP_ID}}' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic {{Authorization_Key}}' \
+--data-raw '{
+    "request_id": "12345",
+    "channel": "EMAIL",
+    "basic_details": {
+        "name": "Test campaign-1",
+        "team": "TestTeam",
+        "tags": [
+            "John"
+        ],
+        "user_attribute_identifier": "MOE_EMAIL_ID",
+        "subscription_category": "",
+        "content_type": "TRANSACTIONAL/PROMOTIONAL"
+    },
+    "connector": {
+        "connector_type": "SENDGRID",
+        "connector_name": "Sendgrid_Staging"
+    },
+    "campaign_content": {
+        "content": {
+            "revivallocale": {
+                "variation_89": {
+                    "email": {
+                        "attachments": [],
+                        "bcc_ids": [],
+                        "cc_ids": [],
+                        "from_address": "john.doe@example.com",
+                        "html_content": "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title></title><style>\n \n body table{\n border-collapse: collapse;\n }\n\n body table td, body table th{\n border: 1px solid rgb(221, 221, 221);\n }\n\n \t\t\t</style></head><body aria-disabled=\"false\"><p>Hi User,</p><p>Your email is: {{UserAttribute['\''MOE_EMAIL_ID'\'']}}</p><p>Your event 1 is: {{EventAttribute['\''Campaign Name'\'']}}</p><p>Your event 2 is: {{EventAttribute['\''Campaign Channel'\'']|default('\''MOE_NOT_SEND'\'')}}</p><p>Bye</p><p><br /></p></body></html>",
+                        "preview_text": "",
+                        "reply_to_address": "john.doe@example.com",
+                        "sender_name": "revivallocale var 1 test api",
+                        "subject": "revivallocale var 1 test api from postman- after personalise fix-1"
+                    }
+                }
+            },
+            "cityidlocale": {
+                "variation_100": {
+                    "email": {
+                        "attachments": [],
+                        "bcc_ids": [
+                            "harry.doe@example.com",
+                            "nick.doe@example.com"
+                        ],
+                        "cc_ids": [
+                            "tom.doe@example.com",
+                            "donald.doe@example.com"
+                        ],
+                        "custom_template_id": "f6eb611a-db9d-48ec-9380-0855226f30ac",
+                        "custom_template_version": 1,
+                        "from_address": "john.doe@example.com",
+                        "html_content": "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title></title><style>\n \n body table{\n border-collapse: collapse;\n }\n\n body table td, body table th{\n border: 1px solid rgb(221, 221, 221);\n }\n\n \t\t\t</style></head><body aria-disabled=\"false\"><p>Hi User,</p><p>Your email is: {{UserAttribute['\''MOE_EMAIL_ID'\'']}}</p><p>Your event 3 is: {{EventAttribute['\''Campaign Name'\'']}}</p><p>Your event 4 is: {{EventAttribute['\''Campaign Channel'\'']|default('\''MOE_NOT_SEND'\'')}}</p><p>Bye</p><p><br /></p></body></html>",
+                        "preview_text": "abc",
+                        "reply_to_address": "john.doe@example.com",
+                        "sender_name": "EMAIL ID cityidlocale test  var 1api",
+                        "subject": "EMAIL ID cityidlocale var 1test api from postman- after personalise fix-1"
+                    }
+                }
+            }
+        }
+    },
+    "personalization_details": {
+        "user_attributes": {
+            "MOE_EMAIL_ID": "john.doe@example.com",
+            "custom link": ""
+        },
+        "event_attributes": {
+            "Campaign Name": "test example Campaign Name",
+            "Campaign Channel": "test channel Campaign Channel"
+        }
+    },
+    "utm_params": {
+        "utm_source": "Moengage",
+        "utm_medium": "channel:{{Campaign Channel}} flow:{{Flow Conversion Goal}}",
+        "utm_campaign": "cid:{{Campaign Id}}!c_delive:{{Campaign Delivery Type}}",
+        "utm_content": "tag:{{Campaign Tags id}} locale:{{Locale Name}}",
+        "utm_campaign_ID": "",
+        "utm_custom": "custom"
+    },
+    "test_campaign_meta": {
+        "identifier": "ID/EMAIL/CUSTOM_SEGMENT",
+        "identifier_values": [
+            "mahesh_groceriesmailosaurFCUSER1.com"
+        ],
+        "locale_name": "cityidlocale",
+        "variation": "variation_90"
+    }
+}'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<CodeGroup>
+``` 200
+{
+    "data": {
+        "Test_list_user": {
+            "status": "success"
+        }
+    },
+    "message": "Test campaign created successfully"
+}
+```
+
+``` 400
+{
+    "error": {
+        "code": "400 Bad Request",
+        "message": "request_id key is mandatory field",
+        "details": [
+            {
+                "target": "request_id",
+                "message": "request_id key is mandatory field"
+            }
+        ],
+        "request_id": "11"
+    }
+}
+```
+
+``` 401
+{
+    "error": {
+        "code": "401 Authentication error",
+        "message": "Authentication required",
+        "details": [
+            {
+                "code": "InvalidValue",
+                "target": "APP_SECRET_KEY",
+                "message": [
+                    {
+                        "code": "InvalidValue",
+                        "target": "APP_SECRET_KEY",
+                        "message": "Invalid APP_SECRET_KEY is provided."
+                    }
+                ]
+            }
+        ],
+        "request_id": ""
+    }
+}
+```
+
+``` 500
+{
+    "error": {
+        "code": "500 Internal Server Error",
+        "message": "Something went wrong. Please contact Moengage team",
+        "target": "string",
+        "details": [
+            {
+                "message": "Expecting value: line 1 column 1 (char 0)",
+                "target": ""
+            }
+        ]
+    }
+}
+```
+
+</CodeGroup>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/folder/3182294-8a349f83-31e5-4721-b236-628420b7dbe0?action=share&creator=3182294&ctx=documentation) to view it in Postman.
+
+# FAQs
+
+arrow\_drop\_down **Can I send the test email to IDs that are not the part of MoEngage?**
+
+Yes, you can send the test campaign to any user by passing identifier as "Email". The campaign sent will not be personalised.
+
+arrow\_drop\_down **How does personalisation works if I pass only a subset of user attribute values used under the content for personalisation?**
+
+The values passed under personalisation details will be used for all users to whom the test campaign to be sent and the remaining user attributes values will be picked up from the user profile.

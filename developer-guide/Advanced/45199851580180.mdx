@@ -1,0 +1,65 @@
+---
+title: "Custom Proxy Domain - iOS"
+description: ""
+---
+
+In today's privacy-focused digital landscape, many users employ ad blockers or private DNS services. These tools often block network requests to known third-party domains, including analytics and engagement platforms. When these requests are blocked, you lose critical data visibility, and your users may not receive in-app messages or push notifications.
+
+To ensure reliable campaign delivery and campaign performance, MoEngage offers the **Custom Proxy Domain** feature. This allows you to route MoEngage SDK traffic through a subdomain of your own primary domain (e.g., `data.yourcompany.com`). Because the traffic appears as first-party communication, it bypasses common ad-blocking lists.
+
+## Onboarding Process
+
+Setting up a Custom Proxy Domain requires a one-time DNS delegation process between your team and MoEngage.
+
+<Info>
+Before updating your SDK code, you must complete the DNS delegation setup. For a detailed guide on picking a domain and configuring NS records, refer to [DNS Delegation](https://help.moengage.com/hc/en-us/articles/45199793953300-DNS-Delegation-for-Custom-Subdomains).
+</Info>
+### Step 1: Choose a Subdomain
+
+Select a subdomain that is short and does not contain keywords typically flagged by filters (e.g., avoid "tracking", "ads", or "moengage").
+
+### Step 2: Request DNS Delegation
+
+Reach out to your MoEngage Customer Success Manager (CSM) or [raise a support ticket](https://help.moengage.com) to initiate the request. Provide your chosen subdomain.
+
+### Step 3: Configure NS Records
+
+MoEngage will provide you with a list of Name Server (NS) records. You must add these records to your DNS provider's configuration for the chosen subdomain.
+
+## Implementation
+
+Once the DNS delegation is verified, update your SDK initialization logic. The SDK will dynamically rewrite all MoEngage endpoints (API calls and CDN assets) to use your custom proxy domain.
+
+### Update MoEngage Configuration
+
+<CodeGroup>
+```swift Swift
+import MoEngageSDK
+
+let sdkConfig = MoEngageSDKConfig(appId: "YOUR_Workspace_ID", dataCenter: DATA_CENTER)
+sdkConfig.customBaseDomain = "CUSTOM_DOMAIN"
+#if DEBUG
+MoEngage.sharedInstance.initializeDefaultTestInstance(sdkConfig)
+#else
+MoEngage.sharedInstance.initializeDefaultLiveInstance(sdkConfig)
+#endif
+```
+
+```objectivec Objective-C
+@import MoEngageSDK;
+
+MoEngageSDKConfig* sdkConfig = [[MoEngageSDKConfig alloc] initWithAppId:@"YOUR_Workspace_ID" dataCenter: DATA_CENTER];
+sdkConfig.customBaseDomain = @"CUSTOM_DOMAIN";
+#ifdef DEBUG
+[[MoEngage sharedInstance] initializeDefaultTestInstance:sdkConfig];
+#else
+[[MoEngage sharedInstance] initializeDefaultLiveInstance:sdkConfig];
+#endif
+```
+
+</CodeGroup>
+## Best Practices and Validation
+
+1. **Domain Selection:** Keep your subdomain string short (5-8 characters).
+2. **Network Logs:** Verify that requests start with your custom subdomain (e.g., `sdk-01.data.example.com`).
+3. **Asset Loading:** Ensure images in campaigns load correctly.

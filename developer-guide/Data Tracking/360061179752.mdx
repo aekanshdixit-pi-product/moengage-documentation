@@ -1,0 +1,155 @@
+---
+title: "Web SDK Events Tracking"
+description: ""
+---
+
+<Info>
+* MoEngage highly recommends using the optional step for MoEngage Web SDK integration.
+* SDK adheres to the MoEngage FUP policies. For more information, refer to the [Fair Usage Policy](https://help.moengage.com/hc/en-us/articles/24151864954644-Fair-Usage-Policy-FUP#h_01HQSMZVQWT2KYP0PY1P8GQMRM).
+</Info>
+
+# Track Event
+
+Tracking events records the user actions and the action properties. A single user action is recorded with every track\_event call. MoEngage recommends that you make your event names human-readable so that everyone in your team can know what they mean instantly.
+
+You can track an event using track\_event with the event name and the event characteristics such as attributes or properties.
+
+<CodeGroup>
+```javascript JavaScript
+Moengage.track_event("EVENT_NAME_1"); // This event has no attributes
+// Track events with additional attributes
+Moengage.track_event("EVENT_NAME_2", {
+"attribute_1": "value_1", // string value
+"attribute_2": 2, // numeric value
+"attribute_3": 3.4, // numeric value
+"attribute_4": new Date(2017, 0, 31), // datetime value. Example value represents 31 January, 2017.
+});
+```
+
+</CodeGroup>
+
+Add all the additional information which you think would be useful for segmentation while creating campaigns. For example, the following code tracks a purchase event of a product. We are including attributes like amount, quantity, category, which describe the event we are tracking.
+
+<CodeGroup>
+```javascript JavaScript
+Moengage.track_event("Purchase", {
+"quantity":2,
+"product_name":"Ipad mini",
+"price": 599.99,
+"currency": "USD"
+});
+```
+
+</CodeGroup>
+
+<Warning>
+**Critical**
+
+* Ensure that you are tracking event and user attributes without changing their data types. For instance, in the above purchase event, amount and quantity are tracked in numeric form. MoEngage detects the data type automatically unless you explicitly specify it as a string.
+* Having unique timestamps for events is crucial to maintain accurate and reliable data. Please ensure that events do not share the same timestamp down to the millisecond level.
+</Warning>
+
+## Event tracking using Google Tag Manager (GTM)
+
+Use the described code in the `Custom HTML Tag` inside GTM. This Tag should be fired once per event and triggered on the elements where you wish to track website events. The event attributes can be picked up from GTM Data Layer.
+
+<CodeGroup>
+``` JavaScript
+<script>
+Moengage.track_event("Purchase", {"quantity":2, "product_name":"Ipad mini", "price": 599.99, "currency": "USD" });
+</script>
+```
+
+</CodeGroup>
+
+# Non-Interactive Event
+
+Events that do not affect the session duration calculation in MoEngage Analytics are marked as Non-Interactive events.
+
+The following are considered non-interactive events:
+
+* Do not start a new session, even when the website is in the foreground
+* Do not extend the session
+* Do not have information on source and session
+
+For example, events that are tracked when the website is in the background, are not initiated by users and hence are marked as non-interactive.
+
+To mark an event as non-interactive send `moe_non_interactive: 1` while tracking the event as described:
+
+<CodeGroup>
+```javascript JavaScript
+Moengage.track_event("Content Refreshed", {"NewsCategory": "Politics", "moe_non_interactive": 1})
+```
+
+</CodeGroup>
+
+# Callbacks on events tracked by SDK
+
+There are few events which are tracked by SDK automatically for you and if you want to get those, then you can listen to the events as follows:
+
+<CodeGroup>
+``` JavaScript
+window.addEventListener('MOE_AUTOMATED_EVENTS', function (event) {switch(event.detail.name) {case 'MOE_WEB_UNSUBSCRIBED':console.log(event.detail.data) // it contains all the attributes of the eventbreak;case 'EVENT_ACTION_WEB_SESSION_START':console.log(event.detail.data) // it contains all the attributes of the eventbreak;…… }});
+```
+
+</CodeGroup>
+
+### List of events
+
+1. MOE\_WEB\_UNSUBSCRIBED
+2. EVENT\_ACTION\_WEB\_SESSION\_START
+3. MOE\_PAGE\_VIEWED
+4. MOE\_WEB\_OPTIN\_BANNER\_LOAD
+5. MOE\_WEB\_OPTIN\_CLOSED
+6. MOE\_WEB\_OPTIN\_ACCEPTED
+7. MOE\_USER\_SUBSCRIBED
+8. MOE\_OPT\_IN\_SHOWN
+9. MOE\_OPT\_IN\_ALLOWED
+10. MOE\_OPT\_IN\_DISMISSED
+11. MOE\_OPT\_IN\_BLOCKED
+12. MOE\_LOGOUT
+13. MOE\_ONSITE\_MESSAGE\_CLICKED
+14. MOE\_ONSITE\_MESSAGE\_SHOWN
+15. MOE\_ONSITE\_MESSAGE\_DISMISSED
+16. MOE\_ONSITE\_MESSAGE\_AUTO\_DISMISS
+
+# Troubleshooting
+
+## Event is not tracked on redirection when I am using window.open(..)
+
+In case you are redirecting to another page using `window.open` method and also tracking some event(s) on redirection then you need to wrap the `window.open` in a `setTimeout`. eg-
+
+<CodeGroup>
+```javascript JavaScript
+setTimeout(() => window.open(<redirection_link>), 0);
+```
+
+</CodeGroup>
+
+## Events are not getting tracked when the page URL is very big
+
+URL is tracked by default in all the events as an attribute. But the maximum length of the URL supported is 512 character. If the URL length exceeds that, then the whole events will be dropped.
+
+So make sure the URL length does not exceed 512 characters
+
+## Page Viewed event is not getting tracked on back/forward navigation
+
+Your website might be eligible for bfcache. Back/forward cache (or bfcache) is a browser optimization that enables instant back and forward navigation. bfcache is an in-memory cache that stores a complete snapshot of a page (including the JavaScript heap) as the user is navigating away. Read more about bfcache [here](https://web.dev/articles/bfcache)
+
+Thus the Moengage SDK does not re-initialises again and hence the page viewed events are not tracked.
+
+To include bfcache restores in your pageview count, set listeners for the `pageshow` event and check the `persisted` property.
+
+<CodeGroup>
+```javascript JavaScript
+window.addEventListener('pageshow', (event) = {
+  // Send another pageview if the page is restored from bfcache.
+  if (event.persisted) {
+    Moengage.track_page_view();
+  }
+});
+```
+
+</CodeGroup>
+
+For further assistance, please contact your MoEngage Customer Success Manager (CSM) or the Support team.

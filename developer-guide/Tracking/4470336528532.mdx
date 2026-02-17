@@ -1,0 +1,151 @@
+---
+title: "Real-time Uninstall Tracking"
+description: ""
+---
+
+# What is real-time uninstall tracking?
+
+Real-time uninstall tracking enables you to track the uninstall immediately after the user uninstalls an app integrated with *Firebase Analytics*.
+
+The Firebase tracks the event **app-remove** when an app is uninstalled. The **app-remove** event is used by MoEngage using Firebase Cloud Functions.
+
+# What are Firebase Cloud Functions?
+
+Cloud Functions for Firebase is a serverless framework that programmatically provides responses to events triggered by Firebase features and HTTPS requests. For more information, refer to [Cloud Functions for Firebase](https://firebase.google.com/docs/functions).
+
+# How is real-time uninstall tracking different from the existing uninstall tracking?
+
+The current uninstall tracking in MoEngage happens by sending Silent Push notifications once a day to all user devices. Up to 24 hours is required to track uninstall.
+
+Using the real-time uninstall tracking, the uninstall is tracked immediately by the Firebase SDK so that you can respond quickly to user uninstalls
+
+# Implementation of real-time uninstall tracking
+
+<Check>
+Ensure you have the Firebase Blaze plan account.
+
+To deploy Cloud Functions to the runtime environment, your project must be on the [Firebase pricing plan](https://firebase.google.com/pricing).
+</Check>
+
+## Set up a common identifier
+
+Ensure your app has integrated Firebase Analytics SDK. For more information, refer to [Get started with Google Analytics](https://firebase.google.com/docs/analytics/get-started).
+
+Add the following code in your app to set up a common identifier between MoEngage and Firebase.
+
+<CodeGroup>
+```kotlin Kotlin
+val firebaseAnalytics = FirebaseAnalytics.getInstance(this)
+MoEHelper.getInstance(this).setUniqueId("<unique-id>")
+firebaseAnalytics.setUserProperty("MOE_USER_ATTRIBUTE_UNIQUE_ID", "<unique-id>")
+}
+```
+
+</CodeGroup>
+
+**Note:** The following values are not allowed in the UniqueID field: "unknown", "guest", "null", "0", "1", "true", "false", "user\_attribute\_unique\_id", "(empty)", "na", "n/a", "", "dummy\_seller\_code", "user\_id", "id", "customer\_id", "uid", "userid", "none", "-2", "-1", "2"
+
+## Set up the conversion event using Firebase
+
+<Check>
+Ensure that the App is integrated with Firebase Analytics for real-time uninstall tracking.
+</Check>
+
+Firebase analytics automatically collects the event `app_remove`. The `app_remove` event is, an Android-only event, tracked when an application package is removed or uninstalled from the device, regardless of the installation source. To set up a real-time uninstall make sure that the `app_remove` event is marked as the conversion event on the Firebase dashboard.
+
+To set up a conversion event, follow these steps:
+
+1. Navigate to [Firebase Console](https://console.firebase.google.com/) and select the Firebase project integrated with the app.
+2. From the Firebase dashboard, select **Analytics > Events**.
+3. Enable the ***Mark as Conversion*** toggle for **app\_remove** event in the event list.
+
+## Create Cloud Function
+
+After the conversion event is set up, use the [Cloud Function for Firebase](https://firebase.google.com/docs/functions/get-started) to create a function and send the **app\_remove** event to MoEngage.
+
+To create and publish a cloud function using Node JS, follow these steps:
+
+1. Install [Node.js](https://nodejs.org/en/) and [npm](https://www.npmjs.com/).  
+Node.js environment is required to write functions. Use the Firebase CLI to deploy functions to the Cloud Functions runtime.
+2. Install Firebase CLI using the following code:
+
+<CodeGroup>
+``` CLI Command
+npm install -g firebase-tools
+```
+
+</CodeGroup>
+
+3. Run ***firebase login*** to log in using the browser and authenticate the firebase tool.
+4. Navigate to your Firebase project directory.
+5. Run ***firebase init functions***.
+6. Select ***Javascript*** as a language option.
+7. Add the following code to the **index.js** file:
+
+<CodeGroup>
+```javascript index.js
+"use strict";
+
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const https = require("https");
+require("firebase-functions/lib/logger/compat");
+
+admin.initializeApp();
+
+exports.sendAndroidUninstallToMoEngage = functions.analytics.event("app_remove")
+    .onLog((event) => {
+      console.log("sendAndroidUninstallToMoEngage() : Event is: " +
+      JSON.stringify(event));
+      return exports.sendAppUninstallEventData(event);
+    });
+
+exports.sendAppUninstallEventData = function(event) {
+//fetch the unique ID <MOE_USER_ATTRIBUTE_UNIQUE_ID>
+var uniqueId = event.user.userProperties.MOE_USER_ATTRIBUTE_UNIQUE_ID.value;
+//send event using S2S API of MoEngage
+//https://developers.moengage.com/hc/en-us/articles/4404674776724-Data-API#user-api-0-10
+};
+```
+
+</CodeGroup>
+
+8. Add the following code to **package.json** file:
+
+<CodeGroup>
+```json pacakage.json
+{
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "lint": "eslint .",
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "12"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^10.0.0",
+    "firebase-functions": "^3.16.0",
+    "firebase-tools": "^9.23.0",
+    "g": "^2.0.1",
+    "requestretry": "^4.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.6.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "firebase-functions-test": "^0.2.0",
+    "requestretry": "^4.1.1",
+    "web-push": "^3.4.5"
+  },
+  "private": true
+}
+```
+
+</CodeGroup>

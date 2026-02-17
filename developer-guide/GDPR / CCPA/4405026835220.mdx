@@ -1,0 +1,274 @@
+---
+title: "GDPR / CCPA API"
+description: ""
+---
+
+# Overview
+
+GDPR / CCPA API ensures all the rights of users are created or updated for GDPR / CCPA compliance. You can erase the personal data of specific users as defined under GDPR using the Erase API.
+
+For more details on GDPR Compliance with MoEngage, refer to [GDPR-Implementation](https://help.moengage.com/hc/en-us/articles/360000878126-GDPR-Implementation).
+
+For more details on CCPA Compliance with MoEngage, refer to [CCPA-Implementation](https://help.moengage.com/hc/en-us/articles/360052917232-California-Consumer-Privacy-Act-CCPA-).
+
+# API Endpoint
+
+Method: **POST**
+
+<CodeGroup>
+``` API Endpoint
+https://api-0X.moengage.com/v1/opengdpr_requests/{{appId}}
+```
+
+</CodeGroup>
+
+<Info>
+The APP\_ID for your MoEngage account is available on the MoEngage Dashboard in **Settings** > **Account** > **APIs** > **Workspace ID (earlier app id)**.
+</Info>
+## Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username: password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_APPKEY\_APIKEY=="}
+
+You can obtain the username and password details from the MoEngage Dashboard.
+
+1. Navigate to **Settings** > **Account** > **APIs**.
+2. Click **Generate Key** in the **Data** tile in the **API Keys** section, and click **Save**.
+3. Use the **Workspace ID** as the username and the **Data API Key** as the password to generate the authentication header.
+
+## Request Parameter
+
+| Key | Required | Data Type | Description |
+| --- | --- | --- | --- |
+| app\_id | Yes | String | This is your MoEngage account's Workspace ID that must be included in the request. You can find your Workspace ID in the following navigation on the dashboard:   Revamped UI: **Settings > Account > APIs > Workspace ID** |
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Content-Type | Yes | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Yes | {"Authorization": "Basic Base64\_ENCODED\_APPKEY\_APIKEY"} | This authentication parameter, used for access control, must be included in the request. For more information on generating the authentication header, refer to [Authentication](https://developers.moengage.com/hc/en-us/articles/38464533337748#h_01JXVJZAVTBM3Y95425B4CJYZC). |
+| MOE-APPKEY | Optional | {“MOE-APPKEY”: “Workspace ID”} | This is the workspace ID (earlier APP ID) of your MoEngage workspace. You must pass the MOE-APPKEY in the request. You can find your MoEngage Workspace ID in the MoEngage UI:   **Settings** -> **Account** -> **APIs** -> **Workspace ID (earlier app id)**   For more information, refer to [Authentication](https://developers.moengage.com/hc/en-us/articles/38464533337748#h_01JXVJZAVTBM3Y95425B4CJYZC). |
+# Request Body
+
+### Request Body Fields
+
+| Key | Data Type | Required | Description |
+| --- | --- | --- | --- |
+| request\_type | String | Yes | This is used to request for GDPR details or request to erase the GDPR details |
+| submitted\_time | String | Yes | This identifies the time when the request was sent |
+| identities | JSON Array | Yes | This provides the details of the user, such as email address, phone number, and so on. For more information, refer to [Identities](https://developers.moengage.com/hc/en-us/articles/43742143072276#h_01KAZZ8HDQC74BPH684E7B7MWN). |
+| api\_version | String | Yes | This identifies the API version used to send the GDPR request. |
+| ID | String | Optional | This is the unique identifier of a registered user. |
+| user\_secondary\_id | String | Optional | This is the secondary identifier of a registered user. |
+| email | String | Optional | This is the user email of an unregistered user. |
+| mobile | String | Optional | This is the user's mobile number of an unregistered user. |
+| google\_advertising\_id | String | Optional | This is the Android device GAID of an unregistered user. |
+| advertising\_identifier | String | Optional | This is the iOS device IDFA of an unregistered user |
+### Identities
+
+The following identities are tracked for the GDPR / CCPA API in MoEngage.
+
+| Key | Data Type | Required | Description |
+| --- | --- | --- | --- |
+| identity\_type | String | Yes | This field denotes the key based on which the user has to be deleted. Supported values are:   * ID * user\_secondary\_id * email * mobile * google\_advertising\_id * advertising\_identifier |
+| identity\_value | String | Yes | This field denotes the value of the identity\_type. |
+## 
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request, attributes are not found, or incorrect values are passed. |
+| 401 | Unauthorized | This response is returned when the request does not have valid authentication credentials. |
+| 403 | Account Blocked | This response is returned when your MoEngage account is suspended or blocked. |
+| 413 | Payload Size Exceeded | This response is returned when the payload size exceeds 128 KB. |
+| 415 | Unsupported Media Type | This response is returned when the content type is not supported. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests has exceeded the rate limit. |
+| 500 | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+# Sample Response
+
+<CodeGroup>
+``` 200
+{
+  "status": "success",
+  "message": "Your request has been accepted and will be processed soon.",
+  "request_id": "a7551968-d5d6-44b2-9831-815ac9017798"
+}
+```
+
+``` 400
+{
+    "status": "fail",
+    "error": {
+        "attribute": "request_type",
+        "message": "request_type is not found in the payload",
+        "type": "MissingAttributeError",
+        "request_id": "zuMJjxAS"
+    }
+}
+{
+    "status": "fail",
+    "error": {
+        "attribute": "identities",
+        "message": "identities is not found in the payload",
+        "type": "MissingAttributeError",
+        "request_id": "OzqWFuri"
+    }
+}
+```
+
+``` 401
+{
+    "status": "fail",
+    "error": {
+        "message": "No identity information found.",
+        "type": "Authentication required",
+        "request_id": "IzbhlLyG"
+    }
+}
+```
+
+``` 403
+Sample response for when your account is blocked
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is suspended. Please contact MoEngage team.",
+        "type": "BlockedClient",
+        "request_id": "ofHUEaEQ"
+    }
+}
+
+Sample response for when your account is suspended
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is suspended. Please contact MoEngage team.",
+        "type": "Account Suspended",
+        "request_id": "gqJvCNYu"
+    }
+}
+
+Sample response for when your account is temporarily suspended
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is temporarily suspended. Please contact MoEngage team.",
+        "type": "Account Temporarily Suspended",
+        "request_id": "ssSJjoyD"
+    }
+}
+```
+
+``` 413
+Sample response for payloads exceeding the size limit
+{
+    "status": "fail",
+    "error": {
+        "message": "Payload can not exceed 128KB",
+        "type": "Payload too large",
+        "request_id": "VFzDwhwt"
+    }
+}
+```
+
+``` 415
+Sample response for unsupported media type
+{
+    "status": "fail",
+    "error": {
+        "message": "Content type is not supported",
+        "type": "Unsupported media type",
+        "request_id": "SgBQfKJh"
+    }
+}
+```
+
+``` 429
+Sample response for rate limit breach
+{
+    "status": "fail",
+    "error": {
+        "message": "Rate limits for customers exceeded. Please Try After Some Time",
+        "type": "Rate Limits Exceeded",
+        "request_id": "onqucLYL"
+    }
+}
+```
+
+``` 500
+Sample response for unknown errors
+{
+    "status": "fail",
+    "error": {
+        "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team",
+        "type": "Server Error",
+        "request_id": "KovrwJiF"
+    }
+}
+```
+
+</CodeGroup>
+The response is a JSON object.
+
+## Example
+
+The following example describes the request to erase personal data.
+
+<CodeGroup>
+``` Text
+{
+ "request_type":"erasure",
+ "submitted_time":"2018-10-05T15:00:00Z",
+ "identities":[
+   {
+      "identity_type":"email",
+      "identity_value":"johndoe@example.com"
+   }
+ ],
+ "api_version":"1.0"
+}
+```
+
+</CodeGroup>
+# Sample cURL Request
+
+<CodeGroup>
+``` JSON
+curl --location --request POST 'https://api-0X.moengage.com/v1/customer/{{appId}}?app_id={{appId}}' \
+--header 'Content-Type: application/json' \
+--header {"Authorization": "Basic Base64_ENCODED_APPKEY_APIKEY"} \
+--data-raw '{
+    "type": "customer",
+    "customer_id": "123",
+    "attributes": {
+        "name": "JohnDoe",
+        "first_name": "John",
+        "platforms": [
+            {
+                "platform": "iOS",
+                "active": true
+            }
+        ]
+    }
+}'
+```
+
+</CodeGroup>
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/request/j4fwuwk/gdpr-ccpa-api?action=share&source=copy-link&creator=9636111) to view it in Postman.
+
+# FAQs
+
+1. **Can multiple users be deleted using this API?**
+
+Multiple users cannot be deleted using this API in a single payload.
+2. **What is the maximum size of the request payload?**
+
+The maximum payload size is 128 KB. If this limit is exceeded, a 413 error response will be sent.
+3. **What happens when an email ID that is associated with multiple users is passed for deletion using this API?**
+
+If multiple users have the same email ID and that email ID is passed in the payload for an erasure request, all the users associated with the email ID will be deleted.

@@ -1,0 +1,352 @@
+---
+title: "Get User"
+description: ""
+---
+
+This API facilitates the retrieval of information of users by specifying the user ids.
+
+<Info>
+To enable this API, you can contact your MoEngage Customer Success Manager (CSM) or the Support team.
+</Info>
+
+# API Endpoint
+
+Method: **POST**
+
+<CodeGroup>
+``` API Endpoint
+https://api-0X.moengage.com/v1/customers/export
+```
+
+</CodeGroup>
+
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the [DC and API endpoint mapping](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="}
+
+The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Parameters
+
+| Key | Required | Data Type | Description |
+| --- | --- | --- | --- |
+| app\_id | Yes | String | This is your MoEngage account's APP ID that has to be passed along with the request. You can find your MoEngage APP ID at **Settings** -> **Account** -> **APIs -> App ID**. |
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| X-Forwarded-For | Optional | Header Value Format: <IP Address> | The 'X-Forwarded-For' header is used to specify the IP address of the client that made the request. This header may be added by proxy servers or load balancers. The header value must contain the IP address of the original client that initiated the request. Multiple IP addresses may be specified in the header value, separated by commas. |
+| Content-Type | Yes | application/json | Set the Content-Type header to application/json. |
+| Authorization | Yes | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#h_01GM2DM5ABJ8NZFR0MBBNMQQK1). |
+
+# Request Body
+
+| Key | Required | Data Type | Description |
+| --- | --- | --- | --- |
+| identifiers | Yes | Array of JSON Objects | This field is used to specify the identifiers for the users for whom the data needs to be fetched.   Structure:   "identifiers": [      {           "identifier\_type": "customer\_id",           "identifier": "<customer\_id>"       },      {           "identifier\_type": "id",            "identifier":"<MoEngageID>"        },       ...{}   ]   * **identifier\_type** - This field specifies the identifier type. Identifier types can either be customer\_id (ID field in the User Profile) or id (the MoEngageID of the user in the User Profile). It is a String. * **identifier** - This field specifies the unique identifier that identifies the user. It is a String. |
+| user\_fields\_to\_export | Optional | Array of Strings | This field is used to specify the fields that need to be fetched for the user specified in **Identifiers**. Tracked standard user attributes and custom attributes can be fetched using this API. For the list of tracked standard attributes in MoEngage, refer to [User Attributes](https://developers.moengage.com/hc/en-us/articles/4413167462804-User-#01GKFZD63JPTF4H5D756VDZH7C). |
+
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| status | String | This field contains the status of the request and specifies whether the request was successful.    Supported Values: success, failure   Example: "status": "success" |
+| type | String | This field denotes the fetch type.   Supported Values: export\_users   Example: "type": "export\_users" |
+| data | JSON Object | This field contains the list of users who were not found in MoEngage and returns the data specified for the list of users who were found in MoEngage.   Structure:   {       "users\_not\_found": [           {               "identifier\_type": "customer\_id",               "identifier": "<customer\_id>"           }       ],       "users": [           {                "user\_attributes": {                      <list of user attributes>                }            }       ]   }      **users\_not\_found** - an array of JSON Objects that contains the list of users who were not found in MoEngage.   **users** - contains the user\_attributes specified in the request for each user in specified in the request. |
+| error | JSON Object | This field is present in the response only in the case of an error and contains the error details.   Structure:   {       "attribute": "<attribute causing the error >",       "message": "<error message>",       "type": "<error type>",       "request\_id": "<request\_id>"    }       **attribute** - This field contains the name of the request attribute causing the error. For example, *"attribute": "identifiers"* implies that the identifiers request attribute is causing the error.   **message** - This field contains the error message.   **type -**This field contains the error type. For example, *"type": "Malformed JSON"*implies that the JSON in the request is incorrectly formed.   **request\_id** - This field denotes the request-id for which the error response is being returned. |
+
+### User Attributes
+
+| Key name | Display name | Fetch through Get User API |
+| --- | --- | --- |
+| publisher\_name | Publisher Name | yes |
+| campaign\_name | Campaign Name | yes |
+| t\_rev | LTV | yes |
+| t\_trans | No of Conversions | yes |
+| moe\_ip\_city | Last Known City | yes |
+| moe\_ip\_pin | Last Known Pincode | yes |
+| moe\_ip\_subdivision | Last Known State | yes |
+| moe\_ip\_country | Last Known Country | yes |
+| moe\_dtzo | User Timezone Offset (Mins) | yes |
+| u\_s\_c | No. of Sessions | yes |
+| u\_l\_a | Last Seen | yes |
+| cr\_t | First Seen | yes |
+| u\_mb | Mobile Number (Standard) | yes |
+| uid | ID | yes |
+| u\_bd | Birthday | yes |
+| u\_em | Email (Standard) | yes |
+| locale\_language\_display | Local Language | yes |
+| locale\_country\_display | Local Country | yes |
+| uninstall\_time | Uninstall time | yes |
+| installed | Install Status | yes |
+| moe\_cr\_from | User Creation Source | yes |
+| u\_n | Name | yes |
+| u\_ln | Last Name | yes |
+| u\_gd | Gender | yes |
+| u\_fn | First Name | yes |
+| geo | Geolocation | yes |
+| moe\_wa\_subscription | WhatsApp Subscription Status | yes |
+| moe\_em\_unsub\_categories | Email Unsubscribed Categories | yes |
+| moe\_gaid | Google Advertising ID (Android) | yes |
+| advertising\_identifier | Advertising Identifier (iOS &Windows) | yes |
+| web subscription url | Web Push Subscription Page URL | - |
+| moe\_sub\_w | Web Push Subscription Status | yes |
+| moe\_w\_ds | Browser Details | yes |
+| moe\_mweb | Mobile User | yes |
+| moe\_i\_ov | OS Version iOS | - |
+| moe\_it | Creation Source | no |
+| moe\_spam | Spam | yes |
+| moe\_unsubscribe | Unsubscribe | yes |
+| moe\_hard\_bounce | Hard Bounce | yes |
+| moe\_rsp\_android | Reachability Push Android | yes |
+| moe\_rsp\_ios | Reachability Push iOS | yes |
+| moe\_rsp\_web | Reachability Push Web | yes |
+| moe\_rsu | Reachability Push | yes |
+| moe\_sms\_subscription | SMS Subscription Status | yes |
+| moe\_ds\_bts\_push\_hour | Best time to send Push | yes |
+| moe\_ds\_bts\_email\_hour | Best time to Email | yes |
+| moe\_ds\_bts\_sms\_hour | Best time to send SMS | yes |
+| moe\_ds\_mpc\_best\_channel | Most Preferred Channel | yes |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters APP KEY, user\_id, and so on are missing from the request or when the provided params are invalid. |
+| 401 | Authorization Failure | This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header. |
+| 403 | Account Suspended/Blocked Temporarily | This response is returned when the user account has been suspended temporarily or blocked. |
+| 413 | Payload Limit Exceeded | This response is returned when the payload size has exceeded the limit set. |
+| 415 | Unsupported media type | This response is returned when the header “Content-Type” is not provided/is not supported. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+
+# Rate Limit
+
+The rate limit is 20 users per payload and 1000 users per minute.
+
+# Sample cURL Request
+
+<CodeGroup>
+``` cURL
+ curl --location --request POST 'https://api-0X.moengage.com/v1/customers/export?app_id={{appId}}' \
+--header 'X-Forwarded-For: 34.249.175.81' \
+--header 'Content-Type: application/json' \
+--header {"Authorization": "Basic Base64_ENCODED_APPKEY_APIKEY"} \
+--data-raw '{
+    "data": {
+        "identifiers": [
+            {
+                "identifier_type": "customer_id",
+                "identifier": "actual_user_id"
+            },
+            {
+                "identifier_type": "id",
+                "identifier": "actual_moengage_id"
+            }
+        ]
+    }
+}'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<CodeGroup>
+``` 200
+Success Response{
+    "status": "success",
+    "type": "export_users",
+    "data": {
+        "users_not_found": [
+            {
+                "identifier_type": "customer_id",
+                "identifier": "john_doe"
+            }
+        ],
+        "users": [
+            {
+                "user_attributes": {
+                    "last_name": "Doe",
+                    "customer_id": "john_doe",
+                    "name": "John",
+                    "custom_user_attr": 12345,
+                    "id": "62e79fb15ada55x123g987bu"
+                }
+            }
+        ]
+    }
+}
+```
+
+``` 400
+Sample response for when idenitifers are missing in the request
+{
+    "status": "fail",
+    "error": {
+        "attribute": "identifiers",
+        "message": "identifiers is not found in the payload",
+        "type": "MissingAttributeError",
+        "request_id": "UkBwaUmU"
+    }
+}
+
+Sample response for when data is missing in the request
+{
+    "status": "fail",
+    "error": {
+        "attribute": "data",
+        "message": "data is not found in the payload",
+        "type": "MissingAttributeError",
+        "request_id": "zAsmTigV"
+    }
+}
+
+Sample response for when the JSON is incorrect in the request
+{
+    "status": "fail",
+    "error": {
+        "message": "Could not decode the request body. The JSON was incorrect or not encoded as UTF-8.",
+        "type": "Malformed JSON",
+        "request_id": "NphDCzWk"
+    }
+}
+
+Sample response for when the number of users exceeds the allowed limit in the request
+{
+    "status": "fail",
+    "error": {
+        "attribute": "payload.users",
+        "message": "max limit allowed is 20",
+        "type": "LimitBreached",
+        "request_id": "IYQXyWTP"
+    }
+}
+```
+
+``` 401
+Sample response for authorization errors
+{
+    "status": "fail",
+    "error": {
+        "message": "App Secret key mismatch. Please login to the dashboard to verify key",
+        "type": "Authentication required",
+        "request_id": "PVUDFisO"
+    }
+}
+
+Sample response for missing authentication header
+{
+    "status": "fail",
+    "error": {
+        "message": "Authentication Header Required",
+        "type": "Authentication required",
+        "request_id": "PiSPjGQQ"
+    }
+}
+```
+
+``` 403
+Sample response for when your account is blocked
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is suspended. Please contact MoEngage team.",
+        "type": "BlockedClient",
+        "request_id": "ofHUEaEQ"
+    }
+}
+
+Sample response for when your account is suspended
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is suspended. Please contact MoEngage team.",
+        "type": "Account Suspended",
+        "request_id": "gqJvCNYu"
+    }
+}
+
+Sample response for when your account is temporarily suspended
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is temporarily suspended. Please contact MoEngage team.",
+        "type": "Account Temporarily Suspended",
+        "request_id": "ssSJjoyD"
+    }
+}
+```
+
+``` 413
+Sample response for payloads exceeding the size limit
+{
+    "status": "fail",
+    "error": {
+        "message": "Payload can not exceed 128KB",
+        "type": "Payload too large",
+        "request_id": "VFzDwhwt"
+    }
+}
+```
+
+``` 415
+Sample response for unsupported media type
+{
+    "status": "fail",
+    "error": {
+        "message": "Content type is not supported",
+        "type": "Unsupported media type",
+        "request_id": "SgBQfKJh"
+    }
+}
+```
+
+``` 429
+Sample response for rate limit breach
+{
+    "status": "fail",
+    "error": {
+        "message": "Rate limits for customers exceeded. Please Try After Some Time",
+        "type": "Rate Limits Exceeded",
+        "request_id": "onqucLYL"
+    }
+}
+```
+
+``` 500
+Sample response for unknown errors
+{
+    "status": "fail",
+    "error": {
+        "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team",
+        "type": "Server Error",
+        "request_id": "KovrwJiF"
+    }
+}
+```
+
+</CodeGroup>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-e644d706-7a21-47e8-ab36-40560c2cbfe6) to view it in Postman.
+
+# FAQs
+
+1. **How do I know which users are available to export and which users are not available in MoEngage to export?**  
+All available users will be found in the *users* key, and users not available will be found in the *users\_not\_found* key. Please refer to the [sample response](#h_01H9Q2KGFHNEJ5E836TC48C0XH) in this doc.
+2. **What if I want to get all the user data available based on the user ids without specifying the fields?**
+If the user\_fields\_to\_export is not passed, then all the custom attributes and exportable standard attributes will be passed. For specific fields, user\_fields\_to\_export needs to be passed along with the required fields.

@@ -1,0 +1,124 @@
+---
+title: "Tracking User Attributes 4.x.x"
+description: ""
+---
+
+User attributes are specific traits of a user, like an email, username, mobile, gender, etc.  
+This is crucial and helps in targeting users based on these attributes across devices or installs.
+
+# Implementing Login / Logout Mechanism for a User
+
+## Setting Unique ID in order to Login User :
+
+* It's important to set the unique identifier when a user logs into your app. This is to unify the new user with an existing user, if any exists, and will help prevent creating unnecessary/stale users.
+* Setting the Unique ID is a critical piece to tie a user across devices and installs/uninstalls as well across all platforms (i.e. iOS, Android, Windows, The Web). Set the attribute as soon as the user is logged in. A unique Identifier can be something like an email ID, a username (unique), or a database ID or any Backend generated identifier which can be used to uniquely identify the user.
+* Do not set this for the user who not logged in.
+
+<CodeGroup>
+```dart Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter();
+_moengagePlugin.initialise();
+_moengagePlugin.setUniqueId("Unique ID");
+```
+
+</CodeGroup>
+
+**Note:** The following values are not allowed in the UniqueID field: "unknown", "guest", "null", "0", "1", "true", "false", "user\_attribute\_unique\_id", "(empty)", "na", "n/a", "", "dummy\_seller\_code", "user\_id", "id", "customer\_id", "uid", "userid", "none", "-2", "-1", "2"
+
+## Notifying the user when the user logs out of the app
+
+<CodeGroup>
+```dart Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter();
+_moengagePlugin.initialise();
+_moengagePlugin.logout();
+```
+
+</CodeGroup>
+
+## Updating Unique Identifier
+
+In a scenario where you have to update the Unique Identifier value for an already logged-in user use `setAlias()`
+
+<CodeGroup>
+```dart Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter();
+_moengagePlugin.initialise();
+_moengagePlugin.setAlias("Updated Unique ID");
+```
+
+</CodeGroup>
+
+<Warning>
+**Critical**
+
+Please make sure that you use `setAlias()` for updating the Unique Identifier and not `setUniqueId()` as calling `setUniqueId()` with a new value will reset the current user and lead to the creation of unintended users in our system.
+</Warning>
+
+# Tracking User Attributes
+
+To track user attributes line First Name, Last Name, email, phone number, etc use the below APIs
+
+<CodeGroup>
+```dart Dart
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter();
+_moengagePlugin.initialise();
+_moengagePlugin.setUserName("User Name");
+_moengagePlugin.setFirstName("FirstName");
+_moengagePlugin.setLastName("LastName");
+_moengagePlugin.setEmail("EmailID");
+_moengagePlugin.setPhoneNumber("PhoneNumber");
+_moengagePlugin.setGender(MoEGender.male); // Supported values also include MoEGender.female OR MoEGender.other
+_moengagePlugin.setLocation(new MoEGeoLocation(23.1, 21.2)); // Pass coordinates with MoEGeoLocation instance
+_moengagePlugin.setBirthDate("2000-12-02T08:26:21.170Z"); // date format - ` yyyy-MM-dd'T'HH:mm:ss.fff'Z'`
+```
+
+</CodeGroup>
+
+## Tracking Custom User Attributes:
+
+For setting other custom user attributes you can use generic method **setUserAttribute(key,value)**
+
+<CodeGroup>
+```dart Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter();
+_moengagePlugin.initialise();
+_moengagePlugin.setUserAttribute(key, value);
+```
+
+</CodeGroup>
+
+## Tracking Date as user attributes:
+
+To track any date as user attributes use the `setUserAttributeIsoDate()`. This API takes attribute name and ISO Date as input.  
+Date Format -`yyyy-MM-dd'T'HH:mm:ss.fff'Z'`  
+Example:
+
+<CodeGroup>
+```dart Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter();
+_moengagePlugin.initialise();
+_moengagePlugin.setUserAttributeIsoDate("timeStamp", "2019-12-02T08:26:21.170Z")
+```
+
+</CodeGroup>
+
+## Tracking Location as user attributes: (Not available for Web)
+
+To track any location as user attributes use the `setUserAttributeLocation()`. This API takes the attribute name and an instance of MoEGeoLocation for coordinates as input.  
+Example:
+
+<CodeGroup>
+```dart Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter();
+_moengagePlugin.initialise();
+_moengagePlugin.setUserAttributeLocation("locationAttr", new MoEGeoLocation(72.8, 53.2));
+```
+
+</CodeGroup>

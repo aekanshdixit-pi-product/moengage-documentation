@@ -1,0 +1,142 @@
+---
+title: "Actionable Notifications 7.x.x"
+description: ""
+---
+
+Actionable notifications let you add custom action buttons to the standard iOS push notifications. Actionable notifications give the user a quick and easy way to perform relevant tasks in response to a notification. These actionable notifications are available from **iOS 8**onwards.
+
+<Warning>
+Actionable Notifications are available from MoEngage SDK version 2.2. And to support using UserNotifications framework from iOS 10 onwards use MoEngage SDK 3.0 and above.
+</Warning>
+
+# How to implement Actionable Notifications?
+
+To use actionable notification with MoEngage SDK, you have to define the actions and group them into categories as shown in below example. In the example, you can see that we are getting two different Sets of categories, one for iOS10 and above(i.e, set of UNNotificationCategory instances) and the other for iOS version below iOS10 (i.e, set of MONotificationCategory instances). And while registering for push provide both the sets in parameters as shown below :
+
+<CodeGroup>
+```swift Swift
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate{
+
+    var window: UIWindow?
+    
+
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+
+        //--- Rest of Implementation
+      
+        //For registering for remote notification
+        let categoriesForiOS10 = self.getCategories()
+      MoEngage.sharedInstance().registerForRemoteNotification(withCategories: categoriesForiOS10, withUserNotificationCenterDelegate: self)
+        
+        //--- Rest of Implementation
+        
+        return true
+    }
+    
+    //Example to define categories
+    //This method gives categories for iOS version 10.0 and above
+    @available(iOS 10.0, *)
+    func getCategories() -> Set<UNNotificationCategory>{
+        
+        let acceptAction = UNNotificationAction.init(identifier: "ACCEPT_IDENTIFIER", title: "Accept", options: .authenticationRequired)
+        let declineAction = UNNotificationAction.init(identifier: "DECLINE_IDENTIFIER", title: "Decline", options: .destructive)
+        let maybeAction = UNNotificationAction.init(identifier: "MAYBE_IDENTIFIER", title: "May Be", options: .foreground)
+        
+        let inviteCategory = UNNotificationCategory.init(identifier: "INVITE_CATEGORY", actions: [acceptAction,declineAction,maybeAction], intentIdentifiers: [], options: .customDismissAction)
+        let categoriesSet = Set.init([inviteCategory])
+        
+        return categoriesSet;
+    }
+}
+```
+
+```objectivec Objective-C
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOption
+{
+ ---------
+    
+    NSSet* categorySetForiOS10 = [self getNotificationCategories];
+  	[[MoEngage sharedInstance] registerForRemoteNotificationWithCategories:categorySetForiOS10 withUserNotificationCenterDelegate:self];
+    }
+  
+ ---------
+    return YES;
+}
+
+//Example to define categories
+//This method gives categories for iOS version 10.0 and above
+-(NSSet*)getNotificationCategories{
+
+    UNNotificationAction *acceptAction = [UNNotificationAction actionWithIdentifier:@"ACCEPT_IDENTIFIER" title:@"Accept" options:UNNotificationActionOptionAuthenticationRequired];
+    UNNotificationAction *declineAction = [UNNotificationAction actionWithIdentifier:@"DECLINE_IDENTIFIER" title:@"Decline" options:(UNNotificationActionOptionDestructive)];
+    UNNotificationAction *maybeAction = [UNNotificationAction actionWithIdentifier:@"MAYBE_IDENTIFIER" title:@"May Be" options:UNNotificationActionOptionNone];
+    
+    UNNotificationCategory* inviteCategory = [UNNotificationCategory categoryWithIdentifier:@"INVITE_CATEGORY"actions:@[acceptAction,maybeAction, declineAction,opt4Action] intentIdentifiers:@[] options:UNNotificationCategoryOptionNone];
+    
+  	NSSet *categories = [NSSet setWithObjects:inviteCategory,nil];
+    
+    return categories;
+}
+```
+
+</CodeGroup>
+
+As you can see in the example Accept, Decline and May Be actions are grouped to a category i.e,"INVITE\_CATEGORY". For declaring categories for iOS8 and iOS9 use **MONotificationCategory** from our SDK.
+
+<Info>
+**Notification Categories**
+
+MoEngage recommended not to change the actions grouped in a category across the app versions, as it will lead to user seeing different actions for same category across different app versions.
+</Info>
+
+# Tracking User Actions
+
+## FOR iOS10 and Above :
+
+As mentioned earlier, use the delegate methods of **UNUserNotificationCenter** to handle actions of notifications and also call ***userNotificationCenter:didReceiveNotificationResponse:*** of the SDK, to track the actions performed on notifications.
+
+<CodeGroup>
+```swift Swift
+func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+	MoEngage.sharedInstance().userNotificationCenter(center, didReceive: response)
+  //---
+	completionHandler()
+}
+```
+
+```objectivec Objective-C
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+didReceiveNotificationResponse:(UNNotificationResponse *)response
+         withCompletionHandler:(void (^)())completionHandler{  
+	[[MoEngage sharedInstance] userNotificationCenter:center didReceiveNotificationResponse:response];
+	//---   
+	completionHandler();  
+}
+```
+
+</CodeGroup>
+
+## FOR iOS8 and iOS9
+
+To track the action performed by the user on actionable notifications call *handleActionWithIdentifier:forRemoteNotification:* in *application:handleActionWithIdentifier:forRemoteNotification:completionHandler:* as shown below :
+
+<CodeGroup>
+```swift Swift
+func application(_ application: UIApplication, handleActionWithIdentifier identifier: String?, forRemoteNotification userInfo: [AnyHashable : Any], completionHandler: @escaping () -> Void) {
+//---
+	if let identifier = identifier {
+		MoEngage.sharedInstance().handleAction(withIdentifier: identifier, forRemoteNotification: userInfo)
+	}
+}
+```
+
+```objectivec Objective-C
+- (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forRemoteNotification:(NSDictionary *)notification completionHandler:(void (^)()) completionHandler {
+    ----
+    [[MoEngage sharedInstance] handleActionWithIdentifier:identifier forRemoteNotification:notification]
+    completionHandler();
+}
+```
+
+</CodeGroup>

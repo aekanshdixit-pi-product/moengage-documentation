@@ -1,0 +1,66 @@
+---
+title: "Setting Unique Id for SDK versions below 2.52.2"
+description: ""
+---
+
+## Implementing Login/Logout
+
+* It's important to set the ID when a user logs into your app.
+* This merges the new user with the existing user, if any exists, and will help prevent the creation of unnecessary/stale users.
+* Setting the ID is a critical piece to tie a user across devices as well across all platforms (i.e. iOS, Android, Web). Call the login method as soon as the user is logged in. ID can be something like an email ID, a username (unique), or a database ID or any Backend generated ID.
+* Do not set this for the user who not logged in.
+
+## Log In
+
+<CodeGroup>
+```javascript JavaScript
+Moengage.add_unique_user_id(UNIQUE_ID); // UNIQUE_ID is used to uniquely identify a user.
+```
+
+</CodeGroup>
+
+<Warning>
+If you do not use the MoEngage logout method and call `Moengage.add_unique_user_id(NEW_UNIQUE_ID)`, then the SDK will trigger MoEngage force-logout. A new user profile will get created with `NEW_UNIQUE_ID` as its ID and the first user profile will receive the logout event. This way of using `Moengage.add_unique_user_id` is NOT recommended as new user creation resets the current user and creates unintended users in our system. You should always explicitly call the MoEngage logout method before calling this method again.
+</Warning>
+
+<Warning>
+**Critical - Very Important Integration Guideline**
+
+Never use both the login methods - `identifyUser` (login method of SDK versions 2.52.2 onwards) and `add_unique_user_id` in your project. Use only either one of the methods. Using both the methods can lead to inconsistent user profile creation and merging in your MoEngage account.
+</Warning>
+
+## Log Out
+
+Logs out the current user.
+
+<CodeGroup>
+```javascript JavaScript
+Moengage.destroy_session();
+```
+
+</CodeGroup>
+
+## Update User
+
+<CodeGroup>
+```javascript JavaScript
+Moengage.update_unique_user_id(NEW_UNIQUE_ID);
+```
+
+</CodeGroup>
+
+<Warning>
+**Critical**
+
+All the methods mentioned above- `add_unique_user_id`, `destroy_session` and `update_unique_user_id` should be called in proper order. So make sure, you track other attributes after these methods are executed completely. Since it returns a promise, you can use. For example:
+
+<Tabs>
+  <Tab title="JavaScript">
+    `Moengage.add_unique_user_id(UNIQUE_ID).then(() => {   
+
+      Moengage.add_mobile('7777777777')  
+
+    });`
+  </Tab>
+</Tabs>
+</Warning>

@@ -1,0 +1,438 @@
+---
+title: "Merge User"
+description: ""
+---
+
+# Overview
+
+The Merge User API merges two users in MoEngage based on their ID. ID is a client-defined identifier for a user. This API can be used when multiple profiles have been created for a single user. For example, a user registered once with a mobile number and once with an email id can be merged. Duplicate users created due to integration or tech issues can also be merged.
+
+There are two types of user merging in MoEngage:
+
+* Default or normal merge
+* Manual merge
+
+| Default merge | Manual Merge |
+| --- | --- |
+| MoEngage merges users with the same ID | MoEngage merges users having different IDs |
+| Happens automatically, and no action is required from your side. For more information, refer to User Merge. | Does not happen automatically; the Merge User API needs to be called with the list of users to be merged along with their IDs. |
+
+<Warning>
+* User Merging is a complex functionality and, if misused, can lead to data integrity issues. If the data passed to the API is incorrect, resulting in a merge of two unintended users, MoEngage will not be able to recover/rectify the data. The retained user would have erroneous data, and segmentation queries would not provide the right results.
+* MoEngage does not support transitive/canonical merging. For example, if user A is merged to B (A ->B) and then user B is merged to C (B ->C), in this scenario, events of user A are not moved to user C.
+* The Merge User API is not functional in workspaces where the [Identity Resolution](https://help.moengage.com/hc/en-us/articles/24050999467284-Unified-Identity-Identity-Resolution) feature is enabled.
+* If you are updating the Unique Identifier ([know more](https://developers.moengage.com/hc/en-us/articles/4404440336148-Tracking-User-Attributes)) for a user, use the User Merge API at least 2 hours after you have updated the Unique Identifier.
+</Warning>
+
+Please ensure that the data passed to the API is accurate. We recommend you test the merging starting with a small batch of users, such as 1, 5, 10, 20, 50, etc. Verify the merged data and users before proceeding with a bulk update.
+
+# Terms to Know
+
+**Retained User -**This is the user that is retained in the system. The merged user’s attributes and associated devices are mapped to the retained user post-merge. Reachability calculation is done for the retained user based on the devices. All of the user attributes of the merged user are moved to the retained user. If an attribute is present for the retained user and the same attribute is not for the merged user, the attribute is retained for the retained user.
+
+**Merged user** -All the data of this user will merge into the retained user. Merged users will be deleted after 30 days of inactivity. If MoEngage receives any event or user property for the merged user after the merging activity, the merged user will not be deleted.
+
+The following happens in MoEngage post-user merging: 
+
+* In the user profile, all events of the last 30 days are moved from the merged user to the retained user.
+* Segmentation and campaign have moved all of the data from merged user to retained user.
+
+## API Endpoint
+
+Method: **POST**
+
+<CodeGroup>
+``` API Endpoint
+https://api-0X.moengage.com/v1/customer/merge
+```
+
+</CodeGroup>
+
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage maintains different data centres for different clients. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage).
+
+## Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="}
+
+The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Parameters
+
+| Key | Required | Data Type | Description |
+| --- | --- | --- | --- |
+| app\_id | Yes | String | This is the Workspace ID of your MoEngage account and needs to be passed along with the request. You can find your MoEngage Workspace ID in **Settings** -> **Account** -> **APIs** -> **Workspace** **ID**. |
+
+ 
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Authorization | Yes | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#01GQRA6BGSEKV3P4EV4SK51F5J). |
+| Content-Type | Yes | {"Content-Type": "application/json"} | Set the Content-Type header to application/json for using the Merge User API. |
+
+# Request Body
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| merge\_data | Yes | Array of Objects | This field contains the list of UID pairs of the users who are to be merged.    Example:   {   “merge\_data”:        [    // All the different pairs of users to merge   {     “merged\_user”: “<sample\_uid>“, // This user will merge into below user     “retained\_user”: “<sample\_uid>”   // Above user will merge into this user   },   {     “merged\_user”: “<sample\_uid>“, // This user will merge into below user     “retained\_user”: “<sample\_uid>”   // Above user will merge into this user   }   ]   }       Every object in the Array contains a pair of UID strings - the ‘merged\_user’ and the ‘retained\_user’.    Note:    * UID is the unique identifier for a user maintained by you. MoEngage stores this identifier in the [ID attribute in the user profile](https://help.moengage.com/hc/en-us/articles/360044285511-User-Profile#h_01FTESCBSZJY53DJ2NS18YVE0E). * If the merging of any user fails in the array, it will skip that object and continue with others. |
+
+ 
+
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| status | String | This field contains a brief description (“success” and “fail”) of the request status. |
+| operation | String | This field contains “created” when there is no error in the payload, and the user merge is successful. |
+| error | JSON Object | This field contains the details of the error:   * message - the error message indicating the reason for the failure of the request * type - the error type indicating the failure type * request\_id - the unique identifier associated with every request |
+
+ 
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request or when the provided parameters are invalid. |
+| 401 | Authorization Failure | This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header. |
+| 403 | Account Suspended Temporarily | This response is returned when the user account that is being merged has been suspended temporarily. |
+| 409 | API SECRET not configured | This response is returned when the authorization fails due to the APP SECRET key not being set on the Dashboard. |
+| 413 | Payload Limit Exceeded | This response is returned when the payload size has exceeded the limit set. |
+| 415 | Unsupported media type | This response is returned when the header “Content-Type” is not provided/is not supported. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+
+# Rate Limit
+
+The rate limit is 1000 user updates per minute.
+
+# Sample cURL Request
+
+<CodeGroup>
+``` cURL
+curl --location -g --request POST 'https://api-0X.moengage.com/v1/customer/merge?app_id={{appId}}' \
+--header 'Content-Type: application/json' \ 
+--header {"Authorization": "Basic Base64_ENCODED_APPKEY_APIKEY"} \
+--data-raw '{
+    "merge_data": [
+        {
+            "merged_user": "user_id_to_remove",
+            "retained_user": "user_id_to_keep"
+        },
+        {
+            "merged_user": "user_id_to_remove_2",
+            "retained_user": "user_id_to_keep"
+        }
+    ]
+}'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<CodeGroup>
+``` 200
+Sample Response for a successful request
+{
+   "status":"success",
+   "operation":"created"
+
+}
+```
+
+``` 400
+Sample Response for malformed JSON request
+{
+    "status": "fail",
+    "error": {
+        "message": "Could not decode the request body. The JSON was incorrect or not   encoded as UTF-8.",
+        "type": "Malformed JSON",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for app blacklisted by MoEngage
+{
+"status": "fail",
+    "error": {
+        "message": "Your account is blacklisted, Please contact MoEngage.",
+        "type": "Blacklisted",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for invalid Workspace ID in Request Parameter
+{
+"status": "fail",
+    "error": {
+        "message": "given app_id is invalid/blocked",
+        "type": "InvalidParams",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for Workspace ID not present in the Request Parameter
+{
+"status": "fail",
+    "error": {
+        "message": "app_id is required in path/query params.",
+        "type": "ParamsRequired",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for invalid Payload format
+{
+"status": "fail",
+    "error": {
+        "message": "A valid JSON document is required.",
+        "type": "Body type is not JSON",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for empty Request Body
+{
+"status": "fail",
+    "error": {
+        "message": "A valid JSON document is required",
+        "type": "Empty request body",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for invalid datatype in request body
+{
+"status": "fail",
+    "error": {
+       "attribute": "merged_user",
+       "message": "merged_user is expected to be String or Unicode String",
+       "type": "MissingAttributeError",
+       "request_id": "dBSEscwl"
+    }
+}
+
+Sample Response for Content Type Header is missing in the request
+{
+"status": "fail",
+    "error": {
+        "message": "The Content-Type Header is required",
+        "type": "Missing header value",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for suspended MoEngage account used in the request
+{
+    "status": "fail",
+    "error": {
+        "message": "Account Suspended",
+        "type": "Account Suspended",
+        "request_id": "pIvbWnGT"
+    }
+}
+```
+
+``` 401
+Sample Response for incorrect values for the APP KEY/ HTTP Auth Header.
+{
+    "status": "fail",
+    "error": {
+        "message":"MOE_APPKEY doesn't match the Username (APP_KEY) used in Basic Auth authorization.",
+        "type": "Authentication required",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for missing APP KEY in HTTP Auth Header
+{
+    "status": "fail",
+    "error": {
+        "message":"MOE-APPKEY is missing in Header",
+        "type": "Authentication required",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for missing APP SECRET in HTTP Auth Header
+{
+    "status": "fail",
+    "error": {
+        "message":"APP_SECRET missing in Authentication Header",
+        "type": "Authentication required",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for username is not provided in the Auth header
+{
+    "status": "fail",
+    "error": {
+        "message":"Username (APP_KEY) is missing in the Basic Auth authorization.",
+        "type": "Authentication required",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Reponse for password  is not provided in the Auth header
+{
+    "status": "fail",
+    "error": {
+        "message":"Password (APP_SECRET) is missing in the Basic Auth authorization.",
+        "type": "Authentication required",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for any other authorization type is used instead of Basic Auth
+{
+    "status": "fail",
+    "error": {
+        "message":"Invalid authorization used. MoEngage only supports 'Basic Auth' authorization.",
+        "type": "Authentication required",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for Authorization details are missing in the header
+{
+    "status": "fail",
+    "error": {
+        "message":"Authorization details are missing",
+        "type": "Authentication required",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Response for Invalid APP Secret key in Authorization Header
+{
+    "status": "fail",
+    "error": {
+        "message": "App Secret key mismatch. Please login to the dashboard to verify key",
+        "type": "Authentication required",
+        "request_id": "JooAzchF"
+    }
+}
+
+Sample Response for Incorrect APP KEY
+{
+    "status": "fail",
+    "error": {
+        "message":"Password (APP_KEY) doesn't match the one available on the dashboard. Kindly ensure the same APP_KEY available on the dashboard is used.",
+        "type": "Authentication required",
+        "request_id": "pIvbWnGT"
+    }
+}
+```
+
+``` 403
+Sample Response for temporary account suspension
+{
+    "status": "fail",
+    "error": {
+        "message": "Account Temporarily Suspended.",
+        "type": "Account Temporarily Suspended",
+        "request_id": "pIvbWnGT"
+    }
+}
+```
+
+``` 409
+Sample Response for authorization errors due to APP SECRET not being set in the Dashboard
+{
+"status": "fail",
+    "error": {
+        "message": "App Secret key is not set. Please login to the dashboard to set a key'",
+        "type": "Authentication required",
+        "request_id": "pIvbWnGT"
+    }
+}
+
+Sample Reponse for mismatch in the app id sent in the request parameter and the authorization header
+{
+    "status": "fail",
+    "error": {
+        "message": "App key mismatch in params and authentication",
+        "type": "Authentication Mismatch",
+        "request_id": "WNqwxfwM"
+    }
+}
+```
+
+``` 413
+Sample Response for Request Payload Size Exceeded
+{
+    "status": "fail",
+    "error": {
+        "message": "The payload can not exceed 128KB",
+        "type": "Payload too large",
+        "request_id": "pIvbWnGT"
+    }
+}
+```
+
+``` 415
+Sample Response for Unsupported Media Type
+{
+    "status": "fail",
+    "error": {
+        "message": "The header 'Content-Type' is missing. Kindly provide the header 'Content-Type' and set it as 'application/json'",
+        "type": "Unsupported media type",
+        "request_id": "pIvbWnGT"
+    }
+}
+```
+
+``` 429
+Sample Response for Rate Limit Breach
+{
+    "status": "fail",
+    "error": {
+        "message": "Rate limit exceeded",
+        "type": "Unsupported media type",
+        "request_id": "pIvbWnGT"
+}
+```
+
+``` 500
+Sample Response for unknown errors
+{
+    "status": "fail",
+    "error": {
+        "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team",
+        "type": "Server Error",
+        "request_id": "pIvbWnGT"
+    }
+}
+```
+
+</CodeGroup>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-3c80e7c5-32a1-4279-b1bb-566c7d4c5588?action=share&creator=3182294) to view it in Postman.
+
+# FAQs
+
+* **Will the merged user information be available after using this API?**No, the merged user will get deleted after calling this API. All the user attributes and devices of the merged user will be transferred to the retained user.
+* **What will happen to the reachability of the retained user?**The reachability status of the user will be recalculated based on the devices present after merging the user.
+* **Can any two users be merged?**Any registered user present in the MoEngage system can be merged with another registered user irrespective of the source of creation.
+* **Should both users have a device attached to them before merging?**Not necessarily; we allow the merging of users with or without devices.
+* **Is there any restriction on the number of times a user can be merged?**No.
+* **Is there any restriction on the number of devices a merged/retained should have?**No.
+* **What happens to the** ***merged\_user*** **after the merge?**This user will get deleted, and if any devices are attached to this user, they will be associated with the ***retained\_ user,*** and all the events and user details of ***merged\_user*** will reflect on the ***retained\_user.***  A merge event *MOE\_USER\_MERGE\_EVENT* will be added to the ***merged\_user*** (who will only have the MoEngage ID now).
+* **What happens to** ***retained\_user*** **after the merge?**The ***retained\_user*** will now have all the user, device, and event details of ***merged\_user*** along with details of ***retained\_user,*** MOE\_USER\_MERGED will be added to ***retained\_user.***
+* **What happens if a user creation request comes with the same** **ID** **as the deleted user (which is deleted after the merge)?**We will create a new user with that **ID**, but the ***MoEngage*** ***ID*** of this user will be different as compared to the deleted user.
+* **What happens to the reachability if both users do not have devices?**The user will not be reachable.
+* **What is the SLA to see user details reflect after the merge?**The maximum SLA is 30 minutes.
+* **How are events copied from the merged user to the retained user?**In the user profile, all events of the last 30 days are moved from the merged user to the retained user.

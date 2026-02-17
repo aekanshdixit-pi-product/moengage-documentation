@@ -1,0 +1,145 @@
+---
+title: "Migration to SDK version 6.0.0"
+description: ""
+---
+
+We have made quite a few changes in SDK version 6.0.0 and if you are someone who was using an older version of our SDK and planning to move to version 6.0.0 or above here are the changes to be made while migrating:
+
+# iOS 8.\* Support Removed
+
+From SDK version `6.0.0` we have set the deployment target as `iOS 9.0` and hence have removed support for `iOS 8.*`. We have decided to do this since the user base in iOS 8.0 is very less and most of the developers are already setting their app's deployment target to greater than iOS 9.0.
+
+# Initialization Method Deprecation
+
+We have deprecated the previous initialization methods and have introduced new methods. This is to simplify initialization by reducing the number of arguments in the method:
+
+**Deprecated methods**
+
+<CodeGroup>
+```objectivec Objective-C
+/**
+ For TEST Environment
+ @warning This method is deprecated and will be removed from SDK Version 7.0.0. Use initializeDevWithAppID:withLaunchOptions instead
+ */
+-(void)initializeDevWithApiKey:(NSString *_Nonnull)apiKey inApplication:(UIApplication *_Nullable)application withLaunchOptions:(NSDictionary *_Nullable)launchOptions openDeeplinkUrlAutomatically:(BOOL)openUrl __deprecated_msg("Use initializeDevWithAppID:withLaunchOptions instead.");
+
+/**
+ For LIVE Environment
+ @warning This method is deprecated and will be removed from SDK Version 7.0.0. Use initializeProdWithAppID:withLaunchOptions: instead
+ */
+-(void)initializeProdWithApiKey:(NSString *_Nonnull)apiKey inApplication:(UIApplication *_Nullable)application withLaunchOptions:(NSDictionary *_Nullable)launchOptions openDeeplinkUrlAutomatically:(BOOL)openUrl __deprecated_msg("Use initializeProdWithAppID:withLaunchOptions: instead.");
+```
+
+</CodeGroup>
+**New methods**
+
+<CodeGroup>
+```objectivec Objective-C
+// For TEST Environment
+-(void)initializeDevWithAppID:(NSString *_Nonnull)appID withLaunchOptions:(NSDictionary *_Nullable)launchOptions;
+
+// For LIVE Environment
+-(void)initializeProdWithAppID:(NSString *_Nonnull)appID withLaunchOptions:(NSDictionary *_Nullable)launchOptions;
+```
+
+</CodeGroup>
+For more info on SDK Initialization, refer to the following [doc](https://developers.moengage.com/hc/en-us/articles/4403905438228).
+
+# Analytics Module Changes
+
+## Track Event:
+
+We have Introduced `MOProperties` class to track all the event attributes. And hence we have deprecated the earlier methods and included `trackEvent:withProperties:` to track events. Refer to this [link](https://developers.moengage.com/hc/en-us/articles/4403922636308) for more info.
+
+**Deprecated Methods**
+
+<CodeGroup>
+```objectivec Objective-C
+/**
+ @warning This method is deprecated and will be removed in SDK version 7.0.0. Use trackEvent:withProperties: instead.
+ */
+-(void)trackEvent:(NSString *_Nonnull)name andPayload:(NSMutableDictionary *_Nullable)payload __deprecated_msg("Use trackEvent:withProperties: instead.");
+
+/**
+ @warning This method is deprecated and will be removed in SDK version 7.0.0. Use trackEvent:withProperties: instead.
+ */
+-(void)trackEvent:(NSString *_Nonnull)name builderPayload:(MOPayloadBuilder *_Nullable)payload __deprecated_msg("Use trackEvent:withProperties: instead.");
+```
+
+</CodeGroup>
+**New methods**
+
+<CodeGroup>
+```objectivec Objective-C
+/**
+Call this method to track events.
+@param name Event name to be tracked
+@param properties of type MOProperties. See MOProperties for more details.
+@version Available from SDK version 6.0.0 and above
+*/
+-(void)trackEvent:(NSString *_Nonnull)name withProperties:(MOProperties *_Nullable)properties;
+```
+
+</CodeGroup>
+## User Attribute Tracking:
+
+We have added a couple of additional methods to track date user attributes in the SDK, more info in this [doc](https://developers.moengage.com/hc/en-us/articles/4403905883796) :
+
+<CodeGroup>
+```objectivec Objective-C
+/**
+ Use this method to set a user attribute which is NSDate instance.
+ @param date The NSDate instance value to track.
+ */
+-(void)setUserAttributeDate:(NSDate* _Nonnull)date forKey:(NSString *_Nonnull)key;
+
+/**
+ Use this method to set a user attribute which is NSDate instance.
+ @param dateStr Date String in ISO date format [yyyy-MM-dd'T'HH:mm:ss'Z'].
+ */
+-(void)setUserAttributeISODateString:(NSString* _Nonnull)dateStr forKey:(NSString *_Nonnull)key;
+```
+
+</CodeGroup>
+# Messaging Module Changes
+
+## Notification Received Method Deprecation:
+
+<Info>
+**AppDelegate Swizzling :**
+
+From SDK version 5.0.0, we have implemented Swizzling of AppDelegate inside the SDK, due to which SDK, by default, gets all the callbacks related to Notifications. Therefore, if AppDelegate Swizzling is enabled, then developers can skip calling the SDK methods on Notification Callbacks. For more info on the same, refer to the following [doc](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45ED56HJA1KZP43JP0ZGG1F).
+</Info>
+We have deprecated `didReceieveNotificationinApplication:withInfo:openDeeplinkUrlAutomatically:` instead, use `didReceieveNotificationinApplication:withInfo:`.
+
+**Deprecated method**
+
+<CodeGroup>
+```objectivec Objective-C
+/**
+ Call this method in AppDelegate in didReceiveRemoteNotification
+ @warning This method is deprecated and will be removed from SDK Version 7.0.0. Use didReceieveNotificationinApplication:withInfo: instead
+ */
+-(void)didReceieveNotificationinApplication:(UIApplication*_Nullable)application withInfo:(NSDictionary* _Nonnull)userInfo openDeeplinkUrlAutomatically:(BOOL)openUrl __deprecated_msg("Use didReceieveNotificationinApplication:withInfo: instead.");
+```
+
+</CodeGroup>
+**New methods**
+
+<CodeGroup>
+```objectivec Objective-C
+/**
+ Call this method in AppDelegate in didReceiveRemoteNotification
+ */
+-(void)didReceieveNotificationinApplication:(UIApplication*_Nullable)application withInfo:(NSDictionary* _Nonnull)userInfo;
+```
+
+</CodeGroup>
+# InApp Module Changes
+
+* The InApp module has been completely revamped and includes a lot of changes, the primary one being we have separated the module from the `MoEngage-iOS-SDK`. Therefore, now to use In-Apps in your app you will have to integrate `MoEngageInApp` module to your project. Refer to this [link](https://developers.moengage.com/hc/en-us/articles/4404155127828) for integrating the inApp Module.
+* We have **removed support** for InApps in **Landscape Orientation** and **iPads** as the existing templates that we have are not made considering them, and therefore may end up breaking in the said scenarios.
+* We have added support for **Context-based InApps** wherein we can tag InApps and show InApps based on the current context set on the SDK. Refer to this [link](https://developers.moengage.com/hc/en-us/articles/4404155127828) for more info.
+* We have removed support for most of the older methods and replaced them with new ones to have it consistent across platforms. To know the differences in the API to be used refer below links:
+* [InApp APIs for SDK version 6.0.0 and above](https://developers.moengage.com/hc/en-us/articles/4404155127828)
+* [InApp APIs for SDK version 5.2.6 and below](https://developers.moengage.com/hc/en-us/articles/4404155414676)

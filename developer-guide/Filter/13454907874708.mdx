@@ -1,0 +1,355 @@
+---
+title: "Update Custom Segment API"
+description: ""
+---
+
+This API is used to update a custom segment by specifying its custom segment id.
+
+# API Endpoint
+
+<CodeGroup>
+``` API Endpoint
+PATCH https://api-0X.moengage.com/v3/custom-segments/{id:str}
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="}
+
+The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Parameters
+
+| Key | Required | Type | Description |
+| --- | --- | --- | --- |
+| id | Required | String | This parameter represents the id of the custom filter segment provided in the response of create custom segment request. |
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Content-Type | Required | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Required | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#01GT0WSQVV011QR4NX5BNBB9WC). |
+| MOE-APPKEY | Required | {“MOE-APPKEY”: “APP ID”} | This is the APP ID of your MoEngage account. You can find your MoEngage APP ID at **Settings** -> **Account** -> **APIs** -> **App ID**. |
+
+# Request Body
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| name | Optional | String | This field contains the name of the custom segment to be created; it should be unique across all custom segments. |
+| included\_filters | Required | JSON Object | This field contains the filtering criteria used for segmentation. The users satisfying this set of filters will be a part of the segment.   Example:   "included\_filters": {         "filter\_operator": <operator\_name>,         "filters": [ Array of JSON Objects]   }   Depending on the filter type and filter criteria, the payload format will vary. For more information, refer to [Included Filters Object](#h_01GSQMETV23VX36NMP66NYX9F3). |
+| updated\_by | Optional(but recommended) | String | This field contains the email id of the user updating the custom segment (In the case of API, can be something like *admin@companyemail.com)* |
+
+### Included Filters Object
+
+The included\_filters contains information about the filters used to create the custom segment. It contains the following fields:
+
+* **filter\_operator** - This is an Enum(String) that contains the logical operator (logical AND and logical OR operators) used to group the filters. Allowed Values: and, or. This is a mandatory field.
+* **filters**- This array contains the list of filters to be combined using the filter operator. The types of filters that can be combined are user attributes-based filters and action-based filters (with or without attributes). This is a mandatory field.
+
+The following filter types are available:
+
+* [Attribute filters](https://developers.moengage.com/hc/en-us/articles/13277936457748/#h_01GTKE3A1RAAGQ1CN4QCKQ2GNS)
+* [Action based filters](https://developers.moengage.com/hc/en-us/articles/13277936457748/#h_01GTKE4QMYR6JRJR1JQ45SNPAX)
+
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| response\_id | String | This field contains the unique response id corresponding to the current request. This field is present in the case of both successful and failed requests. |
+| type | String | This field contains the type of resource referenced in the current request. Default value: custom\_segment |
+| data | JSON Object | This field contains information about the custom segment created for the request. This field is present in the response only for successful requests.   Structure of data object:   "data": {       "name": "<custom\_segment\_name>",       "id": "<custom\_segment\_id>",       "created\_time": "<creation\_timestamp>",       "updated\_time": "updation\_timestamp",       "type": "ELASTIC\_SEARCH",        "source": "API",       "description": "<description of custom segment>"        "included\_filters": {             "filter\_operator": <operator\_name>,             "filters": [ Array of JSON Objects]        }   }   For more information, refer to [the response payload](#h_01GSS69BQH0REHN4HDRPDFZJ6V). |
+| error | JSON Object | This field contains the reason for the request's failure.   Structure:    "error": {       "code": "<error\_code>",        "message": "<error\_message>"    }   The error object contains the following fields:   * code - This field contains the error code that provides a brief explanation of the error and is a String. For example, 400 - Invalid Request, 401- Authentication required, and so on. This field is present in the response only in the case of errors. * message - This field describes why the request has failed and is a String. For example, in the case of 401 errors, the following message will be present: 'APP\_SECRET key mismatch. Please login to the dashboard to verify key'. |
+
+### Response Payload
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| created\_time | String (datetime ISO Format) | This field contains the time of custom-segment creation. This field is present in the response only for successful requests. |
+| updated\_time | String (datetime ISO Format) | This field contains the time of custom-segment update. The updated time can change due to internally running services too. This field is present in the response only for successful requests. |
+| type | Enum(String) | This field contains a fixed value and is used for internal purposes. Value of field: ELASTIC\_SEARCH   This field is present in the response only for successful requests. |
+| source | Enum(String) | This field contains the name of the custom-segment creation source and has a fixed value for internal use. Value of field: API   This field is present in the response only for successful requests. |
+| description | String | This field contains the textual description summarising the custom-segment definition. This field is present in the response only for successful requests. |
+| included\_filters | JSON Object | This field contains the filter criteria for custom segment creation (the included\_filters section in the request payload). This field is present in the response only for successful requests. |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request or when the provided parameters are invalid. |
+| 401 | Authorization Failure | This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header. |
+| 409 | API SECRET not configured | This response is returned when the authorization fails due to the APP SECRET key not being set on the Dashboard. |
+| 413 | Unsupported media type | This response is returned when the number of filters nested, or referenced filters in the query exceed the allowed limit. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+
+# Rate Limit
+
+The rate limit is 50 request/minute, 200 requests/hour, and 1000 requests/day.
+
+# Sample cURL Request
+
+<CodeGroup>
+``` cURL
+curl --location --request PATCH 'https://api-0X.moengage.com/v3/custom-segments/63d8cec0c085939e6c1ab727' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=' \
+--header 'MOE-APPKEY: EXAMPLE_APP_KEY_ID' \
+--data-raw '{
+    "name": "segment_example_name",
+    "included_filters": {
+        "filter_operator": "and",
+        "filters": [
+            {
+                "filter_type": "user_attributes",
+                "name": "Name",
+                "data_type": "string",
+                "operator": "in",
+                "value": "chandan",
+                "negate": false,
+                "case_sensitive": false
+            }
+        ]
+    },
+    "updated_by": "eample_email@mycompany.com"
+}'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<CodeGroup>
+``` 200
+{
+    "data": {
+        "name": "your custom-segment name",
+        "id": "your custom-segment id",
+        "created_time": "2022-12-20T06:21:44.112000",
+        "updated_time": "2022-12-20T06:21:44.160000",
+        "type": "ELASTIC_SEARCH",
+        "source": "API",
+        "description": "Subscription Status 19Dec_7  is active  (case insensitive) AND Has executed Email Sent atleast 1 time in-between Feb 15, 2023 and Feb 24, 2023",
+        "included_filters": {
+            "filter_operator": "and",
+            "filters": [
+                {
+                    "filter_type": "user_attributes",
+                    "name": "Subscription Status 19Dec_7",
+                    "data_type": "string",
+                    "operator": "in",
+                    "value": "active",
+                    "negate": false,
+                    "case_sensitive": false
+                },
+                {
+                    "filter_type": "actions",
+                    "attributes": {
+                        "filter_operator": "and",
+                        "filters": []
+                    },
+                    "executed": true,
+                    "primary_time_range": {
+                        "type": "between",
+                        "value": "2023-02-15T00:00:00.000Z",
+                        "value1": "2023-02-24T23:59:59.999Z",
+                        "value_type": "absolute",
+                        "period_unit": "days"
+                    },
+                    "action_name": "MOE_EMAIL_SENT",
+                    "execution": {
+                        "count": 1,
+                        "type": "atleast"
+                    }
+                }
+            ]
+        }
+    },
+    "response_id": "cNjnTEJw",
+    "type": "custom_segment"
+}
+```
+
+``` 400
+Sample Response for Invalid request format
+{
+    "response_id": "jyNoAPhO",
+    "type": "custom_segment",
+    "error": {
+        "code": "Invalid request",
+        "message": "Invalid request format. Please check the documentation to ensure that the request has been formed correctly."
+    }
+}
+Sample Response for Invalid db-name/app-key
+{
+    "response_id": "FkrgtCVr",
+    "type": "custom_segment",
+    "error": {
+        "code": "Request Error",
+        "message": "MoEngage Client not found. Please check values for headers - MOE-APPKEY or MOE-DBNAME"
+    }
+}
+Sample Response for when there are HTML characters that are not allowed or only whitespaces in custom-segment name present in the request
+    "response_id": "XtVyUnlJ",
+    "type": "custom_segment",
+    "error": {
+        "code": "Invalid Request",
+        "message": "Invalid request. Please ensure that the filters are correct and the custom-segment name doesn't contain HTML characters/only whitespaces."
+    }
+}
+```
+
+``` 401
+Sample Response for when a forbidden operation is present in the request
+{
+    "response_id": "xuLAWeCN",
+    "type": "custom_segment",
+    "error": {
+        "code": "Forbidden operation",
+        "message": "Update isn't supported for file-segments, internally created custom-segments, custom-segments imported from Analyze and archived custom-segments."
+    }
+}
+```
+
+``` 403
+Sample Response for when the custom-segment id used in the request doesn’t exist
+{
+    "response_id": "UAMMfmuU",
+    "type": "custom_segment",
+    "error": {
+        "code": "Entity Not Found",
+        "message": "Custom segment not found with the given id: 638a051185b6b50a018cacc"
+    }
+}
+```
+
+``` 404
+Sample Response for when another custom-segment already exists with the same name
+{
+    "response_id": "wSiiqYRr",
+    "type": "custom_segment",
+    "error": {
+        "code": "Resource not created",
+        "message": "Another custom-segment already exists with the same name: api_test_8. Please change the custom-segment name."
+    }
+}
+Sample Response for when another custom-segment already exists containing the same filters
+{
+    "response_id": "GMpZHlxp",
+    "type": "custom_segment",
+    "error": {
+        "code": "Resource not created",
+        "message": "Another custom-segment already exists containing the given filters: api_cycle_1. Please reuse the same or update the filters",
+        "existing_cs_name": "api_cycle_1",
+        "existing_cs_id": "638a051185b6b50a018cacc1"
+    }
+}
+```
+
+``` 409
+Sample Response for attempt to create a cyclic custom-segment
+{
+    "response_id": "acOcgPed",
+    "type": "custom_segment",
+    "error": {
+        "code": "Cyclic Entity",
+        "message": "Circular reference detected in the custom segment definition."
+    }
+}
+```
+
+``` 412
+Sample Response for when there is another custom-segment already exists with the same name
+{
+    "response_id": "wSiiqYRr",
+    "type": "custom_segment",
+    "error": {
+        "code": "Resource not created",
+        "message": "Another custom-segment already exists with the same name: api_test_8. Please change the custom-segment name."
+    }
+}
+Sample Response for when another custom-segment already exists containing the same filters.
+{
+    "response_id": "GMpZHlxp",
+    "type": "custom_segment",
+    "error": {
+        "code": "Resource not created",
+        "message": "Another custom-segment already exists containing the given filters: api_cycle_1. Please reuse the same or update the filters",
+        "existing_cs_name": "api_cycle_1",
+        "existing_cs_id": "638a051185b6b50a018cacc1"
+    }
+}
+```
+
+``` 413
+Sample Response for when there is too much nesting of custom-segments
+{
+    "response_id": "dDvgyvHX",
+    "type": "custom_segment",
+    "error": {
+        "code": "Query has too many nesting levels",
+        "message": "The query has more than n levels of nesting. Please reduce the segment nesting."
+    }
+}
+Sample Response for too many custom-segments referenced in the current query
+{
+    "response_id": "uQPqruXM",
+    "type": "custom_segment",
+    "error": {
+        "code": "Too many segments in a query",
+        "message": "The query has more than n custom segments. Please reduce the custom segments."
+    }
+}
+Sample Response for too many filters in the current query.
+{
+    "response_id": "dcAqEczX",
+    "type": "custom_segment",
+    "error": {
+        "code": "Query length limit exceeded",
+        "message": "The query is too large to execute. Please reduce the filters."
+    }
+}
+```
+
+``` 429
+Sample Response for Rate Limit Breach
+{
+    "response_id": "OUUkHvcn",
+    "type": "custom_segment",
+    "error": {
+        "code": "Too Many Requests",
+        "message": "API rate limit breached. Current limit: n/m mins"
+    }
+}
+```
+
+``` 500
+Sample Response for server side errors
+{
+    "response_id": "HKWwUkvM",
+    "type": "custom_segment",
+    "error": {
+        "code": "Internal Server Error",
+        "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+    }
+}
+```
+
+</CodeGroup>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-a902c97c-fc5f-474b-9f6a-a9ef9accaf1f?action=share&creator=3182294) to view it in Postman.

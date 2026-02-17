@@ -1,0 +1,331 @@
+---
+title: "Cohort/ Audience Sync"
+description: ""
+---
+
+# Overview
+
+The MoEngage Cohort Sync API allows partners to synchronize cohorts or audiences created in their ecosystem with MoEngage.
+
+The Cohort Sync API performs the following functions:
+
+1. Creates a custom segment (Audience) in MoEngage. This custom segment can be utilized to create marketing campaigns on the MoEngage Dashboard.
+2. Adds or removes a list of users who belong to a custom segment in MoEngage.
+3. Dynamically updates the same custom segment created in MoEngage, ensuring that marketing campaigns automatically engage with the latest set of users during the next scheduled run.
+4. It is important to note that the Cohort Sync API will only match users already present in MoEngage based on the user ID (uid) provided in the API request. This API will not create new users in MoEngage.
+
+The Cohort Sync API enables the creation of segments without needing separate files or CSVs, eliminating the requirement for a separate path or URL as seen in the File Segment API. Segment creation can be initiated by making a direct server-to-server call, eliminating the additional steps required for generating user files. The Cohort Sync API is ideal for segments or segment operations involving fewer users.
+
+## User Resolution
+
+The Cohort Sync API does not create new users in MoEngage. Instead, it resolves existing users in MoEngage based on predefined user identifiers and assigns them to the corresponding custom segment created through Cohort Sync. To achieve efficient user resolution, we primarily rely on the **User ID**. This identifier is provided by the clients and is set as a Unique User ID in MoEngage. It is typically available for registered or logged-in users. Each Unique User ID in MoEngage corresponds to a single user profile. Even if the same user is logged in from multiple devices, their user profile will have the same Unique User ID and the devices will be associated with that user profile. This identifier is represented as uid in the request payload.
+
+# API Endpoint
+
+<CodeGroup>
+``` API Endpoint
+POST https://api-0X.moengage.com/v1/integrations/cohortsync
+```
+
+</CodeGroup>
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage maintains different data centres for different clients. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="}
+
+The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| MOE-APPKEY | Yes | {"MOE-APPKEY": "APP ID"} | This is your MoEngage account's APP ID that has to be passed along with the request. You can find your MoEngage APP ID at **Settings** -> **Account** -> **APIs** -> **App ID**. |
+| Content-Type | Yes | application/json | Set the Content-Type header to application/json. |
+| Authorization | Yes | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#h_01HN07GG6ZDQ7H3YB14KR3FQYF). |
+# Request Body
+
+| Key | Required | Data Type | Description |
+| --- | --- | --- | --- |
+| action | Yes | String | This field indicates whether users need to be added to the cohort or removed from it.   Allowed Values: add\_members, remove\_members   Example: "action": "add\_members" |
+| partner | Yes | String | This field indicates the name of the partner whose cohort is being synced to MoEngage.   Example: "partner": "m particle" |
+| parameters | Yes | JSON Object | This field contains the information about the cohort to be synced to MoEngage from the partner's ecosystem.   Structure:   "parameters": {      "cohort\_name": "<Cohort Name",      "cohort\_id": "<Cohort ID>",      "cohort\_description": "<Cohort description>",     "members": [       {         "uid": "<UniqueIdentifier\_customer1>"       },       {         "uid": "<UniqueIdentifier\_customer2>"        }     ]   }   For more details, refer to Parameters. |
+### Parameters
+
+| Key | Required | Data Type | Description |
+| --- | --- | --- | --- |
+| cohort\_name | Yes | String | This field indicates the name of the cohort.   Example: "cohort\_name": "Demo\_Cohort"   **Note**: Ensure your cohort name must start with a period (.) and must not contain the restricted characters \|, \*, ?, \, :, <, >, =, $, ". |
+| cohort\_id | Yes | String | This field indicates the unique identifier for the cohort being synced to MoEngage.   Example: "cohort\_id": "Demo\_CohortID" |
+| cohort\_description | No | String | This field contains the description for the cohort being synced to MoEnagage.   Example: "cohort\_description": "This is a Demo Cohort to illustrate the addition and removal of cohorts to or from MoEngage." |
+| members | Yes | Array of Objects | This field contains the unique identifiers of the customers being added to or removed from a Cohort in MoEngage.   Structure:   "members": [       {         "uid": "<UniqueIdentifier\_customer1>"       },       {         "uid": "<UniqueIdentifier\_customer2>"        }     ]   Fields:   uid - This field indicates the unique identifier for a customer who is to be added or removed in MoEngage. For more information, refer to [User Resolution](#01GKF4D4BJXRHKDKRRMF0YDT47).   Example:    "members": [      {          "uid": "mm1UR87z4T"       }   ] |
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| status | String | This field contains the status of the request and specifies whether the request was successful.    Supported Values: success, fail   Example: "status": "success" |
+| message | String | This field is present in the response when the request is successful.   Example: "message": "Your request has been accepted and will be processed soon." |
+| error | JSON Object | This field is present in the response only in the case of an error and contains the error details.   Structure:   {      "attribute": "<attribute causing the error >",      "message": "<error message>",      "type": "<error type>",      "request\_id": "<request\_id>"   }       **attribute** - This field contains the name of the request attribute causing the error. For example, *"attribute": "identifiers"* implies that the identifiers request attribute is causing the error.   **message** - This field contains the error message.   **type -**This field contains the error type. For example, *"type": "Malformed JSON"*implies that the JSON in the request is incorrectly formed.   **request\_id** - This field denotes the request-id for which the error response is being returned. |
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters APP KEY, user\_id, and so on are missing from the request or when the provided params are invalid. |
+| 401 | Authorization Failure | This response is returned when the authorization fails due to incorrect APP KEY/ HTTP Auth Header values. |
+| 403 | Account Suspended/Blocked Temporarily | This response is returned when the user account is temporarily suspended or blocked. |
+| 413 | Payload Limit Exceeded | This response is returned when the payload size has exceeded the limit set. |
+| 415 | Unsupported media type | This response is returned when the header “Content-Type” is not provided/is not supported. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+# Rate Limit
+
+The rate limits are:
+
+1. 300 requests per minute
+2. One payload per request (each payload can have multiple UIDs)
+3. The payload size cannot exceed 128KB
+
+# Sample cURL for Adding Users using the API
+
+<CodeGroup>
+```auto cURL
+curl --location 'https://api-0X.moengage.com/v1/integrations/cohortsync' \
+--header 'MOE-APPKEY: {{MOE-APPKEY}}' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic e3tEQVRBIEFQSSBJRH19Ont7REFUQSBBUEkgS0VZfX0==' \
+--data '{
+    "action": "add_members",
+    "partner": "6HNBXFm7ZS",
+    "parameters": {
+        "cohort_name": "<Partner_Name>",
+        "cohort_id": "JKTAuqTRhC",
+        "cohort_description": "<Cohort_Description>",
+        "members": [
+            {
+                "uid": "mm1UR87z4T"
+            },
+            {
+                "uid": "AtCxliflui"
+            }
+        ]
+    }
+}'
+```
+
+</CodeGroup>
+# Sample cURL for Removing Users using the API
+
+<CodeGroup>
+```auto cURL
+curl --location 'https://api-0X.moengage.com/v1/integrations/cohortsync' \
+--header 'MOE-APPKEY: {{MOE-APPKEY}}' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic e3tEQVRBIEFQSSBJRH19Ont7REFUQSBBUEkgS0VZfX0==' \
+--data '{
+    "action": "remove_members",
+    "partner": "6HNBXFm7ZS",
+    "parameters": {
+        "cohort_name": "<Partner_Name>",
+        "cohort_id": "JKTAuqTRhC",
+        "cohort_description": "<Cohort_Description>",
+        "members": [
+            {
+                "uid": "mm1UR87z4T"
+            }
+        ]
+    }
+}'
+```
+
+</CodeGroup>
+# Sample Response
+
+<CodeGroup>
+``` 200
+Success Response{
+    "status": "success",
+    "message": "Your request has been accepted and will be processed soon."
+}
+```
+
+``` 400
+Sample response for when idenitifers are missing in the request
+{
+    "status": "fail",
+    "error": {
+        "attribute": "identifiers",
+        "message": "identifiers is not found in the payload",
+        "type": "MissingAttributeError",
+        "request_id": "UkBwaUmU"
+    }
+}
+
+Sample response for when data is missing in the request
+{
+    "status": "fail",
+    "error": {
+        "attribute": "data",
+        "message": "data is not found in the payload",
+        "type": "MissingAttributeError",
+        "request_id": "zAsmTigV"
+    }
+}
+
+Sample response for when the JSON is incorrect in the request
+{
+    "status": "fail",
+    "error": {
+        "message": "Could not decode the request body. The JSON was incorrect or not encoded as UTF-8.",
+        "type": "Malformed JSON",
+        "request_id": "NphDCzWk"
+    }
+}
+
+Sample response for when action is not found in the request
+{
+    "status": "fail",
+    "error": {
+        "attribute": "action",
+        "message": "action is not found in the payload",
+        "type": "MissingAttributeError",
+        "request_id": "sYsoPuzf"
+    }
+}
+```
+
+``` 401
+Sample response for authorization errors
+{
+    "status": "fail",
+    "error": {
+        "message": "App Secret key mismatch. Please login to the dashboard to verify key",
+        "type": "Authentication required",
+        "request_id": "skSFWvtW"
+    }
+}
+
+Sample response for missing authentication header
+{
+    "status": "fail",
+    "error": {
+        "message": "Authentication Header Required",
+        "type": "Authentication required",
+        "request_id": "PiSPjGQQ"
+    }
+}Sample response for when there is a mismatch in the App Key
+{
+    "status": "fail",
+    "error": {
+        "message": "App key mismatch in params and authentication",
+        "type": "Authentication Mismatch",
+        "request_id": "yEujHykb"
+    }
+}
+```
+
+``` 403
+Sample response for when your account is blocked
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is suspended. Please contact MoEngage team.",
+        "type": "BlockedClient",
+        "request_id": "ofHUEaEQ"
+    }
+}
+
+Sample response for when your account is suspended
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is suspended. Please contact MoEngage team.",
+        "type": "Account Suspended",
+        "request_id": "gqJvCNYu"
+    }
+}
+
+Sample response for when your account is temporarily suspended
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is temporarily suspended. Please contact MoEngage team.",
+        "type": "Account Temporarily Suspended",
+        "request_id": "ssSJjoyD"
+    }
+}
+```
+
+``` 413
+Sample response for payloads exceeding the size limit
+{
+    "status": "fail",
+    "error": {
+        "message": "Payload can not exceed 128KB",
+        "type": "Payload too large",
+        "request_id": "VFzDwhwt"
+    }
+}
+```
+
+``` 415
+Sample response for unsupported media type
+{
+      "status": "fail",
+      "error": {
+          "message": "Content type is not supported",
+          "type": "Unsupported media type",
+          "request_id": "SgBQfKJh"
+      }
+}
+```
+
+``` 429
+Sample response for rate limit breach
+{
+    "status": "fail",
+    "error": {
+        "message": "Rate limits for customers exceeded. Please Try After Some Time",
+        "type": "Rate Limits Exceeded",
+        "request_id": "onqucLYL"
+    }
+}
+```
+
+``` 500
+Sample response for unknown errors
+{
+    "status": "fail",
+    "error": {
+        "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team",
+        "type": "Server Error",
+        "request_id": "KovrwJiF"
+    }
+}
+```
+
+</CodeGroup>
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-6c655db8-b219-4ff0-9892-f633cabbdebf?action=share&creator=3182294) to view it in Postman.
+
+# FAQs
+
+arrow\_drop\_down **What is the difference between Cohort Sync API and the File Segment API?**
+
+The Cohort Sync API enables the creation of segments without needing separate files or CSVs, eliminating the requirement for a separate path or URL as seen in the File Segment API. Segment creation can be initiated by making a direct server-to-server call, eliminating the additional steps required for generating user files.
+
+arrow\_drop\_down **When is it recommended to use the Cohort Sync API?**
+
+The Cohort Sync API is ideal for segments or segment operations involving fewer users.
+
+arrow\_drop\_down **Does the Cohort Sync API create new users?**
+
+The Cohort Sync API does not create new users in MoEngage. Instead, it resolves existing users in MoEngage based on predefined user identifiers and assigns them to the corresponding custom segment created through Cohort Sync.

@@ -1,0 +1,74 @@
+---
+title: "Android SDK Initialization 3.x.x"
+description: ""
+---
+
+# Initializing the SDK
+
+<Info>
+Initialize the SDK on the main thread inside onCreate() and not create a worker thread and initialize the SDK on that thread.
+</Info>
+
+<CodeGroup>
+``` Java
+import android.app.Application;
+import com.moengage.capacitor.MoEInitializer;
+import com.moengage.core.MoEngage;
+import com.moengage.core.DataCenter;
+
+public class MainApplication extends Application {
+
+  @Override public void onCreate() {
+    super.onCreate();
+// this is the instance of the application class and "YOUR_Workspace_ID" is the Workspace ID from the dashboard.
+MoEngage.Builder moEngage = new MoEngage.Builder(this,"YOUR_Workspace_ID”, [YOUR_DATA_CENTER]);
+MoEInitializer.initialiseDefaultInstance(this, moEngage);
+  }
+}
+```
+
+</CodeGroup>
+
+Following details of the different data centers you need to set based on the dashboard hosts
+
+| Data Center | Dashboard host |
+| --- | --- |
+| DataCenter.DATA\_CENTER\_1 | dashboard-01.moengage.com |
+| DataCenter.DATA\_CENTER\_2 | dashboard-02.moengage.com |
+| DataCenter.DATA\_CENTER\_3 | dashboard-03.moengage.com |
+| DataCenter.DATA\_CENTER\_4 | dashboard-04.moengage.com |
+| DataCenter.DATA\_CENTER\_5 | dashboard-05.moengage.com |
+
+ 
+
+<Info>
+All the configurations are added to the builder before initialization. If you are calling initialize at multiple places, ensure that all the required flags and configurations are set each time you initialize to maintain consistency in behavior.
+</Info>
+
+  
+In case your application does not have an Application class yet navigate to the java source code inside the android platform folder and add the Application class file.
+
+![Screenshot_2022-01-28_at_6.32.19_PM.png](28720307344916)
+
+Make sure your application class is defined in the **AndroidManifest.xml** file as well.
+
+# Register MoEngage's Plugin
+
+Register the plugin in your **Activity** class's **onCreate()**.
+
+<CodeGroup>
+``` Java
+import com.getcapacitor.BridgeActivity;
+import com.moengage.capacitor.MoECapacitorCorePlugin;
+
+public class MainActivity extends BridgeActivity {
+
+  @Override protected void onCreate(Bundle savedInstanceState) {
+    //register the MoEngage Capacitor Plugin
+    registerPlugin(MoECapacitorCorePlugin.class);
+    super.onCreate(savedInstanceState);
+  }
+}
+```
+
+</CodeGroup>

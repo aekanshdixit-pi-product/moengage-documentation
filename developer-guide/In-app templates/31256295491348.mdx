@@ -1,0 +1,225 @@
+---
+title: "Search In-app Template API"
+description: ""
+---
+
+The Search In-app Template API can be used to look up the In-app templates created in your MoEngage account.
+
+<Info>
+We are introducing mandatory pagination, effective November 15, 2025, all calls to this API must include the following two parameters:
+
+* [page](#01J2177B7PP4BNPK8EK7G7MCZD): The page number of the results you wish to fetch.
+* [entries](#01J2177B7PP4BNPK8EK7G7MCZD): The number of templates to return per page, with a maximum value of *15*.
+
+Please update all integrations to include these parameters. API requests submitted without them after the effective date will result in an error and fail to execute.
+</Info>
+# API Endpoint
+
+<CodeGroup>
+```auto API Endpoint
+POST https://api-0X.moengage.com/v1.0/custom-templates/inapp/search
+```
+
+</CodeGroup>
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username: password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U="}
+
+Follow the steps below to obtain the username and password details from the MoEngage Dashboard:
+
+![API authentication.png](31256295486996)
+
+1. Navigate to **Settings > Account > APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID** (earlier App ID), click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Campaign report**/**Business events**/**Custom templates**/**Catalog API** tile to copy the API key.
+3. Use the above details to authenticate the API requests.
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Content-Type | Required | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Required | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed in the request. To generate the authentication header, refer to [Authentication](#authentication). |
+# Request Body
+
+| **Key** | **Data Type** | **Required** | **Description** |
+| --- | --- | --- | --- |
+| page | Integer | Optional | This field contains the index of the pages to be returned in the search result.   Example:   2 |
+| entries | Integer | Optional | This field contains the number of entries per page in the search result.   Example:   10 |
+| template\_name | String | Optional | This field indicates the name of the template. When this value is specified, the template that matches the name specified in this field will be returned.   Example:   “test\_template” |
+| template\_source | List | Optional | This field indicates the template source that created the template. For example: ["API", "MOENGAGE"]. When specified, the templates whose source matches that specified in this list will be returned.       Example:   [“API”, “MOENGAGE”] |
+| template\_type | List<String> | Optional | This field indicates whether the template is a custom one or a pre-built one.   Allowed values: CUSTOM, PRE\_BUILT.   When specified, the templates whose template type matches that specified in this list will be returned.   Example:   ["CUSTOM", "PRE\_BUILT"] |
+| created\_by | List<String> | Optional | This field indicates the user who created the template. When specified, the templates for which the created\_by user information matches that specified in this list will be returned.   Example:   ["user1@moengage.com", "user2@moengage.com"] |
+| updated\_by | List<String> | Optional | This field indicates the user who updated the template. When specified, the templates for which the updated\_by user information matches that specified in this list will be returned.   Example:   ["user1@moengage.com", "user2@moengage.com"] |
+| sort\_params | List<Map<String, String>> | Optional | Sort the templates by multiple fields in ASCENDING or DESCENDING order:   1. template\_name, 2. last\_modified\_date, 3. last\_modified\_by   Example:   [    {"template\_name": "ASCENDING"},    {"last\_modified\_date": "DESCENDING"}   ]   First, ordering preference will be done according to template\_name in the ASC order, followed by last\_modified\_date in the DESC order. |
+| template\_ids | List<Map<string, it>> | Optional | Search multiple templates using   Pair of   * external\_template\_id * version   Example:   [    {      "external\_template\_id": "1234",      "version": 1    },   ] |
+
+<Info>
+* If the request body is passed empty, then all templates will be returned.
+* Here, the preview\_image field will be generated by MoEngage for the HTML template payload.
+</Info>
+# Response
+
+| Status | Key | Data Type | Description |
+| --- | --- | --- | --- |
+| Success | * data * external\_template\_id * version * basic\_details * created\_by * created\_at * updated\_by * updated\_at | String | This field contains all the details of the template searched, such as the meta info, template ID, template version, payload, date and time the template was created or updated, and the user attribute of the user who created or updated the template. |
+| Failure | error\_code | String | Each error code is unique and serves as a shorthand representation for the type of error. It provides a quick reference that can be used to diagnose, troubleshoot, and address the problem based on a predefined set of error conditions. |
+| message | String | Along with the error code, a detailed message is also provided in the response, describing the specifics of the request failure and the nature of the error. |
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | The template was searched successfully. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request or when the provided parameters are invalid. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+# Sample cURL Request
+
+<CodeGroup>
+```ruby cURL
+curl --location ' https://api-0X.moengage.com/v1.0/custom-templates/inapp/search' \
+
+--header 'Content-Type: application/json' \
+
+--header 'Authorization: Basic Q000RDFMWk4ySU1KTkJZOVVMWEFVNzNEOlIxWk1PS0ABCDEFGH==' \
+
+--data-raw '{
+
+    "entries": 4,
+
+    "page": 2,
+
+    "template_name": "test1",
+
+    "external_template_ids": [{
+
+        "external_template_id": "904c31c4-c532-4d86-a212-963c697a1bbe",
+
+        "version": 1
+
+        }],
+
+    "template_type": ["CUSTOM", "PRE_BUILT"],
+
+    "template_source": ["MOENGAGE", "API"],
+
+    "updated_by": ["test-1@moengage.com", "test@ABC.com"],
+
+    "created_by": ["test-1@moengage.com", "test@ABC.com"],
+
+    "sort_params": [
+
+        {
+
+          "template_name": "ASCENDING"
+
+        },
+
+        {
+
+          "last_modified_date": "DESCENDING"
+
+        } 
+
+      ]
+
+}'
+```
+
+</CodeGroup>
+# Sample Response
+
+<CodeGroup>
+```auto 200
+{
+
+  "data": [
+
+      {
+
+        "meta_info": {
+
+            "template_id": "1234567890123",
+
+            "template_name": "NAME_OF_THE_TEMPLATE",
+
+            "template_version": "1",
+
+            "created_by": "test@moengage.com",
+
+            "channel": "INAPP",
+
+            "template_source": "API",
+
+            "template_type": "CUSTOM"
+
+        },
+
+        "external_template_id": "4a1afbc5-4c31-4f19-8c23-793e27af01aa",
+
+        "version": 1,
+
+        "basic_details": {
+
+            "payload": "<!doctype html>\n<html lang=\'en\'>\n <head>\n <title>Bootstrap demo</title>\n <link href='' rel='stylesheet'>\n </head>\n <body>\n <h1>Hello, world!</h1>\n <script src='https://cdn.jsdelivr.net></script> \n </body>\n</html>",
+
+            "preview_image": "https://pbs.twimg.com/profile_images/10ydbKG1.jpg",
+
+            "inapp_template_type": "INAPP_HTML"
+
+          },
+
+        "created_by": "test@moengage.com",
+
+        "created_at": "2023-08-01T07:58:53.880000",
+
+        "updated_by": "test@moengage.com",
+
+        "updated_at": "2023-08-01T07:58:53.880000"
+
+      }
+
+    ]
+
+}
+```
+
+```auto 400
+{
+
+    "error": {
+
+      "code": "400 Bad Request",
+
+      "message": "Validation failed because of invalid request data",
+
+      "details": [
+
+          {
+
+            "code": "MissingValue",
+
+            "target": "external_template_ids",
+
+            "message": "external_template_id or version is missing in external_template_ids."
+
+          }
+
+      ],
+
+      "request_id": "npmQrbNE"
+
+    }
+
+}
+```
+
+</CodeGroup>
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/request/3182294-cb8f63c8-388e-4c77-9922-86a335b7e449) to view it in Postman.

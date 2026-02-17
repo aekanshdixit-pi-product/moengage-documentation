@@ -1,0 +1,55 @@
+---
+title: "Android SDK Initialization 7.x.x"
+description: ""
+---
+
+Get the APP ID from the Settings Page *Dashboard --> Settings --> App --> Genera*l on the MoEngage dashboard and initialize the MoEngage SDK in the ***Application*** class's ***onCreate()***.
+
+<Info>
+Initialize the SDK on the main thread inside onCreate() and not create a worker thread and initialize the SDK on that thread.
+</Info>
+
+<CodeGroup>
+```kotlin Kotlin
+import com.moengage.flutter.MoEInitializer
+import com.moengage.core.MoEngage
+import com.moengage.core.DataCenter
+...
+// `this` is the instance of the application class and "YOUR_Workspace_ID" is the Workspace ID from the dashboard.
+val moEngage: MoEngage.Builder = MoEngage.Builder(this,"YOUR_Workspace_ID", DataCenter.DATA_CENTER_X) MoEInitializer.initialiseDefaultInstance(context = this, builder = moEngage)
+```
+
+```java Java
+import com.moengage.flutter.MoEInitializer;
+import com.moengage.core.MoEngage;
+import com.moengage.core.DataCenter;
+...
+// `this` is the instance of the application class and "YOUR_Workspace_ID" is the Workspace ID from the dashboard.
+MoEngage.Builder moEngage = new MoEngage.Builder(this, "YOUR_Workspace_ID", YOUR_DATA_CENTER); MoEInitializer.initialiseDefaultInstance(this, moEngage);
+```
+
+</CodeGroup>
+
+Following details of the different data centers you need to set based on the dashboard hosts
+
+| Data Center | Dashboard host |
+| --- | --- |
+| DataCenter.DATA\_CENTER\_1 | dashboard-01.moengage.com |
+| DataCenter.DATA\_CENTER\_2 | dashboard-02.moengage.com |
+| DataCenter.DATA\_CENTER\_3 | dashboard-03.moengage.com |
+| DataCenter.DATA\_CENTER\_4 | dashboard-04.moengage.com |
+| DataCenter.DATA\_CENTER\_5 | dashboard-05.moengage.com |
+
+ 
+
+<Warning>
+**Critical**
+
+All the configurations are added to the builder before initialization. If you are calling initialize at multiple places, ensure that all the required flags and configurations are set each time you initialize to maintain consistency in behavior.
+</Warning>
+
+# Exclude MoEngage Storage File from Auto-Backup
+
+This is a mandatory integration step and is very essential to prevent your data from getting corrupted. Android's auto back-up service periodically backs up Shared Preference files, Database files, etc, more details [here](https://developer.android.com/guide/topics/data/autobackup). This backup results in MoEngage SDK's identifiers being backed up and restored after re-install.This restoration of the identifier results in your data being corrupted and users not being reachable via push notifications.
+
+To ensure data is not corrupted after a backup is restored, opt out of MoEngage SDK's storage files. Refer to [Exclude MoEngage Storage File from the Auto-Backup](https://developers.moengage.com/hc/en-us/articles/4401999257236) section of the documentation to learn more about which files to exclude.

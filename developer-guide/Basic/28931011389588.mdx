@@ -1,0 +1,197 @@
+---
+title: "Push Callback 7.x.x"
+description: ""
+---
+
+## Push Click Callback
+
+MoEngage's Flutter plugin optionally provides a callback on push clicks.
+
+To register for the callback, call the **setPushClickCallbackHandler()** on the **MoEngageFlutter** object in your dart code.  
+This API takes a method as input with whose **typedef** is **PushClickCallbackHandler(PushCampaignData data).**
+
+<CodeGroup>
+```auto Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+void _onPushClick(PushCampaignData message) {
+    print("_onPushClick(): Push click callback from native to flutter. Payload " +
+            message.toString());
+  }
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+_moengagePlugin.setPushClickCallbackHandler(_onPushClick);
+```
+
+</CodeGroup>
+Make sure this callback is set as soon as the application is initialized. Preferably in the **initState()** of your application widget.
+
+Make sure the callback is set before calling the initialize **()** of the MoEngage Plugin.
+
+## Payload
+
+NotificationPayload received in the callback is an `PushCampaignData` instance with the following definition:
+
+<CodeGroup>
+```auto Dart
+class PushCampaignData {
+  Platforms platform;
+  AccountMeta accountMeta;
+  PushCampaign data;
+}
+```
+
+</CodeGroup>
+**platform** - Native platform from which callback is triggered. Possible values - **android**, **ios**. **data**- **PushCampaignData** object
+
+<CodeGroup>
+```auto Dart
+class PushCampaign {
+  bool isDefaultAction;
+  Map<String, dynamic> clickedAction;
+  Map<String, dynamic> payload;
+}
+```
+
+</CodeGroup>
+**isDefaultAction** - This key is present only for the Android Platform. It's a boolean value indicating if the user clicked on the default content or not. true if the user clicks on the default content else false.
+
+**clickedAction**- Action to be performed on notification click.
+
+Payload Structure for **clickedAction** Map
+
+<CodeGroup>
+```json JSON
+{
+  "clickedAction": {
+    "type": "navigation/customAction",
+    "payload": {
+      "type": "screenName/deepLink/richLanding",
+      "value": "",
+      "kvPair": {
+        "key1": "value1",
+        "key2": "value2",
+        ...
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+**clickedAction.type**- Type of click action. Possible values **navigation** and **customAction**. Currently, **customAction** is supported only on Android.  
+**clickAction.payload** - Action payload for the clicked action.  
+**clickedAction.payload.type** - Type of navigation action defined. Possible values **screenName**, **deepLink**,  and **richLanding**.
+
+Currently, in the case of iOS, rich landing and deep-link URLs are processed internally by the SDK and not passed in this callback; therefore possible value in the case of iOS is only **screenName**.  
+**clickAction.value** - value entered for navigation action or custom payload.  
+**clickAction.kvPair** - Custom key-value pair entered on the MoEngage Platform.  
+**payload** - Complete campaign payload.
+
+## Android Payload
+
+If the user clicks on the default content of the notification, the key-value pair and campaign payload can be found inside the **payload** key. If the user clicks on the action button or a push template action, the action payload would be found inside **clickedAction**.  
+You can use the **isDefaultAction** key to check whether the user clicked on the default content and then parse the payload accordingly.
+
+## iOS Payload
+
+In the case of iOS, you would always receive the key-value pairs for clicked action in the **clickedAction** property. Refer to this [link](https://developers.moengage.com/hc/en-us/articles/23448115571732-Custom-Notification-Handling#h_01H92ZQDWJWX6615STBKN7NRYJ) to knowing the iOS notification payload structure.
+
+## Self-Handled Push Click Android (Optional)
+
+By default, when the user clicks on a notification the SDK redirects the user to the defined Activity and passes the callback to the Application to load the specific flutter component.
+
+When the application is in the foreground it might seem like the application is reloading and not a very good user experience. You might just want to navigate the user to the specific flutter component. In order to handle the push click by yourself when the Application is in the foreground follow the below steps.
+
+While initializing the Flutter Plugin, enable foreground click callback in the ***PushConfig*** object.
+
+<CodeGroup>
+```auto Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+...
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(
+    "YOUR_APP_ID",
+    moEInitConfig: MoEInitConfig(
+    pushConfig: PushConfig(
+      shouldDeliverCallbackOnForegroundClick: true)
+  )
+);
+```
+
+</CodeGroup>
+**Android Configuration**
+
+Enable the **lifecycleAwareCallback** flag in the SDK initialization in the Application class as shown below.
+
+<CodeGroup>
+```kotlin Kotlin
+val moEngage = MoEngage.Builder(this, "YOUR_APP_ID")
+MoEInitializer.initialiseDefaultInstance(
+  context = applicationContext,
+  builder = moEngage,
+  lifecycleAwareCallbackEnabled = true
+)
+```
+
+```java Java
+MoEngage.Builder moEngage = new MoEngage.Builder(this, "YOUR_APP_ID");
+MoEInitializer.INSTANCE.initializeDefaultInstance(getApplicationContext(), moEngage, true);
+```
+
+</CodeGroup>
+You must call the ***initialize()*** whenever the Application comes to the foreground by adding **WidgetsBindingObserver** in the root widget of your app.
+
+So you would need to call **initialise()** in two places, one in **initState()** as usual and another time in **didChangeAppLifecycleState()** in the root widget of your app.
+
+<CodeGroup>
+```auto Dart
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+class _MyAppState extends State with WidgetsBindingObserver {
+  final MoEngageFlutter _moengagePlugin = MoEngageFlutter("<Your_APP_ID>");
+  @override
+  void initState() {
+    super.initState();
+    _moengagePlugin.initialise(); // Initialise MoEngage SDK
+    WidgetsBinding.instance.addObserver(this);
+  }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _moengagePlugin.initialise(); //Call initialise() again in on App Resume State
+    }
+  }
+}
+```
+
+</CodeGroup>
+Handle the redirection as shown below:
+
+<CodeGroup>
+```auto Dart
+void _onPushClick(PushCampaignData message) {
+    if (message.data.selfHandledPushRedirection) {
+	// Handle Redirection for Deeplinking or ScreenName
+    } else {
+	// Callback After SDK Handled Redirection
+    }
+}
+```
+
+</CodeGroup>
+Add the below Activity to your AndroidManifest.xml under **<application>** tag.
+
+<CodeGroup>
+```xml XML
+<manifest ...>
+    <application ...>
+        <activity
+            android:name="com.moengage.pushbase.activities.PushTracker"
+            android:launchMode="singleInstance"
+            tools:replace="android:launchMode" />
+    </application>
+<manifest/>
+```
+
+</CodeGroup>

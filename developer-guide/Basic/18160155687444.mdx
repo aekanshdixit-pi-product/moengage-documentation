@@ -1,0 +1,59 @@
+---
+title: "iOS Push Configuration 2.x.x"
+description: ""
+---
+
+# Configuring Push in iOS
+
+## APNS Certificate
+
+First, you will have to create an APNS certificate and upload to the dashboard to be able to send push notifications in iOS. Follow the steps below to do that :
+
+* [Create an APNS certificate](https://developers.moengage.com/hc/en-us/articles/4564208314516)
+* [Convert the resultant certificate to .pem format](https://developers.moengage.com/hc/en-us/articles/4564208314516)
+* [Upload .pem file to MoEngage Dashboard](https://developers.moengage.com/hc/en-us/articles/4564208314516)
+
+\*Follow the links on each step to complete it.
+
+## Push Registration
+
+After this you will have to register for push notification in the App by using **RegisterForPush** method of the plugin as shown below:
+
+<CodeGroup>
+``` c#
+using MoEngage;
+MoEngageClient.RegisterForPush();
+```
+
+</CodeGroup>
+
+## App Target Settings
+
+MoEngage plugin takes care of setting up the project while building it for the first time. But verify the Capability section has `Push Notifications` enabled along with `AppGroups` and `Background Mode` Settings as shown below:
+
+<Info>
+MoEngage plugin creates an app group for the app with format: `group.<app bundle id>.moengage`. Make sure the same is resolved with the Apple developer account here.
+</Info>
+
+## Notification Extensions
+
+<Info>
+This step is only required on first-time integration OR whenever you `Replace` the build. If you Build and Append hereafter, this step would not be required.
+</Info>
+
+MoEngagePlugin adds `MoENotificationServiceExtension` and `MoEPushTemplateExtension` target for supporting Rich Push and Push delivery tracking. Verify the **Capability** section has `Push Notifications` enabled along with `AppGroups` as shown below:
+
+![1e20120-Screenshot_2020-07-06_at_03.09.01.png](18160145053972)
+
+### Add MORichNotification framework
+
+In `MoENotificationServiceExtension` and `MoEPushTemplateExtension` target, add `MORichNotification` framework to `Frameworks and Libraries` section from Pods folder as shown below:
+
+<Warning>
+* Minimum deployment target of `MoENotificationServiceExtension` and `MoEPushTemplateExtension` targets should be set to `10.0`(or higher) and `12.0`(or higher) respectively.
+* Push Templates is supported from Package [Version 1.1.0] and above.
+</Warning>
+
+![dba3029-Screenshot_2020-07-06_at_03.09.14.png](18160136741908)
+
+![c3740c8-ServiceExtensionTarget.png](18160171412244)

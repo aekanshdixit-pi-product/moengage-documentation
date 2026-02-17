@@ -1,0 +1,179 @@
+---
+title: "Self Handled Cards"
+description: ""
+---
+
+Self-handled cards allow you to create Card Campaigns on the MoEngage Platform and display the cards anywhere inside the website. SDK provides APIs to fetch campaign data, which you can use to create your view for cards.
+
+# SDK Installation
+
+Pass the Cards config in the SDK [initialization](https://developers.moengage.com/hc/en-us/articles/360060713252-Web-SDK-Integration#01H8XHVYJZHY8Z7869YDF2CKJJ) script, as shown below.
+
+<CodeGroup>
+```javascript JavaScript
+Moengage = moe({
+    app_id: moeAppID,
+    debug_logs: 0,
+    cards: {
+      enable: true
+    } 
+  });
+```
+
+</CodeGroup>
+Cards is a separate module and it gets loaded asynchronously with core SDK module. So it may not be available immediately on the page load.
+
+Please use this event listener and call the Cards API once it has been initialised:
+
+<CodeGroup>
+```javascript JavaScript
+window.addEventListener('MOE_LIFECYCLE', event => {
+  if (event.detail.name === 'CARDS_INITIALIZED') {
+    // call the cards APIs here
+  }
+});
+```
+
+</CodeGroup>
+If you are using npm package, then use this helper function:
+
+<CodeGroup>
+```javascript JavaScript
+moengage.on_cards_loaded().then(function() {
+  // call the cards APIs here
+})
+```
+
+</CodeGroup>
+## Notify on Inbox Open
+
+Whenever you open the inbox, you can notify Moengage as shown below to sync the data and track the inbox open event.
+
+<CodeGroup>
+```javascript JavaScript
+<script type="text/javascript">
+   Moengage.cards.inboxOpened();
+</script>
+```
+
+</CodeGroup>
+## Fetch Categories
+
+To fetch all the categories for which cards are configured, use the getCardCategories() API.
+
+<CodeGroup>
+```javascript JavaScript
+<script type="text/javascript">
+   Moengage.cards.getCardCategories().then(function(categories) {
+   	console.log(categories);
+   })
+</script>
+```
+
+</CodeGroup>
+Additionally, you can have an **All** category which would be a superset of all the categories. Use the isAllCategoryEnabled() API.
+
+<CodeGroup>
+```javascript JavaScript
+<script type="text/javascript">
+   Moengage.cards.isAllCategoryEnabled().then(function(enabled) {
+   	console.log(enabled); // boolean
+   })
+</script>
+```
+
+</CodeGroup>
+## Fetch Cards for Categories
+
+To fetch the cards eligible for display for a specific category, use the getCardsForCategory(categoryName) API.
+
+<CodeGroup>
+```javascript JavaScript
+<script type="text/javascript">
+   Moengage.cards.getCardsForCategory('Announcement').then(function(cards) {
+   	console.log(cards); // list of cards
+   })
+</script>
+```
+
+</CodeGroup>
+To fetch all the cards eligible for display irrespective of the category, pass the category 'All' as shown below
+
+<CodeGroup>
+```javascript JavaScript
+<script type="text/javascript">
+   Moengage.cards.getCardsForCategory('All').then(function(cards) {
+   	console.log(cards); // list of cards
+   })
+</script>
+```
+
+</CodeGroup>
+## Fetch Card Info
+
+Instead of using separate APIs to fetch Cards and categories, you can use the *getCardsInfo(cardID)*API to fetch all the information in one go.
+
+<CodeGroup>
+```javascript JavaScript
+<script type="text/javascript">
+   Moengage.cards.getCardsInfo('12345').then(function(card) {
+   	console.log(card); // card detail
+   })
+</script>
+```
+
+</CodeGroup>
+## Refresh Cards from the Server
+
+Use the fetchCards() API to refresh cards from the MoEngage server if required.
+
+<CodeGroup>
+```javascript JavaScript
+<script type="text/javascript">
+   Moengage.cards.fetchCards().then(function(cards) {
+   	console.log(cards); // card detail
+   })
+</script>
+```
+
+</CodeGroup>
+## Track Statistics for Cards
+
+Since the UI/display of the cards is controlled by the application, to track the statistics on display and click, we need the application to notify the SDK.
+
+### Impressions
+
+Call the *cardShown(cardID)*API when a specific card is visible on the screen.
+
+<CodeGroup>
+```javascript JavaScript
+<script type="text/javascript">
+   Moengage.cards.cardShown('12345')
+</script>
+```
+
+</CodeGroup>
+### Clicks
+
+Whenever a user clicks on a card, call the *cardClicked(cardID, widgetID)* API and pass the card object widget identifier for the UI element clicked. 
+
+<CodeGroup>
+```javascript JavaScript
+<script type="text/javascript">
+   Moengage.cards.cardClicked('12345', 123)
+</script>
+```
+
+</CodeGroup>
+### Delete Card
+
+Call the *deleteCard(cardID)* API to delete a card.
+
+<CodeGroup>
+```javascript JavaScript
+<script type="text/javascript">
+   Moengage.cards.deleteCard('12345')
+</script>
+```
+
+</CodeGroup>

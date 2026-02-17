@@ -1,0 +1,176 @@
+---
+title: "Delete User"
+description: ""
+---
+
+# Overview
+
+This API can be used to delete users in MoEngage. Users cannot be retrieved once deleted. Users deleted (hard delete) using this API will be deleted after a default buffer of 24 hours. During this buffer period, the user will still be active in MoEngage and will be visible in Segments, Analytics, and Campaigns. Users can be updated in the buffer period.  
+After the buffer elapses, the user is hard-deleted from MoEngage. If a user with the same unique identifiers as the deleted one is created in MoEngage (through APIs or imports), they will be created again in MoEngage.
+
+![UserDelete_Process.png](21390828420116)
+
+# API Endpoint
+
+Method: **POST**
+
+<CodeGroup>
+```auto API Endpoint
+https://api-0X.moengage.com/v1/customer/delete
+```
+
+</CodeGroup>
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API requests will be authenticated through Basic Authentication.
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="}
+
+The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Parameters
+
+| Key | Required | Data Type | Description |
+| --- | --- | --- | --- |
+| app\_id | Yes | String | This is your MoEngage account's Workspace ID that has to be passed along with the request.   You can find your MoEngage Workspace ID at **Settings** -> **Account** -> **APIs -> Workspace ID**. |
+# Request Headers
+
+| Key | Sample Values | Description |
+| --- | --- | --- |
+| X-Forwarded-For | Header Value Format: <IP Address> | The 'X-Forwarded-For' header is used to specify the IP address of the client that made the request. This header may be added by proxy servers or load balancers. The header value must contain the IP address of the original client that initiated the request. Multiple IP addresses may be specified in the header value, separated by commas. |
+| Content-Type | application/json | Set the Content-Type header to application/json for using the Bulk Update Preferences API. |
+| Authorization | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#h_01GM2DM5ABJ8NZFR0MBBNMQQK1). |
+# Request Body
+
+| Key | Required | Data Type | Description |
+| --- | --- | --- | --- |
+| identity\_type | Yes | String | This field specifies the identifier type. Identifier types can either be customer\_id (ID field in the User Profile) or moengage\_id (the MoEngageID of the user in the User Profile).   Allowed Values: moengage\_id, customer\_id   **Example**: "identity\_type": "moengage\_id" |
+| identity\_value | Yes | String | This field specifies the unique identifier that identifies the user.   **Example**: "identity\_value": "6416d1a318r98264512c0f89" |
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| status | String | This field contains the status of the request and specifies whether the request was successful.    **Supported Values**: success, fail   **Example**: "status": "success" |
+| message | String | This field contains information about whether the response is being processed, the user is deleted, and so on.   **Example**: "message": "Your request has been accepted and will be processed soon." |
+| error | String | This field is present in the response only in the case of errors and contains the error message.   Structure:   "error": {   "message": "<Error Message>",   "type": "<Error Type>",   "request\_id": "<Request ID>"   }   message - This field contains the error message and describes the reason for the error.   type - This field contains the type of error, such as Authentication Required, Invalid Params, and so on.   request\_id - This field contains the request-id that identifies the request uniquely. |
+| title | String | This field is present in the response in the case of 429 and 5xx errors and contains the type of error. |
+| description | String | This field is present in the response in the case of 429 and 5xx errors and contains the error description. |
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters APP KEY, user\_id, etc are missing from the request or when the provided params are invalid. |
+| 401 | Authorization Failure | This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header. |
+| 403 | Account Blocked | This response is returned when your MoEngage account has been blocked or suspended. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+# Rate Limit
+
+The rate limit is 1 user per payload per request. You can run 5000 requests per minute.
+
+# Sample cURL Request
+
+<CodeGroup>
+```auto cURL
+ curl --location 'https://api-0X.moengage.com/v1/customer/delete?app_id={{appId}}' \
+--header 'X-Forwarded-For: 34.249.175.81' \
+--header 'Content-Type: application/json' \
+--header {"Authorization": "Basic Base64_ENCODED_APPKEY_APIKEY"} \
+--data '{
+    "identity_type": "moengage_id/customer_id",
+    "identity_value": "{{moengage_user_id_or_uid_that_you_want_to_delete}}"
+}'
+```
+
+</CodeGroup>
+# Sample Response
+
+<CodeGroup>
+```auto 200
+Success Response
+{
+    "status": "success",
+    "message": "Your request has been accepted and will be processed soon."
+}
+```
+
+```auto 400
+Sample Response for Bad Requests
+{
+    "status": "fail",
+    "error": {
+        "message": "User doesn't exists with customer id b3XSJ7iXvqlCcrYGd5SB5m2m93eG9-9e9HPXd9GtufHvHueWm-mnuiAxUk7DGI1MKg==",
+        "type": "Not Found",
+        "request_id": "bYvNTyWb"
+    }
+}
+```
+
+```auto 401
+Sample Response for Authorization Errors
+{
+    "status": "fail",
+    "error": {
+        "message": "App Secret key mismatch. Please login to the dashboard to verify key",
+        "type": "Authentication required",
+        "request_id": "AJCBfqoj"
+    }
+}
+```
+
+```auto 403
+Sample Response for Blocked/Suspended Accounts
+{
+    "status": "fail",
+    "error": {
+        "message": "given app_id is invalid/blocked",
+        "type": "InvalidParams",
+        "request_id": "bYvNTyWb"
+    }
+}
+```
+
+```auto 429
+Sample Response for Rate Limit Breach{  
+     title="Rate-Limit Reached", 
+     description="Exceeded rate limit for this url"
+}
+```
+
+```auto 500
+Sample Response for Unknown Errors
+{ 
+    title="Internal Error", 
+    description="Please Contact Moengage Team" 
+}
+```
+
+</CodeGroup>
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/request/3182294-b591486a-58b1-4920-ad5f-db6dd5da92f1) to view it in Postman.
+
+# FAQs
+
+1. **Can you reverse a delete operation?**
+
+There are no rollback mechanisms for undoing the delete action. Once the delete request is processed, the user is deleted from MoEngage.
+2. **Are the events of the users also deleted as well?**
+
+No, the events corresponding to a user are not specifically deleted; only the user and the user attributes are deleted when the delete API request is processed.
+
+However, once the user is deleted from MoEngage, the events corresponding to the user will not be accessible, i.e., if the event is used in a segmentation query the deleted user who had executed the event will not be added to the calculated segment or campaign.
+3. **How do you check if a user has been deleted from MoEngage?**
+
+Navigate to **Segment** -> **Create Segment** on the MoEngage Dashboard. Type the unique identifier for the deleted user (the unique identifier could be the ID, MoEngage ID, phone number, email, or any unique identifer that you've configured). If the user has been deleted (hard delete), you will not be able to get any search results. For more information about searching users, refer to [Search User in Segmentation](https://help.moengage.com/hc/en-us/articles/206169646-Create-Segments#01G2PMG9GXFXRYJQ5JRJHC4V60).

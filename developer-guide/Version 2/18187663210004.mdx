@@ -1,0 +1,242 @@
+---
+title: "Update Email Template API"
+description: ""
+---
+
+This API can be used to update an email template by specifying its external template id. You can specify whether the updated version of the template can be used in active campaigns in the request.
+
+# API Endpoint
+
+<CodeGroup>
+``` API Endpoint
+PUT https://api-0X.moengage.com/v1.0/custom-templates/email
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization":"Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY="}
+
+You can obtain the username and password details from the MoEngage Dashboard.
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Campaign report/Business events/Custom templates** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Content-Type | Required | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Required | {"Authorization": "Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#01GT0WSQVV011QR4NX5BNBB9WC). |
+
+# Request Body
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| external\_template\_id | Required | String | This field contains the unique identifier that is generated during the creation of the template. |
+| update\_campaigns | Optional | Boolean | This field contains a flag that is used to update all the campaigns that are currently using the template being updated to the newer version(that is being updated in this request). The default value for this flag is false.   When the update\_campaigns flag is true, all the campaigns running with this template will get updated to the latest version of the template, and when it is false, the new version of the template will be created, but there will be no change made to the template used in the existing campaigns. |
+| update\_latest\_version | Optional | Boolean | If the value is "true," this API does not create a new version of the template but only updates its contents. |
+| basic\_details | Required | JSON Object | This field contains the basic details of the email template, such as the subject, email content, preview text, sender name, thumbnail URL, and attachments. For more information, refer to [Basic Details](https://developers.moengage.com/hc/en-us/articles/18187641060244#BasicDetails). |
+| meta\_info | Required | JSON Object | This field contains information about the template being created, such as the name of the template and the creator's details.   **Structure of meta\_info**:   "meta\_info": {       "template\_name": "<template name>",       "updated\_by": "<email of the person updating the template>",       "template\_version": "<template version>"   }   The meta\_info object contains the following fields:   * template\_name - This field contains the name of the template being updated. * updated\_by - This field contains the email id of the person who created the template. * template\_version - This field contains the version of the template and is optional.   All the fields in the meta\_info are Strings.   **Note:** The fields locale, variation, and group\_id are non-editable. |
+
+Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| external\_template\_id | String | This field contains the unique template id corresponding to a successful template updation request. |
+| error | JSON Object | This field contains the reason for the request's failure.   Structure:    "error": {       "code": "<error\_code>",        "message": "<error\_message>",        "details": [],       "request\_id": "<unique identifier for the request>   }   The error object contains the following fields:   * code - This field contains the error code that provides a brief explanation of the error and is a String. For example, 400 - Bad Request, 401- Authentication required, and so on. This field is present in the response only in the case of errors. * message - This field describes why the request has failed and is a String. For example, in the case of a duplicate request (400- Bad Request), the following message will be present: 'Duplicate - template\_id and template\_version'. * details - This is a List of the error details objects. Each object contains the following information:              {                 "code": "<Descriptive Error Code>",                "target": "<Denotes the field causing the issue or a brief description of the error message in some cases >",                 "message": "<Descriptive Error Message>"               }   * request\_id -  This field contains the unique id pertaining to the request.   For example, in the case of a 400 request where the request is trying to update a template using an invalid template-id, the following error object is returned.   {   "error": {   "code": "400 Bad Request",   "message": "Invalid template id",   "details": [   {   "code": "Missing Value",   "target": "<template\_id>",   "message": "<template\_id>is invalid template id"    }   ],   "request\_id": "cLCcgLQj"   } |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request or when the provided parameters are invalid. |
+| 401 | Authorization Failure | This response is returned when the authorization parameters are missing in the HTTP Auth Header. |
+| 415 | Unsupported File Type | This response is returned when the header Content-Type is not provided/is not supported. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit, or the number of templates has exceeded the allowed quota per channel. |
+
+# Rate Limit
+
+The rate limit is 100 RPM.
+
+# Sample cURL Request
+
+<CodeGroup>
+``` Sample cURL
+curl --location --request PUT 'http://core.campaigns.api.moeinternal.com/v1.0/custom-templates/email' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U==' \
+--data-raw '{
+     "basic_details": {
+         "email_content": "<!DOCTYPE html><html><head><title>Sample Webpage</title></head><body><h1>Welcome to My Sample Webpage</h1><p>This is a small example of an HTML webpage.</p><p>Below is an unordered list:</p><ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul><p>Here'\''s an image:</p><img src=\"https://example.com/sample-image.jpg\" alt=\"Sample Image\"><p>Visit our <a href=\"https://www.example.com\">website</a> for more information.</p></body></html>",
+         "subject": "Test subject",
+         "attachments": [],
+         "thumbnail_url": "https://img.freepik.com/free-vector/bright-yellow-sunflower-design-decorations_1308-130330.jpg",
+         "sender_name": "Test sender",
+         "preview_text": "Sample preview text"
+     },
+     "meta_info": {
+         "template_name": "test_template",
+         "updated_by": "user1@moengage.com",
+         "template_version": "2.0"
+     },
+     "update_campaigns": false,
+     "external_template_id": "245952d4-4cdd-4d0d-9690-b3fae2dc9433"
+ }'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<Tabs>
+  <Tab title="200">
+    ```
+    Sample Response for a successful request
+    {
+       "external_template_id": "eca024b7-a8ea-4f31-9154-5b80c85d18a9"
+    }
+    ```
+  </Tab>
+  <Tab title="400">
+    ```
+    Sample Response for Invalid temnplate id
+    {
+    "error": {
+       "code": "400 Bad Request",
+        "message": "Invalid template id",
+        "details": [
+           {
+              "code": "MissingValue",
+              "target": "9925c8",
+              "message": "9925c8 is invalid template id."
+            }
+         ],
+         "request_id": "BTkUaYgU"
+    }
+    }
+    ```
+
+    ```
+    Sample Response for Authentication/Authorization failure
+    {
+       "title": "Authentication required",
+       "description": "MOE-APPKEY missing in Authentication Header"
+    }
+    ```
+
+    ```
+    Sample Response for Unsupported Media Type
+    {
+       "title": "Unsupported media type",
+       "description": "Content type is not supported"
+    }
+    ```
+
+    ```
+    Sample Response for Rate Limit Breach
+    {
+        "response_id": "OUUkHvcn",
+        "type": "custom_template",
+        "error": {
+            "code": "Too Many Requests",
+            "message": "API rate limit breached. Current limit: n/m mins"
+        }
+    }
+    Sample Response for Template Limit Breach
+    {
+       "error": {
+           "code": "400 Bad Request",
+           "message": "Maximum Template limit exceeded",
+           "details": [
+               {
+                   "code": "NotSupported",
+                   "target": "Maximum Template limit exceeded",
+                   "message": "You have already created maximum allowed template allowed for client"
+               }
+           ],
+           "request_id": "eLeZXIlW"
+       }
+    }
+    ```
+
+    ```
+
+    Sample Response for Invalid request format
+    {
+        "response_id": "jyNoAPhO",
+        "type": "custom_segment",
+        "error": {
+            "code": "Invalid request",
+            "message": "Invalid request format. Please check the documentation to ensure that the request has been formed correctly."
+        }
+    }
+    Sample Response for Invalid db-name/app-key
+    {
+        "response_id": "FkrgtCVr",
+        "type": "custom_segment",
+        "error": {
+            "code": "Request Error",
+            "message": "MoEngage Client not found. Please check values for headers - MOE-APPKEY or MOE-DBNAME"
+        }
+    }
+    Sample Response for when there are HTML characters that are not allowed or only whitespaces in custom-segment name present in the request
+        "response_id": "XtVyUnlJ",
+        "type": "custom_segment",
+        "error": {
+            "code": "Invalid Request",
+            "message": "Invalid request. Please ensure that the filters are correct and the custom-segment name doesn't contain HTML characters/only whitespaces."
+        }
+    }
+    ```
+
+    ```
+
+    Sample Response for when a forbidden operation is present in the request
+    {
+        "response_id": "xuLAWeCN",
+        "type": "custom_segment",
+        "error": {
+            "code": "Forbidden operation",
+            "message": "Update isn't supported for file-segments, internally created custom-segments, custom-segments imported from Analyze and archived custom-segments."
+        }
+    }
+    ```
+
+    ```
+
+    Sample Response for when the custom-segment id used in the request doesn’t exist
+    {
+        "response_id": "UAMMfmuU",
+        "type": "custom_segment",
+        "error": {
+            "code": "Entity Not Found",
+            "message": "Custom segment not found with the given id: 638a051185b6b50a018cacc"
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="401">
+    ```
+    Sample Response for server side errors
+    {
+    
+       "title": "Internal Server Error",
+       "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-c13b39d2-6abb-45a2-9f9f-312e52a65791?action=share&creator=3182294) to view it in Postman.

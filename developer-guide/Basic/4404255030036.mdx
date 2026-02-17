@@ -1,0 +1,96 @@
+---
+title: "Android Push Configuration"
+description: ""
+---
+
+# Basic Setup
+
+Follow the basic setup outlined in this section to enable push notifications on an Android device using MoEngage.
+
+* **FCM Setup on MoEngage Dashboard -** FCM Authentication is the method to enable sending push notifications to your app installed on Android devices. Use the methods mentioned in [this article](https://developers.moengage.com/hc/en-us/articles/16909296490644-FCM-Authentication) to authenticate MoEngage to access Firebase services.
+* **Adding metadata for push notification -** Set the small icon and large icon drawable and other options to handle push notifications using the methods available in [this article](https://developers.moengage.com/hc/en-us/articles/20128522113556-Push-Configuration-For-Hybrid-Applications#01GRNPZWD99YXM7KBVC0458YFM).
+* **Android Notification Runtime Permissions** - When the application is running on Android 13 to show notifications to the user, applications would need to request the user for notification permission. Refer to the methods available in [this article](https://developers.moengage.com/hc/en-us/articles/13065189737748-Android-Notification-Runtime-Permissions) to handle permission requests.
+* **Push Registration and Receiving** - To use Push Notification in your React Native application, you must configure Firebase. Configuring Firebase steps will depend on how you want to integrate it. MoEngage recommends leaving the push handling to MoEngage SDK, as the best practices are properly integrated. You can also handle the push at your app level. In any case, look at the following section that applies to you and finish the integration steps.
+
+<Tabs>
+  <Tab title="Let MoEngage handle Push(Recommended)">
+    **Add messaging service**  
+    You must add the messaging service to the Manifest file for MoEngage SDK to show the notifications. Refer to this document [here](https://developers.moengage.com/hc/en-us/articles/5339876445972-Push-token-registration-and-Display#01H8KNNGEZM9XEGDBD3V9GF4VS).
+
+    **Callback on token registration (optional)**   
+    To get a callback whenever a new token is registered or refreshed, refer to the method [here](https://developers.moengage.com/hc/en-us/articles/5339876445972-Configuring-FCM#01H8KNNGF1A4AA16J7P6YBKS9T).
+
+    **Notification Clicked Callback** 
+
+    To receive a callback whenever a push is clicked and for custom handling redirection, use the method in [this article](https://developers.moengage.com/hc/en-us/articles/7778383683732-Push-Callback#h_01H18VJ9JQDS1ZSN18P1AHY96A).
+  </Tab>
+  <Tab title="You handle Push via Android Native">
+    **How to opt out of MoEngage Registration?**  
+    The MoEngage SDK attempts to register for a push token; since your application handles push, you need to opt out of SDK's token registration using the method in [this article](https://developers.moengage.com/hc/en-us/articles/5339876445972-Configuring-FCM#01H8KNNGEZE3A44NT7STR59R43).
+
+    **Pass the Push Token To MoEngage SDK** - After receiving the push token from FCM, use the method in [this article](https://developers.moengage.com/hc/en-us/articles/5339876445972-Configuring-FCM#01H8KNNGEZ7TQF1458VQ0SY8N4) to pass the Push Token to the MoEngage SDK to set it in the MoEngage platform.
+
+    **Passing the Push payload to the MoEngage SDK** - After receiving the push payload on the app, use the method in [this article](https://developers.moengage.com/hc/en-us/articles/5339876445972-Configuring-FCM#01H8KNNGEZSEEMVV9GS2AB6RQQ) to send out push notifications to the device.
+  </Tab>
+  <Tab title="You handle Push via React Native (Not Recommended)">
+    
+<Warning>
+MoEngage recommends using the Android native APIs to pass the push payload to the MoEngage SDK instead of the React-Native/Javascript APIs. React-Native Engine might not get initialized if the application is killed or if the notification is not sent at a high priority.
+</Warning>
+
+    * [Pass the Push Token To MoEngage SDK](https://developers.moengage.com/hc/en-us/articles/4404255030036-Android-Push-Configuration#01GP36G27XEQ2SP4R4104DT4KJ)
+    * [Pass the Push payload to the MoEngage SDK](https://developers.moengage.com/hc/en-us/articles/4404255030036-Android-Push-Configuration#01GP36G27XAD9VJE77WN4KZWPJ)
+    * [Callbacks and customizations](https://developers.moengage.com/hc/en-us/articles/4404255030036-Android-Push-Configuration#01GP36G27X3S35CR263TXG3GNW)
+
+    **Notification Clicked Callback -** MoEngage's React Native plugin optionally provides a callback on push clicks with the method in [this article](https://developers.moengage.com/hc/en-us/articles/7778383683732-Push-Callback).
+  </Tab>
+</Tabs>
+
+# React-Native methods for Push
+
+*You can skip this section completely if you let MoEngage handle push token registration and display or use Android Native methods to pass tokens and payload to MoEngage SDKs.*
+
+Read on if you want to use React Native methods of MoEngage SDK to pass tokens and payload to MoEngage SDKs.
+
+<Warning>
+MoEngage recommends using the Android native APIs to pass the push payload to the MoEngage SDK instead of the React-Native/Javascript APIs. React-Native Engine might not get initialized if the application is killed or if the notification is not sent at a high priority.
+</Warning>
+
+ 
+
+## Passing Push Token
+
+<CodeGroup>
+```javascript JavaScript
+const ReactMoE = require('react-native-moengage')
+// pass the push token as a string
+ReactMoE.passFcmPushToken("")
+```
+
+</CodeGroup>
+
+## Passing Push Payload
+
+<CodeGroup>
+```javascript JavaScript
+const ReactMoE = require('react-native-moengage')
+// pass the push payload as a JSONObject from FCM. Note only the data payload needs to be passed to SDK.
+ReactMoE.passFcmPushPayload({})
+```
+
+</CodeGroup>
+
+<Warning>
+MoEngage recommends that you use the Android native APIs for passing the push payload to the MoEngage SDK instead of the React-Native/Javascript APIs. React-Native Engine might not get initialized if the application is killed or if the notification is not sent at a high priority.
+</Warning>
+
+## Customizing Push notification
+
+If required the application can customize the behavior of notifications by using Native Android code (Java/Kotlin). To learn more about the customization refer to the [Advanced Push Configuration](https://developers.moengage.com/hc/en-us/articles/4403449633428) documentation.Instead of extending ***PushMessageListener*** as mentioned in the above document extend ***PluginPushCallback**.*
+
+Refer to the below documentation for Push Amp+, Push Templates, and Geofence.
+
+* [Push Amplification](https://developers.moengage.com/hc/en-us/articles/4650416409876-Push-Amplification)
+* [Push Amp Plus](https://developers.moengage.com/hc/en-us/articles/4403458168468)
+* [Push Templates](https://developers.moengage.com/hc/en-us/articles/4403408116884)
+* [GeoFence Push](https://developers.moengage.com/hc/en-us/articles/4403443036564)

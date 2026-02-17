@@ -1,0 +1,86 @@
+---
+title: "Android Push Configuration 6.0.0"
+description: ""
+---
+
+# Basic setup
+
+Follow the basic setup outlined in this section to enable push notifications on an Android device using MoEngage.
+
+* **FCM Setup on MoEngage Dashboard -** FCM Authentication is the method to enable sending push notifications to your app installed on Android devices. Use the methods mentioned in [this article](https://developers.moengage.com/hc/en-us/articles/16909296490644-FCM-Authentication) to authenticate MoEngage to access Firebase services.
+* **Adding metadata for push notification -** Set the small icon and large icon drawable and other options to handle push notifications using the methods available in [this article](https://developers.moengage.com/hc/en-us/articles/360061216011-Push-Configuration#01GRNPZWD99YXM7KBVC0458YFM).
+* **Android Notification Runtime Permissions** - When the application is running on Android 13 to show notifications to the user, applications would need to request the user for notification permission. Refer to the methods available in [this article](https://developers.moengage.com/hc/en-us/articles/13035046752148-Android-Notification-Runtime-Permissions) to handle permission requests.
+* **Push Registration and Receiving** - To use Push Notification in your Flutter application, you need to configure Firebase. Depending on your requirements, refer to one of the below methods to enable Push Registration and Receiving.
+
+<Tabs>
+  <Tab title="Let MoEngage handle Push(Recommended)">
+    **Add messaging service**  
+    You must add the messaging service to the Manifest file for MoEngage SDK to show the notifications. Refer to this document [here](https://developers.moengage.com/hc/en-us/articles/5339876445972-Push-token-registration-and-Display#01H8KNNGEZM9XEGDBD3V9GF4VS).
+
+    **Callback on token registration(optional)**   
+    To get an optional callback whenever a new token is registered or the token is refreshed, refer to the method [here](https://developers.moengage.com/hc/en-us/articles/5339876445972-Configuring-FCM#01H8KNNGF1A4AA16J7P6YBKS9T).
+  </Tab>
+  <Tab title="You handle Push via Android Native">
+    **How to opt out of MoEngage Registration?**  
+    The MoEngage SDK attempts to register for a push token; since your application handles push, you need to opt out of SDK's token registration using the method in [this article](https://developers.moengage.com/hc/en-us/articles/5339876445972-Configuring-FCM#01H8KNNGEZE3A44NT7STR59R43).
+
+    **Pass the Push Token To MoEngage SDK** - After receiving the push token from FCM, use the method in [this article](https://developers.moengage.com/hc/en-us/articles/5339876445972-Configuring-FCM#01H8KNNGEZ7TQF1458VQ0SY8N4) to pass the Push Token to the MoEngage SDK to set it in the MoEngage platform.
+
+    **Passing the Push payload to the MoEngage SDK** - After receiving the push payload on the app, use the method in [this article](https://developers.moengage.com/hc/en-us/articles/5339876445972-Configuring-FCM#01H8KNNGEZSEEMVV9GS2AB6RQQ) to send out push notifications to the device.
+
+    **Notification Clicked Callback** - To receive a callback whenever a push is clicked and for custom handling redirection, use the method in [this article](https://developers.moengage.com/hc/en-us/articles/4403449633428-Callbacks-and-Customisation#01H8KNSHS5QY1D6F13771609H2).
+  </Tab>
+  <Tab title="You handle Push via Flutter (Not Recommended)">
+    
+<Warning>
+We recommend you use the Android native APIs to pass the push payload to the MoEngage SDK instead of the Flutter/Dart APIs. Flutter Engine might not get initialized if the application is in the killed state, which will lead to poor push reachability or delivery.
+</Warning>
+
+    * [Pass the Push Token To MoEngage SDK](https://developers.moengage.com/hc/en-us/articles/4404315005076-Android-Push-Configuration#01GP36V6V5RSG34J4S5MJ5HGD5)
+    * [Pass the Push payload to the MoEngage SDK](https://developers.moengage.com/hc/en-us/articles/4404315005076-Android-Push-Configuration#01GP36V6V5KN7711J4DMBHB8S9)
+    * [Callbacks and customizations](https://developers.moengage.com/hc/en-us/articles/4404315005076-Android-Push-Configuration#01GP36G27X3S35CR263TXG3GNW)
+
+    **Notification Clicked Callback -** MoEngage's Flutter plugin optionally provides a callback on push clicks with the method in [this article](https://developers.moengage.com/hc/en-us/articles/11652033989396-Push-Callback).
+  </Tab>
+  <Tab title="Tab 4">
+
+  </Tab>
+</Tabs>
+
+# Flutter APIs for Push
+
+You can skip this section completely if you let MoEngage handle push token registration and display or use Android Native methods to pass tokens and payload to MoEngage SDKs. 
+
+Read on if you want to use Flutter APIs of MoEngage SDK to pass tokens and payload to MoEngage SDKs.
+
+<Warning>
+We recommend you use the Android native APIs to pass the push payload to the MoEngage SDK instead of the Flutter/Dart APIs. Flutter Engine might not get initialized if the application is in the killed state, which will lead to poor push reachability or delivery.
+</Warning>
+
+## Passing Push Token
+
+<CodeGroup>
+``` Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+_moengagePlugin.initialise();
+_moengagePlugin.passFCMPushToken();
+```
+
+</CodeGroup>
+
+## Passing Push Payload
+
+<CodeGroup>
+``` Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+_moengagePlugin.initialise();
+_moengagePlugin.passFCMPushPayload();
+```
+
+</CodeGroup>
+
+<Warning>
+We highly recommend you use the Android native APIs for passing the push payload to the MoEngage SDK instead of the Flutter/Dart APIs. Flutter Engine might not get initialized if the application is in the killed state, which will lead to poor push reachability or delivery.
+</Warning>

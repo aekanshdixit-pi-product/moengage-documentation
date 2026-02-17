@@ -1,0 +1,305 @@
+---
+title: "Self Handled Cards"
+description: ""
+---
+
+Self-handled cards give you the flexibility of creating Card Campaigns on the MoEngage Platform and displaying the cards anywhere inside the application. SDK provides APIs to fetch the campaign's data using which you can create your own view for cards.
+
+![Download](https://img.shields.io/pub/v/moengage_cards.svg)
+
+# SDK Installation
+
+# Installation
+
+To add MoEngage Cards SDK to your application, edit the application's **pubspec.yaml** file and add the below dependency to it:
+
+<CodeGroup>
+```yaml pubspec.yaml
+dependencies:
+  moengage_cards: $latestVersion
+```
+
+</CodeGroup>
+
+***$latestVersion*** refers to the latest version of the plugin.
+
+Post including the dependency, run ***flutter pub get*** command in the terminal to install the dependency.
+
+After installing the plugin, use the following platform-specific configuration.
+
+<Info>
+This plugin is dependent on **moengage\_flutter** plugin. Make sure you have installed the **moengage\_flutter** plugin as well. Refer to the [documentation](https://developers.moengage.com/hc/en-us/articles/4404304782356) for the same.
+</Info>
+
+# Android Installation
+
+![](https://maven-badges.herokuapp.com/maven-central/com.moengage/cards-core/badge.svg)
+
+Add the following dependency in the *app/build.gradle* file.
+
+<CodeGroup>
+``` build.gradle
+dependencies {
+    ...
+  implementation("com.moengage:cards-core:$sdkVersion")
+}
+```
+
+</CodeGroup>
+
+replace **$sdkVersion** with the appropriate SDK version. Minimum supported version 1.5.0.
+
+# iOS Installation
+
+In the case of iOS, the native dependency is part of the Cards flutter SDK itself, so there is no need to include any additional dependency for supporting Cards.
+
+# Initialize Cards
+
+MoEngage Cards module can be initialized in the widget where the cards module is being used. 
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+cards.initialize();
+```
+
+</CodeGroup>
+
+Example
+
+<CodeGroup>
+``` Dart
+// Use Named Import otherwise MoEngage classes might be collided with classed in flutter/material.dart
+ import 'package:moengage_cards/moengage_cards.dart' as moe;
+class CardsScreen extends StatefulWidget {
+  const CardsScreen({Key? key}) : super(key: key);
+  @override
+  State<CardsScreen> createState() => _CardsScreenState();
+}
+class _CardsScreenState extends State<CardsScreen>{
+moe.MoEngageCards cards = moe.MoEngageCards("MOE_Workspace_ID");
+  @override
+  void initState() {
+    super.initState();
+    cards.initialize();
+  }
+}
+```
+
+</CodeGroup>
+
+# Get Cards Info
+
+Fetch All the cards campaign data that are eligible to show for the particular user which returns data as ***CardsInfo***. For a complete list of data models please refer to the [API documentation](https://pub.dev/documentation/moengage_cards/).
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+CardsInfo cardsInfo = await cards.getCardsInfo();
+```
+
+</CodeGroup>
+
+## Widget and Widget Id Mapping
+
+### Basic Card/Illustration Card
+
+| Widget Id | Widget Type | Widget Information |
+| --- | --- | --- |
+| 0 | Image (WidgetType.IMAGE) | Image widget in the card. |
+| 1 | Text (WidgetType.TEXT) | Header text for the card. |
+| 2 | Text (WidgetType.TEXT) | Message text for the card. |
+| 3 | Button (WidgetType.Button) | Call to action(CTA) for the card. |
+
+# Refresh Cards
+
+Use the ***refreshCards****()*** API to refresh cards on the User Demand. This API can be used to mimic Pull to refresh behavior.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+cards.refreshCards((data) {  if (data?.hasUpdates == true) {    // Update UI  }});
+```
+
+</CodeGroup>
+
+# Fetch Cards
+
+Use the ***fetchCards****()*** API to fetch cards for the User. This API can be used to sync latest cards data.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+cards.fetchCards().then((data) {  // Update UI});
+```
+
+</CodeGroup>
+
+# Inbox Loaded
+
+You can show the cards on a separate screen or a section of the screen. When the cards screen/section is loaded call ***onCardsSectionLoaded()***.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+cards.onCardsSectionLoaded((data) {
+  if (data?.hasUpdates == true) {
+    // Refresh UI
+  }
+});
+```
+
+</CodeGroup>
+
+# Inbox UnLoaded
+
+Call ***onCardSectionUnloaded()*** when the screen/section is no longer visible or going to the background.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+  cards.onCardsSectionUnLoaded();
+```
+
+</CodeGroup>
+
+# Fetch Categories
+
+To fetch all the categories for which cards are configured, use the ***getCardsCategories()*** API.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+List<String> categories = await cards.getCardsCategories();
+```
+
+</CodeGroup>
+
+# All Cards Categories Enabled
+
+To fetch all the categories for which cards are configured, use the ***isAllCategoryEnabled()*** API.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID); 
+bool isAllCategoryEnabled = await cards.isAllCategoryEnabled();
+```
+
+</CodeGroup>
+
+# Fetch Cards for Categories
+
+To fetch cards eligible for display for a specific category use the ***getCardsForCategory()*** API.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID); 
+int count = await cards.getCardsForCategory(category);
+```
+
+</CodeGroup>
+
+# Get New Cards Count
+
+To obtain the new cards count use ***getNewCardsCount()*** method as shown below:
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+int count = await cards.getNewCardsCount();
+```
+
+</CodeGroup>
+
+# Card Shown
+
+Call the ***cardShown()*** API to notify a card is shown to the user.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+cards.cardShown(context, card); // Pass Card Object
+```
+
+</CodeGroup>
+
+# Card Clicked
+
+Call the ***cardClicked()*** API to notify a card is shown to the user.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+cards.cardClicked(card, widgetId); // Pass Card Object
+```
+
+</CodeGroup>
+
+# Delete Card
+
+Call the ***deleteCard()*** API to delete a card.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+cards.deleteCard(card); // Pass Card Object
+```
+
+</CodeGroup>
+
+# Mark Card Delivered
+
+To track delivery to the card section of the application call the ***cardDelivered()*** API when the cards section of the application is loaded.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+cards.cardDelivered();
+```
+
+</CodeGroup>
+
+# Delete Multiple Cards
+
+Call the ***deleteCards()*** API to delete a card.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+cards.deleteCards(context, cards); // Pass List of Cards
+```
+
+</CodeGroup>
+
+# Get Unclicked Cards Count
+
+To obtain the unclicked cards count use ***getUnClickedCardsCount()*** method as shown below.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+int count = await cards.getUnClickedCardsCount();
+```
+
+</CodeGroup>
+
+# App Open Card Sync Listener
+
+Set this listener to get a callback for card sync on the App opened. This listener should be set before calling ***initialize()*** API. In most cases, this API is not required.
+
+<CodeGroup>
+``` Dart
+MoEngageCards cards = MoEngageCards(YOUR_Workspace_ID);
+cards.setAppOpenCardsSyncListener((data) {
+  //Update UI
+});
+cards.initialize();
+```
+
+</CodeGroup>
+
+ 
+
+<Info>
+The hybrid framework does not support the MoEngage default Card. Only the Self-handled Card is supported.
+</Info>

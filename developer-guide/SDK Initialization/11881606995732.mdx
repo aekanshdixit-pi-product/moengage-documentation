@@ -1,0 +1,68 @@
+---
+title: "Android SDK Initialization"
+description: ""
+---
+
+# Initializing the SDK
+
+Get APP ID from the Settings Page `Dashboard --> Settings --> App --> General` on the MoEngage dashboard and initialize the MoEngage SDK in the `Application` class's `onCreate()`.
+
+<Info>
+It is recommended that you initialize the SDK on the main thread inside `onCreate()` and not create a worker thread and initialize the SDK on that thread.
+</Info>
+
+<CodeGroup>
+``` Java
+import android.app.Application;
+import com.moengage.capacitor.MoEInitializer;
+import com.moengage.core.MoEngage;
+
+public class MainApplication extends Application {
+
+  @Override public void onCreate() {
+    super.onCreate();
+    MoEngage.Builder moEngage = new MoEngage.Builder(this, "YOUR_Workspace_ID")
+    MoEInitializer.INSTANCE.initialize(this, moEngage);
+  }
+}
+```
+
+</CodeGroup>
+
+Refer to the [API reference doc](https://moengage.github.io/android-api-reference-v11/core/com.moengage.core/-mo-engage/-builder/index.html) for a detailed list of possible configurations.
+
+In case your application does not have an Application class yet navigate to java source code inside the android platform folder and add the Application class file.
+
+![Screenshot_2022-01-28_at_6.32.19_PM.png](18959741209236)
+
+Make sure your application class is defined in the `AndroidManifest.xml` file as well.
+
+# Register MoEngage's Plugin
+
+Register the plugin in your `Activity` class's `onCreate()`.
+
+<CodeGroup>
+``` Java
+import com.getcapacitor.BridgeActivity;
+import com.moengage.capacitor.MoECapacitorCorePlugin;
+
+public class MainActivity extends BridgeActivity {
+
+  @Override protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);    //register the MoEngage Capacitor Plugin
+    registerPlugin(MoECapacitorCorePlugin.class);
+  }
+}
+```
+
+</CodeGroup>
+
+# Exclude MoEngage Storage File from Auto-Backup
+
+This is a mandatory integration step and is very essential to prevent your data from getting corrupted.  
+Android's auto back-up service periodically backs up Shared Preference files, Database files etc, more details [here](https://developer.android.com/guide/topics/data/autobackup).  
+This backup results in MoEngage SDK's identifiers to be backed up and restored after re-install.  
+This restoration of the identifier results in your data being corrupted and users not being reachable via push notifications.
+
+To ensure data is not corrupted after a backup is restored, opt-out of MoEngage SDK's storage files.  
+Refer to [Exclude MoEngage Storage File from Auto-Backup](https://developers.moengage.com/hc/en-us/articles/4401999257236) section of the documentation to learn more about which files to exclude.

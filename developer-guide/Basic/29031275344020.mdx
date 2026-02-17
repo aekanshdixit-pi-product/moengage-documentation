@@ -1,0 +1,109 @@
+---
+title: "Push Callback 3.x.x"
+description: ""
+---
+
+# Notification Click Observers
+
+MoEngage plugin triggers the **PushNotifCallback** event whenever a notification is clicked. This event is a common trigger for both iOS and Android platforms. Refer to the below code to set the observer to the same:
+
+<CodeGroup>
+```auto c#
+using MoEngage;
+
+// Add Push Callback for MoEGameObject
+MoEGameObject.PushNotifCallback += PushCallback;
+
+//Implement the calback
+public void OnPushClicked(object sender, PushCampaignData campaignData)
+{
+  Debug.Log(" OnPushClicked() : Event handler callback: " + campaignData.platform + 
+  " \n clickedAction: " + campaignData.data.clickedAction + " \n payload:" + campaignData.data.payload);
+}
+```
+
+</CodeGroup>
+## PushCampaignData structure
+
+PushCampaignData instance will have the below properties:
+
+<CodeGroup>
+```auto c#
+  public class PushCampaignData {
+    ///  Account info 
+    public AccountMeta accountMeta;
+
+     ///  PushCampaign data object 
+    public PushCampaign data;
+
+    ///  Native platform from which the callback was triggered. 
+    public Platform platform;
+  }
+  
+  /// Meta-data related to your MoEngage account.
+  public class AccountMeta {
+    ///  Account Identifier  
+    public string appId;
+  }
+  
+  /// Push Payload information
+  public class PushCampaign {
+    ///  This key is present only for the Android Platform. It's a boolean value indicating if the user clicked on the default content or not. true if the user clicks on the default content else false.  
+    public bool isDefaultAction;
+
+    ///  Action to be performed on notification click.  
+    public IDictionary < string, object > clickedAction;
+
+    /// Complete campaign payload. 
+    public IDictionary < string, object > payload;
+  }
+  
+  /// Platform on which Push Campaign belongs
+  public enum Platform {
+         iOS,
+         Android
+  }
+```
+
+</CodeGroup>
+Payload Structure for **clickedAction** Dictionary
+
+<CodeGroup>
+```json JSON
+{
+  "clickedAction": {
+    "type": "navigation/customAction",
+    "payload": {
+      "type": "screenName/deepLink/richLanding",
+      "value": "",
+      "kvPair": {
+        "key1": "value1",
+        "key2": "value2",
+        ...
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+**clickedAction**- Action to be performed on notification click.
+
+**clickedAction.type**- Type of click action. Possible values **navigation** and **customAction**. Currently, **customAction** is supported only on Android.
+
+**clickAction.payload** - Action payload for the clicked action.  
+**clickedAction.payload.type** - Type of navigation action defined. Possible values **screenName**, **deepLink**,  and **richLanding.**
+
+Currently, in the case of iOS, rich landing and deep-link URLs are processed internally by the SDK and not passed in this callback; therefore possible value in the case of iOS is only **screenName**.  
+**clickAction.value** - value entered for navigation action or custom payload.  
+**clickAction.kvPair** - Custom key-value pair entered on the MoEngage Platform.  
+**payload** - Complete campaign payload.
+
+## Android Payload
+
+If the user clicks on the default content of the notification, the key-value pair and campaign payload can be found inside the **payload** key. If the user clicks on the action button or a push template action, the action payload would be found inside **clickedAction**.  
+You can use the **isDefaultAction** key to check whether the user clicked on the default content and then parse the payload accordingly.
+
+## iOS Payload
+
+In the case of iOS, you would always receive the key-value pairs with respect to clicked action in **clickedAction** property. Refer to this [link](https://developers.moengage.com/hc/en-us/articles/23448115571732-Custom-Notification-Handling#h_01H92ZQDWJWX6615STBKN7NRYJ) for knowing the iOS notification payload structure.

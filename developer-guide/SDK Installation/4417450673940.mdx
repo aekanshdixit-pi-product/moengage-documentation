@@ -1,0 +1,104 @@
+---
+title: "Android SDK Installation"
+description: ""
+---
+
+# Configuring Build Settings
+
+## Option 1: Using BOM (Recommended)
+
+![](https://img.shields.io/maven-central/v/com.moengage/android-bom)
+
+Use the Bill of Materials (BOM) to automatically manage compatible versions of the SDK modules.
+
+<CodeGroup>
+```auto build.gradle
+dependencies {
+    ...
+    // Import the MoEngage BOM
+    implementation(platform("com.moengage:android-bom:<bomVersion>"))
+    
+    // Add optional modules as needed
+     implementation("com.moengage:inapp")
+}
+```
+
+</CodeGroup>
+Replace **<bomVersion>** with the latest BOM version. For more info on integration using BOM, refer [here](https://developers.moengage.com/hc/en-us/articles/44622788607892-Installing-BOM).
+
+## Option 2: Manual Integration
+
+### Add Maven Repository
+
+Add *mavenCentral()* repository in the project-level ***build.gradle*** file. If not present already.
+
+Path - ***android/build.gradle(.kts)***
+
+<CodeGroup>
+```auto Groovy
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+```
+
+</CodeGroup>
+### Enable Java 8
+
+The SDK target and source compatible with version 8 of the Java Programming Language. Enable Java 8 in the application ***build.gradle***if not done already. 
+
+Path - ***android/app/build.gradle(.kts)***
+
+<CodeGroup>
+```auto build.gradle
+android {
+  ...
+  compileOptions {
+     sourceCompatibility JavaVersion.VERSION_1_8
+     targetCompatibility JavaVersion.VERSION_1_8
+  }
+  kotlinOptions {
+     jvmTarget = '1.8'
+  }
+}
+```
+
+```auto build.gradle.kts
+android {
+  ...
+  compileOptions {
+     sourceCompatibility = JavaVersion.VERSION_1_8
+     targetCompatibility = JavaVersion.VERSION_1_8
+  }
+  kotlinOptions {
+     jvmTarget = "1.8"
+  }
+}
+```
+
+</CodeGroup>
+### Add Androidx Libraries
+
+The SDK depends on a few Androidx libraries for its functioning, add the below Androidx libraries in your application's build.gradle file in the dependencies block if not done already.
+
+Path - ***android/app/build.gradle(.kts)***
+
+<CodeGroup>
+```auto Groovy
+
+    dependencies {
+    ...
+      implementation("androidx.core:core:1.9.0")
+      implementation("androidx.appcompat:appcompat:1.4.2")
+      implementation("androidx.lifecycle:lifecycle-process:2.7.0")
+    }
+```
+
+</CodeGroup>
+The MoEngage SDK depends on the **lifecycle-process** library for a few key features to work and the latest version of **lifecycle-process** depends on the **androidx.startup:startup-runtime** library. Hence do not remove the **InitializationProvider** component from the manifest. When adding other Initializers using the **startup-runtime** make sure the Initializer for **lifecycle-process** library is also added. Refer to the [documentation](https://developer.android.com/jetpack/androidx/releases/lifecycle#2.4.0) to know how to add the Initializer.

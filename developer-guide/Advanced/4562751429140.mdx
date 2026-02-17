@@ -1,0 +1,56 @@
+---
+title: "Real-Time Triggers 7.x.x"
+description: ""
+---
+
+Real-time device triggers are push notifications that are triggered instantly in the device whenever a trigger event(configured while creating the campaign) is tracked with the SDK [trackEvent:](https://developers.moengage.com/hc/en-us/articles/4403922636308) method. In this case, the notifications are triggered in the device which enables you to post notifications even in offline scenarios.
+
+<Warning>
+Real-Time Triggers are available from SDK version [4.0.0](https://developers.moengage.com/hc/en-us/articles/4404198236564-Change-Log#v4-0-0-0-33)
+</Warning>
+# Manual Syncing
+
+MoEngage SDK syncs all the real-time trigger campaigns whenever the app is **launched OR comes to the foreground**. But in case its needed to manually sync the device triggers for any of the background tasks, use `syncRealTimeTriggersWithCompletionBlock:` as shown below:
+
+<CodeGroup>
+```swift Swift
+MoEngage.sharedInstance().syncRealTimeTriggers { (rtSyncCompleted) in
+            if(rtSyncCompleted){
+                print("Real-Time trigger sync successfull")
+            }
+}
+```
+
+```objectivec Objective-C
+[[MoEngage sharedInstance] syncRealTimeTriggersWithCompletionBlock:^(BOOL rtSyncCompleted) {
+        if (rtSyncCompleted) {
+            NSLog(@"Real-Time trigger sync successfull");
+        }
+}];
+```
+
+</CodeGroup>
+# Additional Callbacks for version below iOS 10
+
+<Warning>
+For iOS 10 and above, MoEngage SDK uses the UserNotification framework for triggering notifications and rely's on the callbacks from **UNUserNotificationCenter** to obtain and process the notification payload. Therefore make sure the SDK methods are called in UNUserNotificationCenter delegate callbacks as mentioned in this [doc](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45ED56HJA1KZP43JP0ZGG1F).
+</Warning>
+For iOS versions below iOS 10 call `didReceieveNotificationinApplication: withInfo:openDeeplinkUrlAutomatically:` method of MoEngage SDK as shown below.
+
+<CodeGroup>
+```swift Swift
+func application(_ application: UIApplication, didReceive notification: UILocalNotification) {
+        if let userInfo = notification.userInfo  {
+            MoEngage.sharedInstance().didReceieveNotificationinApplication(application, withInfo: userInfo, openDeeplinkUrlAutomatically: true)
+        }
+}
+```
+
+```objectivec Objective-C
+-(void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification{
+    NSDictionary* userInfo = notification.userInfo;
+    [[MoEngage sharedInstance]didReceieveNotificationinApplication:application withInfo:userInfo openDeeplinkUrlAutomatically:YES];
+}
+```
+
+</CodeGroup>

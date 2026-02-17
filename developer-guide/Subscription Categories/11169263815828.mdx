@@ -1,0 +1,174 @@
+---
+title: "Update Subscription Preferences API"
+description: ""
+---
+
+Update Preferences API helps update the subscription preferences for custom landing pages.
+
+# API Endpoint
+
+**Method: PUT**
+
+<CodeGroup>
+``` API Endpoint
+https://api-0X.moengage.com/v1/category-subscription/user-preferences
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="}
+
+The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Parameters
+
+| Key | Required | Value | Description |
+| --- | --- | --- | --- |
+| user\_id | Yes | String | This is the MoEngage ID that uniquely identifies the customer for whom the subscription preferences are being updated. This is encrypted using 16 bits DES and is encoded in the URL of the landing page. The same can be fetched from the URL of the landing page. |
+| cid | Yes | String | This is the campaign id of the email campaign. This field contains the information about the email campaign received by the customer from where they have navigated to the subscription preferences page to update their preferences.     **Note**: The campaign ID is encrypted using 16 bits DES and is encoded in the URL of the landing page. The same can be fetched from the URL of the landing page. |
+| moe\_event\_id | Optional | String | This is used to update the unsubscribe event when the user chooses the unsubscribe all option. |
+
+# Request Headers
+
+| Key | Sample Values | Description |
+| --- | --- | --- |
+| Content-Type | application/json | Set the Content-Type header to application/json for using the Bulk Update Preferences API. |
+| MOE-APPKEY | {"MOE-APPKEY": "Workspace ID"} | This is your MoEngage account's APP ID that has to be passed along with the request.   You can find your MoEngage Workspace ID at **Settings** -> **Account** -> **APIs** -> **Workspace ID (earlier app id)**. |
+| Authorization | {"Authorization: Basic Base64\_ENCODED\_APPKEY\_APIKEY=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#h_01GM5WQ0E21CKR5SHH6BPAF66D). |
+
+# Request Body
+
+| Key | Required | Value | Description |
+| --- | --- | --- | --- |
+| categories | Yes | JSON Object | This field contains the details about the updated subscription preferences of the user.   “categories”:{   <catergory\_name>:<true/false>,   <catergory\_name>:<true/false>,   <catergory\_name>:<true/false>   }   The categories object contains the subscription preferences of the customer for all the categories. |
+| unsubscribe\_all | Yes | Boolean | This field contains information about whether the customer has unsubscribed from all the categories. |
+
+# Response Parameters
+
+| Key | Description |
+| --- | --- |
+| message | This field contains a brief description of the request status in the case of success. |
+| title | This field is present in the response body only when the request was unsuccessful and contains the error type. |
+| description | This field is present in the response body only when the request was unsuccessful and contains the error description. |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters APP KEY, user\_id, cid, moe\_event\_id, and categories are missing from the request or when the provided params are invalid. |
+| 401 | Authorization Failure | This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header. |
+| 409 | API SECRET not configured | This response is returned when the authorization fails due to the APP SECRET key not being set on the Dashboard. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+
+# Rate Limit
+
+The rate limit is 100 RPM and 360k per day.
+
+# Sample cURL Request
+
+<CodeGroup>
+``` cURL
+curl --location -g --request PUT 'https://api-{{0X}}.moengage.com/v1/category-subscription/user-preferences?user_id={{user_id}}&cid={{cid}}' \
+--header 'Content-Type: application/json' \
+--header 'MOE-APPKEY: {{DATA Workspace ID}}' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY==' \
+--data-raw '{
+    "unsubscribe_all": true,
+    "categories": {
+    	"Promotional": true,
+        "Transactional": false,
+        "Special Offers": true,
+        "Product Updates": true,
+        "New arrivals": false,
+        "Recommendations": true,
+        "Newsletter": true
+    }
+}'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<CodeGroup>
+``` 200
+Success Response
+{
+    "message": "Success"
+}
+```
+
+``` 400
+Sample Response for Bad Request{ 
+    title="Internal App Key", 
+    description="Valid App-Key required to process" 
+}
+```
+
+``` 401
+Sample Response for Authorization Errors
+{
+    "title": "Header required",
+    "description": "MOE-APPKEY missing in Header"
+}
+```
+
+``` 409
+Sample Response for Authorization Errors{
+    "title": "Header required",
+    "description": "MOE-APPKEY missing in Header"
+}
+```
+
+``` 429
+Sample Response for Rate Limit Breach
+{   
+    title="Rate-Limit Reached", 
+    description="Exceeded rate limit for this url"  
+}
+```
+
+``` 500
+Sample Response for Unknown Errors
+{
+    "title": "Internal Error",
+    "description": "Please Contact Moengage Team"
+}
+```
+
+</CodeGroup>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-b58fd768-b718-458a-bd0e-fef8d6848d07) to view it in Postman.
+
+# FAQs
+
+* **How do we fetch the parameters to be passed in the request?**The user\_id (MoEngage ID) and the cid (Campaign ID) fields should be fetched from the landing page URL.
+* **How do we fetch the parameters to be passed in the request?**The user\_id (MoEngage ID) and the cid (Campaign ID) fields should be fetched from the landing page URL.   
+For example, if the link to the custom landing page was `https://www.abc.com/managepreference`, when the user clicks the same from the email, the link will be as below:  
+
+<CodeGroup>
+```json JSON
+https://www.abc.com/managepreference?user_id=7XvJW2dj3iS.rYAt4pg5ASBQtaqAMFDw9e89vZCXx_RFfN3eL0wBG008oI6cpncOQV6ESg&cid=5FGZGcA8FRv3Id89JCCczQjwxq6ApEyAarYDje2mzfRQ_WG7VyyFEc0w4L3MA.31a7wzR64fi7lfq8Km0AaeO4paGVul.4HxixDYnoUp21xyUjGtfvnrHSR2G1reTpYPHHU.r3Ac9vE&app_key=UY_GHXBXyaHbiYnCoNOu7eS.u5yIrrN3noTBNZX5mNSL4KN5C5PZ3zcXBKCCxl9w3m0ukw
+```
+
+</CodeGroup>
+
+Here, you can parse and find user\_id and cid
+	+ user\_id is: `7XvJW2dj3iS.rYAt4pg5ASBQtaqAMFDw9e89vZCXx_RFfN3eL0wBG008oI6cpncOQV6ESg`
+	+ cid is: `5FGZGcA8FRv3Id89JCCczQjwxq6ApEyAarYDje2mzfRQ_WG7VyyFEc0w4L3MA.31a7wzR64fi7lfq8Km0AaeO4paGVul.4HxixDYnoUp21xyUjGtfvnrHSR2G1reTpYPHHU.r3Ac9vE` and pass the same while triggering the API.

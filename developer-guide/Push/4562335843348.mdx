@@ -1,0 +1,216 @@
+---
+title: "Advanced Push Configuration 11.x.x"
+description: ""
+---
+
+<Warning>
+**Advanced Customization**
+
+Support for advanced use cases where the application wants to customize or alter the default behavior of the MoEngage SDK.
+</Warning>
+
+MoEngage SDK allows the client application to optionally customize the notification display and extend/customize the behavior of the notification. Some of the possible customizations are deciding whether to show a notification or not, tweaking the `NotificationCompat.Builder` object, etc. To do so, you need to extend a class called `PushMessageListener` provided by the MoEngage SDK and pass on the instance of this class to the MoEngage SDK. Once you have done this, you can override the default implementation as per the requirement. Let's look at the above steps in more detail.
+
+# Extending PushMessageListener
+
+The first thing required to customize the notification is creating a class that extends **PushMessageListener; we** will call this class **CustomPushMessageListener** (only for illustration purposes you can have any class name you want). The barebones of this class would look something like below.
+
+<CodeGroup>
+``` Kotlin
+class CustomPushMessageListener : PushMessageListener() {
+}
+```
+
+``` Java
+public class CustomPushMessageListener extends PushMessageListener {
+}
+```
+
+</CodeGroup>
+
+For more information about the class of **PushMessageListener**, refer to the [API documentation](https://moengage.github.io/android-api-reference-v11/pushbase/com.moengage.pushbase.push/-push-message-listener/index.html).
+
+# Passing the instance of CustomPushMessageListener to MoEngage SDK
+
+You need to pass on the instance of **CustomPushMessageListener** to the MoEngage SDK in the **onCreate()** of the **Application** class. You need to pass the instance to **MoEPushHelper.getInstance().setMessageListener();** API. A sample call is described.
+
+<CodeGroup>
+``` Kotlin
+MoEPushHelper.getInstance().messageListener = CustomPushMessageListener()
+```
+
+``` Java
+MoEPushHelper.getInstance().setMessageListener(new CustomPushMessageListener());
+```
+
+</CodeGroup>
+
+For more information, refer to [API Reference](https://moengage.github.io/android-api-reference-v11/pushbase/com.moengage.pushbase/-mo-e-push-helper/index.html).
+
+# Optionally control notification display
+
+To control whether a notification is shown to the user or not, you need to override **isNotificationRequired()** in the **CustomPushMessageListener** class created above.  
+If you intend to show the notification overridden, the implementation should return **true** or **false**.
+
+<Warning>
+It is important to call the *super()* in this case. If the *super()* is not called, notifications will not be displayed. If the *super()* returns *false,* make sure your implementation returns false; otherwise, users might end up seeing blank notifications.
+</Warning>
+
+The structure for implementation is described as follows:  
+If this method returns **false,** this notification is discarded by the SDK; that is, the notification will not be displayed on the device, and the impression will not be tracked.
+
+<CodeGroup>
+``` Kotlin
+class CustomPushMessageListener : PushMessageListener() {
+    // decide whether notification should be shown or not. If super() returns false this method
+    // should return false. In case super() isn't called notification will not be displayed.
+    override fun isNotificationRequired(context: Context, payload: Bundle): Boolean {
+        val shouldDisplayNotification = super.isNotificationRequired(context, payload)
+            // do not show notification if MoEngage SDK returns false.
+        if (shouldDisplayNotification) {
+            // app's logic to decide whether to show notification or not.
+            // for illustration purpose reading notification preference from SharedPreferences and
+            // deciding whether to show notification or not. Logic can vary from application to
+            // application.
+            val preferences = context.getSharedPreferences("demoapp", 0)
+            return preferences.getBoolean("notification_preference", true)
+        }
+    return shouldDisplayNotification
+  }
+}
+```
+
+``` Java
+public class CustomPushMessageListener extends PushMessageListener {
+  // decide whether notification should be shown or not. If super() returns false this method
+  // should return false. In case super() isn't called notification will not be displayed.
+  @Override public boolean isNotificationRequired(Context context, Bundle payload) {
+      boolean shouldDisplayNotification = super.isNotificationRequired(context, payload);
+      // do not show notification if MoEngage SDK returns false.
+      if (shouldDisplayNotification){
+          // app's logic to decide whether to show notification or not.
+          // for illustration purpose reading notification preference from SharedPreferences and
+          // deciding whether to show notification or not. Logic can vary from application to
+          // application.
+          SharedPreferences preferences = context.getSharedPreferences("demoapp", 0);
+          return preferences.getBoolean("notification_preference", true);
+      }
+   return shouldDisplayNotification;
+  }
+}
+```
+
+</CodeGroup>
+
+For more information, refer to [API Reference](https://moengage.github.io/android-api-reference-v11/pushbase/com.moengage.pushbase.push/-push-message-listener/is-notification-required.html).
+
+# Notification Received Callback
+
+To receive a callback whenever a push is received, override the **onNotificationReceived()** in the **CustomPushMessageListener** class.
+
+<CodeGroup>
+``` Kotlin
+class CustomPushMessageListener : PushMessageListener() {
+    override fun onNotificationReceived(context: Context, payload: Bundle) {
+        super.onNotificationReceived(context, payload)
+        //callback for push notification received.
+    }
+}
+```
+
+``` Java
+public class CustomPushMessageListener extends PushMessageListener {
+    @Override public void onNotificationReceived(Context context, Bundle payload) {
+        super.onNotificationReceived(context, payload);
+        //callback for push notification received.
+    }
+}
+```
+
+</CodeGroup>
+
+For more information, refer to [API Reference](https://moengage.github.io/android-api-reference-v11/pushbase/com.moengage.pushbase.push/-push-message-listener/on-notification-received.html).
+
+# Notification Clicked Callback
+
+To receive a callback whenever a push is clicked, override the **onHandleRedirection()** in the **CustomPushMessageListener** class created as described in the Notification Received Callback.  
+This method doubles as a callback and can be used for handling redirection. If you want to handle redirection on notification, click do not call the **super()** and add your custom logic for redirection here.
+
+<CodeGroup>
+``` Kotlin
+class CustomPushMessageListener : PushMessageListener() {
+    override fun onHandleRedirection(activity: Activity, payload: Bundle) {
+        super.onHandleRedirection(activity, payload)
+        //callback for notification clicked. if you want to handle redirection then do not call super()
+        // and add the redirection logic here.
+    }
+}
+```
+
+``` Java
+public class CustomPushMessageListener extends PushMessageListener {
+    @Override public void onHandleRedirection(Activity activity, Bundle payload) {
+        super.onHandleRedirection(activity, payload);
+       //callback for notification clicked. if you want to handle redirection then do not call super()
+       // and add the redirection logic here.
+    }
+}
+```
+
+</CodeGroup>
+
+For more information, refer to [API Reference](https://moengage.github.io/android-api-reference-v11/pushbase/com.moengage.pushbase.push/-push-message-listener/on-handle-redirection.html).
+
+# Notification Cleared Callback
+
+To receive a callback whenever a push is cleared, override the **onNotificationCleared()** in the **CustomPushMessageListener** class created above.
+
+<CodeGroup>
+``` Kotlin
+public class CustomPushMessageListener extends PushMessageListener {
+    @Override public void onNotificationCleared(Context context, Bundle payload) {
+      super.onNotificationCleared(context, payload);
+      // callback for notification cleared.
+    }
+}
+```
+
+``` Java
+public class CustomPushMessageListener extends PushMessageListener {
+    @Override public void onNotificationCleared(Context context, Bundle payload) {
+      super.onNotificationCleared(context, payload);
+      // callback for notification cleared.
+    }
+}
+```
+
+</CodeGroup>
+
+For more information, refer to [API Reference](https://moengage.github.io/android-api-reference-v11/pushbase/com.moengage.pushbase.push/-push-message-listener/on-notification-cleared.html).
+
+# Custom Action on Action Button Click
+
+To use a custom action on the Action Button, click override the `handleCustomAction()` in the `CustomPushMessageListener` class created above.
+
+<CodeGroup>
+``` Kotlin
+class CustomPushMessageListener : PushMessageListener() {
+    override fun handleCustomAction(context: Context, payload: String) {
+        super.handleCustomAction(context, payload)
+        // callback for notification custom action
+    }
+}
+```
+
+``` Java
+public class CustomPushMessageListener extends PushMessageListener {
+    @Override public void handleCustomAction(Context context, String payload) {
+        super.handleCustomAction(context, payload);
+        // callback for notification custom action
+    }
+}
+```
+
+</CodeGroup>
+
+For more information, refer to [API Reference](https://moengage.github.io/android-api-reference-v11/pushbase/com.moengage.pushbase.push/-push-message-listener/handle-custom-action.html).

@@ -1,0 +1,227 @@
+---
+title: "Search Push Template API"
+description: ""
+---
+
+The Search Push Template  API can be used to look up the push templates created in your MoEngage account.
+
+<Info>
+We are introducing mandatory pagination, effective November 15, 2025, all calls to this API must include the following two parameters:
+
+* [`page`](https://developers.moengage.com/hc/en-us/articles/14226294477972-Search-Push-Template-API#01GQRA6BGSZX7WC4DYD1ZEPN1J): The page number of the results you wish to fetch.
+* [`entries`](https://developers.moengage.com/hc/en-us/articles/14226294477972-Search-Push-Template-API#01GQRA6BGSZX7WC4DYD1ZEPN1J): The number of templates to return per page, with a maximum value of *15*.
+
+Please update all integrations to include these parameters. API requests submitted without them after the effective date will result in an error and fail to execute.
+</Info>
+
+# API Endpoint
+
+<CodeGroup>
+``` API Endpoint
+POST https://api-0X.moengage.com/v1.0/custom-templates/push/search
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization":"Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY="}
+
+You can obtain the username and password details from the MoEngage Dashboard.
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Campaign report/Business events/Custom templates** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Content-Type | Required | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Required | {"Authorization": "Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#01GQRA6BGSEKV3P4EV4SK51F5J). |
+
+ 
+
+# Request Body
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| page | Optional | Integer | This field contains the index of the pages to be returned in the search result. |
+| entries | Optional | Integer | This field contains the number of entries per page in the search result. |
+| template\_name | Optional | String | This field indicates the name of the template. When this value is specified, the template that matches the name specified in this field will be returned. |
+| platform | Optional | List of Strings | This field indicates the list of platforms. Allowed values: ANDROID, IOS. When specified, the templates whose platform matches that specified in this list will be returned. |
+| template\_source | Optional | List of Strings | This field indicates the template source that created the template. For example: ["API", "MOENGAGE"]. When specified, the templates whose source matches that specified in this list will be returned. |
+| template\_style | Optional | List of Strings | This field indicates the template style. Allowed values: BASIC, STYLIZED. When specified, the templates whose template style matches that specified in this list will be returned. |
+| template\_type | Optional | List of Strings | This field indicates whether the template is a custom one or a pre-built one.      Allowed values: CUSTOM, PRE\_BUILT.      When specified, the templates whose template type matches that specified in this list will be returned. |
+| created\_by | Optional | List of Strings | This field indicates the user who created the template. When specified, the templates for which the created\_by user information matches that specified in this list will be returned.      Example: ["user1@moengage.com", "user2@moengage.com"] |
+| updated\_by | Optional | List of Strings | This field indicates the user who updated the template. When specified, the templates for which the updated\_by user information matches that specified in this list will be returned.     Example: ["user1@moengage.com", "user2@moengage.com"] |
+| sort\_params | Optional | List of attributes and sort orders | This field indicates the sorting parameters for the search result and the sort order.     Example:      "sort\_params":[{"template\_name": "ASCENDING","last\_modified\_date": "ASCENDING","last\_modified\_by": "ASCENDING"}] |
+| template\_ids | Optional | List of template ids | This field indicates the list of the template ids that must be fetched. When this value is specified, the template that matches the id specified in this field will be returned.     Example:     "template\_ids":[{"external\_template\_id": "e1c95cb8-4f15-4f22-ae73-e9f47c9925c8", "version": 1}] |
+
+**Note**:
+
+* You can send empty filters to fetch all the push templates.
+* You can send only template\_ids if you want specific older versions of the push template. In other cases, you will receive the latest version of the template.
+
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| data | Array of JSON Objecys | This field contains the list of push templates that satisfy the search criteria.   "data": [     {           "external\_template\_id": "<template\_id>",           "version": 2,           "ANDROID": {<Android Template Info>},           "IOS": {<iOS Template Info>},           "meta\_info": {<teamplate's meta info>},           "created\_by": "<created by user name>",           "created\_at": "<timestamp>",           "updated\_by": "<created by user name>",           "updated\_at": "<timestamp>"     }    {...}   ]   For information about the ANDROID and IOS templates and meta\_info, refer to [Template Details](https://developers.moengage.com/hc/en-us/articles/14187268321428). |
+| title | String | This field contains a brief description of the error. |
+| description | String | This field contains a description of the error. |
+| code | String | This field contains the error code. |
+| message | String | This field contains the error message. |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request or when the provided parameters are invalid, or when a template already exists with the same version, name, or id. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+
+# Rate Limit
+
+The rate limit is 100 RPM.
+
+# Sample cURL Request
+
+<CodeGroup>
+``` cURL
+curl --location 'https://api-{{0X}}.moengage.com/v1.0/custom-templates/push/search' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic e3tBUFBfSUR9fTp7e0FQSV9TRUNSRVR9fQ==' \
+--data-raw '{
+    "page": 1,
+    "entries": 10,
+    "template_name": "NAME_OF_THE_TEMPLATE(PARTIAL SEARCH)/ID_OF_TEMPLATE",
+    "platform": ["ANDROID", "IOS"],
+    "template_source": ["API","MOENGAGE"],
+    "template_style": ["BASIC", "STYLIZED"],
+    "template_type": ["CUSTOM", "PRE_BUILT"],
+    "created_by": ["user1@moengage.com", "user2@moengage.com"],
+    "updated_by": ["user1@moengage.com", "user2@moengage.com"],
+    "sort_params": [{"template_name/last_modified_date/last_modified_by": "ASCENDING/DESCENDING"}],
+    "template_ids": [{"external_template_id": "ID_OF_TEMPLATE", "version": 1}]
+}'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<CodeGroup>
+``` 200
+Sample Response for a successful request
+{
+  "data": [
+	{
+  "external_template_id": "9b09875c-edda-42e9-8f9f-a7d0a9a2aa26",
+  "version": 2,
+  "ANDROID": { 
+   "basic_details": {
+    "background_color_code": "#ffffff",
+    "notification_control_color": "Dark",
+    "apply_background_color": false,
+    "title": "Winter Sale 50% Off",
+    "message": "Sample Message",
+    "summary": "Sample Summary",
+    "image_url": "",
+    "default_click_action": "RICH_LANDING",
+    "default_click_action_value": "https://www.google.com"
+   },
+  "buttons": [
+    {
+      "btn_name": "View Offers",
+      "click_action_type": "RICH_LANDING",
+      "click_action_name": "",
+      "click_action_value": "https://www.google.com"
+    },
+    {
+      "btn_name": "Show More Like This",
+      "click_action_type": "RICH_LANDING",
+      "click_action_name": "",
+      "click_action_value": "https://www.google.com"
+    }
+  ],
+  "advanced": {
+    "coupon_code": "",
+    "icon_type_in_notification": "appicon",
+    "make_notification_sticky": true,
+    "dismiss_button_text": "Dismiss",
+    "auto_dismiss_notification": true,
+    "dismissal_time_value": 24,
+    "dismissal_time_multiplier": "hours"
+  },
+  "template_backup": {
+    "title": "Stylized Android Template",
+    "message": "Sample Stylized Android Template",
+    "allow_bg_refresh": true,
+    "default_click_action": "RICH_LANDING",
+    "default_click_action_value": "https://www.google.com",
+  }
+ },
+  "meta_info": {
+    "platform": [
+      "ANDROID",
+    ],
+    "template_style": "STYLIZED",
+    "template_id": "Stylizedandroid1",
+    "template_name": "Stylized Android Template 2",
+    "template_version": "1",
+    "updated_by": "Jane Doe",
+    "channel": "PUSH",
+    "template_source": "API",
+    "template_type": "CUSTOM"
+  },
+  "created_by": "John Doe",
+  "created_at": "2023-02-27T12:33:05.575000",
+  "updated_by": "Jane Doe",
+  "updated_at": "2023-02-27T12:33:05.575000"
+}
+   ]
+}
+```
+
+``` 400
+Sample Response for Invalid Field Value in Request
+{
+   "title": "Invalid Field Value",
+   "description": "Some of the field values are invalid",
+   "code": "nGpUNpDQ"
+}
+```
+
+``` 429
+Sample Response for Rate Limit Breach
+{
+    "response_id": "OUUkHvcn",
+    "type": "custom_template",
+    "error": {
+        "code": "Too Many Requests",
+        "message": "API rate limit breached. Current limit: n/m mins"
+    }
+}
+```
+
+``` 5xx
+Sample Response for server side errors
+{ 
+    "title": "Internal Server Error",
+    "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+}
+```
+
+</CodeGroup>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-7980d47d-248a-4060-96d2-a7d9ebc3e22d?action=share&creator=3182294&ctx=documentation) to view it in Postman.

@@ -1,0 +1,459 @@
+---
+title: "Create Event"
+description: ""
+---
+
+The Create Event API allows you to track the actions of a user.
+
+## API Endpoint
+
+Method: **POST**
+
+<CodeGroup>
+``` API Endpoint
+https://api-0X.moengage.com/v1/event/{{appId}}
+```
+
+</CodeGroup>
+
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage maintains different data centres for different clients. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage).
+
+<Info>
+* The Workspace\_ID for your MoEngage account is available on the MoEngage Dashboard. You can find the WORKSPACE\_ID in **Settings** -> **Account** -> **APIs -> Workspace ID**.
+* If you have [Portfolio](https://help.moengage.com/hc/en-us/articles/40394603054100-Portfolio) enabled for your workspace, you need to pass *project\_code* in the API endpoint. This identifies which project a user or event belongs to. For more information, refer to [Portfolio: Data Ingestion and Management](https://help.moengage.com/hc/en-us/articles/40358246598804-Portfolio-Data-Ingestion-and-Management#h_01K2XZS7GTBYAT8QRG4HWV19VC).
+</Info>
+
+## Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="}
+
+The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+## Request Parameters
+
+| Key | Required | Data Type | Description |
+| --- | --- | --- | --- |
+| app\_id | Yes | String | This is your MoEngage account's Workspace ID that has to be passed along with the request. You can find your MoEngage Workspace ID at **Settings > Account > APIs > Workspace ID**. |
+
+## Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| X-Forwarded-For | Yes | Header Value Format: <IP Address> | The 'X-Forwarded-For' header is used to specify the IP address of the client that made the request. This header may be added by proxy servers or load balancers. The header value must contain the IP address of the original client that initiated the request. Multiple IP addresses may be specified in the header value, separated by commas. (This is optional) |
+| Content-Type | Yes | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Yes | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#h_01HS8BGYN3HEG3WSWPZ70Z583D). |
+
+## Request Body
+
+<Info>
+You can not use "moe\_" as a prefix while naming events, event attributes, or user attributes. It is a system prefix and using it might result in periodic blacklisting without prior communication.
+</Info>
+
+ 
+
+### Request Body Fields
+
+| Key | Data Type | Required | Description |
+| --- | --- | --- | --- |
+| type | String | Yes | This is used to identify the type of request.     Allowed Value: event   Example: "type": "event"   **Note**: This field is case-sensitive. Follow the case as in the example when passing the value in the request. |
+| customer\_id | String | Yes | Identifier to identify or create a user in MoEngage.   Not mandatory in [*Identity resolution*](#h_01JPM29NNFT4NX7VEMV0B1V11N) enabled workspaces. |
+| device\_id | String | No | device\_id in event payload is optional. The default value is the customer\_id value. The value is used to map events to specific devices. |
+| actions | List | Yes | List of events to be tracked for the user. |
+| action | String | Yes | The name of the event to be tracked. |
+| attributes | JSON Object | No | A dictionary containing event attributes to track with the event. |
+| platform | String | No | Used to identify the platform on which the event happened. Allowed values are ANDROID, iOS, web, or unknown. |
+| app\_version | String | No | App Version of the app on which the event originated. |
+| user\_time | Numeric (Epoch time in seconds) or String (ISO 8601) | No | Local time at which the event happened. |
+| current\_time | Numeric (Epoch time in seconds) or String( ISO 8601) | No | UTC time at which the event happened. |
+| user\_timezone\_offset | Numeric | No | The difference in time between UTC and the local system time in a particular time zone. All time zones are defined by their offset from UTC. The offset is expressed as either UTC- or UTC+.   user\_timezone\_offset should have a value in seconds which can be between -54000 to 54000. For example, for IST (UTC+0530), "user\_timezone\_offset" will be 19800. |
+
+<Warning>
+Ensure that the platform value sent is Android, iOS, or web. Platform value depends on which platform the event was generated.  
+If you are unsure about the platform on which the event occurred, send the value as unknown or do not send any value. Incorrect platform value leads to inconsistencies in platform level campaigns like Push and In-App.
+
+MoEngage does not accept any future dated events.
+</Warning>
+
+<Info>
+This note helps you understand the differences between Current\_time, User\_time, and User\_timezone\_offset.  
+  
+
+**Current\_time**
+
+* This field is necessary to specify the UTC time of the event.
+* Acceptable formats for current\_time include:
+	+ ISO 8601 (for example - 2020-05-31T16:33:35Z)
+	+ Epoch time in seconds (for example - 1590404615)
+
+ **User\_time**
+
+* This field lets the system identify the local system time for when the event happened.
+* Acceptable formats for user\_time:
+	+ ISO 8601 (for example - 2020-05-31T16:33:35Z)
+	+ Epoch time in seconds (for example - 1590404615)
+
+ **User\_timezone\_offset**
+
+* This field is crucial for establishing the User\_time or Current\_time.
+* This field should contain a numerical value between -54000 and 54000, representing the local timezone’s offset from UTC in seconds.
+* If the field is absent, MoEngage gets this information from the internal system in the sequence as follows:
+	+ The user profile’s timezone is taken into consideration.
+	+ If the user profile’s timezone is not present, the App/account’s timezone is considered.
+	+ In cases where neither is present, the UTC timezone is used.
+* Only include User\_timezone\_offset in your request if you have accurate timezone information for each user, as incorrect info could disrupt event timelines in the user profile.
+
+ **Fields to be Provided**  
+MoEngage generates Current\_time and User\_time if they are not provided in the request. Use the following information and provide Current\_time, User\_time, and User\_timezone\_offset accordingly:
+
+* If you don't provide any of Current\_time, User\_time, and User\_timezone\_offset, MoEngage automatically uses the UTC time when the request was received by MoEngage as the Current\_time. MoEngage uses internal data to calculate the User\_timezone\_offset to generate the User\_time.
+* If you provide only the Current\_time, MoEngage uses internal data to calculate the User\_timezone\_offset to generate the User\_time.
+* If you provide only the User\_time, MoEngage uses internal data to calculate the User\_timezone\_offset to generate the Current\_time.
+* If you send the Current\_time and User\_time, MoEngage uses them as is.
+* If you provide the Current\_time and User\_timezone\_offset, MoEngage generates the User\_time.
+* If you provide User\_time and User\_timezone\_offset, MoEngage generates the Current\_time.
+</Info>
+
+ 
+
+### Example Payload
+
+The following example provides tracking of numeric, boolean, and date type event attributes.  
+Use the payload described, where the price is numeric, departure\_date is a date type attribute and premium\_seat is a boolean attribute.
+
+<CodeGroup>
+``` JSON
+{
+    "type": "event",
+    "customer_id": "john@example.com",
+    "actions": [{
+		    "action": "Flight Booked",
+		    "attributes": {
+				"price": 3999,
+				"departure_date": "2019-05-21T03:47:35Z",
+				"premium_seat": true
+			},
+		    "platform": "iOS",
+		    "app_version": "1.2.3",
+		    "current_time": 1433837969,
+		    "user_timezone_offset": 19800
+		}
+	]
+}
+```
+
+</CodeGroup>
+
+ 
+
+## Response Codes
+
+<CodeGroup>
+``` 200
+Success Response{
+    "status": "success",
+    "message": "Your request has been accepted and will be processed soon." 
+}
+```
+
+``` 400
+Sample response if the actions are sent as an empty list:
+{
+    "status": "fail",
+    "error": {
+        "attribute": "actions",
+        "message": "actions can not be empty Array",
+        "type": "MissingAttributeError",
+        "request_id": "izsZuQNw"
+    }
+}
+
+Sample response if the customer_id or user_alias is missing: 
+{
+    "status": "fail",
+    "error": {
+        "attribute": "customer_id",
+        "message": "customer_id is not found in the payload",
+        "type": "MissingAttributeError",
+        "request_id": "TtnwRNrU"
+    }
+}
+
+Sample response if the elements in actions are not in json format:
+{
+    "status": "fail",
+    "error": {
+        "message": "Could not decode the request body. The JSON was incorrect or not encoded as UTF-8.",
+        "type": "Malformed JSON",
+        "request_id": "USkbHpIK"
+    }
+}
+
+Sample response if the action key is not present, or if it is not in string or unicode string format:
+{
+    "status": "fail",
+    "error": {
+        "attribute": "action",
+        "message": "action is not found in the payload",
+        "type": "MissingAttributeError",
+        "request_id": "TgzuJhcj"
+    }
+}
+Sample response if the action key is not sent as a string: 
+{
+    "status": "fail",
+    "error": {
+        "message": "Could not decode the request body. The JSON was incorrect or not encoded as UTF-8.",
+        "type": "Malformed JSON",
+        "request_id": "USkbHpIK"
+    }
+}
+```
+
+``` 401
+Sample response for authorization errors
+{
+    "status": "fail",
+    "error": {
+        "message": "App Secret key mismatch. Please login to the dashboard to verify key",
+        "type": "Authentication required",
+        "request_id": "PVUDFisO"
+    }
+}
+
+Sample response for missing authentication header
+{
+    "status": "fail",
+    "error": {
+        "message": "Authentication Header Required",
+        "type": "Authentication required",
+        "request_id": "PiSPjGQQ"
+    }
+}
+```
+
+``` 403
+Sample response for when your account is blocked
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is suspended. Please contact MoEngage team.",
+        "type": "BlockedClient",
+        "request_id": "ofHUEaEQ"
+    }
+}
+
+Sample response for when your account is suspended
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is suspended. Please contact MoEngage team.",
+        "type": "Account Suspended",
+        "request_id": "gqJvCNYu"
+    }
+}
+
+Sample response for when your account is temporarily suspended
+{
+    "status": "fail",
+    "error": {
+        "message": "Your account is temporarily suspended. Please contact MoEngage team.",
+        "type": "Account Temporarily Suspended",
+        "request_id": "ssSJjoyD"
+    }
+}
+```
+
+``` 413
+Sample response for payloads exceeding the size limit
+{
+    "status": "fail",
+    "error": {
+        "message": "Payload can not exceed 128KB",
+        "type": "Payload too large",
+        "request_id": "VFzDwhwt"
+    }
+}
+```
+
+``` 415
+Sample response for unsupported media type
+{
+    "status": "fail",
+    "error": {
+        "message": "Content type is not supported",
+        "type": "Unsupported media type",
+        "request_id": "SgBQfKJh"
+    }
+}
+```
+
+``` 429
+Sample response for rate limit breach
+{
+    "status": "fail",
+    "error": {
+        "message": "Rate limits for customers exceeded. Please Try After Some Time",
+        "type": "Rate Limits Exceeded",
+        "request_id": "onqucLYL"
+    }
+}
+```
+
+``` 500
+Sample response for unknown errors
+{
+    "status": "fail",
+    "error": {
+        "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team",
+        "type": "Server Error",
+        "request_id": "KovrwJiF"
+    }
+}
+```
+
+</CodeGroup>
+
+## Sample cURL Request
+
+<CodeGroup>
+``` cURL
+
+curl --location --request POST 'https://api-0X.moengage.com/v1/event/{{appId}}?app_id={{appId}}' \
+--header 'Content-Type: application/json' \
+--header {"Authorization": "Basic Base64_ENCODED_APPKEY_APIKEY"} \
+--data-raw '{
+    "type": "event",
+    "customer_id": "123",
+    "actions" : [
+          {
+              "action": "ProductAdded",
+              "attributes": {
+                "product"  : "Accessories",
+                "color"  : "Black",
+                "Brand"  : "Adidas"
+              },
+              "platform" : "Android",
+              "app_version" : "1.2.3",
+              "user_time" : "1708939453396",
+              "current_time" : "1708939453396"
+          }
+     ]
+}'
+```
+
+</CodeGroup>
+
+## Array Support
+
+If you want to pass an attribute in an array, the appropriate syntax for that is:
+
+<CodeGroup>
+``` cURL
+"Array_attributeName":["abc","123"],
+```
+
+</CodeGroup>
+
+The sample cURL for adding and removing elements in an array is:
+
+<CodeGroup>
+``` cURL
+
+curl --location --globoff 'https://api-0X.moengage.com/v1/event/{{appId}}?app_id={{appId}}' \
+--header 'Content-Type: application/json' \
+--header {"Authorization": "Basic Base64_ENCODED_APPKEY_APIKEY"} \
+--data '{
+    "type": "event",
+    "customer_id": "John",
+    "actions" : [
+          {
+              "action": "product_selected",
+              "attributes": {
+                "product": "Shirt",
+                "color": "Green",
+                "arraySupport":["abc","xyz"],
+                "Brand": "Adidas"
+              },
+              "platform": "Android",
+              "app_version" : "1.2.3",
+              "user_time": "1710740192",
+              "current_time": "1710740192"
+          }
+     ]
+}'
+```
+
+</CodeGroup>
+
+<Info>
+Following are the valid *moe\_os\_type* accepted in Moengage:
+
+* For RokuTV, *moe\_os\_type* should be *ROKU.*
+* For LGTV, *moe\_os\_type* should be *WebOS.*
+* For AndroidTV,  *moe\_os\_type* should be *AndroidTV.*
+* For AppleTV, *moe\_os\_type* should be *tvOS.*
+* For *SamsungTV,**moe\_os\_type* should be *Tizen*.
+* For FireTV, *moe\_os\_type* should be *FireOS*.
+* For VizioTV, *moe\_os\_type* should be *VizioTV*.
+* For Xbox, *moe\_os\_type* should be *Xbox*.
+</Info>
+
+## User Identity Resolution
+
+If the User Identity Resolution feature is enabled in your workspace, identifiers set up in the workspace must be mentioned within the *user\_identifiers* parameter, as shown in the following example where *moe\_mobile* is one of the identifiers in the workspace:  
+
+is:
+
+<CodeGroup>
+``` cURL
+
+curl --location --request POST 'https://api-0X.moengage.com/v1/event/{{appId}}?app_id={{appId}}' \
+--header 'Content-Type: application/json' \
+--header {"Authorization": "Basic Base64_ENCODED_APPKEY_APIKEY"} \
+--data-raw '{
+    "type": "event",
+    "user_identifiers":{                 "moe_mobile":"{{Mobile_Number}}"                 },
+    "actions" : [
+          {
+              "action": "product_selected",
+              "attributes": {
+                "product"  : "Shirt",
+                "color"  : "Green",
+                "moe_os_type":"Xbox",
+                "arraySupport":["abc","xyz"],
+                "Brand"  : "Adidas"
+              },
+              "platform" : "TV",
+             
+              "app_version" : "1.2.3",
+              "user_time" : "1710740192",
+              "current_time" : "1710740192"
+          }
+     ]
+}'
+```
+
+</CodeGroup>
+
+For more information, refer to [User Identity Resolution](https://help.moengage.com/hc/en-us/articles/24050999467284-User-Identity-Resolution).
+
+## Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/request/3182294-e4bac8cb-98e9-486b-8808-a601f93c0f44) to view it in Postman.
+
+## FAQs
+
+* **How to identify the events to a given user? What identifiers can I use?**  
+Events in the payload need to be mapped to a given user who has executed the event. You must use the Customer ID to identify the events mapped to a customer.
+* **Can I send events for anonymous users?**  
+No, anonymous users can be tracked using MoEngage SDKs.
+* **Can events be updated/modified?**  
+Events in MoEngage are immutable, i.e. events can only be created, they cannot be updated or deleted.

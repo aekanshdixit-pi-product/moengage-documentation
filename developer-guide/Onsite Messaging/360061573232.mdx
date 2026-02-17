@@ -1,0 +1,150 @@
+---
+title: "Configure and Integrate On-site Messaging"
+description: ""
+---
+
+On-site Messaging Campaigns allow you to show personalized pop-ups and non-intrusive banners on your website.
+
+Web SDK integration for On-site Messaging will automatically start working on all the pages where the web SDK is integrated. 
+
+For more information, refer to [Web SDK Integration](https://developers.moengage.com/hc/en-us/articles/360060713252-Web-SDK-Integration).
+
+# Disabling On-site Messaging
+
+<Info>
+Optional step for On-Site messaging
+</Info>
+
+If you want to disable On-site Messaging on a few pages or all pages of your website, you need to add `disable_onsite: true` on the pages wherever MoEngage Web SDK is active as described:
+
+<CodeGroup>
+```javascript JavaScript
+Moengage = moe({
+  app_id: "XXXXXXXXXXXX",
+  debug_logs: 0,
+  disable_onsite: true
+});
+```
+
+</CodeGroup>
+
+# Callback to On-site messaging events
+
+<CodeGroup>
+```javascript JavaScript
+window.addEventListener('MOE_AUTOMATED_EVENTS', function (event) {
+    if (event.detail.name === 'MOE_ONSITE_MESSAGE_SHOWN' && event.detail.data && event.detail.data.length) {
+      //do some processing on event.detail.data
+    }
+});
+```
+
+</CodeGroup>
+
+In the above example, we have `event.detail.name` = `'MOE_ONSITE_MESSAGE_SHOWN'`. Similarly, we provide callbacks to other On-site messaging events
+
+| event.detail.name | description |
+| --- | --- |
+| MOE\_ONSITE\_MESSAGE\_SHOWN | On-site message is shown to the user |
+| MOE\_ONSITE\_MESSAGE\_CLICKED | User clicks on the element on which     `moe-inapp-click` class is present |
+| MOE\_ONSITE\_MESSAGE\_DISMISSED | User clicks on the element on which   `moe-inapp-close` class is present |
+| MOE\_ONSITE\_MESSAGE\_AUTO\_DISMISS | The On-site message is auto-closed after the time configured while creating the On-site messaging campaign |
+
+Here is a sample of `event.detail.data` when `event.detail.name` = `'MOE_ONSITE_MESSAGE_SHOWN'`
+
+<CodeGroup>
+```javascript JSON
+  [
+    {
+      "key": "campaign_id",
+      "value": < the campaign ID >
+    },
+    {
+      "key": "campaign_name",
+      "value": < the campaign name >
+    },
+    {
+      "key": "type",
+      "value": "onsite" //this is fixed value
+    },
+    {
+      "key": "templateType",
+      "value": "POP_UP" //just an example, the templateType can be POP_UP, SELF_HANDLED or BANNER according to the type of template you had chosen for your campaign 
+    },
+    {
+      "key": "cid",
+      "value": "643e2a69dcb2c753d3a1b8a3_F_T_ON_AB_1_P_0_L_0" //just an example, this is an extension of the campaign ID
+    },
+    {
+      "key": "moe_locale_name",
+      "value": "Default" //just an example
+    },
+    {
+      "key": "moe_locale_id",
+      "value": "0" //just an example
+    },
+    {
+      "key": "moe_variation_id",
+      "value": "1" //just an example
+    },
+    {
+      "key": "moe_logged_in_status",
+      "value": false //just an example, tells us if the user is a logged-in user 
+    },
+    {
+      "key": "moe_first_visit",
+      "value": true //just an example
+    },
+    {
+      "key": "URL",
+      "value": < the url of the page on which the On-site message is shown >
+    }
+  ]
+```
+
+</CodeGroup>
+
+`event.detail.data` of other On-site messaging events (eg: for `MOE_ONSITE_MESSAGE_DISMISSED`) will have similar (not identical) payload. You can check the data by logging it to the console: `console.log(event.detail.data)`
+
+# Troubleshooting
+
+## Sticky Banner type campaign is overlapping the website header.
+
+Sticky banner type campaign has `fixed` position with `top: 0`. So if your website also has any fixed position element with `top: 0`, then it will overlap. This is the tech limitation and should be handled by your end.
+
+Solution:
+
+You can update the position of you fixed position element as soon as the OSM template is displayed from Moengage. Use this:
+
+<CodeGroup>
+```javascript JavaScript
+window.addEventListener('MOE_AUTOMATED_EVENTS', function (event) {
+    if (event.detail.name === 'MOE_ONSITE_MESSAGE_SHOWN' && event.detail.data && event.detail.data.length) {
+      const campaign = event.detail.data.find(item => item.key === "campaign_id");
+      if (campaign && campaign.value === < your campaign ID > ) {
+        //perform your action here
+      }
+    }
+});
+```
+
+</CodeGroup>
+
+## On-site messaging campaign is not displayed.
+
+Verify the following:
+
+1. Check if the Trigger Action condition is matching or not
+2. If you have Selected Pages for onsite messaging, then check whether the URL is matching or not
+3. Check the segmentation of the Audience is matching or not.
+4. Check the platform (Web or Mobile Web) is appropriately selected.
+
+## On-site messaging test campaign is not working
+
+Moengage Web SDK uses window.opener.postMessage to communicate between the Moengage dashboard and your website, in order to show the test OSM campaign. 
+
+However, it may be that the window.opener is blocked between different origin in your website. Please check whether `Cross-Origin-Opener-Policy': 'same-origin'` header is added in your website.
+
+If the above header exist in your website, then the test campaign will not work. You can either remove this and test or create a live campaign and target yourself using segmentation.
+
+For further assistance, please contact your MoEngage Customer Success Manager (CSM) or the Support team.

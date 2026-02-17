@@ -1,0 +1,2726 @@
+---
+title: "Inform API"
+description: ""
+---
+
+# Overview
+
+Inform facilitates a unified messaging infrastructure across multiple channels with a single API for building and managing transactional alerts.
+
+Transactional Alerts can be sent in the following scenarios:
+
+* Order/Booking/Purchase confirmations
+* Shipping/Delivery confirmations and updates
+* Security and account alerts
+* Password resets
+* OTP (one-time password)
+* User invitations and shares
+* User inaction related to previous transactions
+* Fraud prevention/security alerts
+
+The Inform API sends notifications to all the channels simultaneously for a specified Live Alert. You can use the Inform API to do the following:
+
+1. Send a transactional message on a single channel like SMS or Email or Push
+2. Send transactional messages on multiple channels
+
+# Glossary
+
+We’ve put together a list of terminology that you will encounter when using the Inform Service API.
+
+## Alert ID
+
+This is the unique identifier for an Alert. This field will be used to identify the Alert configured in the MoEngage Dashboard that contains the template for the notifications to be sent to the user.
+
+## Alert Reference Name
+
+This field is used to identify the Alert using your reference Name and can be used to identify the alert as an alternative to Alert ID.
+
+## Test Alert ID
+
+When creating an Alert, you can test it on an external console and MoEngage provides a unique identifier called Test Alert ID for this purpose.
+
+## Test Alert Reference Name
+
+Test Alert Reference Name is configured while adding the alert on the Dashboard to send this Test Alert request to an external console.
+
+## Live and Test Alerts
+
+| Live Alerts | Test Alerts |
+| --- | --- |
+| The unique Identifier for a published Alert is called the Alert ID. | The unique identifier for a test Alert is called the Test Alert ID. |
+| The Alert Logs are available in the Alert Info Section. | The Test Alert Logs are available in the third step of Alert creation. |
+
+# API Endpoint
+
+## For Live Alerts
+
+<CodeGroup>
+``` Live Alert Endpoint
+https://api-0X.moengage.com/v1.0/alerts/send
+```
+
+</CodeGroup>
+
+## For Test Alerts
+
+<CodeGroup>
+``` Test Alert Endpoint
+https://sandbox-api-0X.moengage.com/v1.0/alerts/send
+```
+
+</CodeGroup>
+
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage maintains different data centres for different clients. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization":"Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY="}
+
+You can obtain the username and password details from the MoEngage Dashboard.
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Inform** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+## Regenerate API SECRET
+
+The API SECRET can be regenerated on the MoEngage Dashboard in the INFORM API Settings section discussed above.
+
+Please **DO NOT** regenerate the key unless there is a security breach. Once you generate a different API SECRET KEY and save it, API calls using the older SECRET KEY won't work.
+
+# Request Headers
+
+| Key | Sample Values | Description |
+| --- | --- | --- |
+| MOE-APPKEY | {"MOE-APPKEY": "APP ID"} | This is the Workspace ID (or App ID) of your MoEngage account and needs to be passed along with the request. You can find your MoEngage APP ID in the MoEngage Dashboard API Settings. For more information, refer to [Authentication](#h_01GHDT03HHXDA3GK17RECVZGTK). |
+| Authorization | {"Authorization": "Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#h_01GHDT03HHXDA3GK17RECVZGTK). |
+| Content-Type | application/JSON | Set the Content-Type header to application/JSON for using the Inform API. |
+
+# Request Body
+
+| Key | Type | Value | Description |
+| --- | --- | --- | --- |
+| alert\_id | Mandatory | String | This field uniquely identifies the Alert to be sent to the user. For the staging endpoint, use the test alert id and for the live endpoint, use the alert id. For more information, refer to [Live and Test Alerts](#h_01GHGSPG24YA4C06P3VPKB7RPF). |
+| alert\_reference\_name | Mandatory | String | This field is used to identify the Alert using your reference Name and can be used to identify the alert as an alternative to Alert ID. |
+| user\_id | Optional | String | This is the unique user identifier information you maintain. This information should be passed in the request to facilitate the mapping of the channel events back to the user profile to which this user\_id is associated in MoEngage. MoEngage stores this unique identifier as the Client ID in the user profile. |
+| transaction\_id | Mandatory | String | This is the unique identifier denoting the transaction for which the Alert is being sent to the user. This information is maintained by the brand and is passed in the request. The maximum length allowed for this field is 50 characters. The Inform API supports idempotency using this parameter. If a request contains a transaction\_id and is successful and another request with the same transaction ID is received within 5 minutes of the successful request, the new request would be deemed a duplicate one. |
+| payloads | Mandatory | JSON Object | [payloadobject, payloadobject..]   Payload object -    <medium>: {   “recipient”:<recipient value>,   “personalized\_attributes”:<json object of personalized key-value parameters>   "sender\_attributes": <list of the API attributes used for evaluating the sender to be selected>,   "personalized\_attachments": {<list of the attributes used for sending attachements>},    "live\_activity\_attributes": {<list of attributes used to manage the lifecycle, static data, and dynamic state of an iOS Live Activity>},   }   ]   The payload contains the following channel-level information for all the configured channels:   * **recipient** This field contains the following information:   SMS Channel: <mobile number>    Email Chanel: <email id>   Push Channel: <push token>   For information on how recipient and user\_id fields are used, refer to [Identifying the user for sending Alerts](https://help.moengage.com/hc/en-us/articles/10717041310484#h_01GVG4PZ49ZB3NTT9JZSRB6A7C). * **personalized attributes** This field contains the personalized attributes for each channel configured for the Alert. This information would be passed by the brand when invoking the Inform API Service. * ****sender attributes**** A list of the API attributes used for evaluating the sender to be selected. If not passed, the alert will not be sent out. * **personalized attachments** This field contains the personalized attachments for the email channel and should be sent as a base64-encoded string. If email attachments are specified to be **Uploaded via API** during Alert creation, this field should be added to the payload and the attachment should be passed using the attachment key specified during Alert creation. For example, if the attachment key is specified as sample\_attachment\_key during Alert creation for an attachment, it should be passed in the request as follows:   "personalized\_attachments": {      "sample\_attachment\_key":      "data:{extension\_type};base64, + YOUR\_sample\_base64\_attachment\_key\_VAL\_HERE"   } * **live\_activity\_attributes**This field denotes the list of attributes used to manage the lifecycle, static data, and dynamic state of an iOS Live Activity. 	+ **la-type**: The lifecycle stage of the activity. Supported values are start (initiate), update (refresh content), and end (terminate). 	+ **attribute-info**: A JSON object containing static data that remains constant throughout the activity (e.g., Order ID or Flight Number). 	+ **content-state**: A JSON object containing the dynamic data that updates in real-time (for example, Delivery Status or ETA). Enter these as Key-Value pairs using personalization tags to fetch values from the event. 	+ **stale\_date**: Denotes the timestamp when the system considers the activity outdated 	+ **dismissal\_date**: Denotes the timestamp when the system automatically removes the activity from the user's screen.   **Note**:   1. * At least one channel is mandatory in the API request and only a maximum of two channels can be configured for an Alert and a maximum payload size of 100KB is allowed for personalised attributes. 	* If multiple channels are configured in the Alert, and the payload contains information for only some channels, MoEngage will send the Alerts to the channels for which information is present and ignore the channels for which information is not available in the payload. 	* The total size of the attachments should be less than 4 MB. You can attach up to 5 files. 	* Live Activities are supported starting from MoEngage SDK version 10.09.0. |
+
+# Sample Requests for a Live Alert Without Personalization
+
+## Case 1: One channel is configured for the Alert
+
+**Only SMS Channel**
+
+<CodeGroup>
+``` cURL
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR_APP_KEY_HERE' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "alert_id": "636b77e6e2cf83277195fb60",
+  "alert_reference_name": "Demo_ID",
+  "user_id": "USER_ID",
+  "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+  "payloads": {
+     "SMS": {
+        "recipient": "123456789"
+     }
+  }
+}'
+```
+
+``` Node.js
+import fetch from 'node-fetch';
+fetch('https://inform-api-0X.moengage.com/v1/send', {
+method: 'POST',
+headers: {
+    'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+    'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    'Content-Type': 'application/json'
+},
+//body: "{\n    \"alert_id\": \"636b77e6e2cf83277195fb60\",\n  \"alert_reference_name\": \"Demo_ID\",\n  \"user_id\": \"USER_ID\",\n    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",\n    \"payloads\": {\n        \"SMS\": {\n            \"recipient\": \"123456789\"\n        }\n    }\n}",
+body: JSON.stringify({
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "SMS": {
+            "recipient": "123456789"
+        }
+    }
+})
+});
+```
+
+``` Go
+package main
+import (
+"fmt"
+"io/ioutil"
+"log"
+"net/http"
+"strings"
+)
+func main() {
+client := &http.Client{}
+var data = strings.NewReader(`{
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "SMS": {
+            "recipient": "123456789"
+        }
+    }
+}`)
+req, err := http.NewRequest("POST", "https://inform-api-0X.moengage.com/v1/send", data)
+if err != nil {
+    log.Fatal(err)
+}
+req.Header.Set("MOE-APPKEY", "YOUR_APP_KEY_HERE")
+req.Header.Set("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY")
+req.Header.Set("Content-Type", "application/json")
+resp, err := client.Do(req)
+if err != nil {
+    log.Fatal(err)
+}
+defer resp.Body.Close()
+bodyText, err := ioutil.ReadAll(resp.Body)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s
+", bodyText)
+}
+```
+
+``` PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://inform-api-0X.moengage.com/v1/send');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+'MOE-APPKEY' =-> 'YOUR_APP_KEY_HERE',
+'Authorization' => 'Basic Base64_ENCODED_APPKEY_APIKEY',
+'Content-Type' => 'application/json',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"alert_id":"636b77e6e2cf83277195fb60",
+  "alert_reference_name": "Demo_ID","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"SMS":{"recipient":"123456789"}}}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+``` Python
+import requestsheaders = {
+'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+# Already added when you pass json= but not when you pass data=
+# 'Content-Type': 'application/json',
+}
+json_data = {
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "SMS": {
+            "recipient": "123456789"
+        }
+    }
+}
+response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, json=json_data)
+# Note: json_data will not be serialized by requests
+# exactly as it was in the original request.
+#data = '{"alert_id": "636b77e6e2cf83277195fb60", "alert_reference_name":"Demo_ID","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"SMS":{"recipient":"123456789"}}}'
+#response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, data=data)
+```
+
+``` Ruby
+require 'net/http'
+require 'json'
+uri = URI('https://inform-api-0X.moengage.com/v1/send')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['MOE-APPKEY'] = 'YOUR_APP_KEY_HERE'
+req['Authorization'] = 'Basic Base64_ENCODED_APPKEY_APIKEY'
+# The object won't be serialized exactly like this
+# req.body = "{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"SMS":{"recipient":"123456789"}}}"
+req.body = {
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "SMS": {
+            "recipient": "123456789"
+        }
+    }
+}.to_json
+req_options = {
+use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+http.request(req)
+end
+```
+
+``` Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+public class Main {
+	public static void main(String[] args) throws IOException {
+        URL url = new URL("https://inform-api-0X.moengage.com/v1/send");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod(“POST”);
+        httpConn.setRequestProperty(“MOE-APPKEY”, “YOUR_APP_KEY_HERE”);
+        httpConn.setRequestProperty(“Authorization”, “Basic Base64_ENCODED_APPKEY_APIKEY”);
+        httpConn.setRequestProperty(“Content-Type”, “application/json”);
+        httpConn.setDoOutput(true);
+        String payload = "{
+    \"alert_id\": \"636bc615e2cf83285495055f\",
+    \"alert_reference_name\": \"Demo_ID\",
+    \"user_id\": \"USER_ID\",
+    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",
+    \"payloads\": {
+        \"SMS\": {
+            \"recipient\": \"123456789\"
+        }
+    }
+}";
+        httpConn.setDoOutput(true);
+        OutputStream os = httpConn.getOutputStream();
+        os.write(payload.getBytes());
+        os.flush();
+        InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+            ? httpConn.getInputStream()
+            : httpConn.getErrorStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            (responseStream)));
+        String output;
+        while ((output = br.readLine()) != null) {
+            System.out.println(output);
+        }
+        httpConn.disconnect();
+    }
+}
+```
+
+</CodeGroup>
+
+ 
+
+**Only Email Channel**
+
+<CodeGroup>
+``` cURL
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR_APP_KEY_HERE' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com"
+        }
+    }
+}'
+```
+
+``` Node.js
+import fetch from 'node-fetch';
+fetch('https://inform-api-0X.moengage.com/v1/send', {
+method: 'POST',
+headers: {
+    'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+    'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    'Content-Type': 'application/json'
+},
+// body: "{\n    \"alert_id\": \"636b77e6e2cf83277195fb60\",\n    \"user_id\": \"USER_ID\",\n    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",\n    \"payloads\": {\n        \"EMAIL\": {\n            \"recipient\": \"john.doe@moengage.com\"\n        }\n    }\n}",
+body: JSON.stringify({
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID", 
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE", 
+    "payloads": { "EMAIL": { "recipient": "john.doe@moengage.com" } } }) });
+```
+
+``` Go
+package main
+import (
+"fmt"
+"io/ioutil"
+"log"
+"net/http"
+"strings"
+)
+func main() {
+client := &http.Client{}
+var data = strings.NewReader(`{
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com"
+        }
+    }
+}`)
+req, err := http.NewRequest("POST", "https://inform-api-0X.moengage.com/v1/send", data)
+if err != nil {
+    log.Fatal(err)
+}
+req.Header.Set("MOE-APPKEY", "YOUR_APP_KEY_HERE")
+req.Header.Set("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY")
+req.Header.Set("Content-Type", "application/json")
+resp, err := client.Do(req)
+if err != nil {
+    log.Fatal(err)
+}
+defer resp.Body.Close()
+bodyText, err := ioutil.ReadAll(resp.Body)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s
+", bodyText)
+}
+```
+
+``` PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://inform-api-0X.moengage.com/v1/send');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+'MOE-APPKEY' => 'YOUR_APP_KEY_HERE',
+'Authorization' => 'Basic Base64_ENCODED_APPKEY_APIKEY',
+'Content-Type' => 'application/json',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"EMAIL":{"recipient":"john.doe@moengage.com"}}}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+``` Python
+import requests
+headers = {
+'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+# Already added when you pass json= but not when you pass data=
+# 'Content-Type': 'application/json',
+}
+json_data = {
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com"
+        }
+    }
+}
+response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, json=json_data)
+# Note: json_data will not be serialized by requests
+# exactly as it was in the original request.
+#data = '{"alert_id":"636b77e6e2cf83277195fb60","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"EMAIL":{"recipient":"john.doe@moengage.com"}}}'
+#response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, data=data)
+```
+
+``` Ruby
+require 'net/http'
+require 'json'
+uri = URI('https://inform-api-0X.moengage.com/v1/send')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['MOE-APPKEY'] = 'YOUR_APP_KEY_HERE'
+req['Authorization'] = 'Basic Base64_ENCODED_APPKEY_APIKEY'
+# The object won't be serialized exactly like this
+# req.body = "{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"EMAIL":{"recipient":"john.doe@moengage.com"}}}"
+req.body = {
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com"
+        }
+    }
+}.to_json
+req_options = {
+use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+http.request(req)
+end
+```
+
+``` Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+public class Main {
+	public static void main(String[] args) throws IOException {
+        URL url = new URL("https://i-inform-api-00.moengage.com/v1/send");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod(“POST”);
+        httpConn.setRequestProperty(“MOE-APPKEY”, “YOUR_APP_KEY_HERE”);
+        httpConn.setRequestProperty(“Authorization”, “Basic Base64_ENCODED_APPKEY_APIKEY”);
+        httpConn.setRequestProperty(“Content-Type”, “application/json”);
+        httpConn.setDoOutput(true);
+        String payload = "{
+    \"alert_id\": \"636bc615e2cf83285495055f\",
+    \"alert_reference_name\": \"Demo_ID\",
+    \"user_id\": \"USER_ID\",
+    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",
+    \"payloads\": {
+        \"EMAIL\": {
+            \"recipient\": \"john.doe@moengage.com\"
+        }
+    }
+}";
+        httpConn.setDoOutput(true);
+        OutputStream os = httpConn.getOutputStream();
+        os.write(payload.getBytes());
+        os.flush();
+        InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+            ? httpConn.getInputStream()
+            : httpConn.getErrorStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            (responseStream)));
+        String output;
+        while ((output = br.readLine()) != null) {
+            System.out.println(output);
+        }
+        httpConn.disconnect();
+    }
+}
+```
+
+</CodeGroup>
+
+**Only Push Channel**
+
+<CodeGroup>
+``` cURL
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR_APP_KEY_HERE' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "alert_id": "636b77e6e2cf83277195fb60",
+  "alert_reference_name": "Demo_ID",
+  "user_id": "USER_ID",
+  "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+  "payloads": {
+      "PUSH": {
+            "recipient": "<push-token>"
+        }
+  }
+}'
+```
+
+``` Node.js
+import fetch from 'node-fetch';
+fetch('https://inform-api-0X.moengage.com/v1/send', {
+method: 'POST',
+headers: {
+    'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+    'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    'Content-Type': 'application/json'
+},
+//body: "{\n    \"alert_id\": \"636b77e6e2cf83277195fb60\",\n \"alert_reference_name\": \"Demo_ID\",\n   \"user_id\": \"USER_ID\",\n    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",\n    \"payloads\": {\n        \"PUSH\": {\n            \"recipient\": \"<push-token>\"\n        }\n    }\n}",
+body: JSON.stringify({
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+      "PUSH": {
+            "recipient": "<push-token>"
+        }     
+    }
+})
+});
+```
+
+``` Go
+package main
+import (
+"fmt"
+"io/ioutil"
+"log"
+"net/http"
+"strings"
+)
+func main() {
+client := &http.Client{}
+var data = strings.NewReader(`{
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+      "PUSH": {
+            "recipient": "<push-token>"
+        }
+    }
+}`)
+req, err := http.NewRequest("POST", "https://inform-api-0X.moengage.com/v1/send", data)
+if err != nil {
+    log.Fatal(err)
+}
+req.Header.Set("MOE-APPKEY", "YOUR_APP_KEY_HERE")
+req.Header.Set("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY")
+req.Header.Set("Content-Type", "application/json")
+resp, err := client.Do(req)
+if err != nil {
+    log.Fatal(err)
+}
+defer resp.Body.Close()
+bodyText, err := ioutil.ReadAll(resp.Body)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s
+", bodyText)
+}
+```
+
+``` PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://inform-api-0X.moengage.com/v1/send');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+'MOE-APPKEY' =-> 'YOUR_APP_KEY_HERE',
+'Authorization' => 'Basic Base64_ENCODED_APPKEY_APIKEY',
+'Content-Type' => 'application/json',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>"}}}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+``` Python
+import requestsheaders = {
+'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+# Already added when you pass json= but not when you pass data=
+# 'Content-Type': 'application/json',
+}
+json_data = {
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>"
+        }
+    }
+}
+response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, json=json_data)
+# Note: json_data will not be serialized by requests
+# exactly as it was in the original request.
+#data = '{"alert_id":"636b77e6e2cf83277195fb60","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>"}}}'
+#response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, data=data)
+```
+
+``` Ruby
+require 'net/http'
+require 'json'
+uri = URI('https://inform-api-0X.moengage.com/v1/send')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['MOE-APPKEY'] = 'YOUR_APP_KEY_HERE'
+req['Authorization'] = 'Basic Base64_ENCODED_APPKEY_APIKEY'
+# The object won't be serialized exactly like this
+# req.body = "{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>"}}}"
+req.body = {
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>"
+        }
+    }
+}.to_json
+req_options = {
+use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+http.request(req)
+end
+```
+
+``` Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+public class Main {
+	public static void main(String[] args) throws IOException {
+        URL url = new URL("https://inform-api-0X.moengage.com/v1/send");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod(“POST”);
+        httpConn.setRequestProperty(“MOE-APPKEY”, “YOUR_APP_KEY_HERE”);
+        httpConn.setRequestProperty(“Authorization”, “Basic Base64_ENCODED_APPKEY_APIKEY”);
+        httpConn.setRequestProperty(“Content-Type”, “application/json”);
+        httpConn.setDoOutput(true);
+        String payload = "{
+    \"alert_id\": \"636bc615e2cf83285495055f\",
+    \"alert_reference_name\": \"Demo_ID\",
+    \"user_id\": \"USER_ID\",
+    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",
+    \"payloads\": {
+        \"PUSH\": {
+            \"recipient\": \"<push-token>\"
+        }
+    }
+}";
+        httpConn.setDoOutput(true);
+        OutputStream os = httpConn.getOutputStream();
+        os.write(payload.getBytes());
+        os.flush();
+        InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+            ? httpConn.getInputStream()
+            : httpConn.getErrorStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            (responseStream)));
+        String output;
+        while ((output = br.readLine()) != null) {
+            System.out.println(output);
+        }
+        httpConn.disconnect();
+    }
+}
+```
+
+</CodeGroup>
+
+## Case 2: Multiple channels are configured for the Alert
+
+<CodeGroup>
+``` cURL
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR_APP_KEY_HERE' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>"
+        },
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com"
+        }
+    }
+}'
+```
+
+``` Node.js
+import fetch from 'node-fetch';
+fetch('https://inform-api-0X.moengage.com/v1/send', {
+method: 'POST',
+headers: {
+    'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+    'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    'Content-Type': 'application/json'
+},
+// body: "{\n    \"alert_id\": \"636b77e6e2cf83277195fb60\",\n   \"alert_reference_name\": \"Demo_ID\",\n   \"user_id\": \"USER_ID\",\n    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",\n    \"payloads\": {\n        \"PUSH\": {\n            \"recipient\": \"<push-token>\"\n        },\n        \"EMAIL\": {\n            \"recipient\": \"john.doe@moengage.com\"\n        }\n    }\n}",
+body: JSON.stringify({
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>"
+        },
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com"
+        }
+    }
+})
+});
+```
+
+``` Go
+package main
+import (
+"fmt"
+"io/ioutil"
+"log"
+"net/http"
+"strings"
+)
+func main() {
+client := &http.Client{}
+var data = strings.NewReader(`{
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>"
+        },
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com"
+        }
+    }
+}`)
+req, err := http.NewRequest("POST", "https://inform-api-0X.moengage.com/v1/send", data)
+if err != nil {
+    log.Fatal(err)
+}
+req.Header.Set("MOE-APPKEY", "YOUR_APP_KEY_HERE")
+req.Header.Set("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY")
+req.Header.Set("Content-Type", "application/json")
+resp, err := client.Do(req)
+if err != nil {
+    log.Fatal(err)
+}
+defer resp.Body.Close()
+bodyText, err := ioutil.ReadAll(resp.Body)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s
+", bodyText)
+}
+```
+
+``` PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://inform-api-0X.moengage.com/v1/send');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+'MOE-APPKEY' => 'YOUR_APP_KEY_HERE',
+'Authorization' => 'Basic Base64_ENCODED_APPKEY_APIKEY',
+'Content-Type' => 'application/json',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>"},"EMAIL":{"recipient":"john.doe@moengage.com"}}}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+``` Python
+import requests
+headers = {
+'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+# Already added when you pass json= but not when you pass data=
+# 'Content-Type': 'application/json',
+}
+json_data = {
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>"
+        },
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com"
+        }
+    }
+}
+response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, json=json_data)
+# Note: json_data will not be serialized by requests
+# exactly as it was in the original request.
+#data = '{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>"},"EMAIL":{"recipient":"john.doe@moengage.com"}}}'
+#response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, data=data)
+```
+
+``` Ruby
+require 'net/http'
+require 'json'
+uri = URI('https://inform-api-0X.moengage.com/v1/send')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['MOE-APPKEY'] = 'YOUR_APP_KEY_HERE'
+req['Authorization'] = 'Basic Base64_ENCODED_APPKEY_APIKEY'
+# The object won't be serialized exactly like this
+# req.body = "{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>"},"EMAIL":{"recipient":"john.doe@moengage.com"}}}"
+req.body = {
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>"
+        },
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com"
+        }
+    }
+}.to_json
+req_options = {
+use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+http.request(req)
+end
+```
+
+``` Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+public class Main {
+	public static void main(String[] args) throws IOException {
+        URL url = new URL("https://inform-api-0X.moengage.com/v1/send");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod(“POST”);
+        httpConn.setRequestProperty(“MOE-APPKEY”, “YOUR_APP_KEY_HERE”);
+        httpConn.setRequestProperty(“Authorization”, “Basic Base64_ENCODED_APPKEY_APIKEY”);
+        httpConn.setRequestProperty(“Content-Type”, “application/json”);
+        httpConn.setDoOutput(true);
+        String payload = "{
+    \"alert_id\": \"636bc615e2cf83285495055f\",
+    \"alert_reference_name\": \"Demo_ID\",
+    \"user_id\": \"USER_ID\",
+    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",
+    \"payloads\": {
+        \"PUSH\": {
+            \"recipient\": \"<push-token>\"
+        },
+        \"EMAIL\": {
+            \"recipient\": \"john.doe@moengage.com\"
+        }
+    }
+}";
+        httpConn.setDoOutput(true);
+        OutputStream os = httpConn.getOutputStream();
+        os.write(payload.getBytes());
+        os.flush();
+        InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+            ? httpConn.getInputStream()
+            : httpConn.getErrorStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            (responseStream)));
+        String output;
+        while ((output = br.readLine()) != null) {
+            System.out.println(output);
+        }
+        httpConn.disconnect();
+    }
+}
+```
+
+</CodeGroup>
+
+# Sample Request for a Live Alert with Personalization
+
+## Case 1: One channel is configured for the Alert
+
+**Only SMS Channel**
+
+<CodeGroup>
+``` cURL
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR_APP_KEY_HERE' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "SMS": {
+            "recipient": "123456789",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}'
+```
+
+``` Node.js
+import fetch from 'node-fetch';
+fetch('https://inform-api-0X.moengage.com/v1/send', {
+method: 'POST',
+headers: {
+    'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+    'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    'Content-Type': 'application/json'
+},
+// body: "{\n    \"alert_id\": \"636b9d5de2cf8328549503b9\",\n \"alert_reference_name\": \"Demo_ID\",\n   \"user_id\": \"USER_ID\",\n    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",\n    \"payloads\": {\n        \"SMS\": {\n            \"recipient\": \"123456789\",\n            \"personalized_attributes\": {\n                \"firstname\": \"YOUR_firstname_ATTRIBUTE_VAL_HERE\",\n                \"orderid\": \"YOUR_orderid_ATTRIBUTE_VAL_HERE\",\n                \"deliverydate\": \"YOUR_deliverydate_ATTRIBUTE_VAL_HERE\",\n                \"deliveryslot_starttime\": \"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE\",\n                \"deliveryslot_endtime\": \"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE\"\n            }\n        }\n    }\n}",
+body: JSON.stringify({
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "SMS": {
+            "recipient": "123456789",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+})
+});
+```
+
+``` Go
+package main
+import (
+"fmt"
+"io/ioutil"
+"log"
+"net/http"
+"strings"
+)
+func main() {
+client := &http.Client{}
+var data = strings.NewReader(`{
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "SMS": {
+            "recipient": "123456789",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}`)
+req, err := http.NewRequest("POST", "https://inform-api-0X.moengage.com/v1/send", data)
+if err != nil {
+    log.Fatal(err)
+}
+req.Header.Set("MOE-APPKEY", "YOUR_APP_KEY_HERE")
+req.Header.Set("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY")
+req.Header.Set("Content-Type", "application/json")
+resp, err := client.Do(req)
+if err != nil {
+    log.Fatal(err)
+}
+defer resp.Body.Close()
+bodyText, err := ioutil.ReadAll(resp.Body)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s
+", bodyText)
+}
+```
+
+``` PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://inform-api-0X.moengage.com/v1/send');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+'MOE-APPKEY' => 'YOUR_APP_KEY_HERE',
+'Authorization' => 'Basic Base64_ENCODED_APPKEY_APIKEY',
+'Content-Type' => 'application/json',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"alert_id":"636b9d5de2cf8328549503b9","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"SMS":{"recipient":"123456789","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}}}}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+``` Python
+import requests
+headers = {
+'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+# Already added when you pass json= but not when you pass data=
+# 'Content-Type': 'application/json',
+}
+json_data = {
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "SMS": {
+            "recipient": "123456789",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}
+response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, json=json_data)
+# Note: json_data will not be serialized by requests
+# exactly as it was in the original request.
+#data = '{"alert_id":"636b9d5de2cf8328549503b9","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"SMS":{"recipient":"123456789","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}}}}'
+#response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, data=data)
+```
+
+``` Ruby
+require 'net/http'
+require 'json'
+uri = URI('https://inform-api-0X.moengage.com/v1/send')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['MOE-APPKEY'] = 'YOUR_APP_KEY_HERE'
+req['Authorization'] = 'Basic Base64_ENCODED_APPKEY_APIKEY'
+# The object won't be serialized exactly like this
+# req.body = "{"alert_id":"636b9d5de2cf8328549503b9","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"SMS":{"recipient":"123456789","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}}}}"
+req.body = {
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "SMS": {
+            "recipient": "123456789",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}.to_json
+req_options = {
+use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+http.request(req)
+end
+```
+
+``` Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+public class Main {
+	public static void main(String[] args) throws IOException {
+        URL url = new URL("https://inform-api-0X.moengage.com/v1/send");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod(“POST”);
+        httpConn.setRequestProperty(“MOE-APPKEY”, “YOUR_APP_KEY_HERE”);
+        httpConn.setRequestProperty(“Authorization”, “Basic Base64_ENCODED_APPKEY_APIKEY”);
+        httpConn.setRequestProperty(“Content-Type”, “application/json”);
+        httpConn.setDoOutput(true);
+        String payload = "{
+    \"alert_id\": \"636bc615e2cf83285495055f\",
+    \"alert_reference_name\": \"Demo_ID\",
+    \"user_id\": \"USER_ID\",
+    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",
+    \"payloads\": {
+        \"SMS\": {
+            \"recipient\": \"123456789\",
+            \"personalized_attributes\": {
+                \"firstname\": \"YOUR_firstname_ATTRIBUTE_VAL_HERE\",
+                \"userid\": \"YOUR_userid_ATTRIBUTE_VAL_HERE\",
+                \"deliverydate\": \"YOUR_deliverydate_ATTRIBUTE_VAL_HERE\",
+                \"deliveryslot_starttime\": \"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE\"
+            }
+        }
+    }
+}";
+        httpConn.setDoOutput(true);
+        OutputStream os = httpConn.getOutputStream();
+        os.write(payload.getBytes());
+        os.flush();
+        InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+            ? httpConn.getInputStream()
+            : httpConn.getErrorStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            (responseStream)));
+        String output;
+        while ((output = br.readLine()) != null) {
+            System.out.println(output);
+        }
+        httpConn.disconnect();
+    }
+}
+```
+
+</CodeGroup>
+
+**Only Email Channel**
+
+<CodeGroup>
+``` cURL
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR_APP_KEY_HERE' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            },
+            "personalized_attachments": {
+                "order_summary": "YOUR_order_summary_VAL_HERE"
+            }
+        }
+    }
+}'
+```
+
+``` Node.js
+import fetch from 'node-fetch';
+fetch('https://inform-api-0X.moengage.com/v1/send', {
+method: 'POST',
+headers: {
+    'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+    'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    'Content-Type': 'application/json'
+},
+// body: "{\n    \"alert_id\": \"636b9d5de2cf8328549503b9\",\n  \"alert_reference_name\": \"Demo_ID\",\n  \"user_id\": \"USER_ID\",\n    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",\n    \"payloads\": {\n        \"EMAIL\": {\n            \"recipient\": \"john.doe@moengage.com\",\n            \"personalized_attributes\": {\n                \"firstname\": \"YOUR_firstname_ATTRIBUTE_VAL_HERE\",\n                \"orderid\": \"YOUR_orderid_ATTRIBUTE_VAL_HERE\",\n                \"deliverydate\": \"YOUR_deliverydate_ATTRIBUTE_VAL_HERE\",\n                \"deliveryslot_starttime\": \"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE\",\n                \"deliveryslot_endtime\": \"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE\"\n           \"personalized_attachments\": {\n                \"order_summary\": \"YOUR_order_summary_VAL_HERE\"\n           }\n        }\n    }\n}",
+body: JSON.stringify({
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            },
+            "personalized_attachments": {
+                "order_summary": "YOUR_order_summary_VAL_HERE"
+            }            
+        }
+    }
+})
+});
+```
+
+``` Go
+package main
+import (
+"fmt"
+"io/ioutil"
+"log"
+"net/http"
+"strings"
+)
+func main() {
+client := &http.Client{}
+var data = strings.NewReader(`{
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            },
+            "personalized_attachments": {
+                "order_summary": "YOUR_order_summary_VAL_HERE"
+            }            
+        }
+    }
+}`)
+req, err := http.NewRequest("POST", "https://inform-api-0X.moengage.com/v1/send", data)
+if err != nil {
+    log.Fatal(err)
+}
+req.Header.Set("MOE-APPKEY", "YOUR_APP_KEY_HERE")
+req.Header.Set("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY")
+req.Header.Set("Content-Type", "application/json")
+resp, err := client.Do(req)
+if err != nil {
+    log.Fatal(err)
+}
+defer resp.Body.Close()
+bodyText, err := ioutil.ReadAll(resp.Body)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s
+", bodyText)
+}
+```
+
+``` PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://inform-api-0X.moengage.com/v1/send');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+'MOE-APPKEY' => 'YOUR_APP_KEY_HERE',
+'Authorization' => 'Basic Base64_ENCODED_APPKEY_APIKEY',
+'Content-Type' => 'application/json',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"alert_id":"636b9d5de2cf8328549503b9","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"EMAIL":{"recipient":"john.doe@moengage.com","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"},"personalized_attachments":{"order_summary":"YOUR_order_summary_VAL_HERE"}}}}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+``` Python
+import requests
+headers = {
+'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+# Already added when you pass json= but not when you pass data=
+# 'Content-Type': 'application/json',
+}
+json_data = {
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            },
+            "personalized_attachments": {
+                "order_summary": "YOUR_order_summary_VAL_HERE"
+            }
+        }
+    }
+}
+response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, json=json_data)
+# Note: json_data will not be serialized by requests
+# exactly as it was in the original request.
+#data = '{"alert_id":"636b9d5de2cf8328549503b9","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"EMAIL":{"recipient":"john.doe@moengage.com","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"},"personalized_attachments":{"order_summary":"YOUR_order_summary_VAL_HERE"}}}}'
+#response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, data=data)
+```
+
+``` Ruby
+require 'net/http'
+require 'json'
+uri = URI('https://inform-api-0X.moengage.com/v1/send')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['MOE-APPKEY'] = 'YOUR_APP_KEY_HERE'
+req['Authorization'] = 'Basic Base64_ENCODED_APPKEY_APIKEY'
+# The object won't be serialized exactly like this
+# req.body = "{"alert_id":"636b9d5de2cf8328549503b9","alert_reference_name": "Demo_ID", "user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"EMAIL":{"recipient":"john.doe@moengage.com","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"},"personalized_attachments":{"order_summary":"YOUR_order_summary_VAL_HERE"}}}}"
+req.body = {
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            },
+           "personalized_attachments": {
+                "order_summary": "YOUR_order_summary_VAL_HERE"
+           }
+        }
+    }
+}.to_json
+req_options = {
+use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+http.request(req)
+end
+```
+
+``` Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+public class Main {
+	public static void main(String[] args) throws IOException {
+        URL url = new URL("https://inform-api-0X.moengage.com/v1/send");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod(“POST”);
+        httpConn.setRequestProperty(“MOE-APPKEY”, “YOUR_APP_KEY_HERE”);
+        httpConn.setRequestProperty(“Authorization”, “Basic Base64_ENCODED_APPKEY_APIKEY”);
+        httpConn.setRequestProperty(“Content-Type”, “application/json”);
+        httpConn.setDoOutput(true);
+        String payload = "{
+    \"alert_id\": \"636bc615e2cf83285495055f\",
+    \"alert_reference_name\": \"Demo_ID\",
+    \"user_id\": \"USER_ID\",
+    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",
+    \"payloads\": {
+        \"EMAIL\": {
+            \"recipient\": \"john.doe@moengage.com\",
+            \"personalized_attributes\": {
+                \"firstname\": \"YOUR_firstname_ATTRIBUTE_VAL_HERE\",
+                \"userid\": \"YOUR_userid_ATTRIBUTE_VAL_HERE\",
+                \"deliverydate\": \"YOUR_deliverydate_ATTRIBUTE_VAL_HERE\",
+                \"deliveryslot_starttime\": \"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE\"
+            },
+            \"personalized_attachments\": {
+                \"order_summary\": \"YOUR_order_summary_VAL_HERE\"
+            }
+        }
+    }
+}";
+        httpConn.setDoOutput(true);
+        OutputStream os = httpConn.getOutputStream();
+        os.write(payload.getBytes());
+        os.flush();
+        InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+            ? httpConn.getInputStream()
+            : httpConn.getErrorStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            (responseStream)));
+        String output;
+        while ((output = br.readLine()) != null) {
+            System.out.println(output);
+        }
+        httpConn.disconnect();
+    }
+}
+```
+
+</CodeGroup>
+
+**Only Push Channel**
+
+<CodeGroup>
+``` cURL
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR_APP_KEY_HERE' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}'
+```
+
+``` Node.js
+import fetch from 'node-fetch';
+fetch('https://inform-api-0X.moengage.com/v1/send', {
+method: 'POST',
+headers: {
+    'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+    'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    'Content-Type': 'application/json'
+},
+body: JSON.stringify({
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+})
+});
+```
+
+``` Go
+package main
+import (
+"fmt"
+"io/ioutil"
+"log"
+"net/http"
+"strings"
+)
+func main() {
+client := &http.Client{}
+var data = strings.NewReader(`{
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}`)
+req, err := http.NewRequest("POST", "https://inform-api-0X.moengage.com/v1/send", data)
+if err != nil {
+    log.Fatal(err)
+}
+req.Header.Set("MOE-APPKEY", "YOUR_APP_KEY_HERE")
+req.Header.Set("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY")
+req.Header.Set("Content-Type", "application/json")
+resp, err := client.Do(req)
+if err != nil {
+    log.Fatal(err)
+}
+defer resp.Body.Close()
+bodyText, err := ioutil.ReadAll(resp.Body)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s
+", bodyText)
+}
+```
+
+``` PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://inform-api-0X.moengage.com/v1/send');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+'MOE-APPKEY' => 'YOUR_APP_KEY_HERE',
+'Authorization' => 'Basic Base64_ENCODED_APPKEY_APIKEY',
+'Content-Type' => 'application/json',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"alert_id":"636b9d5de2cf8328549503b9","alert_reference_name": "Demo_ID","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}}}}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+``` Python
+import requests
+headers = {
+'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+# Already added when you pass json= but not when you pass data=
+# 'Content-Type': 'application/json',
+}
+json_data = {
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}
+response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, json=json_data)
+# Note: json_data will not be serialized by requests
+# exactly as it was in the original request.
+#data = '{"alert_id":"636b9d5de2cf8328549503b9","alert_reference_name": "Demo_ID","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}}}}'
+#response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, data=data)
+```
+
+``` Ruby
+require 'net/http'
+require 'json'
+uri = URI('https://inform-api-0X.moengage.com/v1/send')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['MOE-APPKEY'] = 'YOUR_APP_KEY_HERE'
+req['Authorization'] = 'Basic Base64_ENCODED_APPKEY_APIKEY'
+# The object won't be serialized exactly like this
+# req.body = "{"alert_id":"636b9d5de2cf8328549503b9","alert_reference_name": "Demo_ID","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}}}}"
+req.body = {
+    "alert_id": "636b9d5de2cf8328549503b9",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}.to_json
+req_options = {
+use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+http.request(req)
+end
+```
+
+``` Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+public class Main {
+	public static void main(String[] args) throws IOException {
+        URL url = new URL("https://inform-api-0X.moengage.com/v1/send");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod(“POST”);
+        httpConn.setRequestProperty(“MOE-APPKEY”, “YOUR_APP_KEY_HERE”);
+        httpConn.setRequestProperty(“Authorization”, “Basic Base64_ENCODED_APPKEY_APIKEY”);
+        httpConn.setRequestProperty(“Content-Type”, “application/json”);
+        httpConn.setDoOutput(true);
+        String payload = "{
+    \"alert_id\": \"636bc615e2cf83285495055f\",
+    \"alert_reference_name\": \"Demo_ID\",
+    \"user_id\": \"USER_ID\",
+    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",
+    \"payloads\": {
+        \"PUSH\": {
+            \"recipient\": \"<push-token>\",
+            \"personalized_attributes\": {
+                \"firstname\": \"YOUR_firstname_ATTRIBUTE_VAL_HERE\",
+                \"userid\": \"YOUR_userid_ATTRIBUTE_VAL_HERE\",
+                \"deliverydate\": \"YOUR_deliverydate_ATTRIBUTE_VAL_HERE\",
+                \"deliveryslot_starttime\": \"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE\"
+            }
+        }
+    }
+}";
+        httpConn.setDoOutput(true);
+        OutputStream os = httpConn.getOutputStream();
+        os.write(payload.getBytes());
+        os.flush();
+        InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+            ? httpConn.getInputStream()
+            : httpConn.getErrorStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            (responseStream)));
+        String output;
+        while ((output = br.readLine()) != null) {
+            System.out.println(output);
+        }
+        httpConn.disconnect();
+    }
+}
+```
+
+</CodeGroup>
+
+ 
+
+## Case 2: Multiple channels are configured for the Alert
+
+<CodeGroup>
+``` cURL
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR_APP_KEY_HERE' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        },
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}'
+```
+
+``` Node.js
+import fetch from 'node-fetch';
+fetch('https://inform-api-0X.moengage.com/v1/send', {
+method: 'POST',
+headers: {
+    'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+    'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    'Content-Type': 'application/json'
+},
+// body: "{\n    \"alert_id\": \"636b77e6e2cf83277195fb60\",\n  \"alert_reference_name\": \"Demo_ID\",\n   \"user_id\": \"USER_ID\",\n    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",\n    \"payloads\": {\n        \"PUSH\": {\n            \"recipient\": \"<push-token>\",\n            \"personalized_attributes\": {\n                \"firstname\": \"YOUR_firstname_ATTRIBUTE_VAL_HERE\",\n                \"orderid\": \"YOUR_orderid_ATTRIBUTE_VAL_HERE\",\n                \"deliverydate\": \"YOUR_deliverydate_ATTRIBUTE_VAL_HERE\",\n                \"deliveryslot_starttime\": \"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE\",\n                \"deliveryslot_endtime\": \"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE\"\n            }\n        },\n        \"EMAIL\": {\n            \"recipient\": \"john.doe@moengage.com\",\n            \"personalized_attributes\": {\n                \"firstname\": \"YOUR_firstname_ATTRIBUTE_VAL_HERE\",\n                \"orderid\": \"YOUR_orderid_ATTRIBUTE_VAL_HERE\",\n                \"deliverydate\": \"YOUR_deliverydate_ATTRIBUTE_VAL_HERE\",\n                \"deliveryslot_starttime\": \"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE\",\n                \"deliveryslot_endtime\": \"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE\"\n            }\n        }\n    }\n}",
+body: JSON.stringify({
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        },
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+})
+});
+```
+
+``` Go
+package main
+import (
+"fmt"
+"io/ioutil"
+"log"
+"net/http"
+"strings"
+)
+func main() {
+client := &http.Client{}
+var data = strings.NewReader(`{
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        },
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}`)
+req, err := http.NewRequest("POST", "https://inform-api-0X.moengage.com/v1/send", data)
+if err != nil {
+    log.Fatal(err)
+}
+req.Header.Set("MOE-APPKEY", "YOUR_APP_KEY_HERE")
+req.Header.Set("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY")
+req.Header.Set("Content-Type", "application/json")
+resp, err := client.Do(req)
+if err != nil {
+    log.Fatal(err)
+}
+defer resp.Body.Close()
+bodyText, err := ioutil.ReadAll(resp.Body)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s
+", bodyText)
+}
+```
+
+``` PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://inform-api-0X.moengage.com/v1/send');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+'MOE-APPKEY' => 'YOUR_APP_KEY_HERE',
+'Authorization' => 'Basic Base64_ENCODED_APPKEY_APIKEY',
+'Content-Type' => 'application/json',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}},"EMAIL":{"recipient":"john.doe@moengage.com","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}}}}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+``` Python
+import requests
+headers = {
+'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+# Already added when you pass json= but not when you pass data=
+# 'Content-Type': 'application/json',
+}
+json_data = {
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        },
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}
+response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, json=json_data)
+# Note: json_data will not be serialized by requests
+# exactly as it was in the original request.
+#data = '{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}},"EMAIL":{"recipient":"john.doe@moengage.com","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}}}}'
+#response = requests.post('https://inform-api-0X.moengage.com/v1/send', headers=headers, data=data)
+```
+
+``` Ruby
+require 'net/http'
+require 'json'
+uri = URI('https://inform-api-0X.moengage.com/v1/send')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['MOE-APPKEY'] = 'YOUR_APP_KEY_HERE'
+req['Authorization'] = 'Basic Base64_ENCODED_APPKEY_APIKEY'
+# The object won't be serialized exactly like this
+# req.body = "{"alert_id":"636b77e6e2cf83277195fb60","alert_reference_name": "Demo_ID","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}},"EMAIL":{"recipient":"john.doe@moengage.com","personalized_attributes":{"firstname":"YOUR_firstname_ATTRIBUTE_VAL_HERE","orderid":"YOUR_orderid_ATTRIBUTE_VAL_HERE","deliverydate":"YOUR_deliverydate_ATTRIBUTE_VAL_HERE","deliveryslot_starttime":"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE","deliveryslot_endtime":"YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"}}}}"
+req.body = {
+    "alert_id": "636b77e6e2cf83277195fb60",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        },
+        "EMAIL": {
+            "recipient": "john.doe@moengage.com",
+            "personalized_attributes": {
+                "firstname": "YOUR_firstname_ATTRIBUTE_VAL_HERE",
+                "orderid": "YOUR_orderid_ATTRIBUTE_VAL_HERE",
+                "deliverydate": "YOUR_deliverydate_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_starttime": "YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE",
+                "deliveryslot_endtime": "YOUR_deliveryslot_endtime_ATTRIBUTE_VAL_HERE"
+            }
+        }
+    }
+}.to_json
+req_options = {
+use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+http.request(req)
+end
+```
+
+``` Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+public class Main {
+	public static void main(String[] args) throws IOException {
+        URL url = new URL("https://inform-api-0X.moengage.com/v1/send");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod(“POST”);
+        httpConn.setRequestProperty(“MOE-APPKEY”, “YOUR_APP_KEY_HERE”);
+        httpConn.setRequestProperty(“Authorization”, “Basic Base64_ENCODED_APPKEY_APIKEY”);
+        httpConn.setRequestProperty(“Content-Type”, “application/json”);
+        httpConn.setDoOutput(true);
+        String payload = "{
+    \"alert_id\": \"636bc615e2cf83285495055f\",
+    \"alert_reference_name\": \"Demo_ID\",
+    \"user_id\": \"USER_ID\",
+    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",
+    \"payloads\": {
+        \"PUSH\": {
+            \"recipient\": \"<push-token>\",
+            \"personalized_attributes\": {
+                \"firstname\": \"YOUR_firstname_ATTRIBUTE_VAL_HERE\",
+                \"userid\": \"YOUR_userid_ATTRIBUTE_VAL_HERE\",
+                \"deliverydate\": \"YOUR_deliverydate_ATTRIBUTE_VAL_HERE\",
+                \"deliveryslot_starttime\": \"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE\"
+            }
+        },
+        \"EMAIL\": {
+            \"recipient\": \"john.doe@moengage.com\",
+            \"personalized_attributes\": {
+                \"firstname\": \"YOUR_firstname_ATTRIBUTE_VAL_HERE\",
+                \"userid\": \"YOUR_userid_ATTRIBUTE_VAL_HERE\",
+                \"deliverydate\": \"YOUR_deliverydate_ATTRIBUTE_VAL_HERE\",
+                \"deliveryslot_starttime\": \"YOUR_deliveryslot_starttime_ATTRIBUTE_VAL_HERE\"
+            }
+        }
+    }
+}";
+        httpConn.setDoOutput(true);
+        OutputStream os = httpConn.getOutputStream();
+        os.write(payload.getBytes());
+        os.flush();
+        InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+            ? httpConn.getInputStream()
+            : httpConn.getErrorStream();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            (responseStream)));
+        String output;
+        while ((output = br.readLine()) != null) {
+            System.out.println(output);
+        }
+        httpConn.disconnect();
+    }
+}
+```
+
+</CodeGroup>
+
+## Case 3: Live Activity
+
+**Live Activity Only**
+
+<CodeGroup>
+``` cURL
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send \
+--header 'MOE-APPKEY: YOUR_APP_KEY_HERE' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "alert_id": "696737255def18872642f9d2",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "stale_date": "YOUR_stale_date_VAL_HERE",
+                "dismissal_date": "YOUR_dismissal_date_VAL_HERE"
+            },
+            "live_activity_attributes": {
+                "la_type": "<start/update/end>",
+                "attribute_info": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},
+                "content_state": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}
+            }
+        }
+    }
+}'
+```
+
+``` Node.js
+import fetch from 'node-fetch';
+
+fetch('https://inform-api-0X.moengage.com/v1/send', {
+    method: 'POST',
+    headers: {
+        'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+        'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        "alert_id": "696737255def18872642f9d2",
+        "alert_reference_name": "Demo_ID",
+        "user_id": "USER_ID",
+        "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+        "payloads": {
+            "PUSH": {
+                "recipient": "<push-token>",
+                "personalized_attributes": {
+                    "stale_date": "YOUR_stale_date_VAL_HERE",
+                    "dismissal_date": "YOUR_dismissal_date_VAL_HERE"
+                },
+                "live_activity_attributes": {
+                    "la_type": "<start/update/end>",
+                    "attribute_info": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},
+                    "content_state": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}
+                }
+            }
+        }
+    })
+});
+```
+
+``` Go
+package main
+
+import (
+    "fmt"
+    "io/ioutil"
+    "log"
+    "net/http"
+    "strings"
+)
+
+func main() {
+    client := &http.Client{}
+    var data = strings.NewReader(`{
+    "alert_id": "696737255def18872642f9d2",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "stale_date": "YOUR_stale_date_VAL_HERE",
+                "dismissal_date": "YOUR_dismissal_date_VAL_HERE"
+            },
+            "live_activity_attributes": {
+                "la_type": "<start/update/end>",
+                "attribute_info": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},
+                "content_state": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}
+            }
+        }
+    }
+}`)
+    req, err := http.NewRequest("POST", "https://inform-api-0X.moengage.com/v1/send", data)
+    if err != nil {
+        log.Fatal(err)
+    }
+    req.Header.Set("MOE-APPKEY", "YOUR_APP_KEY_HERE")
+    req.Header.Set("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY")
+    req.Header.Set("Content-Type", "application/json")
+    resp, err := client.Do(req)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer resp.Body.Close()
+    bodyText, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("%s\n", bodyText)
+}
+```
+
+``` PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://inform-api-0X.moengage.com/v1/send');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'MOE-APPKEY' = 'YOUR_APP_KEY_HERE',
+    'Authorization' = 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    'Content-Type' = 'application/json',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"alert_id":"696737255def18872642f9d2","alert_reference_name":"Live Activity Only Test","user_id":"USER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>","personalized_attributes":{"stale_date":"YOUR_stale_date_VAL_HERE","dismissal_date":"YOUR_dismissal_date_VAL_HERE"},"live_activity_attributes":{"la_type":"<start/update/end>","attribute_info":"{YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE}","content_state":"{YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}"}}}}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+$response = curl_exec($ch);
+
+curl_close($ch);
+```
+
+``` Python
+import requests
+
+headers = {
+    'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+    'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    # Already added when you pass json= but not when you pass data=
+    # 'Content-Type': 'application/json',
+}
+
+json_data = {
+    "alert_id": "696737255def18872642f9d2",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "stale_date": "YOUR_stale_date_VAL_HERE",
+                "dismissal_date": "YOUR_dismissal_date_VAL_HERE"
+            },
+            "live_activity_attributes": {
+                "la_type": "<start/update/end>",
+                "attribute_info": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},
+                "content_state": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}
+            }
+        }
+    }
+}
+
+response = requests.post('https://api-00.moengage.com/v1.0/alerts/send', headers=headers, json=json_data)
+```
+
+``` Ruby
+require 'net/http'
+require 'json'
+
+uri = URI('https://inform-api-0X.moengage.com/v1/send')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['MOE-APPKEY'] = 'YOUR_APP_KEY_HERE'
+req['Authorization'] = 'Basic Base64_ENCODED_APPKEY_APIKEY'
+
+req.body = {
+    "alert_id": "696737255def18872642f9d2",
+    "alert_reference_name": "Live Activity Only Test",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "stale_date": "YOUR_stale_date_VAL_HERE",
+                "dismissal_date": "YOUR_dismissal_date_VAL_HERE"
+            },
+            "live_activity_attributes": {
+                "la_type": "<start/update/end>",
+                "attribute_info": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},
+                "content_state": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}
+            }
+        }
+    }
+}.to_json
+
+req_options = {
+    use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+    http.request(req)
+end
+```
+
+``` Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        URL url = new URL("https://inform-api-0X.moengage.com/v1/send");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod("POST");
+
+        httpConn.setRequestProperty("MOE-APPKEY", "YOUR_APP_KEY_HERE");
+        httpConn.setRequestProperty("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY");
+        httpConn.setRequestProperty("Content-Type", "application/json");
+
+        httpConn.setDoOutput(true);
+        String payload = "{\n" +
+"    \"alert_id\": \"696737255def18872642f9d2\",\n" +
+"    \"alert_reference_name\": \"Live Activity Only Test\",\n" +
+"    \"user_id\": \"USER_ID\",\n" +
+"    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",\n" +
+"    \"payloads\": {\n" +
+"        \"PUSH\": {\n" +
+"            \"recipient\": \"<push-token>\",\n" +
+"            \"personalized_attributes\": {\n" +
+"                \"stale_date\": \"YOUR_stale_date_VAL_HERE\",\n" +
+"                \"dismissal_date\": \"YOUR_dismissal_date_VAL_HERE\"\n" +
+"            },\n" +
+"            \"live_activity_attributes\": {\n" +
+"                \"la_type\": \"<start/update/end>\",\n" +
+"                \"attribute_info\": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},\n" +
+"                \"content_state\": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}\n" +
+"            }\n" +
+"        }\n" +
+"    }\n" +
+"}";
+
+        httpConn.setDoOutput(true);
+        OutputStream os = httpConn.getOutputStream();
+        os.write(payload.getBytes());
+        os.flush();
+
+        InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+            ? httpConn.getInputStream()
+            : httpConn.getErrorStream();
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            (responseStream)));
+
+        String output;
+        while ((output = br.readLine()) != null) {
+            System.out.println(output);
+        }
+
+        httpConn.disconnect();
+    }
+}
+```
+
+</CodeGroup>
+
+ 
+
+ 
+
+**Live Activity with Push Fallback**  
+  
+
+<CodeGroup>
+``` cURL
+ curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR_APP_KEY_HERE' \
+--header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "alert_id": "695ce8bc5def18872642e2d8",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "stale_date": "YOUR_stale_date_VAL_HERE",
+                "dismissal_date": "YOUR_dismissal_date_VAL_HERE"
+            },
+            "live_activity_attributes": {
+                "la_type": "<start/update/end>",
+                "attribute_info": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},
+                "content_state": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}
+            }
+        }
+    }
+}'
+```
+
+``` Node.js
+import fetch from 'node-fetch';
+
+fetch('https://inform-api-0X.moengage.com/v1/send', {
+    method: 'POST',
+    headers: {
+        'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+        'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        "alert_id": "695ce8bc5def18872642e2d8",
+        "alert_reference_name": "Demo_ID",
+        "user_id": "USER_ID",
+        "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+        "payloads": {
+            "PUSH": {
+                "recipient": "<push-token>",
+                "personalized_attributes": {
+                    "stale_date": "YOUR_stale_date_VAL_HERE",
+                    "dismissal_date": "YOUR_dismissal_date_VAL_HERE"
+                },
+                "live_activity_attributes": {
+                    "la_type": "<start/update/end>",
+                    "attribute_info": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},
+                    "content_state": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}
+                }
+            }
+        }
+    })
+});
+```
+
+``` Go
+package main
+
+import (
+    "fmt"
+    "io/ioutil"
+    "log"
+    "net/http"
+    "strings"
+)
+
+func main() {
+    client := &http.Client{}
+    var data = strings.NewReader(`{
+    "alert_id": "695ce8bc5def18872642e2d8",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "stale_date": "YOUR_stale_date_VAL_HERE",
+                "dismissal_date": "YOUR_dismissal_date_VAL_HERE"
+            },
+            "live_activity_attributes": {
+                "la_type": "<start/update/end>",
+                "attribute_info": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},
+                "content_state": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}
+            }
+        }
+    }
+}`)
+    req, err := http.NewRequest("POST", "https://inform-api-0X.moengage.com/v1/send", data)
+    if err != nil {
+        log.Fatal(err)
+    }
+    req.Header.Set("MOE-APPKEY", "YOUR_APP_KEY_HERE")
+    req.Header.Set("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY")
+    req.Header.Set("Content-Type", "application/json")
+    resp, err := client.Do(req)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer resp.Body.Close()
+    bodyText, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("%s\n", bodyText)
+}
+```
+
+``` PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://inform-api-0X.moengage.com/v1/send');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'MOE-APPKEY' = 'YOUR_APP_KEY_HERE',
+    'Authorization' = 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    'Content-Type' = 'application/json',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"alert_id":"695ce8bc5def18872642e2d8","alert_reference_name":"Demo_ID":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"PUSH":{"recipient":"<push-token>","personalized_attributes":{"stale_date":"YOUR_stale_date_VAL_HERE","dismissal_date":"YOUR_dismissal_date_VAL_HERE"},"live_activity_attributes":{"la_type":"<start/update/end>","attribute_info":"{YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE}","content_state":"{YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}"}}}}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+$response = curl_exec($ch);
+
+curl_close($ch);
+```
+
+``` Python
+import requests
+
+headers = {
+    'MOE-APPKEY': 'YOUR_APP_KEY_HERE',
+    'Authorization': 'Basic Base64_ENCODED_APPKEY_APIKEY',
+    # Already added when you pass json= but not when you pass data=
+    # 'Content-Type': 'application/json',
+}
+
+json_data = {
+    "alert_id": "695ce8bc5def18872642e2d8",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "stale_date": "YOUR_stale_date_VAL_HERE",
+                "dismissal_date": "YOUR_dismissal_date_VAL_HERE"
+            },
+            "live_activity_attributes": {
+                "la_type": "<start/update/end>",
+                "attribute_info": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},
+                "content_state": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}
+            }
+        }
+    }
+}
+
+response = requests.post('https://api-00.moengage.com/v1.0/alerts/send', headers=headers, json=json_data)
+```
+
+``` Ruby
+require 'net/http'
+require 'json'
+
+uri = URI('https://inform-api-0X.moengage.com/v1/send')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['MOE-APPKEY'] = 'YOUR_APP_KEY_HERE'
+req['Authorization'] = 'Basic Base64_ENCODED_APPKEY_APIKEY'
+
+req.body = {
+    "alert_id": "695ce8bc5def18872642e2d8",
+    "alert_reference_name": "Demo_ID",
+    "user_id": "USER_ID",
+    "transaction_id": "YOUR_TRANSACTION_ID_VAL_HERE",
+    "payloads": {
+        "PUSH": {
+            "recipient": "<push-token>",
+            "personalized_attributes": {
+                "stale_date": "YOUR_stale_date_VAL_HERE",
+                "dismissal_date": "YOUR_dismissal_date_VAL_HERE"
+            },
+            "live_activity_attributes": {
+                "la_type": "<start/update/end>",
+                "attribute_info": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},
+                "content_state": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}
+            }
+        }
+    }
+}.to_json
+
+req_options = {
+    use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+    http.request(req)
+end
+```
+
+``` Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        URL url = new URL("https://api-00.moengage.com/v1.0/alerts/send");
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod("POST");
+
+        httpConn.setRequestProperty("MOE-APPKEY", "YOUR_APP_KEY_HERE");
+        httpConn.setRequestProperty("Authorization", "Basic Base64_ENCODED_APPKEY_APIKEY");
+        httpConn.setRequestProperty("Content-Type", "application/json");
+
+        httpConn.setDoOutput(true);
+        String payload = "{\n" +
+"    \"alert_id\": \"695ce8bc5def18872642e2d8\",\n" +
+"    \"alert_reference_name\": \"Duplicate - Demo_ID\",\n" +
+"    \"user_id\": \"USER_ID\",\n" +
+"    \"transaction_id\": \"YOUR_TRANSACTION_ID_VAL_HERE\",\n" +
+"    \"payloads\": {\n" +
+"        \"PUSH\": {\n" +
+"            \"recipient\": \"<push-token>\",\n" +
+"            \"personalized_attributes\": {\n" +
+"                \"stale_date\": \"YOUR_stale_date_VAL_HERE\",\n" +
+"                \"dismissal_date\": \"YOUR_dismissal_date_VAL_HERE\"\n" +
+"            },\n" +
+"            \"live_activity_attributes\": {\n" +
+"                \"la_type\": \"<start/update/end>\",\n" +
+"                \"attribute_info\": {YOUR_LIVE_ACTIVITY_attribute_info_JSON_HERE},\n" +
+"                \"content_state\": {YOUR_LIVE_ACTIVITY_content_state_JSON_HERE}\n" +
+"            }\n" +
+"        }\n" +
+"    }\n" +
+"}";
+
+        httpConn.setDoOutput(true);
+        OutputStream os = httpConn.getOutputStream();
+        os.write(payload.getBytes());
+        os.flush();
+
+        InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+            ? httpConn.getInputStream()
+            : httpConn.getErrorStream();
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+            (responseStream)));
+
+        String output;
+        while ((output = br.readLine()) != null) {
+            System.out.println(output);
+        }
+
+        httpConn.disconnect();
+    }
+}
+```
+
+</CodeGroup>
+
+ 
+
+# Response Parameters
+
+| Key | Description |
+| --- | --- |
+| message | This field contains a brief description of the request status. |
+| request\_id | This field contains the unique identifier for the request and is present in the response body only for the following cases:   1. Successful request 2. Duplicate request |
+| err\_code | This field is present in the response body only when the request is unsuccessful and contains the error code. |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is submitted to MoEngage and the channel-level details are present in the [API Response Details](#Errors).   **Note**: For errors in the channel-level payload, the error information is present in the logs on the dashboard. To learn more, see [API Response Details](#Errors). |
+| 400 | Bad Request | This response is returned in the following cases:     1. When the payload is empty or invalid 2. Invalid Alert ID (alert) being sent 3. Incorrect Channel in the Payload (When the Payload contains information about channels that are not configured in the Alert). 4. When the transaction\_id exceeds the allowed limit 5. When the Alert ID of a paused or stopped or archived Alert is used in the request. |
+| 401 | Authorization Failed | This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header. |
+| 409 | Duplicate Request | This response is returned when a request is sent with the same transaction\_id value as a previously successful or in-progress request. For more information, refer to [Duplicate requests](#h_01GHGSMS4AV209HYYG287PTZ20). |
+| 429 | Rate Limit Reached | This response is returned when the number of requests per minute has exceeded the rate limit. |
+| 500 | Internal Server error | This response is returned when the system runs into an unexpected error. You can try for a maximum of 3 times with exponential backoff. |
+
+## How Does Inform API Work & Respond?
+
+<Info>
+**Info**
+
+Reach out to your Customer Success Manager to enable sending the channel level details as part of your API response.
+</Info>
+
+Inform API works in two steps as described below:
+
+1. A check is performed to verify if the API request received for Inform is valid.
+2. If valid, the second process is to resolve the content and send a message using the partner.
+
+The response codes are shared in **wxyzab** format as described below:  
+**w** - Status (failures are indicated with 1 and success is indicated with 2)  
+**x** - Category of the error  
+**y** - Request is considered for parallel request (parallel requests is indicated with 0 and fallback requests are indicated with 1)  
+**z** - Can this request be retried by you(0 indicates it cannot be retried with same details)  
+**ab** - Reason details for the error
+
+ 
+
+Below are the Category details:
+
+| Category Code | Details |
+| --- | --- |
+| 1 | Unauthorized |
+| 2 | Bad Request |
+| 4 | Internal Server Error / Ratelimit |
+
+ 
+
+The Reason details are given below with each Reason Code holding specific meanings:
+
+| Reason Code | Details |
+| --- | --- |
+| 1 | Invalid Credentials |
+| 2 | Invalid Alert ID |
+| 3 | Missing Transaction ID |
+| 4 | Duplicate Transaction ID |
+| 5 | Long Transaction ID |
+| 6 | Invalid Payload |
+| 7 | Personalisation Attribute |
+| 9 | Internal Server Error |
+| 10 | Rate Limit |
+| 11 | Personalisation Failed |
+| 12 | Invalid Recipient details |
+| 13 | Vendor configuration errors |
+| 14 | Vendor not available |
+| 15 | Vendor Payload Rejection |
+| 16 | Unexpected Error Occurred |
+| 17 | Invalid Origin Source |
+
+### 
+
+### Payload Errors Before Accepting the API Request
+
+The list of the payload errors that can occur before accepting the API request and the equivalent response codes to be shared under HTTP status code **4xx** for different scenarios across each functionality is given below:
+
+| Payload Errors | Description | Scenarios | Response Codes | Resolution |
+| --- | --- | --- | --- | --- |
+| **Authorization Failure** | This error occurs when invalid authorization details such as App Key (Workspace ID) or Password are shared. | * No Auth values passed. * Incorrect Auth Values Passed * Incorrect Password shared. * No Auth & No Key Passed * No App key shared / Empty App Key   * Incorrect App Key shared | { "message": "Authorization Failed", "err\_code": "UNAUTHORIZED" } | Recheck the authorization details listed in [Settings](https://help.moengage.com/hc/en-us/articles/10726947613844-Settings-Inform) / Check if you passed the [Test Alert ID](https://help.moengage.com/hc/en-us/articles/10717041310484-Test-Alert#h_01HD12HPYXR8YC37HQWSC49RT8) on Live Endpoint. |
+| **Invalid Alert ID** | This error occurs when an invalid Alert ID or external reference name is shared. | * Missing Alert ID * Alert ID <24 characters * Alert ID > 24 Characters * Invalid Alert ID | {"message": "Invalid Alert ID“, "err\_code": "BAD\_REQUEST", “status\_code”:120002} | Recheck the Alert ID or external reference name listed on the [Info page](https://help.moengage.com/hc/en-us/articles/10717122838548-Alert-Info). |
+| **Invalid Transaction ID** | This error occurs when the Transaction ID is not shared. | Missing Transaction ID | {"message": "Invalid Transaction ID“, "err\_code": "BAD\_REQUEST", “status\_code”:120003} | Share the transaction ID using the key name **transaction\_id** as part of the API Call. |
+| **Long Transaction ID** | This error occurs when the Transaction ID is invalid. | Long Transaction ID | {"message": "Long Transaction ID“, "err\_code": "BAD\_REQUEST", “status\_code”:120004} | Reduce the length of the Transaction ID to 50 characters. |
+| **Duplicate Transaction ID** | This error occurs when the currently shared Transaction ID matches the previous one in the last 5 minutes. | Duplicate Transaction ID | {"message": "Duplicate Transaction ID“, "err\_code": "DUPLICATE\_REQUEST\_RECEIVED", “status\_code”:120105} | Add a unique Transaction ID. |
+| **Invalid Payload** | This error occurs when the payload is in incorrect JSON format or when incorrect Channel details are shared. | * Invalid JSON / Invalid Class * Channel Attribute is incorrect / Channel details missing | {"message": "Invalid Payload“, "err\_code": "BAD\_REQUEST", “status\_code”:120006} | Recheck the JSON format and the Channel details.   Sample payload is available on our [Info page](https://help.moengage.com/hc/en-us/articles/10717122838548-Alert-Info). |
+| **Personalisation Attribute Max length** | This error occurs when the Personalization Attribute length is greater than 1500 characters. |  | {"message": "Personalisation attribute limit exceeded - {x}“, "err\_code": "BAD\_REQUEST", “status\_code”:120007} | Reduce the length of the Personalization Attribute to 1500 characters / payload size of <100 KB |
+| **Invalid Recipient** | This error occurs when the recipient details like mobile number or email address are invalid. |  | {"message": "Invalid Recipient“, "err\_code": "BAD\_REQUEST", “status\_code”:120012} | Recheck the recipient details in the API call or the User Profile. |
+| **Internal Server Error** | This error occurs when MoEngage is not able to resolve the API request. |  | {"message": "Unexpected error occurred“, "err\_code": "Internal Server Error", “status\_code”:140109} | Retry using the same API call with a different Transaction ID. |
+| **Rate Limit** | This error occurs when you cross the Rate Limit. |  | {"message": "Too many requests“, "err\_code": "Rate Limit", “status\_code”:140110} | Make API calls within the  Rate Limit. |
+
+### Payload Errors After Accepting the API Request
+
+Alerts can be configured for parallel/sequential fallback as described below:
+
+* Parallel: For parallel requests, the payload information of success/failure requests should be added at each channel level.
+* Sequence: For fallback requests, the payload information of success/failure requests should be added for the first channel, and other channels, info should be shared over streams
+
+The list of the payload details that can occur after accepting the API request and the equivalent response codes to be shared under HTTP status code **200/429** for different scenarios across each functionality is given below:
+
+| Payload Errors | Description | Response Codes | Resolution |
+| --- | --- | --- | --- |
+| **Personalisation Failed** | This error occurs when the required Personalization attributes are not shared in the API call or User Profile doesn't have these values. | {"message": "Successfully Received“, “Request\_ID”: 122323, SMS: {"message": "Personalisation Failure - {{attribute name}}“, "err\_code": "BAD\_REQUEST", “status\_code”:120011 / 121011}} | Either share the valid Personalization attributes in the API call or update the User Profile with the required values. |
+| **Invalid Recipient details** | This error occurs when the recipient details like mobile number or email address are invalid. | {"message": "Successfully Received” , “Request\_ID”: 122323, SMS: {"message": "Invalid Recipient“, "err\_code": "BAD\_REQUEST", “status\_code”:120012 / 121012} | Recheck the recipient details in the API call or the User Profile. |
+| **Internal Errors** | This error occurs when MoEngage is not able to resolve the API request or channel level details. | {"message": "Successfully Received”, “Request\_ID”: 122323, SMS: {"message": "Unexpected error occurred“, "err\_code": "Internal Server Error", “status\_code”:140109 / 141109}} | Retry using the same API call with a different Transaction ID. |
+| **Vendor Errors** | This error occurs when the vendor configuration is invalid. | {"message": "Successfully Received”, “Request\_ID”: 122323, SMS: {"message": "Invalid Vendor Configuration“, "err\_code": "Vendor Error", “status\_code”:150013 / 151013}} | Recheck the vendor configuration in MoEngage for [SMS](https://help.moengage.com/hc/en-us/articles/7455149158676-Configure-SMS-General-Settings), [Push](https://help.moengage.com/hc/en-us/articles/210224063-Configure-Web-Push-Settings#h_01HNCJDJ3JY7CSKPAG52TTYYCT), and [Email](https://help.moengage.com/hc/en-us/articles/25306820413844-Test-the-Email-Settings#h_01HTWMMAYG6CXV7ZB9Y3YDDC91). |
+| This error occurs when the vendor is not available. | {"message": "Successfully Received”, “Request\_ID”: 122323, SMS: {"message": "Vendor not available“, "err\_code": "Vendor Error", “status\_code”:150014 / 151014}} | NA/MoEngage will retry up to 5 times to submit the message to the vendor. |
+| This error occurs when the vendor rejects the Payload. | {"message": "Successfully Received”, “Request\_ID”: 122323, SMS: {"message": "Rejected by Vendor with error - {{error from vendor}},“, "err\_code": "Vendor Error", “status\_code”:150015 / 151015}} | Resolve the error sent by the vendor and then make the API call. |
+| This is sent as response when vendor accepts the request | {"message": "Successfully Received”, “Request\_ID”: 122323, SMS: {"message": "Successfully sent“, "err\_code": "NA", “status\_code”:200000}} |  |
+
+## Postman Collection
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-dc1af424-ca64-42f3-8722-2dcdbabdc5bc?action=share&creator=20517718) to view it in Postman. 
+
+## FAQs
+
+* **What is the Rate Limit?**  
+The default rate limit is 10K RPM.
+* **How are Duplicate Requests handled?**  
+A request is deemed duplicate in the case following cases:
+
+1. 1. It is received within 5 minutes of a previously successful request containing the same transaction\_id
+	2. It is received within 5 minutes of a previous request which is ‘In Progress’ (being processed) and contains the same transaction\_id
+
+Duplicate requests are dropped and not reprocessed.
+
+* **What happens when a vendor does not accept requests from MoEngage?**  
+When the vendor does not accept requests from MoEngage, MoEngage retries every request a maximum of five times with 200ms exponential backoff.
+* **Are Alert Logs stored in MoEngage?**  
+Alert logs are stored for up to 30 days for every Alert in MoEngage.
+* **Error - Live Alert Request received on Sandbox API endpoint**  
+This error occurs when you hit the live alert ID at the sandbox endpoint. For every alert, there are 2 IDs: one is live, and another is Test; the same behavior can be seen for alerts created on the test environment of the MoEngage Dashboard as well. Test Alert ID can be picked up by editing the Alert and going to the 3rd page.

@@ -1,0 +1,106 @@
+---
+title: "Migrating to 4.x.x"
+description: ""
+---
+
+This migration is required only for people who have integrated plugin version 3.2.0 or below. If your plugin version is greater than 3.2.0 you can ignore this step.
+
+# Removing existing plugin
+
+Remove MoEngage SDK Plugin
+
+<CodeGroup>
+```javascript JavaScript
+cordova plugin remove moengagesdk
+```
+
+</CodeGroup>
+
+Remove MoEngage Push Extension, if added. Use the command `cordova plugin list` to check whether the plugin is installed or not.
+
+<CodeGroup>
+```javascript JavaScript
+cordova plugin remove moengagepushextension
+```
+
+</CodeGroup>
+
+# Install the new plugin
+
+Install the new MoEngage SDK plugin.
+
+<CodeGroup>
+```javascript JavaScript
+cordova plugin add moengagesdk --variable APP_ID="[your_Workspace_id]"
+```
+
+</CodeGroup>
+
+### Variables
+
+* **APP\_ID** = Workspace ID found under the settings page on the MoEngage dashboard.
+
+# Initialize SDK(only for Android)
+
+To initialize SDK create a class extending `Application` the class of Android and override `onCreate()`.  
+Inside the `onCreate()` initialize the SDK as shown below.
+
+<CodeGroup>
+```javascript JavaScript
+// this is the instance of the application class and "XXXXXXXXXXX" is the Workspace ID from the dashboard.
+MoEngage moEngage =
+        new MoEngage.Builder(this, "XXXXXXXXXXX")
+  			.build();
+    MoEngage.initialise(moEngage);
+```
+
+</CodeGroup>
+
+Make sure your application class is defined in the `AndroidManifest.xml` file as well.
+
+# Setting up Push Notification(only Android)
+
+MoEngage SDK supports both FCM and GCM, based on what you are using in your application install the appropriate plugin.  
+The SDK no longer ships with Google's GCM or FCM library please ensure you have added the appropriate dependency in your app.
+
+## FCM
+
+<CodeGroup>
+```javascript JavaScript
+cordova plugin add cordova-moengage-fcm-dependency
+```
+
+</CodeGroup>
+
+## GCM
+
+<CodeGroup>
+```javascript JavaScript
+cordova plugin add cordova-moengage-gcm-dependency
+```
+
+</CodeGroup>
+
+If MoEngage SDK is registering for push notification add the appropriate FCM/GCM listeners.
+
+## FCM
+
+<CodeGroup>
+```javascript JavaScript
+cordova plugin add cordova-moengage-fcm-listeners
+```
+
+</CodeGroup>
+
+## GCM
+
+<CodeGroup>
+```javascript JavaScript
+cordova plugin add cordova-moengage-gcm-listeners
+```
+
+</CodeGroup>
+
+# Adding Push Related Meta Data
+
+Refer to [Push Notification](https://developers.moengage.com/hc/en-us/articles/360061216011) documentation and add all the required meta-data for push notifications to work.

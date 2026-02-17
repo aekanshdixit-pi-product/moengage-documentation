@@ -1,0 +1,83 @@
+---
+title: "Tracking Events 10.x.x"
+description: ""
+---
+
+Tracking events is how you record any actions your users perform, along with any properties that describe the action. Every trackEvent call records a single user action. We recommend that you make your event names human-readable so that everyone on your team can know what they mean instantly.
+
+Every ***trackEvent()*** API expects 2 parameters, event name, and event attributes i.e. instance of ***MoEProperties.*** 
+
+Add all the additional information which you think would be useful for segmentation while creating campaigns.
+
+For example, the following code tracks a Purchase event of a product. We are including attributes like price, quantity, purchase date, and store location which describe the event we are tracking.
+
+<CodeGroup>
+```javascript JavaScript
+import ReactMoE, {
+  MoEGeoLocation,
+  MoEProperties,
+} from "react-native-moengage";
+let properties = new MoEProperties();
+properties.addAttribute("quantity", 1);
+properties.addAttribute("product", "iPhone");
+properties.addAttribute("currency", "dollar");
+properties.addAttribute("price", 699);
+properties.addAttribute("new_item", true);
+properties.addAttribute("models", ["iPhone15", "iPhone14"]);
+properties.addDateAttribute("purchase_date", "2020-06-10T12:42:10Z");
+properties.addLocationAttribute(
+  "store_location",
+  new MoEGeoLocation(90.00001, 180.00001)
+);
+ReactMoE.trackEvent("Purchase", properties);
+```
+
+</CodeGroup>
+
+<Warning>
+* Event names should not contain any special characters other than "\_". It can contain just spaces and an underscore. Also, it should not contain “between”, “greater”, “less”, “in\_the\_last”, “in\_the\_next”, “equal”, “contains”, “starts”, or “is\_not".
+* You can not use "moe\_" as a prefix while naming events, event attributes, or user attributes. It is a system prefix and using it might result in periodic blacklisting without prior communication.
+</Warning>
+
+# Analytics
+
+MoEngage SDK tracks user sessions and application traffic sources. Refer to the [Sessions in MoEngage Analytics](https://help.moengage.com/hc/en-us/articles/360031402891-Understanding-Sessions-in-MoEngage-Analytics) and [Source Analysis in MoEngage Analytics](https://help.moengage.com/hc/en-us/articles/360031146052-Source-Analysis-in-MoEngage-Analytics)to learn more about how user session and application traffic source tracking works.
+
+With user session tracking we have introduced the flexibility to selectively mark events as non-interactive.
+
+## What is a non-interactive event?
+
+Events that do not affect the session calculation in anyways are called non-interactive events. Non-interactive events have the below properties
+
+* Do not start a new session.
+* Do not extend the session.
+* Do not have information related to a user session.
+
+## How to mark an event as non-interactive?
+
+To mark an event as a non-interactive call ***setNonInteractive()*** of the ***MoEProperties***instance as shown below:
+
+<CodeGroup>
+```javascript JavaScript
+import ReactMoE, {
+  MoEGeoLocation,
+  MoEProperties,
+} from "react-native-moengage";
+let properties = new MoEProperties();
+properties.addAttribute("quantity", 1);
+properties.addAttribute("product", "iPhone");
+properties.addAttribute("currency", "dollar");
+properties.addAttribute("price", 699);
+properties.addAttribute("new_item", true);
+properties.addAttribute("models", ["iPhone15", "iPhone14"]);
+properties.addDateAttribute("purchase_date", "2020-06-10T12:42:10Z");
+properties.addLocationAttribute(
+  "store_location",
+  new MoEGeoLocation(90.00001, 180.00001)
+);
+//Marking it as Non Interactive
+properties.setNonInteractiveEvent();
+ReactMoE.trackEvent("Purchase", properties);
+```
+
+</CodeGroup>

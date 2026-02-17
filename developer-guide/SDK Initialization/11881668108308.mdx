@@ -1,0 +1,51 @@
+---
+title: "iOS SDK Initialization"
+description: ""
+---
+
+To initialize the iOS Application with the MoEngage Workspace ID from Settings in the dashboard. In your project, go to AppDelegate file and  call the initialize method of `MoECapacitorInitializer` instance in `applicationdidFinishLaunchingWithOptions()` method as shown below:
+
+Sample code to initialise from `application:didFinishLaunchingWithOptions:` method in
+
+<CodeGroup>
+```objectivec swift
+import UIKit
+import Capacitor
+import CapacitorMoengageCore
+import MoEngage
+
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
+
+    var window: UIWindow?
+
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        var sdkConfig : MOSDKConfig
+        let yourAppID = "" //Workspace ID: You can obtain it from General Settings in MoEngage Dashboard.
+        if let config = MoEngage.sharedInstance().getDefaultSDKConfiguration()         {
+            sdkConfig = config
+            sdkConfig.moeAppID = yourAppID
+        }
+        else{
+            sdkConfig = MOSDKConfig.init(appID: yourAppID)
+        }
+        
+        // Set Correct Data Center here
+        sdkConfig.moeDataCenter = DATA_CENTER_01 //DATA_CENTER_01,DATA_CENTER_02,DATA_CENTER_03,DATA_CENTER_04
+        
+        // Set App Group ID for sharing data between App and extensions(if Any)
+        sdkConfig.appGroupID = "app group id"
+        
+        // Change these if required, by default all the below opt-outs are set to false.
+        sdkConfig.optOutIDFATracking = false
+        sdkConfig.optOutIDFVTracking = false
+        sdkConfig.optOutDataTracking = false
+        sdkConfig.optOutPushNotification = false
+        sdkConfig.optOutInAppCampaign = false
+                MoECapacitorInitializer.sharedInstance.initializeWithSDKConfig(sdkConfig, withSDKState: true, andLaunchOptions: launchOptions);
+        return true
+    }
+ }
+```
+
+</CodeGroup>

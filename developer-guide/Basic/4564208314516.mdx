@@ -1,0 +1,107 @@
+---
+title: "APNS Certificate/ PEM file 7.x.x"
+description: ""
+---
+
+In order to send push notifications to your app, APNS certificate is needed for your app and the same has to be converted to `.pem` format and uploaded to our dashboard. Follow the steps below to do the same:
+
+# Creating APNS Certificate
+
+## Generating the Certificate Signing Request (CSR)
+
+First Open **Keychain Access** on your Mac and choose the menu option **Request a Certificate from a Certificate Authority** as shown below:
+
+![138254b-Screenshot_2020-01-12_at_14.11.18.png](4564194651156)
+
+You should now see the window shown below. Enter your email address here and your app name for Common Name. Check `Saved to disk` and click Continue. Save the file as “.certSigningRequest”:
+
+## 
+6a050fd-Screenshot_2020-01-12_at_14.14.44.pngCreate an APNS Certificate in Developer Account
+
+Log-in to your developer account and go to **Certificates, Identifiers and Profiles**. Select **Certificates** Section and Click on the *+* icon to create a new certificate. In **Create a New Certificate** screen select `Apple Push Notification service SSL(Sandbox & Production)` and click Continue as shown below:
+
+![3cc77af-Screenshot_2020-01-12_at_14.18.40.png](4564175770388)
+
+Next, select the App ID(App Bundle ID) for which you are creating the APNS certificate and click Continue
+
+![dc9df04-Screenshot_2020-01-12_at_14.18.52.png](4564155756820)
+
+<Warning>
+**APP ID Selection Note**
+
+Ensure **Push Notification** capability is enabled for the App(App ID selected) you are creating an APNS certificate for.
+</Warning>
+
+Now choose the `certificate signing request` file created in the first step and click Continue as shown below:
+
+![eebd391-Screenshot_2020-01-12_at_14.19.39.png](4564173124244)
+
+That's it! your APNS certificate has been successfully created. Go ahead and download the same and open it to include it in your Mac `Keychain Access`
+
+![e87c36b-Screenshot_2020-01-12_at_14.20.37.png](4564175613204)
+
+# Converting Certificate to PEM format
+
+Follow the below steps to convert the APNS certificate obtained in the previous step to `.pem` file:
+
+1. First, go to **Keychain Access** and select your APNS certificate, then right-click on it select **Export** option. Now export your certificate in `.p12` format. You will be prompted to provide a password for `.p12`, do the same.
+2. Convert the `.p12` file obtained in the previous step into a `.pem` file by using **openssl** commands as shown below, here you will have to provide the `Import Password`:
+
+<CodeGroup>
+``` Ruby
+$ openssl pkcs12 -in p12Cert.p12 -out pemAPNSCert.pem -nodes
+Enter Import Password:
+MAC verified OK
+```
+
+</CodeGroup>
+
+<Info>
+You can also go the SSL Converter [here](https://www.sslshopper.com/ssl-converter.html) and convert your `.p12` file to `.pem`.
+</Info>
+
+# Verify .pem file
+
+Before uploading the certificate to MoEngage Dashboard, verify the `.pem` file obtained:
+
+1. First, open the `.pem` in a text editor to view its content. The certificate content should be in format as shown below. Make sure the pem file contains both Certificate content(from `BEGIN CERTIFICATE` to `END CERTIFICATE`) as well as Certificate Private Key (from `BEGIN PRIVATE KEY` to `END PRIVATE KEY`) :
+
+<CodeGroup>
+``` Text
+Bag Attributes
+    friendlyName: Apple Push Services:<Bundle ID>
+    localKeyID: <>
+subject=<>
+-----BEGIN CERTIFICATE-----
+
+<Certificate Content>
+
+-----END CERTIFICATE-----
+Bag Attributes
+    friendlyName: <>
+    localKeyID: <>
+Key Attributes: <No Attributes>
+-----BEGIN PRIVATE KEY-----
+
+<Certificate Private Key>
+
+-----END PRIVATE KEY-----
+```
+
+</CodeGroup>
+
+2. Also, you check the validity of the certificate by going to SSLShopper [Certificate Decoder](https://www.sslshopper.com/certificate-decoder.html) and paste the Certificate Content (from `BEGIN CERTIFICATE` to `END CERTIFICATE`) to get all the info about the certificate as shown below:![9449df7-Screenshot_2020-01-12_at_15.58.10.png](4564155249044)
+
+As you can see the Common Name should contain **Apple Push Services** and the App's Bundle ID. Confirm the organization's information and also the **Validity** of the Certificate. Once everything is verified, upload the certificate to our dashboard.
+
+# Uploading PEM file to MoEngage Dashboard
+
+Open the settings page in the MoEngage Dashboard, go to **Settings > Push > Mobile Push > iOS.** and upload the `.pem` file. Enter the password if set for the `.pem` file OR leave it blank.
+
+<Info>
+**iPad Support**
+
+In case, you have different apps for iPhones and iPads(Different Bundle IDs), set up certificates for both iOS and iPad separately in the dashboard in order to be able to send the messages to all the devices.
+</Info>
+
+![PEMCertificate.png](4564175525140)

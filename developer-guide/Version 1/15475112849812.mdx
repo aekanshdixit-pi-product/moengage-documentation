@@ -1,0 +1,187 @@
+---
+title: "Bulk Create/Update Template"
+description: ""
+---
+
+The Bulk Create/Update Template API is used to create/update email templates in bulk. You can create or update up to fifty templates in a single request.
+
+# API Endpoint
+
+<CodeGroup>
+``` API Endpoint
+PUT  https://api-x.moengage.com/v2/bulk/email-templates
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="}
+
+The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| MOE-APPKEY | Required | {"MOE-APPKEY": "APP ID"} | This is your MoEngage account's APP ID that has to be passed along with the request. You can find your MoEngage APP ID at **Settings** -> **Account** -> **APIs** -> **App ID**. |
+| Content-Type | Required | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Required | {"Authorization": "Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#01GQRA6BGSEKV3P4EV4SK51F5J). |
+
+# Request Body
+
+You can pass the templates to be created and/or updated as an array of JSON Objects, as shown in the sample cURL. Each of these JOSN Objects will have the following fields in them.
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| name | Required | String | This field contains the name of the template and would be used for identifying the template. You can look for the template created using this API in the second step of campaign creation in the '*My Saved Templates*' tab using this name. For more information, refer to [accessing templates created via APIs on the Dashboard](#h_01GZZY4AQX0AEE0FJHKAQRFT4T).      **Example**: "End\_Of\_Season\_Sale\_Template".     **Note**:     * The name field can contain only alphanumeric and underscore characters. * The length of this field can be between 5-50 characters. |
+| html | Required | JSON Object | This field contains the message body of the email. This is where you define the email template being created. The HTML tag and BODY tag (with text/tags) are mandatory. The SCRIPT tag is not allowed.      **Example**:       "html": "<!DOCTYPE html>   <html>   <head>   <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">   <title></title>   <style>   \n \n body table {   \n border-collapse: collapse;   \n   }   \n\n body table td,   body table th {   \n border: 1px solid rgb(0, 0, 0);   \n   }   \n\n \t\t\t   </style>   </head>   <body aria-disabled=\"false\">   <p>Your Email Template Content Here</p>   </body>   </html>" |
+| subject | Optional | String | This field contains the subject of the email campaign.  **Example**: "End of Season Sale!" |
+| attachments | Optional | List of JSON Objects | This field contains the attachments to be included in the email.      **Example**: "attachments": [   "https://app-cdn.moengage.com/assets/LogoThumbnail.jpg"   ]     **Note**:     * Only URLs can be added as part of Email attachments. * A maximum of ten attachments are allowed. * The URL should start with https and end with a valid extension. The following extensions are not allowed: .dmg, .exe, .xls, .ddl, .class, .obj, .int, .gnt, .o, .so, .lbr, and .net * Individual attachments should be less than 6 MB, and the total size of the attachments should be less than 20 MB. |
+| sender\_name | Optional | String | This field contains the name displayed that is displayed in the inboxes of your recipients. Sender names are one of the first things people see when you send them an email.      **Example**: "sender\_name": "Your Brand Name" |
+| id | Required when updating a template | String | This is the Template id of the template being updated. It is mandatory to add this field when updating a template. The template id is a unique identifier that is generated at the time of template creation using the Create Email Template API.    Example: {"id": "63f30792c66ddcaac2ef9109"} |
+| source | Required | String | This field contains information about the source of template creation. This can be the name of the email partner.     **Example**: "source": "Partner"   **Note**: Only alphanumerics, spaces, and underscores are allowed in this field. |
+| updated\_by | Optional | String | This field contains information about who created the template.      **Example**:      "updated\_by": "test\_partner"     "updated\_by": "john.doe@example.com"     **Note:** Only alphanumerics, spaces, and hyphens are allowed in this field. This field can contain the email ID of the creator as well. The email id should be in the right format and a valid one. |
+
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| status | String | This field contains the status of the request and denotes whether it was successful or not. **Example**: "status": "success", "status": "error" |
+| data | JSON Object | This field contains the id of the created template when the request is successful and the error details in case of an unsuccessful request.    **Successful Request**   The data object contains the following fields in the case of a successful request:   Structure:       "data": {        "new\_templates": [List of template\_ids for the newly created templates],       "updated\_templates": [[List of template\_ids for the updated templates]       }   * **new\_templates** - This field contains the list of template ids for the newly created templates, and these need to be stored by you. The template id would be used for searching a specific template and updating it. The template id is a String. **Example**:   "new\_templates": [               "63f497844d31f4c68d980a02",           "63f499344d31f4c68d720b04"           ] * **updated\_templates** - This field contains the list of template ids for the updated templates. **Example**:  "msg": "Custom email template saved"   **Unsuccessful Request**   The data object contains the following fields in the case of errors:   Structure:    "data": {       "code": "<error\_code>",        "title": "<type of error>",       "description": "<error\_message>"   }   The error object contains the following fields:   * **code** - This field contains the error code and is a String. Example: **400** (for a Bad Request), **401**( for Authentication failures), and so on. This field is present in the response only in the case of errors. * **title** - This field contains the type of error encountered. **Example**: **Bad Request**, **Authentication Required**, and so on. This field is present in the response only in the case of errors. * **description** - This field describes why the request has failed and is a String. **Example:** 'MOE-APPKEY header is invalid or empty'. |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request or when the provided parameters are invalid, or when a template already exists with the same version, name, or id. |
+| 401 | Authorization Failure | This response is returned when the authorization parameters are missing in the HTTP Auth Header. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit or the number of templates has exceeded the allowed quota per channel. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+
+# Rate Limit
+
+The rate limits are at the app level, and a maximum of a thousand (sum of all the API requests per app)requests are allowed for an app per minute.
+
+# Sample cURL Request
+
+<CodeGroup>
+``` cURL
+curl --location --request PUT 'https://api-0X.moengage.com/v2/bulk/email-templates' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic e3tEQVRBX0FQSV9JRH19Ont7REFUQV9BUElfS0VZfX0=' \
+--header 'MOE-APPKEY: {DATA_API_ID}' \
+--data-raw '[
+   {
+       "name": "Season_Sale_Template",
+       "html": "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title></title><style>\n \n body table{\n border-collapse: collapse;\n }\n\n body table td, body table th{\n border: 1px solid rgb(0, 0, 0);\n }\n\n \t\t\t</style></head><body aria-disabled=\"false\"><p>Your Email Template Content here</p></body></html>",
+        "subject": "test email",
+        "attachments": [
+            "https://app-cdn.moengage.com/assets/LogoThumbnail.jpg"
+        ],
+        "sender_name": "Your Brand Name",
+        "source": "Partner",
+        "updated_by": "john.doe@example.com"
+   },
+   {
+       "name": "Coupon_code_template",
+       "html": "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"><title></title><style>\n \n body table{\n border-collapse: collapse;\n }\n\n body table td, body table th{\n border: 1px solid rgb(0, 0, 0);\n }\n\n \t\t\t</style></head><body aria-disabled=\"false\"><p>Your Updated Email Template Content</p></body></html>",
+       "subject": "test email",
+        "attachments": [
+            "https://app-cdn.moengage.com/assets/LogoThumbnail.jpg"
+        ],
+        "sender_name": "Your Brand Name",
+        "id": "<your template id>",
+        "source": "Partner",
+        "updated_by": "jane.doe@example.com"
+   }
+  ]'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<CodeGroup>
+``` 200
+Sample Response for a successful request
+{
+   "status": "success",
+   "data": {
+     "new_templates": [
+       "645a2c0d10e0307e6d7f7719"
+     ],
+     "updated_templates": [
+       "645a2bd910e0307e6d7f7717"
+     ]
+   }
+}
+```
+
+``` 400
+Sample Response for validation failure in update and create
+{
+  "status": "success",
+  "data": {
+    "new_templates": [
+      "Email attachment should be valid one with size less than 6mb & total attachments size less than 20mb"
+    ],
+    "updated_templates": [
+      "Given id is invalid email template id"
+    ]
+  }
+}
+```
+
+``` 401
+Sample Response for Authentication/Authorization failure
+{
+    "status": "error",
+    "data": {
+        "code": 401,
+        "title": "Authentication required",
+        "description": "Invalid APP_ID used in Authentication Header"
+    }
+}
+```
+
+``` 429
+Sample Response for Rate Limit Breach
+{
+    "status": "error",
+    "data": {
+        "code": 429,
+        "title": "rate limiter exception",
+        "description": "Exceeded rate limit for this app"
+    }
+}
+```
+
+``` 5xx
+Sample Response for server side errors
+{ 
+    "title": "Internal Server Error",
+    "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+}
+```
+
+</CodeGroup>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-c13b39d2-6abb-45a2-9f9f-312e52a65791?action=share&creator=3182294) to view it in Postman.
+
+# FAQ
+
+* **How is the create request differentiated from an update template request?**In the case of an update, the template to be updated is identified using its template id. It is mandatory to pass the id field in the required for an update template request. Otherwise, it will be treated as a create template request.

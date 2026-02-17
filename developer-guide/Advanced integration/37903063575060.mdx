@@ -1,0 +1,173 @@
+---
+title: "Web SDK Opt-out"
+description: ""
+---
+
+# Empower User Privacy with MoEngage Web SDK
+
+The MoEngage Web SDK empowers you to offer your users explicit control over their data tracking. This is crucial for complying with privacy regulations such as GDPR and CCPA, ensuring that you collect data only from users who have given their explicit consent. With this feature, you can dynamically disable and enable the SDK, providing a flexible approach to managing user privacy preferences.
+
+# Understand SDK Opt-Out Functionality
+
+When the MoEngage Web SDK is disabled (either during initialization or by a subsequent API call), its data tracking and communication capabilities are paused. This means the SDK will cease to collect or transmit user data and will not perform most of its usual functions.
+
+When the Web SDK is disabled:
+
+* **No Data Transmission:** The SDK will not track or send any user attributes, event data, or device information to MoEngage servers.
+* **Queue Clearance:** Any data pending in the SDK's batch queue will be cleared and will not be sent.
+* **Feature Impact:** Most SDK features that depend on active data tracking (like analytics, personalization, and triggered campaigns) will become unavailable.
+* **Web Push:** Users will no longer receive push notifications.
+
+You can re-enable the SDK at any time using the appropriate API method, at which point data tracking and SDK functionalities will resume.
+
+# How to Disable SDK?
+
+## Disable SDK at Initialization (Preventing Initial Tracking)
+
+To prevent any data tracking from the moment your website loads, you can [initialize](https://developers.moengage.com/hc/en-us/articles/360060713252-Web-SDK-Integration#01H8XHVYJZHY8Z7869YDF2CKJJ) the SDK in a disabled state. This is achieved by passing the `disableSdk: true` parameter in the SDK's initialization configuration.
+
+<CodeGroup>
+``` JavaScript
+Moengage = moe({
+  app_id: "YOUR_Workspace_ID", // Replace with your actual workspace ID
+  debug_logs: 0,         // Standard setting: 1 for development/testing, 0 for production
+  disableSdk: true       // This line disables SDK functionality from the start
+});
+```
+
+</CodeGroup>
+When the SDK is initialized with `disableSdk: true`:
+
+* It will not make any initial network calls for device registration (for example, device/add) or to fetch configurations (for example, websdksettings, sdkconfig).
+* No default events that are typically tracked on page load will be recorded or sent.
+* The SDK will remain dormant until it is explicitly enabled via an API call.
+
+<Info>
+If you initialize the SDK with `disableSdk: true` and later enable it using `Moengage.enableSdk()`, remember to remove the `disableSdk: true` parameter from your SDK initialization code for subsequent page loads. Otherwise, the SDK will revert to a disabled state on the user's next visit.
+</Info>
+## Disable SDK Dynamically (After Initialization)
+
+If the SDK is already initialized and operational, you can dynamically disable all its data tracking and other functions by calling the `disableSdk()` method. This is particularly useful for scenarios where a user revokes their consent for data tracking after initially granting it.
+
+<CodeGroup>
+``` JavaScript
+Moengage.disableSdk();
+```
+
+</CodeGroup>
+Upon calling `disableSdk()`:
+
+* All data currently in the batch queue is discarded and not sent to MoEngage.
+* Any subsequent attempts by your application or by the SDK internally to track events or user attributes will be ignored.
+* The current user's session data and locally cached attributes are cleared.
+* Core identifiers are retained (though inactive) to ensure a smoother experience if the SDK is re-enabled and to avoid unnecessary re-registrations.
+* If cross-domain data sharing is enabled, data tracking will also cease on any linked subdomains.
+
+# Enable SDK to Start Data Tracking
+
+To resume data tracking and all other SDK functionalities after the SDK has been disabled, call the `enableSdk()` method.
+
+<CodeGroup>
+``` JavaScript
+Moengage.enableSdk();
+```
+
+</CodeGroup>
+When `enableSdk()` is invoked:
+
+* If the SDK was initially disabled via the `disableSdk: true` parameter, calling this method will trigger the complete SDK initialization sequence (including device registration and fetching remote configurations).
+* If it was disabled dynamically, it resumes operations from its previous state. Event and attribute tracking will function again.
+* Push notifications will be available to be shown to the users.
+
+<Warning>
+**Enabling the SDK**
+
+Only enableSdk() method can enable the SDK if it was disabled before
+
+**Using SDK methods/Performing any activity after enabling/disabling the SDK**
+
+If you want to use any SDK methods or perform any JS activity like changing the page after SDK is enabled then perform those in the .then of the enableSdk() method-
+
+<CodeGroup>
+``` JavaScript
+Moengage.enableSdk().then(() => {
+    Moengage.add_user_attribute('attributeName', 'attributeValue');
+    window.open('yourUrl', _self);
+});
+```
+
+</CodeGroup>
+
+Similarly for disableSdk() method-
+
+<CodeGroup>
+``` JavaScript
+Moengage.disableSdk().then(() => {
+    window.open('yourUrl', _self);
+});
+```
+
+</CodeGroup>
+</Warning>
+# Check the SDK's Current Status
+
+To determine whether the Web SDK is currently enabled or disabled, you can use the `isSdkEnabled()` method.
+
+<CodeGroup>
+``` JavaScript
+Moengage.isSdkEnabled();
+```
+
+</CodeGroup>
+This method returns a boolean value:
+
+* `true`: The SDK is enabled and operational.
+* `false`: The SDK is disabled.
+
+<Warning>
+**Cross-Subdomain Data Sharing**
+
+Important considerations for managing the SDK in a cross-subdomain environment:
+
+* + If you utilize cross-subdomain data sharing and disable the SDK at initialization (`disableSdk: true`) on one subdomain, ensure you apply the same configuration to all other subdomains involved in data sharing for consistent behavior.
+	+ When `disableSdk()` is called on one subdomain, SDK operations will generally cease on all linked subdomains immediately. However, web push notifications on other subdomains might continue until a page load occurs on those specific subdomains.
+	+ After re-enabling the SDK with `Moengage.enableSdk()` on one subdomain, a page reload or redirection is necessary on the other sharing subdomains for the SDK to become fully operational there. For Single Page Applications (SPAs), this implies a full browser page refresh, not merely a client-side route change.
+
+**Effect of Clearing Browser Storage**
+
+If the Web SDK is in a disabled state and the user subsequently clears their browser's storage (including cookies, localStorage, and IndexedDB) or site-specific data, the SDK's persisted opt-out state will be lost. On the next page load, the SDK will initialize as if it's a fresh start (enabled by default, unless `disableSdk: true` is in the initial configuration), potentially creating a new user profile and session.
+
+**Using the opt-out SDK methods at initialisation**
+
+Please ensure to invoke the Web SDK Opt-out methods only after the SDK has been initialised. Calling them before SDK initialisation will throw error. Sample implementation-
+
+<CodeGroup>
+``` JavaScript
+window.addEventListener('MOE_LIFECYCLE', function(event) { 
+    if (event.detail.name === 'SDK_INITIALIZED') { 
+        // SDK has been initialized; use the opt-out methods only after this 
+        if (!Moengage.isSdkEnabled()) { 
+            Moengage.enableSdk();
+        } 
+    } 
+});
+```
+
+</CodeGroup>
+
+ 
+
+**Service Worker Update Delays** 
+
+Even after the SDK is disabled, the MoEngage service worker (which handles web push notifications) might continue to track web push interaction events (like impressions or clicks) and render push notifications for a brief period. This occurs because service workers operate and update independently of the main website code, a process managed by the browser that cannot be controlled by the SDK.
+
+**Shopify Integration**
+
+For websites using MoEngage's Shopify integration, calling `Moengage.disableSdk()` will only disable the client-side Web SDK tracking on your storefront. MoEngage will continue to receive and process any server-to-server webhook events configured for your Shopify store, regardless of the Web SDK's client-side status.
+
+**Campaign Display and Opt-out Impact**
+
+* + When `disableSdk()` is called, the SDK will attempt to dismiss any currently rendered On-site Messaging (OSM) and Card campaigns. If tracking impression and dismiss events for these campaigns is critical, ensure this is done before invoking `disableSdk()`.
+	+ For Web Personalization, if content has already been rendered on the page when `disableSdk()` is called, the SDK may not be able to remove it from the current view. However, no new personalized content will be applied on subsequent page loads or navigations while the SDK remains disabled.
+	+ If you are using a custom UI element (for example, a bell icon) for a Card inbox, the SDK will try to remove its click listener when disabled. You are responsible for managing the UI state of such custom elements (for example, hiding or disabling them as appropriate).
+</Warning>

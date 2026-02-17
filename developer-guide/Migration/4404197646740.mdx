@@ -1,0 +1,101 @@
+---
+title: "Migration to SDK version 7.0.0"
+description: ""
+---
+
+We have made quite a few changes in SDK version 7.0.0 and if you are someone who was using an older version of our SDK and planning to move to version 7.0.0 or above here are the changes to be made while migrating:
+
+# iOS 9.\* Support Removed
+
+From SDK version `7.0.0` we have set the deployment target as `iOS 10.0` and hence have removed support for `iOS 9.*`. We have decided to do this since the user base in iOS 9.0 is very less and most of the developers are already setting their app's deployment target to greater than iOS 10.0.
+
+# Initialisation Method Changes
+
+We have deprecated the previous initialization methods and have introduced new methods. The new methods accept the MOSDKConfig instance as an argument which can contain multiple parameters along with the Workspace ID required for setting up the SDK on app launch:
+
+**Deprecated methods**
+
+<CodeGroup>
+```swift Swift
+var yourMoEAppID = "Your Workspace ID"
+#if DEBUG
+	MoEngage.sharedInstance().initializeDev(withAppID:yourMoEAppID, withLaunchOptions: nil)
+#else
+	MoEngage.sharedInstance().initializeProd(withAppID:yourMoEAppID, withLaunchOptions: nil)
+#endif
+```
+
+```objectivec Objective-C
+NSString* yourMoEngageAppID = @"Your Workspace ID";
+#ifdef DEBUG
+    [[MoEngage sharedInstance] initializeDevWithAppID:yourMoEngageAppID withLaunchOptions:launchOptions];
+#else
+    [[MoEngage sharedInstance] initializeProdWithAppID:yourMoEngageAppID withLaunchOptions:launchOptions];
+#endif
+```
+
+</CodeGroup>
+For info on the new initialization methods, refer to this [link](https://developers.moengage.com/hc/en-us/articles/4403905438228).
+
+# Setting Region/Data Center
+
+MODataCenter: We’ve introduced new APIs to set up the Data center in the SDK, earlier API which made use of `DataRedirectionRegion` Enumerator is no longer supported, instead the same has to be configured using MOSDKConfig and provided during Initialization, refer [doc](https://developers.moengage.com/hc/en-us/articles/4403910162452) for info on how to configure in the latest SDK versions.
+
+**Older method[6.3.1 and below]**
+
+<CodeGroup>
+```swift Swift
+/*
+DataRedirectionRegion Enum Values:
+MOE_REGION_SERV3
+MOE_REGION_EU
+MOE_REGION_DEFAULT
+*/
+// Eg to redirect data to EU Data Center
+MoEngage.redirectData(to: MOE_REGION_EU)
+```
+
+```objectivec Objective-C
+/*
+DataRedirectionRegion Enum Values:
+MOE_REGION_SERV3
+MOE_REGION_EU
+MOE_REGION_DEFAULT
+*/
+// Eg to redirect data to EU Data Center
+[MoEngage redirectDataToRegion:MOE_REGION_EU];
+```
+
+</CodeGroup>
+# App Target: Setting App Group ID
+
+App Group ID for App target was earlier set using `setAppGroupID:`, which is no longer supported. Make use of the MOSDKConfig to configure the same in the latest SDK versions(Refer [link](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45FKD0XDH4X776R47JA04GJ) for more info)
+
+**Older method[6.3.1 and below]**
+
+<CodeGroup>
+```swift Swift
+MoEngage.setAppGroupID("AppGroupID")
+```
+
+```objectivec Objective-C
+[MoEngage setAppGroupID:@"AppGroupID"];
+```
+
+</CodeGroup>
+# Enable Logs Changes
+
+For troubleshooting, the method to enable SDK logs has been changed from `debug:` to `enableSDKLogs :`. The earlier method was used as shown below, and for the updated implementation in the latest SDK versions refer to the following [doc](https://developers.moengage.com/hc/en-us/articles/4404197969812-Troubleshooting-And-FAQs#enable-sdk-logs-0-0):
+
+**Older method[6.3.1 and below]**
+
+<CodeGroup>
+```swift Swift
+MoEngage.debug(LOG_ALL)
+```
+
+```objectivec Objective-C
+[MoEngage debug:LOG_ALL];
+```
+
+</CodeGroup>

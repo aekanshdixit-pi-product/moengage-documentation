@@ -1,0 +1,197 @@
+---
+title: "InApp NATIV 7.x.x"
+description: ""
+---
+
+In-App Messaging is custom views that you can send to a segment of users to show custom messages or give new offers or take to some specific pages. They can be created from your MoEngage account.
+
+![71c6364-f93ec45-vlcsnap-2016-11-08-16h16m41s386.png](18923021540628)
+
+# How to show In-App Message?
+
+Use `showInApp( )` method to show inApp as shown below:
+
+<CodeGroup>
+```javascript JavaScript
+var moe = new MoECordova.init();
+moe.showInApp();
+```
+
+</CodeGroup>
+
+# Self Handled In-App Messaging
+
+Self-handled In-Apps are not shown by the SDK. While creating the campaign, a JSON payload has to be provided in the dashboard. The same payload will be provided to the app by the SDK on calling *getSelfHandledInApp* method, and info will be received by a callback post all the delivery controls are checked:
+
+<CodeGroup>
+```javascript JavaScript
+var moe = new MoECordova.init();
+moe.getSelfHandledInApp();
+
+//Callback for receiving self-handled inapp
+moe.on('onInAppSelfHandle', function(selfHandledPayload) {
+   console.log('Self hanlded InApp Info: ' + JSON.stringify(selfHandledPayload));
+});
+```
+
+</CodeGroup>
+
+Post consuming the Self-handled inApp, to update impression, click and dismiss stats call the following methods with the payload received in self-handled In-App callback:
+
+<CodeGroup>
+```javascript JavaScript
+var moe = new MoECordova.init();
+
+// Track impression 
+moe.selfHandledShown(selfHandledPayload)
+// Track Primary Click
+moe.selfHandledPrimaryClicked(selfHandledPayload)
+// Track Click
+moe.selfHandledClicked(selfHandledPayload)
+// Track Dismiss
+moe.selfHandledDismissed(selfHandledPayload)
+```
+
+</CodeGroup>
+
+# In-App Messaging Rules
+
+We use the following rules while showing the In-App:
+
+Preconditions for In-App to work:
+
+* If InApp Backend Sync was successful in the current session or not.
+* Check if the Device is NOT iPad/Tablet.
+* Check if InApp disabled on the current screen.
+* Check Device Orientation is Portrait(Landscape is not supported).
+
+The following are checked for each campaign in the list of active campaigns(sorted according to priority and Last Updated Time)
+
+* Check Global Delay has lapsed, skip this if `Ignore Global Delay` set for the campaign.
+* Check if the campaign has expired
+* Display Rules
+* Check Show Only in Screen
+* Check with current contexts
+* Delivery Controls
+* Persistence Check(If primary action of InApp is done but still want to show the inApp)
+* Check if the campaign has been shown Max Times
+* Check if the campaign level delay has crossed.
+
+The first campaign satisfying all the rules is shown to the user.
+
+# Callback in JavaScript on In-App Events
+
+To get a callback in javascript on in-app events you need to register for a click listener as shown below.
+
+Minimum Plugin version required : 6.0.0
+
+<CodeGroup>
+```javascript JavaScript
+var moe = new MoECordova.init();
+moe.on('onInAppShown', function(inAppInfo) {
+  	console.log('InApp Shown with Info: ' + JSON.stringify(inAppInfo));
+});
+
+moe.on('onInAppClick', function(inAppInfo) {
+    console.log('InApp Shown Clicked with Info: ' + JSON.stringify(inAppInfo));
+});
+
+moe.on('onInAppDismiss', function(inAppInfo) {
+    console.log('InApp Dismissed with Info: ' + JSON.stringify(inAppInfo));
+});
+
+moe.on('onInAppCustomAction', function(inAppInfo) {
+    console.log('InApp Custom Action with Info: ' + JSON.stringify(inAppInfo));
+});
+```
+
+</CodeGroup>
+
+## Payload Structure in Callbacks
+
+InAppInfo received in the callbacks above have the following structure:
+
+<CodeGroup>
+```javascript JavaScript
+{
+  "platform": "ios/android",
+  "campaignName": "",
+  "campaignId": "",
+  "navigation": { // Key will only be present for onInAppClick callback
+    "navigationType": "screen/deep_linking",
+    "value": "screen name info/url",
+    "kvPair": {
+				"k1":"v1"
+    }
+  },
+  "customAction": { // Key will only be present for onInAppCustomAction callback
+    "kvPair": {
+       "k2":"v2"
+    }
+  },
+  "selfHandled": { // Key will only be present for onInAppSelfHandle callback
+    "payload": "", // payload entered in dashboard while creating selfHandled campaign
+    "dismissInterval": 60,// auto dismiss interval
+    "isCancellable": true // only for Android platform
+  },
+  "type": "Internal Callback name"
+}
+```
+
+</CodeGroup>
+
+# Handling Orientation Change
+
+<Info>
+This is only for the Android platform
+</Info>
+
+Starting SDK version `7.3.0` in-apps are supported in both portrait and landscape modes.  
+SDK has to be notified when the device orientation changes for SDK to handle in-app display.
+
+There are two ways to do it:
+
+1. Add the API call in the Android native part of your app
+2. Call MoEngage plugin's `onOrientationChanged()`
+
+## Add the API call in the Android native part of your app
+
+Notify the SDK when `onConfigurationChanged()` API callback is received in your App's Activity class.
+
+<CodeGroup>
+```java Java
+import android.os.Bundle;
+import org.apache.cordova.*;
+import com.moengage.cordova.MoECordovaHelper;
+
+public class MainActivity extends CordovaActivity {
+
+  ...
+    
+  @Override
+  public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    MoECordovaHelper.getInstance().onConfigurationChanged();
+    ...
+  }
+  
+  ...
+}
+```
+
+</CodeGroup>
+
+## Call MoEngage plugin's orientation change API
+
+Call the below API to notify SDK on orientation change.
+
+<CodeGroup>
+```javascript Java
+var moe = new MoECordova.init();
+...
+
+// Notify SDK on orientation change
+moe.onOrientationChanged();
+```
+
+</CodeGroup>

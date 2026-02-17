@@ -1,0 +1,379 @@
+---
+title: "File Segment API"
+description: ""
+---
+
+If you need to create segments by importing a large number of users, we recommend utilising the File segment API. This API allows you to easily generate a file segment by initiating a call to the file segment API endpoint. To proceed, you will need to compile a CSV file containing the relevant users (ensuring that the users are already present in MoEngage). It is essential to provide the public path of the file, which allows for downloading and identification of users in order to successfully create the file segment.
+
+Use the Custom File Segment API to:
+
+* [Create](https://developers.moengage.com/hc/en-us/articles/4405027805844-Custom-File-Segment-API#create-file-segment-0-5) a new Custom File Segment
+* [Add Users](https://developers.moengage.com/hc/en-us/articles/4405027805844-Custom-File-Segment-API#add-users-to-file-segment-0-10) to an existing Custom Segment
+* [Remove Users](https://developers.moengage.com/hc/en-us/articles/4405027805844-Custom-File-Segment-API#remove-users-from-file-segment-0-15) from an existing Custom Segment
+* [Replace Users](https://developers.moengage.com/hc/en-us/articles/4405027805844-Custom-File-Segment-API#replace-users-from-file-segment-0-20) from an existing Custom Segment
+
+## Request Headers
+
+Request headers are applicable to create, update, archive, or unarchive the custom segment.
+
+| Header | Type | Description |
+| --- | --- | --- |
+| Content-Type | {"Content-Type": "text/csv"}   The following content types are accepted:   * "text/csv" * "application/csv" * "application/vnd.ms-excel" * "text/plain" * "application/octet-stream" * "binary/octet-stream" | Set the Content-Type header to any of the specified types for using the Data API. |
+| Database | MOE-DBNAME | Set the database from which the data is available. |
+| Authorization | {"Authorization": "Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY="} | Basic authentication is used for access control. |
+
+<Info>
+**Info**
+
+Any other Content Types besides the ones listed above will be rejected.
+</Info>
+
+## Authentication
+
+Authentication applies to create, update, archive, or unarchive APIs.
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="}
+
+The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+![API_Authentication_RevampedUI.png](22154240076948)
+
+Authentication is performed using a client like Postman as follows:
+
+![df440da-f0c37fd-postman_new_sample.png](4405027822740)
+
+ 
+
+If your file is private, you should whitelist [these](https://help.moengage.com/hc/en-us/articles/35329024618772-A-Guide-to-MoEngage-IP-Whitelisting-Mechanism#h_01JNGJNR5F141E7KRK89YW1X8H) IPs to provide access only to MoEngage for the file.
+
+Check the data center and API endpoint [mapping page here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+## Response Codes
+
+| HTTP Status Code | Response Reason |
+| --- | --- |
+| 200 - OK | Everything worked as expected. |
+| 202 - Accepted | Request accepted for the required operation. |
+| 400 - Bad Request | Request not accepted due to missing a required parameter.   The reason is passed in the description field. |
+| 401 - Unauthorized | Signature is not valid. |
+| 404 - Entity not found | The custom segment mentioned in the request does not exist. |
+| 409 - Conflict | The request conflicts with another request. |
+| 429 - Too Many Requests | The number of requests or the rate of requests exceeds the allowed limit. |
+| 500, 502, 503, 504 - Server Errors | Something went wrong on MoEngage. |
+
+## Limits
+
+<Info>
+The limit of 1000 custom file segments is calculated only for the file segments that are active. Most of our customers utilize only 30-40% of this limit at any given point.
+</Info>
+
+| Rate Limit Name | Rate Limit |
+| --- | --- |
+| total active segment | The limit of the total number of active custom segments at a time for a client is 1000. |
+| file\_segment ops per hour | The total number of file segment operations(which are create-segment/add-users/remove-users) per hour per client allowed is 10. |
+| file\_segment ops per day | The total number of file segment operations(which are create-segment/add-users/remove-users) per day per client allowed is 100. |
+| file\_segment users per day | The total number of users uploaded via the File segment is limited to 2 million per day.   (This limit is customizable, please get in touch with support) |
+| file\_size\_limit | The size of the file from which the segment is created/updated. For each request, the file size limit is 150 MB. |
+
+<Info>
+* Breaching the limits will reject the request
+* Per hour and per day limits will consider the calculation based on the last hour and last 24 hrs respectively.
+</Info>
+
+# Create File Segment
+
+## API Endpoint
+
+<CodeGroup>
+``` URL
+POST https://api-0X.moengage.com/v2/custom-segments/file-segment
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center, you can find your data center number (value of X), by checking the data center and API endpoint [mapping page here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+## Request Body
+
+| Parameter | Mandatory | Description |
+| --- | --- | --- |
+| name | Yes | The name of the custom segment. The name should be unique across all segments. |
+| attribute\_name | Yes | Name of the user attribute on which the segment is created.   For registered users, use ID (to indicate customer id) or any other unique attribute which uniquely identifies the user. For example, for Anonymous (not registered) users use email, mobile number, or any other identifier as the anonymous user identifier. |
+| attribute\_type | Yes | The type is string or double based on the type of attribute\_name. For double attribute\_type, the attribute values should be within 64-bit signed numeric values, that is [-9223372036854775808, 9223372036854775807] |
+| file\_url | Yes | CSV file from URL should be downloadable without authorization. |
+| expiry\_time | Yes | Segment expiry time in days.    - All existing users are dropped from the created custom segment after the expiry time.    - The custom segment is archived after expiry time. |
+| callback\_url | No | Callback URL to receive the result of segment creation. |
+| emails | No | List of email ids to receive segment creation response. |
+
+Use callback, emails, or both for better visibility and end-to-end integration capability.
+
+<Info>
+* The attribute names should be separated by new lines.
+* CSV should be a single column. CSV size should be less than 150MB.
+* Values should not end with a comma (,) For example, values in a row should be abcd and not abcd,
+* Values should not have duplicate, special characters. For string values use abcd and not "abcd". String value can not be a#bc.
+* File should not have empty rows or empty columns.
+* A user attribute value must uniquely identify a single user. If an attribute value identifies multiple users (e.g. a city attribute with the value 'London' may have many users) these multiple users may get mapped to a single attribute, become part of the segment, and may block other users from being included in the segment.  
+For example, if you upload 5 emails and the first email matches with 3 users, the rest 4 emails match with one user each. In this case, the system will randomly pick 5 users to be added to the file segment. The system does this processing in batches of 2000.
+* [Sample File Link](https://app-cdn.moengage.com/assets/Sample_GAIDs.csv)
+</Info>
+
+## Response
+
+| Status Code | Request State | Description | Response Body |
+| --- | --- | --- | --- |
+| HTTP 202 | Success | File-segment creation request accepted. | `{ "message": "File-segment creation request accepted", "success": true, "cs_name": <custom_segment_unique_name> }` |
+| HTTP 401 | Failure | Authentication or Authorization Failure. Invalid key or Secretor Database Name or Authorization Header. | `{ "title": "Authentication required", "description": <message> }` |
+| HTTP 409 | Failure | File-segment creation attempt with duplicate name. | `{ "title": "Resource not created", "description": "Name already exists : <custom_segment_name>" }` |
+| HTTP 429 | Failure | The number of requests or the rate of requests exceeds the allowed limit. | `{ "title": "Too Many Requests", "description": <appropriate message> }` |
+| HTTP 5xx | Failure | Server issue | `{ "title": "Internal Server Error", ... }` |
+
+## Example
+
+<CodeGroup>
+``` HTTP
+POST https://api-0X.moengage.com/v2/custom-segments/file-segment
+Body
+{
+  "name": "custom_segment_unique_name",
+  "attribute_name": "unique_identifier",
+  "attribute_type": "string",
+  "file_url": "https://s3.amazonaws.com/Sample_GAIDs.csv",
+  "callback_url": "http://localhost:5000",
+  "emails": ["abc@gmail.com", "xyz@wrx.com"],
+  "expiry_time": 30
+}
+```
+
+</CodeGroup>
+
+### Callback Sample Body
+
+<CodeGroup>
+``` Success
+{
+"db_name": "test_db",
+"segment_name": "test_segment_name",
+"request_id": "d5a263c4ef1198ae3d8496c0460f570f",
+"values_found":80 ,
+"values_processed": 70,
+"user_count": 60,
+"status": 201
+}
+```
+
+``` Failure-1
+{
+"db_name": "test_db",
+"segment_name": "test_segment_name",
+"request_id": "d5a263c4ef1198ae3d8496c0460f570f",
+"status": 400,
+"error_message": "File size cannot be greater than 150MB. Created custom_segment contains 0 users."
+}
+```
+
+``` Failure-2
+{
+"db_name": "test_db",
+"segment_name": "test_segment_name",
+"request_id": "d5a263c4ef1198ae3d8496c0460f570f",
+"status": 400,
+"error_message": "File download failed. Created custom_segment contains 0 users."
+}
+```
+
+``` Failure-3
+{
+"db_name": "test_db",
+"segment_name": "test_segment_name",
+"request_id": "d5a263c4ef1198ae3d8496c0460f570f",
+"status": 500,
+"error_message": "Internal Server Error. Contact MoEngage Team."
+}
+```
+
+</CodeGroup>
+
+<Info>
+**Note - Segment Processing & Availability**
+
+As soon as the request is received at the MoEngage system, MoEngage creates a custom segment with zero users. After this, the file is processed and users are added to the custom segment. If the created custom segment is queried in between the file processing, it will show zero or partial user count.
+</Info>
+
+# Add users to file segment
+
+## API Endpoint
+
+<CodeGroup>
+``` URL
+PUT https://api-0X.moengage.com/v2/custom-segments/file-segment/add-users
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center, you can find your data center number (value of X), by checking the data center and API endpoint [mapping page here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+## Request Headers
+
+| Parameter | Mandatory | Description |
+| --- | --- | --- |
+| name | Yes | Name of the custom segment to which the users are added. |
+| attribute\_name | Yes | Name of the user attribute on which the segment is added.   For registered users, use ID (to indicate customer id) or any other unique attribute which uniquely identifies the user. For example, for Anonymous (not registered) users use email, mobile number, or any other identifier as the anonymous user identifier. |
+| attribute\_type | Yes | The type is string or double based on type of attribute\_name. For double attribute\_type, the attribute values should be within 64-bit signed numeric values, that is [-9223372036854775808, 9223372036854775807] |
+| file\_url | Yes | URL of the CSV file.   - The attribute names should be separated by new lines.   - CSV size should be less than 150MB.   - CSV should be downloadable without authorization. |
+| callback\_url | No | Callback URL to receive the result of updated segment. |
+| emails | No | List of email ids to receive segment response. |
+
+Use callback, emails, or both for better visibility and end-to-end integration capability.
+
+## Response
+
+| Status Code | Request State | Description | Response Body |
+| --- | --- | --- | --- |
+| HTTP 202 | Success | File-segment creation request accepted. | `{ "message": "File-segment user-add request accepted", "success": true, "cs_name": <custom_segment_unique_name> }` |
+| HTTP 400 | Failure | Invalid file-segment request(invalid payload format). | `{ "title": "Invalid Request", "description": <message> }` |
+| HTTP 401 | Failure | Authentication or Authorization Failure. Invalid key or Secretor Database Name or Authorization Header. | `{ "title": "Authentication required", "description": <message> }` |
+| HTTP 404 | Failure | The custom-segment name used in the request does not exist. | `{ "title": "Entity Not Found", "description": "Custom segment not found with the given name: <custom_segment_unique_name>" }` |
+| HTTP 429 | Failure | The number of requests or the rate of requests exceeds the allowed limit. | `{ "title": "Too Many Requests", "description": <appropriate message> }` |
+| HTTP 5xx | Failure | Server issue | `{ "title": "Internal Server Error", ... }` |
+
+## Example
+
+<CodeGroup>
+``` HTTP
+PUT https://api-0X.moengage.com/v2/custom-segments/file-segment/add-users
+Body
+{
+  "name": "custom_segment_unique_name",
+  "attribute_name": "unique_identifier",
+  "attribute_type": "string",
+  "file_url": "https://s3.amazonaws.com/Sample_GAIDs.csv",
+  "callback_url": "http://localhost:5000",
+  "emails": ["abc@gmail.com", "xyz@wrx.com"]
+}
+```
+
+</CodeGroup>
+
+# Remove users from File Segment
+
+## API Endpoint
+
+<CodeGroup>
+``` URL
+PUT https://api-0X.moengage.com/v2/custom-segments/file-segment/remove-users
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center, you can find your data center number (value of X), by checking the data center and API endpoint [mapping page here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+## Request Body
+
+| Parameter | Mandatory | Description |
+| --- | --- | --- |
+| name | Yes | Name of the custom segment from which the users are removed. |
+| attribute\_name | Yes | Name of the user attribute on which the segment is removed.   For registered users, use ID (to indicate customer id) or any other unique attribute which uniquely identifies the user. For example, for Anonymous (not registered) users use email, mobile number, or any other identifier as the anonymous user identifier. |
+| attribute\_type | Yes | The type is string or double based on type of attribute\_name. For double attribute\_type, the attribute values should be within 64-bit signed numeric values, that is [-9223372036854775808, 9223372036854775807] |
+| file\_url | Yes | URL of the CSV file.   - The attribute names should be separated by new lines.   - CSV size should be less than 150MB.   - CSV should be downloadable without authorization. |
+| callback\_url | No | Callback URL to receive the result of segment deletion. |
+| emails | No | List of email ids to receive segment deletion response. |
+
+Use callback, emails, or both for better visibility and end-to-end integration capability.
+
+## Response
+
+| Status Code | Request State | Description | Response Body |
+| --- | --- | --- | --- |
+| HTTP 202 | Success | File-segment creation request accepted. | `{ "message": "File-segment user-remove request accepted", "success": true, "cs_name": <custom_segment_unique_name> }` |
+| HTTP 400 | Failure | Invalid file-segment request(invalid payload format). | `{ "title": "Invalid Request", "description": <message> }` |
+| HTTP 401 | Failure | Authentication or Authorization Failure. Invalid key or Secretor Database Name or Authorization Header. | `{ "title": "Authentication required", "description": <message> }` |
+| HTTP 404 | Failure | The custom-segment name used in the request does not exist. | `{ "title": "Entity Not Found", "description": "Custom segment not found with the given name: <custom_segment_unique_name>" }` |
+| HTTP 429 | Failure | The number of requests or the rate of requests exceeds the allowed limit. | `{ "title": "Too Many Requests", "description": <appropriate message> }` |
+| HTTP 5xx | Failure | Server issue | `{ "title": "Internal Server Error", ... }` |
+
+## Example
+
+<CodeGroup>
+``` HTTP
+PUT https://api-0X.moengage.com/v2/custom-segments/file-segment/remove-users
+Body
+{
+  "name": "custom_segment_unique_name",
+  "attribute_name": "unique_identifier",
+  "attribute_type": "string",
+  "file_url": "https://s3.amazonaws.com/Sample_GAIDs.csv",
+  "callback_url": "http://localhost:5000",
+  "emails": ["abc@gmail.com", "xyz@wrx.com"]
+}
+```
+
+</CodeGroup>
+
+# Replace users from File Segment
+
+## API Endpoint
+
+<CodeGroup>
+``` URL
+PUT https://api-0X.moengage.com/v2/custom-segments/file-segment/replace
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center, you can find your data center number (value of X), by checking the data center and API endpoint [mapping page here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+## Request Body
+
+| Parameter | Mandatory | Description |
+| --- | --- | --- |
+| name | Yes | Name of the custom segment from which all the previous users are removed and new users are added. |
+| attribute\_name | Yes | Name of the user attribute on which the segment is removed.   For registered users, use ID (to indicate customer id) or any other unique attribute which uniquely identifies the user. For example, for Anonymous (not registered) users use email, mobile number, or any other identifier as the anonymous user identifier. |
+| attribute\_type | Yes | The type is string or double based on type of attribute\_name. For double attribute\_type, the attribute values should be within 64-bit signed numeric values, that is [-9223372036854775808, 9223372036854775807] |
+| file\_url | Yes | URL of the CSV file.   - The attribute names should be separated by new lines.   - CSV size should be less than 150MB.   - CSV should be downloadable without authorization. |
+| callback\_url | No | Callback URL to receive the result of segment deletion. |
+| emails | No | List of email ids to receive segment deletion response. |
+
+Use callback, emails, or both for better visibility and end-to-end integration capability.
+
+## Response
+
+| Status Code | Request State | Description |  |
+| --- | --- | --- | --- |
+| HTTP 202 | Success | Replace users request accepted. | {   "message": "File-segment user-replace request accepted",   "success": true,   "cs\_name":    } |
+| HTTP 400 | Failure | Invalid file-segment request(invalid payload format). | {   "title": "Invalid Request",   "description":   } |
+| HTTP 401 | Failure | Authentication or Authorization Failure. Invalid key or Secretor Database Name or Authorization Header | {   "title": "Authentication required",   "description":   } |
+| HTTP 404 | Failure | The custom-segment name used in the request does not exist. | {   "title": "Entity Not Found",   "description": "Custom segment not found with the given name: "   } |
+| HTTP 429 | Failure | The number of requests or the rate of requests exceeds the allowed limit. | {   "title": "Too Many Requests",   "description": ,   "actual\_count": ,   "limit":   } |
+| HTTP 5XX | Failure | Server issue | {   "title": "Internal Server Error",   ...   } |
+
+## Example
+
+<CodeGroup>
+``` HTTP
+PUT https://api-0X.moengage.com/v2/custom-segments/file-segment/replace
+Body
+{
+  "name": "custom_segment_unique_name",
+  "attribute_name": "unique_identifier",
+  "attribute_type": "string",
+  "file_url": "https://s3.amazonaws.com/Sample_GAIDs.csv",
+  "callback_url": "http://localhost:5000",
+  "emails": ["abc@gmail.com", "xyz@wrx.com"]
+}
+```
+
+</CodeGroup>
+
+<Info>
+1. Replace users API drops all the existing user of the custom segment and add new users which are provided in the file URL.
+2. Only the newly added users are counted towards the daily file\_segment\_user limit.
+</Info>

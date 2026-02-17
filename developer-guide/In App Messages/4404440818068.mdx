@@ -1,0 +1,335 @@
+---
+title: "InApp NATIV"
+description: ""
+---
+
+In-App NATIV Campaigns target your users by showing a message while the user is using your app. They are very effective in providing contextual information and help to cross-sell/up-sell on desired screens of your app or/and on desired actions performed by the user in your app.
+
+![7e6cdb1-Screenshot_2016-02-11-17-18-06.png](18332487098260)
+## Installing Android Dependency
+
+![](https://maven-badges.herokuapp.com/maven-central/com.moengage/inapp/badge.svg)
+
+Add the following dependency to the **mainTemplate.gradle** file.
+
+<CodeGroup>
+```gradle Groovy
+dependencies {
+  ...
+  implementation("com.moengage:inapp:$sdkVersion")}
+```
+
+</CodeGroup>
+
+replace **$sdkVersion** with the appropriate SDK version
+
+### 
+
+### **Requirements for displaying images and GIFs in InApp**
+
+<Info>
+Starting InApp version **7.0.0,** SDK requires [Glide](https://bumptech.github.io/glide/) to show images and GIFs in the in-apps. You need to add the below dependency in your **mainTemplate.gradle** file.
+</Info>
+
+<CodeGroup>
+```gradle Groovy
+dependencies {
+ ...
+ implementation("com.github.bumptech.glide:glide:4.9.0")
+ annotationProcessor("com.github.bumptech.glide:compiler:4.9.0")
+}
+```
+
+</CodeGroup>
+
+# Display In-App
+
+Call the below API to show an in-app message on a screen.
+
+<CodeGroup>
+``` c#
+using MoEngage;
+MoEngageClient.ShowInApp();
+```
+
+</CodeGroup>
+
+# Self Handled In-Apps
+
+Self Handled In-Apps are messages that are delivered by the SDK but showing has to be done by the App.  
+To show In-Apps call the below method.
+
+<CodeGroup>
+``` c#
+using MoEngage;
+MoEngageClient.GetSelfHandledInApp();
+```
+
+</CodeGroup>
+
+The payload for self-handled in-app is returned via a callback. Register a callback as shown below.
+
+<CodeGroup>
+``` c#
+using MoEngage;
+// register a callback
+MoEGameObject.InAppSelfHandled += InAppSelfHandledCallback;
+
+public void InAppSelfHandledCallback(object sender, InAppSelfHandledCampaignData inAppData) {
+         /// process the selfhandled payload here
+         string selfHandledPayload = inAppData.selfHandled.payload;
+ }
+```
+
+</CodeGroup>
+
+## Tracking Statistics
+
+Since display, click, and dismiss for Self-Handled InApp is controlled by the application we need you to notify the SDK whenever the In-App is **Shown**, **Clicked**, or **Dismissed**. Below are the methods you need to call to notify the SDK. The **InAppSelfHandledCampaignData** object provided to the application in the callback for self-handled in-app should be passed in as a parameter to the below APIs.
+
+<CodeGroup>
+``` c#
+// call whenever in-app is shown
+MoEngageClient.SelfHandledShown(campaign);
+// call whenever in-app is clicked
+MoEngageClient.SelfHandledClicked(campaign);
+ // call whenever in-app is dismissed
+MoEngageClient.SelfHandledDismissed(campaign);
+```
+
+</CodeGroup>
+
+# InApp Callbacks
+
+SDK provides callbacks to the client application whenever is shown, dismissed or clicked(only if there is a navigation action or custom action associated with the widget).  
+Use the below callbacks to get notified for the above cases
+
+## InApp Shown
+
+<CodeGroup>
+``` c#
+using MoEngage;
+// register a callback
+MoEGameObject.InAppShown += InAppShownCallback;
+
+public void InAppShownCallback(object sender, InAppData inappData){
+    Debug.Log(TAG + " InAppShownCallback() : ");
+}
+```
+
+</CodeGroup>
+
+## InApp Clicked
+
+<CodeGroup>
+``` c#
+using MoEngage;
+// register a callback
+MoEGameObject.InAppClicked += InAppClickedCallback;
+
+public void InAppClickedCallback(object sender, InAppClickData inAppData)
+{   Debug.Log(TAG + " InAppClickedCallback() : ");
+}
+```
+
+</CodeGroup>
+
+## InApp Custom Action
+
+<CodeGroup>
+``` c#
+using MoEngage;
+// register a callback
+MoEGameObject.InAppCustomAction += InAppCustomActionCallback;
+
+public void InAppCustomActionCallback(object sender, InAppClickData inAppData)
+{
+  // key value pairs for custom aciton. 
+  IDictionary<string, object> keyValuePairs = ((CustomAction) inAppData.action).keyValuePairs;   Debug.Log(TAG + " InAppCustomActionCallback() : keyValuePairs: " + keyValuePairs.ToString());
+}
+```
+
+</CodeGroup>
+
+## InApp Dismissed
+
+<CodeGroup>
+``` c#
+using MoEngage;
+// register a callback
+MoEGameObject.InAppDismissed += InAppDismissedCallback;
+
+public void InAppDismissedCallback(object sender, InAppData inAppData)
+{   Debug.Log(TAG + " InAppDismissedCallback() : ");
+}
+```
+
+</CodeGroup>
+
+<CodeGroup>
+``` c#
+  /// InApp Campaign model
+  public class InAppData {
+    ///  Account info 
+    public AccountMeta accountMeta;
+
+    ///  InApp campaign info 
+    public InAppCampaign campaignData;
+
+    ///   Native platform from which the callback was triggered. 
+    public Platform platform;
+  }
+ 
+  /// Meta-data related to your MoEngage account.
+  public class AccountMeta {
+    ///  Account Identifier  
+    public string appId;
+  }
+  
+  /// InApp Campaign Details
+  public class InAppCampaign {
+    ///  Unique identifier for each campaign. 
+    public string campaignId;
+
+    ///  Campaign Name 
+    public string campaignName;
+
+    ///  Additional meta data of campaign 
+    public InAppCampaignContext campaignContext;
+  }
+ 
+  /// Additonal meta of InAppCampaign
+  public class InAppCampaignContext {
+    ///  Formatted campaign id 
+    public string formattedCampaignId;
+  }
+  
+  /// InApp model when click action is performed.
+  public class InAppClickData {
+    ///  Account info 
+    public AccountMeta accountMeta;
+
+    ///  InApp campaign info 
+    public InAppCampaign campaignData;
+
+    ///   Native platform from which the callback was triggered. 
+    public Platform platform;
+
+    ///  Action info 
+    public InAppClickAction action;
+  }
+  
+  /// InApp Navigation action model.Available only in InAppClickedCallback()
+  public class NavigationAction: InAppClickAction {
+    ///  Navigation action type 
+    public ActionType actionType;
+
+    ///  Type of Navigation action.Possible value deep_linking or screen 
+    public NavigationType navigationType;
+    
+    ///   Deeplink Url or the Screen Name used for the action. 
+    public string url;
+
+    ///  Additional Key-Value pairs entered on the MoEngage Platform for navigation action of the campaign
+    public IDictionary < string, object > keyValuePairs;
+  }
+
+  /// Custom action performed on inapp.Available only in InAppCustomActionCallback()
+  public class CustomAction: InAppClickAction {
+    /// Custom Action type 
+    public ActionType actionType;
+    ///  Key-Value Pair entered on the MoEngage Platform during campaign creation. 
+    public IDictionary < string, object > keyValuePairs;
+  }   /// InApp SelfHandled model. Available on InAppSelfHandledCallback() callback
+  public class InAppSelfHandledCampaignData {
+    ///  Account info 
+    public AccountMeta accountMeta;
+    
+    ///  InApp campaign info 
+    public InAppCampaign campaignData;
+   
+    ///   Native platform from which the callback was triggered. 
+    public Platform platform;
+    
+    ///   SelfHandled payload info 
+    public SelfHandled selfHandled;
+  }
+  
+  /// SelfHandled Payload information
+  public class SelfHandled {
+    ///  Self handled campaign payload. 
+    public string payload;
+
+    ///   Interval after which in-app should be dismissed, unit - Seconds 
+    public long dismissInterval;
+
+    /// Should the campaign be dismissed by pressing the back button or using the back gesture. if the value is true campaign should be dismissed on back press.  
+    public bool isCancellable;
+  }
+```
+
+</CodeGroup>
+
+# Handling Orientation Change
+
+<Info>
+This is only for the Android platform
+</Info>
+
+Starting Unity Plugin version 2.2.0 in-apps are supported in both portrait and landscape modes.  
+SDK has to be notified when the device orientation changes for SDK to handle in-app displays.
+
+There are two ways to do it:
+
+1. Add the API call in the Android native part of your app
+2. Call MoEngage plugin's **onOrientationChanged()**
+3. Add the API call in the Android native part of your app
+
+Notify the SDK when **onConfigurationChanged()** API callback is received in your UnityPlayerActivity class.
+
+<CodeGroup>
+```java Java
+public class SampleUnityPlayerActivity extends UnityPlayerActivity {
+  ...
+    @Override 
+     public void onConfigurationChanged(@NonNull Configuration newConfig) {
+         super.onConfigurationChanged(newConfig);
+   
+         //API to notify MoEngage SDK
+         MoEUnityHelper.getInstance().onConfigurationChanged();
+       ...
+     }
+  ...
+}
+```
+
+</CodeGroup>
+
+If you don't want to create a custom **UnityPlayerActivity**, MoEngage SDK on Android comes bundled with **MoEUnityPlayerActivity** which internally handles the device configuration changes.  
+This activity needs to be added as an entry point to your app, to do so replace your current entry point with the below code in your **AndroidManifest.xml**.
+
+<CodeGroup>
+```xml XML
+... 
+<activity android:name="com.moengage.unity.wrapper.MoEUnityPlayerActivity" android:theme="@style/UnityThemeSelector"> 
+  <intent-filter> <action android:name="android.intent.action.MAIN" /> 
+    <category android:name="android.intent.category.LAUNCHER" /> 
+    <category android:name="android.intent.category.LEANBACK_LAUNCHER" /> 
+  </intent-filter> 
+  <meta-data android:name="unityplayer.UnityActivity" android:value="true" /> 
+</activity> 
+...
+```
+
+</CodeGroup>
+
+## Call the MoEngage plugin's orientation change API
+
+Call the below API to notify SDK of the orientation change.
+
+<CodeGroup>
+```objectivec c#
+MoEngageClient.OnOrientationChanged();
+```
+
+</CodeGroup>

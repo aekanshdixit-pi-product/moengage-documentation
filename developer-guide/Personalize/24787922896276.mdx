@@ -1,0 +1,785 @@
+---
+title: "Personalize API"
+description: ""
+---
+
+# Overview
+
+Personalize APIs constitute a set of endpoints that can be accessed from your platform's code.  These APIs offer personalization capabilities and must be invoked from your codebase for MoEngage to provide relevant data. After receiving the data, you can use the same within your platform's code to personalize the content for your users.
+
+# Fetch Experience
+
+Use the **Fetch** endpoint to receive data on active personalization experiences. You can fetch data for one or more server-side experiences by using the **experience-key** field. MoEngage will evaluate targeting rules and in-session attributes automatically and return the correct variation for the user. Typically, you would make this call as part of your larger page and content rendering pipeline.
+
+<CodeGroup>
+```auto API Endpoint
+POST https://sdk-0X.moengage.com/v1/experiences/fetch
+```
+
+</CodeGroup>
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage).
+
+## Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization":"Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U="}
+
+The username and password details can be obtained from the MoEngage Dashboard.
+
+1. Navigate to **Settings** -> **Account** -> **APIs.**
+2. Click **the Copy**icon in the **Personalize** tile in the **API Key**s section to copy the API Key.
+3. Use the **Workspace ID** as the username and the Personalize API Key as the password to generate the authentication header.
+
+### Regenerate API SECRET
+
+The API SECRET can be regenerated on the MoEngage Dashboard in the Personalize API Settings section discussed above.
+
+Please **DO NOT** regenerate the key unless there is a security breach. Once you generate a different API SECRET KEY and save it, API calls using the older SECRET KEY won't work.
+
+## Request Headers
+
+| Key | Sample Values | Description |
+| --- | --- | --- |
+| MOE-APPKEY | {"MOE-APPKEY": "Workspace ID"} | This is the Workspace ID of your MoEngage account and needs to be passed along with the request. You can find your MoEngage Workspace ID in the MoEngage Dashboard API Settings. For more information, refer to [Authentication](#authentication). |
+| Authorization | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#authentication). |
+| Content-Type | application/JSON | Set the Content-Type header to application/JSON for using the Personalize API. |
+## Request Body
+
+| Key | Mandatory | Value | Description |
+| --- | --- | --- | --- |
+| customer\_id | No | String | Your brand provides this field, which should be pasted in the request. Generally, this is the phone number, email ID, or any other unique ID used to uniquely identify the user in MoEngage.       This is essential for fetching experiences that are configured for audiences segmented based on user attributes/user behavior/user affinity/custom segments.       If the the **customer\_id** is not part of the request **OR** is inaccurate **OR** is not present in MoEngage, **user\_identifiers** to uniquely identify the user.       It is mandatory to have [Identity Resolution](https://help.moengage.com/hc/en-us/articles/24050999467284-Unified-Identity-Identity-Resolution) implemented for your workspace to use *user\_identifiers* as a fallback to **customer\_id** for identifying the user. |
+| user\_identifiers | No | String | If you have [Identity Resolution](https://help.moengage.com/hc/en-us/articles/24050999467284-Unified-Identity-Identity-Resolution) enabled for your account, you can use different attributes such as customer ID OR email ID OR mobile number to uniquely identify a user.       Apart from email id or phone number, you can use any custom user attribute that is being used as part of the Identity Resolution.           If the **user\_identifiers** is not part of the request **OR** the **user\_identifier** is not present in MoEngage, the API will return experiences configured for All users. |
+| experience\_key | No | List of Strings | This field uniquely identifies each server-side experience created using MoEngage Personalize. You can pass multiple values in a single request and receive the personalized content defined for each experience in the response.   For Example:    To fetch the payload for a single experience   
+```auto
+experience_key: ["experience-1"]
+```
+ To fetch payload for multiple experiences in a single call   
+```auto
+experience_key: ["experience-1", "experience-2"]
+```
+ If no experience\_key is specified, API will return   * all experiences for the specified customer\_id **OR** * all experiences configured for **all users** if customer\_id is not part of the request |
+| Custom Attribute | No | String | This field is must contain the same value that has been used to identify users using the In-session attribute *Query Parameter*.       For example, if you want to target users who have opened the app after clicking on a link in an e-mail campaign and you have specified the parameter name as *utm\_medium,*   
+```auto
+utm_medium:"email"
+```
+ |
+| DAY\_OF\_THE\_WEEK | No | String | This field must contain the day of the week for evaluating IN-session attribute-based experiences. Example:    
+```auto
+DAY_OF_THE_WEEK:"Sunday"
+```
+ |
+| TIME\_OF\_THE\_DAY | No | String | This field must contain the time of the day for evaluating IN-session attribute-based experiences.   Example: For a time interval between 7 PM - 8 PM, the input for this field should be    
+```auto
+TIME_OF_THE_DAY: "00"
+```
+ |
+| USER\_IP\_ADDRESS | No | String | This field must contain the user’s IP address to fetch experiences for audiences segmented basis  geo-location. |
+| USER\_AGENT | No | String | This field must contain the USER-AGENT HTTP header.   This is useful to delivering experiences personalized based on in-session attributes like Device Type. |
+### Sample Requests
+
+<CodeGroup>
+```auto cURL
+curl --location 'https://sdk-0X.moengage.com/v1/experiences/fetch'
+--header 'Accept: */*'
+--header 'Content-Type: application/json'
+--header 'Authorization: Basic XCDEAjFOVk0xQjJKRUs4VVNCUzFICCCCOlVMWkI1Z3JUTTRRWmJJU0RsOFFEM0c2Vw=='
+--header 'MOE-APPKEY: <Your Workspace ID>'
+--data '{
+"identifiers": {
+"customer_id": "Unique identifier for the user mapped with ID field",
+"user_identifiers": {
+"u_em": "User Email",
+"u_mb": "Mobile Number"
+}
+ },
+"experience_key": ["<experience-key>"],
+"Custom_attribute":"Example: utm_medium: email",
+"DAY_OF_THE_WEEK": "Day of the week as a string in format: Monday, Tuesday etc.",
+"TIME_OF_THE_DAY": "Time of the day as string: 00,01,02,..,23",
+"USER_IP_ADDRESS": "IP address for location based experiences",
+"USER_AGENT": "Copy the USER-AGENT http header from the request"
+}'
+```
+
+```auto Node.js
+import fetch from 'node-fetch';
+
+var result = await fetch('https://sdk-0X.moengage.com/v1/experiences/fetch', {
+method: 'POST',
+headers: {
+    'Authorization': 'Basic XCDEAjFOVk0xQjJKRUs4VVNCUzFICCCCOlVMWkI1Z3JUTTRRWmJJU0RsOFFEM0c2Vw==',
+    'Content-Type': 'application/json',
+    'MOE-APPKEY: <Your Workspace ID>' },
+body: JSON.stringify({
+    "identifiers": {
+        "customer_id": "Unique identifier for the user mapped with ID field",
+        "user_identifiers": {
+"u_em": "User Email",
+"u_mb": "Mobile Number"
+        }
+    },
+    "experience_key": ["<experience-key>"],
+    "Custom_attribute":"Example: utm_medium: email",
+    "DAY_OF_THE_WEEK": "Day of the week as a string in format: Monday, Tuesday etc.",
+    "TIME_OF_THE_DAY": "Time of the day as string: 00,01,02,..,23",
+    "USER_IP_ADDRESS": "IP address for location based experiences",
+    "USER_AGENT": "Copy the USER-AGENT http header from the request"
+})
+});
+var data = await result.json()
+console.log(data)
+```
+
+```auto Go
+
+package main
+    
+import (
+"fmt"
+"io/ioutil"
+"log"
+"net/http"
+"strings"
+)
+
+func main() {
+client := &http.Client{}
+var data = strings.NewReader(`{
+    "identifiers": {
+        "customer_id": "Unique identifier for the user mapped with ID field",
+        "user_identifiers": {
+"u_em": "User Email",
+"u_mb": "Mobile Number"
+        }
+    },
+    "experience_key": ["<experience-key>"],
+    "Custom_attribute":"Example: utm_medium: email",
+    "DAY_OF_THE_WEEK": "Day of the week as a string in format: Monday, Tuesday etc.",
+    "TIME_OF_THE_DAY": "Time of the day as string: 00,01,02,..,23",
+    "USER_IP_ADDRESS": "IP address for location based experiences",
+    "USER_AGENT": "Copy the USER-AGENT http header from the request"
+}`)
+req, err := http.NewRequest("POST", "https://sdk-0X.moengage.com/v1/experiences/fetch", data)
+if err != nil {
+    log.Fatal(err)
+}
+req.Header.Set("Authorization", "Basic XCDEAjFOVk0xQjJKRUs4VVNCUzFICCCCOlVMWkI1Z3JUTTRRWmJJU0RsOFFEM0c2Vw==")
+req.Header.Set("Content-Type", "application/json")
+req.Header.Set("MOE-APPKEY", "<Your Workspace ID>")
+resp, err := client.Do(req)
+if err != nil {
+    log.Fatal(err)
+}
+defer resp.Body.Close()
+bodyText, err := ioutil.ReadAll(resp.Body)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("%s", bodyText)
+}
+```
+
+```auto PHP
+<?php
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://sdk-0X.moengage.com/v1/experiences/fetch');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+'Authorization' = 'Basic XCDEAjFOVk0xQjJKRUs4VVNCUzFICCCCOlVMWkI1Z3JUTTRRWmJJU0RsOFFEM0c2Vw==',
+'Content-Type' = 'application/json',
+'MOE-APPKEY' = '<Your Workspace ID>',
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, '{"identifiers": {"customer_id": "Unique identifier for the user mapped with ID field","user_identifiers": {"u_em": "User Email","u_mb": "Mobile Number"}}, "experience_key": ["<experience-key>"],   "Custom_attribute":"Example: utm_medium: email", "DAY_OF_THE_WEEK": "Day of the week as a string in format: Monday, Tuesday etc.", "TIME_OF_THE_DAY": "Time of the day as string: 00,01,02,..,23", "USER_IP_ADDRESS": "IP address for location based experiences", "USER_AGENT": "Copy the USER-AGENT http header from the request"}');
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+$response = curl_exec($ch);
+
+curl_close($ch);
+```
+
+```auto Python
+import requests
+    
+   url = 'https://sdk-0X.moengage.com/v1/experiences/fetch'
+   headers = {
+       'Authorization': 'Basic XCDEAjFOVk0xQjJKRUs4VVNCUzFICCCCOlVMWkI1Z3JUTTRRWmJJU0RsOFFEM0c2Vw==',
+       'MOE-APPKEY', '<Your Workspace ID>'
+   }
+   data = {
+       "identifiers": {
+  "customer_id": "Unique identifier for the user mapped with ID field",
+  "user_identifiers": {
+      "u_em": "User Email",
+      "u_mb": "Mobile Number"
+  }
+       },
+       "experience_key": ["<experience-key>"],
+       "Custom_attribute":"Example: utm_medium: email",
+       "DAY_OF_THE_WEEK": "Day of the week as a string in format: Monday, Tuesday etc.",
+       "TIME_OF_THE_DAY": "Time of the day as string: 00,01,02,..,23",
+       "USER_IP_ADDRESS": "IP address for location based experiences",
+       "USER_AGENT": "Copy the USER-AGENT http header from the request"
+   }
+   
+   response = requests.post(url, headers=headers, json=data)
+   print(response.json())
+```
+
+```auto Ruby
+require 'net/http'
+require 'json'
+
+uri = URI('https://sdk-0X.moengage.com/v1/experiences/fetch')
+req = Net::HTTP::Post.new(uri)
+req.content_type = 'application/json'
+req['Authorization'] = 'Basic XCDEAjFOVk0xQjJKRUs4VVNCUzFICCCCOlVMWkI1Z3JUTTRRWmJJU0RsOFFEM0c2Vw=='
+req['MOE-APPKEY'] = '<Your Workspace ID>'
+# The object won't be serialized exactly like this
+# req.body = "{"alert_id":null,"customer_id":"CUSTOMER_ID","transaction_id":"YOUR_TRANSACTION_ID_VAL_HERE","payloads":{"SMS":{"recipient":""}}}"
+req.body = {
+    "identifiers": {
+        "customer_id": "Unique identifier for the user mapped with ID field",
+        "user_identifiers": {
+"u_em": "User Email",
+"u_mb": "Mobile Number"
+        }
+    },
+    "experience_key": ["<experience-key>"],
+    "Custom_attribute":"Example: utm_medium: email",
+    "DAY_OF_THE_WEEK": "Day of the week as a string in format: Monday, Tuesday etc.",
+    "TIME_OF_THE_DAY": "Time of the day as string: 00,01,02,..,23",
+    "USER_IP_ADDRESS": "IP address for location based experiences",
+    "USER_AGENT": "Copy the USER-AGENT http header from the request"
+}.to_json
+
+req_options = {
+use_ssl: uri.scheme == "https"
+}
+res = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+http.request(req)
+end
+```
+
+```auto Java
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+URL url = new URL("https://sdk-0X.moengage.com/v1/experiences/fetch");
+HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+httpConn.setRequestMethod(“POST”);
+
+httpConn.setRequestProperty(“Authorization”, “Basic XCDEAjFOVk0xQjJKRUs4VVNCUzFICCCCOlVMWkI1Z3JUTTRRWmJJU0RsOFFEM0c2Vw==”);
+httpConn.setRequestProperty(“Content-Type”, “application/json”);
+httpConn.setRequestProperty("MOE-APPKEY", "<Your Workspace ID>");
+
+httpConn.setDoOutput(true);
+String payload = "{
+"identifiers": {
+    "customer_id": "Unique identifier for the user mapped with ID field",
+    "user_identifiers": {
+        "u_em": "User Email",
+        "u_mb": "Mobile Number"
+    }
+},
+    "experience_key": ["<experience-key>"],
+    "Custom_attribute":"Example: utm_medium: email",
+    "DAY_OF_THE_WEEK": "Day of the week as a string in format: Monday, Tuesday etc.",
+    "TIME_OF_THE_DAY": "Time of the day as string: 00,01,02,..,23",
+    "USER_IP_ADDRESS": "IP address for location based experiences",
+    "USER_AGENT": "Copy the USER-AGENT http header from the request"
+}";
+
+httpConn.setDoOutput(true);
+OutputStream os = httpConn.getOutputStream();
+os.write(payload.getBytes());
+os.flush();
+
+InputStream responseStream = httpConn.getResponseCode() == HttpURLConnection.HTTP_OK
+    ? httpConn.getInputStream()
+    : httpConn.getErrorStream();
+
+BufferedReader br = new BufferedReader(new InputStreamReader(
+    (responseStream)));
+
+String output;
+while ((output = br.readLine()) != null) {
+    System.out.println(output);
+}
+
+httpConn.disconnect();
+
+    }
+}
+```
+
+</CodeGroup>
+## Response Body
+
+| Key | Description |
+| --- | --- |
+| payload | This field contains a list of all the key-value pairs defined as part of the experience |
+| value | This field contains the value of the keys defined in the payload |
+| data\_type | This field specifies the data type of the value of each key |
+| experience\_context | This field returns a JSON object that is to be used for reporting pageviews/impressions and/or tracking clicks within the personalized experience. Refer here for more details |
+### Sample response
+
+<CodeGroup>
+```auto JSON
+{
+  "experiences": {     
+      "new-serverside-experience": { 
+        "payload": {
+"Title": {
+  "value": "Presenting MoEngage Server side personalization! ",
+  "data_type": "string"
+},
+"Image": {
+  "value": "https://cdn.pixabay.com/photo/2021/02/24/20/53/abstract-6047465_960_720.jpg",
+  "data_type": "string"
+},
+        },
+        "experience_context": {
+"cid": "65eae5738ea5032b0ef60138_F_T_WP_AB_2_P_0_AU_42D",
+"experience": "Server Side Experience",
+"moe_locale_id": "<id>",
+"moe_variation_id": "<id>",
+"audience_name": "<audience name>",
+"audience_id": "<id>",
+"type": "Web Personalization"
+        }
+      }
+  }
+}
+```
+
+</CodeGroup>
+## Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is submitted to MoEngage. |
+| 400 | Bad Request | This response is returned in case the payload is empty or invalid. |
+| 401 | Authorization Failed | This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header. |
+| 500 | Internal Server error | This response is returned when the system runs into an unexpected error. |
+# Metadata API
+
+The Metadata API is used to fetch a list of currently Active, Scheduled and Paused experiences within a workspace. 
+
+<CodeGroup>
+```auto API Endpoint
+GET https://sdk-0X.moengage.com/v1/experiences/metadata
+```
+
+</CodeGroup>
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage).
+
+### Authentication
+
+Same method as the one used for the Fetch API endpoint described [above](#authentication).
+
+### Request Header
+
+| Key | Sample Values | Description |
+| --- | --- | --- |
+| MOE-APPKEY | {"MOE-APPKEY": "Workspace ID"} | This is the Workspace ID of your MoEngage account, and it needs to be passed along with the request. You can find your MoEngage Workspace ID in the MoEngage Dashboard API Settings. For more information, refer to [Authentication](#authentication). |
+### Sample Request
+
+<CodeGroup>
+```auto cURL
+curl --location 'https://sdk-03.moengage.com/v1/experiences/metadata' \
+--header 'Accept: */*' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic TkFTNUlQWVdaM0tWTEcyQ05FTVJQVkRROklpSUZzU21zOHVGendEa0ZNX3FqaVVlYw==' \
+--header 'MOE-APPKEY: <Your Workspace ID>'
+```
+
+</CodeGroup>
+The above request will fetch all the Active, Scheduled & Paused experiences in your workspace. You can also fetch experiences that are in a specific state - Only Active or only Active + Paused - by using the query parameter **status**
+
+### Sample Request
+
+<CodeGroup>
+```auto cURL
+curl --location 'https://sdk-03.moengage.com/v1/experiences/metadata?status=Active' \
+--header 'Accept: */*' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic TkFTNUlQWVdaM0tWTEcyQ05FTVJQVkRROklpSUZzU21zOHVGendEa0ZNX3FqaVVlYw==' \
+--header 'MOE-APPKEY: <Your Workspace ID>'
+```
+
+</CodeGroup>
+
+<CodeGroup>
+```auto cURL
+curl --location 'https://sdk-03.moengage.com/v1/experiences/metadata?status=Active,Paused' \
+--header 'Accept: */*' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic TkFTNUlQWVdaM0tWTEcyQ05FTVJQVkRROklpSUZzU21zOHVGendEa0ZNX3FqaVVlYw==' \
+--header 'MOE-APPKEY: <Your Workspace ID>'
+```
+
+</CodeGroup>
+### Sample Response
+
+<CodeGroup>
+```auto JSON
+      {
+    "metadata": {
+        "count": 3,
+        "experiences": [
+{
+    "experience_name": "Experience 1",
+    "experience_key": "experience-1",
+    "status": "Active"
+},
+{
+    "experience_name": "Experience 2",
+    "experience_key": "experience-2",
+    "status": "Paused"
+},
+{
+    "experience_name": "Experience-3",
+    "experience_key": "experience-3",
+    "status": "Scheduled"
+}
+        ]
+    }
+}
+```
+
+</CodeGroup>
+ 
+
+# Reporting Experience Shown event
+
+With Server-side personalization, the experience is personalized on the server. You can use either the Report Impression API or the MoEngage Web SDK to report impressions
+
+## Using API (Recommended)
+
+**Applicable for all platforms, including website, mobile or TV app & more.**
+
+To report an impression for your campaign, use the API endpoint given below:
+
+<CodeGroup>
+```auto API Endpoint
+POST https://sdk-0X.moengage.com/v1/experiences/events
+```
+
+</CodeGroup>
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage).
+
+### Authentication
+
+Same method as the one used for the Fetch API endpoint described [above](#authentication).
+
+### Request Header
+
+| Key | Sample Values | Description |
+| --- | --- | --- |
+| MOE-APPKEY | {"MOE-APPKEY": "Workspace ID"} | This is the Workspace ID of your MoEngage account, and it needs to be passed along with the request. You can find your MoEngage Workspace ID in the MoEngage Dashboard API Settings. For more information, refer to [Authentication](#authentication). |
+### Request Body
+
+| Key | Mandatory | Value | Description |
+| --- | --- | --- | --- |
+| customer\_id | Yes | String | Your brand provides this field, which should be pasted in the request. Generally, this is the phone number, email ID, or any other unique ID used to uniquely identify the user in MoEngage. This is essential for event mapping back to the user.   If the **customer\_id** shared is not present in MoEngage, a new user profile will be created with the shared details. |
+| user\_attributes | No | JSON | This field is used to update the details of a user identified by **customer\_id**.   If the **customer\_id** does not exist, a new user will be created with the details present in **user\_attributes**. |
+| user\_timezone\_offset | No | Numeric | The difference in time between UTC and the local system time in a particular time zone. All time zones are defined by their offset from UTC. The offset is expressed as either UTC- or UTC+.   **user\_timezone\_offset** should have a value in seconds, which can be between -54000 to 54000. For example, for IST (UTC+0530), "user\_timezone\_offset" will be 19800. |
+| action | Yes | String | This field identifies the action or the event performed by the user.   **Accepted values**   *MOE\_PERSONALIZATION\_MESSAGE\_SHOWN*   *MOE\_PERSONALIZATION\_MESSAGE\_CLICKED* |
+| actions | Yes | Array | Multiple actions or events performed by a user can be grouped together in a single API call |
+| moe\_event\_uuid | Yes | String | Unique identifier to be sent for each event to prevent duplication. |
+| event\_time | Yes | Numeric (Epoch time in seconds) OR   String (ISO 8601) | This field represents UTC time at which the event happened. |
+| platform | Yes | String | This field represents the platform on which the user is shown the personalization event. If the values are missing, **Unknown** will be used.   **Accepted values**   * *Android* * *IOS* * *Web* * *TV* |
+| attributes | Yes | JSON | This field is the [experience context](#experience-context) sent as part of the response to the [Experience Fetch API](#authentication) request call. |
+| b\_id | No | String | This field can be used to uniquely identify click tracking events on multiple elements on a page.   For example, *Add to Cart* & *Wishlist* can be used to identify if the user has clicked or tapped on these buttons on the website or the app. |
+### Sample Requests
+
+**For a user existing in MoEngage**
+
+<CodeGroup>
+```auto cURL
+curl --location --request POST 'https://sdk-0X.moengage.com/v1/experiences/events' \
+--header 'Accept: */*' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic <Authorisation>' \
+--header 'MOE-APPKEY: <Your APP Key>' \
+--data-raw '{
+    "elements": [
+        {
+"customer_id": "<unique user identifier like email or phone number. Eg: john@example.com>",
+"user_timezone_offset": 19800,
+"actions": [
+    {
+        "action": "MOE_PERSONALIZATION_MESSAGE_SHOWN",
+        "moe_event_uuid": "aa886712-4537-47c1-b126-2686efda2e26",
+        "event_time": 1725258666,
+        "platform": "web",
+        "attributes": {
+"cid": "66d55ae445921e4d35ae4368_F_T_WP_AB_2_P_0_AU_5A",
+"experience": "Test Server side experience",
+"moe_locale_id": "0",
+"moe_variation_id": "2",
+"audience_name": "All Users",
+"audience_id": "5A",
+"type": "Web Personalization"
+        }
+    }
+]
+        }
+    ]
+}'
+}'
+```
+
+</CodeGroup>
+**For a  user new to MoEngage with a unique identifier**
+
+<CodeGroup>
+```auto cURL
+curl --location --request POST 'https://sdk-0X.moengage.com/v1/experiences/events' \
+--header 'Accept: */*' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic <Authorisation>' \
+--header 'MOE-APPKEY: <Your APP Key>' \
+--data-raw '{
+    "elements": [
+        {
+"customer_id": "john@example.com",
+"user_attributes": {
+  "name": "John Doe",
+  "first_name": "John",
+  "last_name": "Doe"
+}
+"user_timezone_offset": 19800,
+"actions": [
+    {
+        "action": "MOE_PERSONALIZATION_MESSAGE_SHOWN",
+        "moe_event_uuid": "aa886712-4537-47c1-b126-2686efda2e26",
+        "event_time": 1725258666,
+        "platform": "web",
+        "attributes": {
+"cid": "66d55ae445921e4d35ae4368_F_T_WP_AB_2_P_0_AU_5A",
+"experience": "Test Server side experience",
+"moe_locale_id": "0",
+"moe_variation_id": "2",
+"audience_name": "All Users",
+"audience_id": "5A",
+"type": "Web Personalization"
+        }
+    }
+]
+        }
+    ]
+}'
+}'
+```
+
+</CodeGroup>
+**For an anonymous user visiting the platform**
+
+<CodeGroup>
+```auto cURL
+curl --location --request POST 'https://sdk-0X.moengage.com/v1/experiences/events' \
+--header 'Accept: */*' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic <Authorisation>' \
+--header 'MOE-APPKEY: <Your APP Key>' \
+--data-raw '{
+    "elements": [
+        {
+"customer_id": "<identifier for the user for the session>",
+"user_timezone_offset": 19800,
+"actions": [
+    {
+        "action": "MOE_PERSONALIZATION_MESSAGE_SHOWN",
+        "moe_event_uuid": "aa886712-4537-47c1-b126-2686efda2e26",
+        "event_time": 1725258666,
+        "platform": "web",
+        "attributes": {
+"cid": "66d55ae445921e4d35ae4368_F_T_WP_AB_2_P_0_AU_5A",
+"experience": "Test Server side experience",
+"moe_locale_id": "0",
+"moe_variation_id": "2",
+"audience_name": "All Users",
+"audience_id": "5A",
+"type": "Web Personalization"
+        }
+    }
+]
+        }
+    ]
+}'
+}'
+```
+
+</CodeGroup>
+## Using MoEngage Web SDK
+
+Refer to [this](https://developers.moengage.com/hc/en-us/articles/39084350090772-Personalize-API-Experience-events-tracking#h_01JXWHX5488QT9XMEN0R5WPX6P) article on reporting Experience shown event using the Personalize SDK.
+
+## Using MoEngage App SDK
+
+* Refer to [this](https://developers.moengage.com/hc/en-us/articles/38474488247444-Personalize-Experience-Events-Tracking#h_01JXWHX5488QT9XMEN0R5WPX6P) article on reporting Experience shown event using the **Android** SDK.
+* Refer to [this](https://developers.moengage.com/hc/en-us/articles/38532362954004-Personalize-Experience-Events-tracking#h_01JY0XF2DW9VKRF3S7G5FNR4XR) article on reporting Experience shown event using the **iOS** SDK.
+
+# Reporting Experience Click event
+
+With Server-side personalization, the experience is personalized on the server. You can use either the Report Impression API or the MoEngage Web SDK to report impressions
+
+## Using API (Recommended)
+
+**Applicable for all platforms, including website, mobile or TV app & more.**
+
+The API Request to report clicks using APIs remains the same as the one to report impressions. The only change is to the value of the **action**field to **MOE\_PERSONALIZATION\_MESSAGE\_CLICKED**.
+
+<CodeGroup>
+```auto API Endpoint
+POST https://sdk-0X.moengage.com/v1/experiences/events
+```
+
+</CodeGroup>
+### Sample Requests
+
+**For a user existing in MoEngage**
+
+<CodeGroup>
+```auto cURL
+curl --location --request POST 'https://sdk-0X.moengage.com/v1/experiences/events' \
+--header 'Accept: */*' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic <Authorisation>' \
+--header 'MOE-APPKEY: <Your APP Key>' \
+--data-raw '{
+    "elements": [
+        {
+"customer_id": "<unique user identifier like email or phone number. Eg: john@example.com>",
+"user_timezone_offset": 19800,
+"actions": [
+    {
+        "action": "MOE_PERSONALIZATION_MESSAGE_CLICKED",
+        "moe_event_uuid": "aa886712-4537-47c1-b126-2686efda2e26",
+        "event_time": 1725258666,
+        "platform": "web",
+        "attributes": {
+"cid": "66d55ae445921e4d35ae4368_F_T_WP_AB_2_P_0_AU_5A",
+"experience": "Test Server side experience",
+"moe_locale_id": "0",
+"moe_variation_id": "2",
+"b_id": "Add to Cart",
+"audience_name": "All Users",
+"audience_id": "5A",
+"type": "Web Personalization"
+        }
+    }
+]
+        }
+    ]
+}'
+}'
+```
+
+</CodeGroup>
+**For a  user new to MoEngage with a unique identifier**
+
+<CodeGroup>
+```auto cURL
+curl --location --request POST 'https://sdk-0X.moengage.com/v1/experiences/events' \
+--header 'Accept: */*' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic <Authorisation>' \
+--header 'MOE-APPKEY: <Your APP Key>' \
+--data-raw '{
+    "elements": [
+        {
+"customer_id": "john@example.com",
+"user_attributes": {
+  "name": "John Doe",
+  "first_name": "John",
+  "last_name": "Doe"
+}
+"user_timezone_offset": 19800,
+"actions": [
+    {
+        "action": "MOE_PERSONALIZATION_MESSAGE_CLICKED",
+        "moe_event_uuid": "aa886712-4537-47c1-b126-2686efda2e26",
+        "event_time": 1725258666,
+        "platform": "web",
+        "attributes": {
+"cid": "66d55ae445921e4d35ae4368_F_T_WP_AB_2_P_0_AU_5A",
+"experience": "Test Server side experience",
+"moe_locale_id": "0",
+"moe_variation_id": "2",
+"b_id": "Add to Cart",
+"audience_name": "All Users",
+"audience_id": "5A",
+"type": "Web Personalization"
+        }
+    }
+]
+        }
+    ]
+}'
+}'
+```
+
+</CodeGroup>
+**For an anonymous user visiting the platform**
+
+<CodeGroup>
+```auto cURL
+curl --location --request POST 'https://sdk-0X.moengage.com/v1/experiences/events' \
+--header 'Accept: */*' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic <Authorisation>' \
+--header 'MOE-APPKEY: <Your APP Key>' \
+--data-raw '{
+    "elements": [
+        {
+"customer_id": "<identifier for the user for the session>",
+"user_timezone_offset": 19800,
+"actions": [
+    {
+        "action": "MOE_PERSONALIZATION_MESSAGE_CLICKED",
+        "moe_event_uuid": "aa886712-4537-47c1-b126-2686efda2e26",
+        "event_time": 1725258666,
+        "platform": "web",
+        "attributes": {
+"cid": "66d55ae445921e4d35ae4368_F_T_WP_AB_2_P_0_AU_5A",
+"experience": "Test Server side experience",
+"moe_locale_id": "0",
+"moe_variation_id": "2",
+"b_id": "Add to Cart",
+"audience_name": "All Users",
+"audience_id": "5A",
+"type": "Web Personalization"
+        }
+    }
+]
+        }
+    ]
+}'
+}'
+```
+
+</CodeGroup>
+
+<Tabs>
+  <Tab title="Tab 1">
+    ## Using MoEngage Web SDK
+
+    Refer to [this](https://developers.moengage.com/hc/en-us/articles/39084350090772/live_preview/01JZMXHTZJCMVA9BX0A67XD6VM#h_01JY0TEW61D02S5VMX4FV4PGZN) article on reporting Experience shown event using the Personalize SDK.
+
+    ## Using MoEngage App SDK
+
+    * Refer to [this](https://developers.moengage.com/hc/en-us/articles/38474488247444-Personalize-Experience-Events-Tracking#h_01JY0TEW61D02S5VMX4FV4PGZN) article on reporting Experience shown event using the **Android** SDK.
+    * Refer to [this](https://developers.moengage.com/hc/en-us/articles/38532362954004-Personalize-Experience-Events-tracking#h_01JY0XF2DW05P2706PP5Y5PWS3) article on reporting Experience shown event using the **iOS** SDK.
+  </Tab>
+</Tabs>

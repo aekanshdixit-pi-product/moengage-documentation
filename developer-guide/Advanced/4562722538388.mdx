@@ -1,0 +1,264 @@
+---
+title: "iOS Notification Center 7.x.x"
+description: ""
+---
+
+Inbox is a drop-in view controller which contains the read and unread push notifications. Even if the user has not clicked on a notification, it will be present in the Inbox and will be highlighted to signify it is unread status. The title and the look and feel of the view are also customisable.
+
+Inbox view controller is added as a child view controller to your own controller. This helps you get the delegate callback in the same controller, which you can further use for navigation to different screens.
+
+# Inbox Setup Checklist
+
+Make sure the following items are implemented before using the Inbox Module:
+
+1. Update the MoEngage-iOS-SDK to version >= [4.4.0](https://developers.moengage.com/hc/en-us/articles/4404198236564-Change-Log#v4-4-0-0-27).
+2. [Implement Notification Service Extension](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45FKD0XDH4X776R47JA04GJ) and Integrate [MORichNotiifcation](https://cocoapods.org/pods/MORichNotification)(>= 3.0.1).
+3. AppGroupID is set in **App Target** [Capabilities](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45FKD0XDH4X776R47JA04GJ) and the same is passed to the SDK.
+4. AppGroupID is set in **Notification Service Extension Target** [Capabilities](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45FKD0XDH4X776R47JA04GJ) and the [same is passed to the MORichNotification SDK](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45FKD0XDH4X776R47JA04GJ).
+
+<Warning>
+**App Group ID**
+
+Make sure the App Group ID configured for both the **App Target** and the **Notification Service Extension Target** are the **same**.
+</Warning>
+
+# How to use Inbox?
+
+1. Import `MOMessaging` in your View Controller.
+2. Create a property - @property(nonatomic, strong) MOInboxViewController \*myInboxController.
+3. In viewDidLoad, add
+
+<CodeGroup>
+```swift Swift
+self.myInboxController = MOInbox.initializeInbox(on: self)
+```
+
+```objectivec Objective-C
+self.myInboxController = [MOInbox initializeInboxOnController:self];
+```
+
+</CodeGroup>
+
+You are all set. This will add Inbox as a child controller to your view controller.
+
+# MOInboxCellSelectedDelegate Methods
+
+In case if you want to do perform any action on clicking of the Inbox notification, make use of the MOInboxCellSelectedDelegate. On setting the `delegate` of the `MOInboxViewController` you will get the `inboxCellSelectedWithPushDict:` and `inboxCellSelectedWithData:` callback where you will get the push notification payload and `app\_extra` dict in the notification payload respectively as shown below :
+
+<CodeGroup>
+```swift Swift
+ func inboxCellSelected(withData dataDict: [AnyHashable : Any]!) {
+        print("Data Dict : \(dataDict)")
+ }
+
+func inboxCellSelected(withPushDict pushDict: [AnyHashable : Any]!) {
+        print("Push Dict : \(pushDict)")
+}
+```
+
+```objectivec Objective-C
+-(void)inboxCellSelectedWithData:(NSDictionary *)dataDict{
+    NSLog(@"data dict is %@", dataDict);
+}
+
+-(void)inboxCellSelectedWithPushDict:(NSDictionary *)pushDict{
+  NSLog(@"push dict is %@", pushDict);
+}
+```
+
+</CodeGroup>
+
+# Click Processing of Inbox Notifications
+
+To enable click processing in Default Inbox implementation set `shouldProcessNotificationActions` of InboxViewController instance to `true` as shown below:
+
+<CodeGroup>
+```swift Swift
+self.myInboxController?.shouldProcessNotificationActions = true
+```
+
+```objectivec Objective-C
+self.myInboxController.shouldProcessNotificationActions = true
+```
+
+</CodeGroup>
+
+# Customizing Appearance
+
+1. You can push/present your controller. If you push your controller, make sure to add “Done” or “Cancel” button as a UIBarButtonItem to dismiss your View Controller.
+2. You can get the delegate callback of the click action on inbox cells.
+3. You can use this data for tracking events or navigation to another screen.
+4. You can customize the look and feel of the inbox view controller using the method:
+
+<CodeGroup>
+```swift Swift
+self.myInboxController?.customiseInbox(withCellTextColor: UIColor.darkGray, fontForReadMsg: UIFont.systemFont(ofSize: 15.0, weight: .bold), fontForUnreadMsg: UIFont.systemFont(ofSize: 15.0, weight: .regular), dateTextColor:UIColor.lightGray, font: UIFont.systemFont(ofSize: 10.0, weight: .light), cellBackgroundColor: UIColor.clear)
+```
+
+```objectivec Objective-C
+[self.myInboxController customiseInboxWithCellTextColor:[UIColor blackColor] fontForReadMsg:[UIFont fontWithName:@"AvenirNext-Regular" size:18] fontForUnreadMsg:[UIFont fontWithName:@"AvenirNext-Bold" size:18] dateTextColor:[UIColor grayColor] font:nil cellBackgroundColor:[UIColor clearColor]];
+```
+
+</CodeGroup>
+
+You can use the method *setDataWithMessage* in the table view cell to set the data, which sets the message, the font and time of the message.
+
+Alternatively, you can build your own UI and not chose to call this method and set the data in your own method.
+
+# Self Handled Inbox
+
+## Fetch Inbox Messages:
+
+Inbox can be completely customized now. Use `getMessagesWithCompletionBlock:` to fetch the inbox messages.
+
+<CodeGroup>
+```swift Swift
+MOInbox.getMessagesWithCompletionBlock { (messages) in
+	if let messages = messages{
+		self.inboxMessages = messages
+	}
+}
+```
+
+```objectivec Objective-C
+[MOInbox getInboxMessagesWithCompletionBlock:^(NSArray<MOInboxModel *> *inboxMessages) {
+        self.inboxMessagesArray = inboxMessages
+}]
+```
+
+</CodeGroup>
+
+## Mark a notification as Read:
+
+An inbox notification can be marked as read with the method `markInboxNotificationReadForCampaignID:` by providing the campaign ID of the notification while calling the method. The method will return the updated notification payload where the `isRead` key will be set to true.
+
+<CodeGroup>
+```swift Swift
+//Get the MOInboxModel instance
+let pushModel = self.inboxMessages[<get index>]
+
+if !pushModel.isRead {
+	MOInbox .markNotificationClicked(withCampaignID: pushModel.campaignID)
+}
+```
+
+```objectivec Objective-C
+//An example of marking the inbox message as read
+MOInboxModel *pushDataObj = [self.inboxMessagesArray objectAtIndex:<get the index>];
+
+if (!pushDataObj.isRead){
+    [[MOInboxHandler sharedInstance] markInboxNotificationReadForCampaignID:pushDataObj.campaignID];
+  //Rest of the implementation
+}
+```
+
+</CodeGroup>
+
+## Track Inbox Notification Clicks:
+
+An inbox notification click can be tracked by using method `trackInboxNotificationClickForCampaignID:` by providing the campaign ID of the notification while calling the method.
+
+<CodeGroup>
+```swift Swift
+//Get the MOInboxModel instance
+let pushModel = self.inboxMessages[<get index>]
+
+MOInbox.trackInboxNotificationClick(withCampaignID: pushModel.campaignID)
+```
+
+```objectivec Objective-C
+//An example of marking the inbox message as read
+MOInboxModel *pushDataObj = [self.inboxMessagesArray objectAtIndex:<get the index>];
+
+[[MOInboxHandler sharedInstance] trackInboxNotificationClickForCampaignID:pushDataObj.campaignID];
+```
+
+</CodeGroup>
+
+## Process the Inbox Clicks:
+
+If you want to perform the actions supported by the SDK(i.e, rich landing, deep linking, coupon code etc) associated with the notifications on clicking the entry in Inbox call `processInboxNotificationWithCampaignID:` method as shown below.
+
+<CodeGroup>
+```swift Swift
+//Get the MOInboxModel instance
+let pushModel = self.inboxMessages[<get index>]
+
+MOInbox.processInboxNotification(withCampaignID: pushModel.campaignID)
+```
+
+```objectivec Objective-C
+ //An example of process the notification actions
+MOInboxModel *pushDataObj = [self.inboxMessagesArray objectAtIndex:<get the index>];
+[MOInbox processInboxNotificationWithCampaignID:pushDataObj.campaignID];
+```
+
+</CodeGroup>
+
+## Get Unread Notifications count:
+
+You can obtain the unread notifications count from the Inbox by using `getUnreadNotifictionCount` method as shown below:
+
+<CodeGroup>
+```swift Swift
+//Get Unread Notifications count 
+let unreadCount = MOInbox.getUnreadNotifictionCount()
+```
+
+```objectivec Objective-C
+//Get Unread Notifications count 
+NSInteger unreadCount = [MOInbox getUnreadNotifictionCount];
+```
+
+</CodeGroup>
+
+## Disabling Inbox
+
+If you wish to disable inbox, set the property disableInbox. This property has to be set before the initialze call.
+
+<CodeGroup>
+```swift Swift
+MoEngage.sharedInstance().disableInbox = true
+```
+
+```objectivec Objective-C
+[MoEngage sharedInstance].disableInbox = YES;
+```
+
+</CodeGroup>
+
+## Deleting Messages
+
+Use this method to remove all the messages currently stored in inbox.
+
+<CodeGroup>
+```swift Swift
+MOInbox.removeInboxMessages()
+```
+
+```objectivec Objective-C
+[MOInbox removeInboxMessages]
+```
+
+</CodeGroup>
+
+# Methods deprecated in SDK version 4.4.0
+
+We have revamped the Inbox Module in the SDK version 4.4.0 and following this, we have deprecated `MOInboxPushDataModel` class and use `MOInboxModel` class instances as the model object for notifications. Along with this, we have also deprecated few of the existing methods of `MOInbox` as listed below:
+
+<CodeGroup>
+```objectivec Objective-C
++(NSArray *)getInboxMessages __deprecated_msg("This method is deprecated as the payload structure has changed, this method will be removed in SDK Version 5.0.0. Use getInboxMessagesWithCompletionBlock: instead");
+
++(void)trackInboxNotificationClickForCampaign:(MOInboxPushDataModel*)campaignObj andIsFirstClick:(BOOL)isFirstClick __deprecated_msg("This method is deprecated as MOInboxPushDataModel Class is depreacted, this method will be removed in SDK Version 5.0.0. Use trackInboxNotificationClickWithCampaignID: instead");
+
++(void)processInboxNotificationOnClickForCampaign:(MOInboxPushDataModel*)campaignObj __deprecated_msg("This method is deprecated as MOInboxPushDataModel Class is depreacted, this method will be removed in SDK Version 5.0.0. Use processInboxNotificationWithCampaignID: instead");
+
++(NSMutableDictionary*)markNotificationReadWithCampaignID:(NSString*)cid __deprecated_msg("This method is deprecated as MOInboxPushDataModel Class is depreacted, this method will be removed in SDK Version 5.0.0. Use markInboxNotificationClickedWithCampaignID: instead");
+
++(void)writeArrayToFile:(NSMutableArray *)anArray __deprecated_msg("Method Deprecated. From SDK Version 5.0.0 you will not be able to change the inbox file content.");
+```
+
+</CodeGroup>
+
+These methods will be removed from the SDK version 5.0.0, therefore make sure you have updated all the Inbox feature to use the newer APIs.

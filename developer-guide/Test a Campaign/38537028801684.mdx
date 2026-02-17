@@ -1,0 +1,498 @@
+---
+title: "Test a Push Campaign"
+description: ""
+---
+
+You can use this API to test a campaign in MoEngage.
+
+<Info>
+* Currently, you can use this API to test Push campaigns.
+* You can test only those campaigns that are created using the [Create Push Campaigns](https://developers.moengage.com/hc/en-us/articles/38466364097044) API.
+</Info>
+
+# API Endpoint
+
+Method: **POST**
+
+<CodeGroup>
+``` API Endpoint
+https://api-0X.moengage.com/core-services/v1/campaigns/test
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username: password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization": "Basic Base64\_ENCODED\_APPKEY\_APIKEY"}
+
+You can obtain the username and password details from the MoEngage UI.
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Campaign report/Business events/Custom templates** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Content-Type | Required | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Required | {"Authorization": "Basic Base64\_ENCODED\_APPKEY\_APIKEY=="} | This authentication parameter, used for access control, must be passed in the request. To generate the authentication header, refer to [Authentication](#01GQRA6BGSEKV3P4EV4SK51F5J). |
+| MOE-APPKEY | Required | {“MOE-APPKEY”: “Workspace ID”} | This is the workspace ID (earlier APP ID) of your MoEngage workspace. The MOE-APPKEY has to be passed in the request. You can find your MoEngage Workspace ID in the MoEngage UI: **Settings** -> **Account** -> **APIs** -> **Workspace ID (earlier app id)**   **For more information, refer to [Authentication](#01GQRA6BGSEKV3P4EV4SK51F5J).** |
+
+# Request Body
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| request\_id | Required | String | This field denotes the request ID for which the campaign is tested. |
+| channel | Required | String | This field denotes the type of channel. Supported value is PUSH. |
+| basic\_details | Required | JSON Object | This object contains the basic details of the campaign. For more information, refer to [Basic Details](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns#h_01JXWDE7P301GPHEGMRB7SJSZQ). |
+| campaign\_content | Required | JSON Object | This object contains the campaign content. For more information, refer to [Campaign Content](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns#h_01J20Z053896ZC0KJ3CM6C3GMZ). |
+| personalization\_details | Optional | JSON Object | This object contains the personalization details. For more information, refer to [Personalization Details](#h_01J1EWKYX4K5F3E7H1QV40CYJY). |
+| test\_campaign\_meta | Required | JSON Object | This object contains the test campaign meta details. For more information, refer to [Meta Info](#h_01J1EWMTQTDG2A8BW34VRJMBQX). |
+
+## Personalization Details
+
+<Info>
+When you pass personalization details in the personalization\_details object, MoEngage uses those details to personalize the user attributes or event attributes present in the content instead of the attributes present in the user profile.
+</Info>
+
+The personalization\_details JSON object contains the following information:
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| user\_attributes | Optional | JSON Object | This object contains personalization details for user attributes. |
+| event\_attributes | Optional | JSON Object | This object contains personalization details for event attributes. |
+
+## Meta Info
+
+The meta\_info JSON object contains the following information:
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| identifier | Required | String | This field denotes the identifier. Supported values are:   * **USER\_ATTRIBUTE\_UNIQUE\_ID**: Specifies a permanent, internal ID that your system assigns to a user for reliable identification. Sample value: USER\_1138 * **USER\_ATTRIBUTE\_USER\_EMAIL**: Specifies the user's email address. Sample value: john.doe@abc.com * **USER\_ATTRIBUTE\_USER\_MOBILE**: Specifies the user's mobile phone number, used for SMS campaigns and verification. Sample value: +14155550101 * **MOE\_GAID**: Specifies the Google Advertising ID (GAID) from an Android device, used for ad tracking within the MoEngage platform. * **ADVERTISING\_IDENTIFIER**: Specifies the device's resettable advertising ID (GAID on Android, IDFA on iOS) for ad tracking and attribution. * **PUSH\_ID**: Specifies the unique device token required to deliver a push notification to a specific app installation. * **CUSTOM\_SEGMENT**: Specifies a user-defined group or tag used for targeting audiences in marketing campaigns. |
+| identifier\_values | Required | Array | This field denotes the identifier values. |
+| locale\_name | Optional | String | This field denotes the locale name. |
+| variation | Optional | String | This field denotes the name of the variation. |
+
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| message | String | This field contains a brief description of the request status if it is successful. For more information, refer to [Response Codes](#01GQRA6BGS399F7XK2GNS51WTQ). |
+| error | JSON Object | This field contains the reason for the request's failure.   Structure:    "error": {       "code": "<error\_code>",        "message": "<error\_message>",       "target": "<target>",       "details": [            {                "target": "<target>",                "message": "<error\_message>"             }       ],       "request\_id": "<request\_id>"       }   }   The error object contains the following fields:   * code - This field is of String type and contains the error code that provides a brief explanation of the error. For example, 400 - Bad Request, 401- Authentication required, and so on. This field is present in the response only in the case of errors. * message - This field is of String type and describes why the request has failed. * details - This object provides the error details and contains the following information: 	+ target - This field is of String type and denotes the target of the error. 	+ message - This field is of String type and describes why the request has failed. * request\_id: This field denotes the request ID. |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. This JSON object has the following structure:   * data: This object contains the test data. For more information, refer to [Data](#h_01J1SDMPND1AW53GMTSP3D8EFF). * message: This field contains the success message. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request, or when the provided parameters are invalid, or when a template already exists with the same version, name, or ID. |
+| 401 | Authentication Failure | This response is returned when the authorization parameters are missing in the HTTP Auth Header. |
+| 500 | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+
+## Data
+
+The Data JSON object contains the following information:
+
+| Key | Values | Description |
+| --- | --- | --- |
+| user\_identifier(custom segment) | JSON Object | This object contains the user ID (custom segment). It has the following fields:   * status - String * failure\_reason (if any) - String |
+| email\_id | JSON Object | This object contains the email ID. It has the following fields:   * status - String * failure\_reason (if any) - String |
+| UID | JSON Object | This object contains the unique ID. It has the following fields:   * status - String * failure\_reason (if any) - String |
+
+# Sample cURL Request
+
+The following is the sample code to test the Push campaigns:
+
+<CodeGroup>
+``` Sample cURL Request
+curl --location 'https://api-0X.moengage.com/core-services/v1/campaigns/test' \
+--header 'MOE-APPKEY: {{Workspace_ID or APP_ID}}' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic {{Authorization_Key}}' \
+--data '{
+    "request_id": "{{request_id}}",
+    "channel": "PUSH",
+    "basic_details": {
+        "name": "{{campaign_name}}",
+        "team": "{{team_name}}",
+        "platforms": [
+            "IOS"
+        ],
+        "platform_specific_details": {
+            "ios": {
+                "send_to_all_eligible_device": true,
+                "exclude_provisional_push_devices": false,
+                "send_to_only_provisional_push_enabled_devices": false
+            }
+        }
+    },
+    "campaign_content": {
+        "content": {
+            "push": {
+                "ios": {
+                    "template_type": "SIMPLE_IMAGE_CAROUSEL",
+                    "basic_details": {
+                        "background_color_code": "#a0a0a0",
+                        "apply_background_color_in_text_editor": false,
+                        "title": "Message Carousel Check",
+                        "message": "Sample Check",
+                        "subtitle": "Subtitle",
+                        "allow_bg_refresh": true,
+                        "default_click_action": "DEEPLINKING",
+                        "default_click_action_value": "string",
+                        "key_value_pairs": [
+                            {
+                                "key": "keyy",
+                                "value": "valuee"
+                            }
+                        ],
+                        "carousel_content": {
+                            "slider_transition": "MANUAL",
+                            "slide_data": [
+                                {
+                                    "image_url": "string",
+                                    "image_click_action": "DEEPLINKING",
+                                    "image_click_action_value": "string",
+                                    "key_value_pairs": [
+                                        {
+                                            "key": "tree",
+                                            "value": "dance"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "image_url": "image_url.jpg",
+                                    "image_click_action": "DEEPLINKING",
+                                    "image_click_action_value": "image_click_action_value.jpg",
+                                    "key_value_pairs": [
+                                        {
+                                            "key": "tree",
+                                            "value": "dance"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "image_url": "image_url.jpg",,
+                                    "image_click_action": "DEEPLINKING",
+                                    "image_click_action_value": "image_click_action_value.jpg",
+                                    "key_value_pairs": [
+                                        {
+                                            "key": "tree",
+                                            "value": "dance"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "advanced": {
+                        "coupon_code": "Coupon code",
+                        "sound_file": "Sound",
+                        "enable_ios_badge": true
+                    },
+                    "template_backup": {
+                        "title": "Message backup title",
+                        "message": "Message backup",
+                        "subtitle": "Subtitle backup",
+                        "allow_bg_refresh": true,
+                        "rich_media_type": "Image",
+                        "rich_media_value": "https:/2017/01/random.jpg",
+                        "default_click_action": "DEEPLINKING",
+                        "default_click_action_value": "https://default_click_action_value/2017/01/random.jpg",
+                        "key_value_pairs": [
+                            {
+                                "key": "keyy2",
+                                "value": "valuee2"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "test_campaign_meta": {
+        "identifier": "USER_ATTRIBUTE_UNIQUE_ID",
+        "identifier_values": [
+            "john012"
+        ]
+    }
+},
+```
+
+``` Custom Segment
+{
+    "request_id": "{{request_id}}",
+    "channel": "PUSH",
+    "basic_details": {
+        "name": "{{campaign_name}}",
+        "team": "{{team_name}}",
+        "platforms": [
+            "ANDROID",
+            "IOS",
+            "WEB"
+        ],
+        "platform_specific_details": {
+            "ios": {
+                "send_to_all_eligible_device": true,
+                "exclude_provisional_push_devices": false,
+                "send_to_only_provisional_push_enabled_devices": false
+            }
+        }
+    },
+    "campaign_content": {
+        "content": {
+            "push": {
+                "android": {
+                    "template_type": "BASIC",
+                    "basic_details": {
+                        "notification_channel": "general",
+                        "title": "quick scheduled update",
+                        "message": "Message",
+                        "summary": "Message summary",
+                        "image_url": "{{image_url}}",
+                        "default_click_action": "DEEPLINKING",
+                        "default_click_action_value": "{{default_click_action_value}}",
+                        "key_value_pairs": [
+                            {
+                                "key": "q",
+                                "value": "adfsa"
+                            }
+                        ]
+                    },
+                    "buttons": [
+                        {
+                            "btn_name": "Button 1.1",
+                            "click_action_type": "DEEPLINKING",
+                            "click_action_name": "asd",
+                            "click_action_value": "{{click_action_value}}",
+                            "key_value_pairs": [
+                                {
+                                    "key": "q",
+                                    "value": "adfsa"
+                                }
+                            ]
+                        },
+                        {
+                            "btn_name": "button2.1",
+                            "click_action_type": "RICH_LANDING",
+                            "click_action_name": "asd",
+                            "click_action_value": "{{click_action_value}}",
+                            "key_value_pairs": [
+                                {
+                                    "key": "q",
+                                    "value": "adfsa"
+                                }
+                            ]
+                        }
+                    ],
+                    "advanced": {
+                        "coupon_code": "Coupon code 24",
+                        "icon_type_in_notification": "app_icon",
+                        "auto_dismiss_notification": true,
+                        "auto_dismiss_notification_time_value": 1,
+                        "auto_dismiss_notification_time_granularity": "DAYS"
+                    }
+                },
+                "ios": {
+                    "template_type": "SIMPLE_IMAGE_CAROUSEL",
+                    "basic_details": {
+                        "background_color_code": "#a0a0a0",
+                        "apply_background_color_in_text_editor": false,
+                        "title": "Test API title",
+                        "message": "Sample Check",
+                        "subtitle": "Subtitle",
+                        "allow_bg_refresh": true,
+                        "default_click_action": "DEEPLINKING",
+                        "default_click_action_value": "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg",
+                        "key_value_pairs": [
+                            {
+                                "key": "keyy",
+                                "value": "valuee"
+                            }
+                        ],
+                        "carousel_content": {
+                            "slider_transition": "MANUAL",
+                            "slide_data": [
+                                {
+                                    "image_url": "https://www.gstatic.com/webp/gallery/5.jpg",
+                                    "image_click_action": "DEEPLINKING",
+                                    "image_click_action_value": "https://www.gstatic.com/webp/gallery/2.jpg",
+                                    "key_value_pairs": [
+                                        {
+                                            "key": "tree",
+                                            "value": "dance"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "image_url": "https://www.gstatic.com/webp/gallery/2.jpg",
+                                    "image_click_action": "DEEPLINKING",
+                                    "image_click_action_value": "https://www.gstatic.com/webp/gallery/2.jpg",
+                                    "key_value_pairs": [
+                                        {
+                                            "key": "tree",
+                                            "value": "dance"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "image_url": "https://www.gstatic.com/webp/gallery/3.jpg",
+                                    "image_click_action": "DEEPLINKING",
+                                    "image_click_action_value": "https://www.gstatic.com/webp/gallery/2.jpg",
+                                    "key_value_pairs": [
+                                        {
+                                            "key": "tree",
+                                            "value": "dance"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "advanced": {
+                        "coupon_code": "Coupon code",
+                        "sound_file": "Sound",
+                        "enable_ios_badge": true
+                    },
+                    "template_backup": {
+                        "title": "Message backup title",
+                        "message": "Message backup",
+                        "subtitle": "Subtitle backup",
+                        "allow_bg_refresh": true,
+                        "rich_media_type": "Image",
+                        "rich_media_value": "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg",
+                        "default_click_action": "DEEPLINKING",
+                        "default_click_action_value": "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg",
+                        "key_value_pairs": [
+                            {
+                                "key": "keyy2",
+                                "value": "valuee2"
+                            }
+                        ]
+                    }
+                },
+                "web": {
+                    "template_type": "BASIC",
+                    "basic_details": {
+                        "title": "Sample Check",
+                        "message": "Kannada - ಶುಭೋದಯ   Hindi - शुभ प्रभात, आपका दिन अच्छा हो| ",
+                        "redirect_url": "https://www.gstatic.com/webp/gallery/1.jpg",
+                        "auto_dismiss_notification": true,
+                        "image_url": "https://www.gstatic.com/webp/gallery/2.jpg"
+                    },
+                    "buttons": [
+                        {
+                            "title": "Button-1",
+                            "icon_url": "https://www.gstatic.com/webp/gallery/1.jpg",
+                            "url": "https://www.gstatic.com/webp/gallery/2.jpg"
+                        }
+                    ],
+                    "advanced": {
+                        "icon_image_type": "DEFAULT"
+                    }
+                }
+            }
+        }
+    },
+    "test_campaign_meta": {
+        "identifier": "CUSTOM_SEGMENT",
+        "identifier_values": [
+            "cdsghdsgqa"
+        ]
+    }
+}
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<CodeGroup>
+``` 200
+{
+    "data": {
+        "Test_list_user": {
+            "status": "success"
+        }
+    },
+    "message": "Test campaign created successfully"
+}
+```
+
+``` 400
+{
+    "error": {
+        "code": "400 Bad Request",
+        "message": "request_id key is mandatory field",
+        "details": [
+            {
+                "target": "request_id",
+                "message": "request_id key is mandatory field"
+            }
+        ],
+        "request_id": "11"
+    }
+}
+```
+
+``` 401
+{
+    "error": {
+        "code": "401 Authentication error",
+        "message": "Authentication required",
+        "details": [
+            {
+                "code": "InvalidValue",
+                "target": "APP_SECRET_KEY",
+                "message": [
+                    {
+                        "code": "InvalidValue",
+                        "target": "APP_SECRET_KEY",
+                        "message": "Invalid APP_SECRET_KEY is provided."
+                    }
+                ]
+            }
+        ],
+        "request_id": ""
+    }
+}
+```
+
+``` 500
+{
+    "error": {
+        "code": "500 Internal Server Error",
+        "message": "Something went wrong. Please contact Moengage team",
+        "target": "string",
+        "details": [
+            {
+                "message": "Expecting value: line 1 column 1 (char 0)",
+                "target": ""
+            }
+        ]
+    }
+}
+```
+
+</CodeGroup>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/api-docs/request/21ai7kf/test-campaign-api) to view it in Postman.
+
+# FAQs
+
+arrow\_drop\_down **Can I send the test email to IDs that are not the part of MoEngage?**
+
+Yes, you can send the test campaign to any user by passing identifier as "Email". The campaign sent will not be personalised.
+
+arrow\_drop\_down **How does personalisation works if I pass only a subset of user attribute values used under the content for personalisation?**
+
+The values passed under personalisation details will be used for all users to whom the test campaign to be sent and the remaining user attributes values will be picked up from the user profile.

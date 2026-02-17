@@ -1,0 +1,557 @@
+---
+title: "Bulk Import"
+description: ""
+---
+
+## Overview
+
+Use the Bulk Import API to send, to MoEngage, in batch multiple user and event requests using a single API request. You can send a batch request of a maximum of 100 kB in a single API call.
+
+## API Endpoint
+
+Method: **POST**
+
+<CodeGroup>
+``` API Endpoint
+https://api-0X.moengage.com/v1/transition/{{appId}}
+```
+
+</CodeGroup>
+
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage maintains different data centres for different clients. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage).
+
+<Info>
+* The Workspace\_ID for your MoEngage account is available at **Settings** -> **Account** -> **APIs -> Workspace ID (earlier app id)**.
+* If you have [Portfolio](https://help.moengage.com/hc/en-us/articles/40394603054100-Portfolio) enabled for your workspace, you need to pass *project\_code* in the API endpoint. This identifies which project a user or event belongs to. For more information, refer to [Portfolio: Data Ingestion and Management](https://help.moengage.com/hc/en-us/articles/40358246598804-Portfolio-Data-Ingestion-and-Management#h_01K2XZS7GTBYAT8QRG4HWV19VC).
+</Info>
+
+## Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization: Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="}
+
+The username and password details can be obtained from the MoEngage Dashboard. If you're using the API for the first time, follow these steps:
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Data** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+## Request Parameters
+
+| Key | Required | Data Type | Description |
+| --- | --- | --- | --- |
+| app\_id | Yes | String | This is your MoEngage account's Workspace ID that has to be passed along with the request. You can find your MoEngage Workspace ID at **Settings > Account > APIs > Workspace ID (earlier app id)**. |
+
+## 
+
+## Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| X-Forwarded-For | Yes | Header Value Format: <IP Address> | The 'X-Forwarded-For' header is used to specify the IP address of the client that made the request. This header may be added by proxy servers or load balancers. The header value must contain the IP address of the original client that initiated the request. Multiple IP addresses may be specified in the header value, separated by commas. (This is optional) |
+| Content-Type | Yes | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Yes | {"Authorization": "Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#h_01GQEHHAQY7ZW6MKJPX52NS12W). |
+
+ 
+
+## Request Body
+
+### Request Body Fields
+
+| Key | Data Type | Required | Description |
+| --- | --- | --- | --- |
+| type | String | Yes | This is used to identify the type of request.   Allowed Value: transition   Example: "type": "transition"   Note: This field is case-sensitive. Follow the case as in the example when passing the value in the request. |
+| elements | List | Yes | List of data points (events and customers) to track.   **Note**: The type field in this List denotes whether the information is for a customer or an event. This field is case-sensitive. Follow the case as in the example when passing the value in the request.   * Allowed Values: customer, event, device * Examples: 	+ "type": "customer" 	+ "type": "event" 	+ "type": "device" |
+
+<Info>
+All bulk API requests return a 200 response code. Debugging should be done on the user profile on the dashboard.
+</Info>
+
+### Example Payload
+
+A sample API request is as follows:
+
+<CodeGroup>
+``` JSON
+{
+    "type":"transition",
+    "elements":[
+        {
+            "type":"customer",
+            "customer_id":"john@example.com",
+            "attributes":{
+                "name":"John",
+                "platforms":[
+                    {
+                        "platform":"ANDROID",
+                        "active":"true"
+                    }
+                ]
+            }
+        },
+        {
+            "type":"event",
+            "customer_id":"john@example.com",
+            "device_id":"96bd03b6-defc-4203-83d3-dc1c73080232",
+            "actions":[
+                {
+                    "action":"Added to Cart",
+                    "attributes":{
+                        "product":"Mobile",
+                        "color":"white",
+                        "Brand":"Apple"
+                    },
+                    "platform":"iOS",
+                    "app_version":"1.2.3",
+                    "current_time":"2020-05-31T16:33:35Z",
+                    "user_timezone_offset":19800
+                },
+                {
+                    "action":"Purchase",
+                    "attributes":{
+                        "product":"MacBook Air",
+                        "Brand":"Apple"
+                    },
+                    "platform":"iOS",
+                    "app_version":"1.2.3",
+                    "current_time":1590404615,
+                    "user_timezone_offset":19800
+                }
+            ]
+        }
+    ]
+}
+```
+
+</CodeGroup>
+
+ 
+
+## Response Codes
+
+<CodeGroup>
+``` 200
+
+Success Response
+{
+    "status": "success",
+    "message": "Your request has been accepted and will be processed soon." 
+}
+```
+
+``` 400
+Bad Request
+{
+    "status": "fail",
+    "error": {
+        "message": "Could not decode the request body. The JSON was incorrect or not encoded as UTF-8",
+        "type": "Malformed JSON",
+        "request_id": "oWvxnUuo"
+    }
+}
+
+Empty Body
+{
+    "status": "fail",
+    "error": {
+        "attribute": "elements",
+        "message": "elements cannot be empty array",
+        "type": "MissingAttributeError",
+        "request_id": "oWvxnUuo"
+    }
+}
+      
+Invalid Type
+{
+    "status": "fail",
+    "error": {
+        "attribute": "type",
+        "message": "type in elements should be customer/event/device",
+        "type": "AttributeError",
+        "request_id": "oWvxnUuo"
+    }
+}
+
+Customer ID is Missing
+{
+    "status": "fail",
+    "error": {
+        "attribute": "customer_id",
+        "message": "customer_id not found in the payload",
+        "type": "MissingAttributeError",
+        "request_id": "oWvxnUuo"
+    }
+}
+      
+
+Empty Action
+{
+    "status": "fail",
+    "error": {
+        "attribute": "action",
+        "message": "action cannot be empty Unicode string",
+        "type": "MissingAttributeError",
+        "request_id": "oWvxnUuo"
+    }
+}
+      
+Element Dict Type
+{
+    "status": "fail",
+    "error": {
+        "message": "Could not decode the request body. The JSON was incorrect or not decoded as UTF-8.",
+        "type": "Malformed JSON",
+        "request_id": "oWvxnUuo"
+    }
+}
+
+      
+Elements are empty
+{
+    "status": "fail",
+    "error": {
+        "attribute": "elements",
+        "message": "elements cannot be empty array",
+        "type": "MissingAttributeError",
+        "request_id": "oWvxnUuo"
+    }
+}
+```
+
+</CodeGroup>
+
+ 
+
+## Sample cURL Request
+
+<CodeGroup>
+``` cURL
+curl --location 'https://api-0X.moengage.com/v1/transition/{{appId}?app_id={{appId}}' \
+--header 'Content-Type: application/json' \
+--header {"Authorization": "Basic Base64_ENCODED_APPKEY_APIKEY"} \
+--data '{
+    "type": "transition",
+    "elements": [
+        {
+            "type": "customer",
+            "customer_id": "AZ8TM",
+            "attributes": {
+                "name": "qjDKn",
+                "first_name": "xSEdd",
+                "last_name": "UWbah",
+                "platforms": [
+                    {
+                        "platform": "iOS",
+                        "active": "true"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "customer",
+            "customer_id": "9yt8q8",
+            "attributes": {
+                "name": "5Np",
+                "first_name": "2irjN",
+                "last_name": "CH4Zo",
+                "platforms": [
+                    {
+                        "platform": "ANDROID",
+                        "active": "true"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "customer",
+            "customer_id": "ONfYcF",
+            "attributes": {
+                "name": "U92",
+                "first_name": "zgI63",
+                "last_name": "Dle4b",
+                "platforms": [
+                    {
+                        "platform": "web",
+                        "active": "true"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "device",
+            "customer_id": "AZ8TM",
+            "device_id": "AZ8TM",
+            "attributes": {
+                "brand": "{{model_bulk1}}",
+                "platform": "{{platform_bulk1}}",
+                "push_id": "pushid1991"
+            }
+        },
+        {
+            "type": "device",
+            "customer_id": "9yt8q8",
+            "device_id": "9yt8q8",
+            "attributes": {
+                "brand": "{{model_bulk1}}",
+                "platform": "{{platform_bulk1}}",
+                "push_id": "pushid2744"
+            }
+        },
+        {
+            "type": "device",
+            "customer_id": "ONfYcF",
+            "device_id": "ONfYcF",
+            "attributes": {
+                "brand": "{{model_bulk1}}",
+                "platform": "{{platform_bulk1}}",
+                "push_id": "pushid3546"
+            }
+        },
+        {
+            "type": "event",
+            "customer_id": "AZ8TM",
+            "actions": [
+                {
+                    "action": "A6CO5",
+                    "attributes": {
+                        "product": "Shirt"
+                    },
+                    "platform": "{{platform_bulk1}}",
+                    "app_version": "839",
+                    "user_time": "1712567385726",
+                    "current_time": "1712567385726"
+                },
+                {
+                    "action": "wuDX8",
+                    "attributes": {
+                        "product": "MacBook Air",
+                        "Brand": "Apple"
+                    },
+                    "platform": "iOS",
+                    "app_version": "1.2.3",
+                    "user_time": "1712567385726",
+                    "current_time": "1712567385726"
+                }
+            ]
+        },
+        {
+            "type": "event",
+            "customer_id": "9yt8q8",
+            "actions": [
+                {
+                    "action": "A6CO5",
+                    "attributes": {
+                        "product": "Shirt"
+                    },
+                    "platform": "{{platform_bulk1}}",
+                    "app_version": "1.2.3",
+                    "user_time": "1712567385726",
+                    "current_time": "1712567385726"
+                },
+                {
+                    "action": "Purchase",
+                    "attributes": {
+                        "product": "MacBook Air",
+                        "Brand": "Apple"
+                    },
+                    "platform": "iOS",
+                    "app_version": "1.2.3",
+                    "user_time": "1712567385726",
+                    "current_time": "1712567385726"
+                }
+            ]
+        },
+        {
+            "type": "event",
+            "customer_id": "ONfYcF",
+            "actions": [
+                {
+                    "action": "A6CO5",
+                    "attributes": {
+                        "product": "Shirt"
+                    },
+                    "platform": "{{platform_bulk1}}",
+                    "app_version": "1.2.3",
+                    "user_time": "1712567385726",
+                    "current_time": "1712567385726"
+                },
+                {
+                    "action": "Purchase",
+                    "attributes": {
+                        "product": "MacBook Air",
+                        "Brand": "Apple"
+                    },
+                    "platform": "iOS",
+                    "app_version": "1.2.3",
+                    "user_time": "1712567385726",
+                    "current_time": "1712567385726"
+                }
+            ]
+        }
+            ]
+}'
+```
+
+</CodeGroup>
+
+ 
+
+## Array Support
+
+If you want to pass an attribute in an array, the appropriate syntax for that is:
+
+<CodeGroup>
+``` cURL
+"Array_attributeName":["abc","123"],
+```
+
+</CodeGroup>
+
+The sample cURL for adding and removing elements in an array is:
+
+<CodeGroup>
+``` cURL
+
+curl --location 'https://api-0X.moengage.com/v1/transition/{{appId}}?app_id={{appId}}' \
+--header 'Content-Type: application/json' \
+--header {"Authorization": "Basic Base64_ENCODED_APPKEY_APIKEY"} \
+--data '{
+    "type": "transition",
+    "elements": [
+        {
+            "type": "customer",
+            "customer_id": "OTBoS",
+            "attributes": {
+                "name": "wtmNx",
+                "first_name": "bt016",
+                "last_name": "JPCUi",
+                "Array_attribute":["one","two"],
+                "platforms": [
+                    {
+                        "platform": "iOS",
+                        "active": "true"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "device",
+            "customer_id": "OTBoS",
+            "device_id": "OTBoS",
+            "attributes": {
+                "brand": "Mi",
+                "platform": "Windows",
+                "push_id": "pushid1186"
+            }
+        },
+        {
+            "type": "event",
+            "customer_id": "OTBoS",
+            "actions": [
+                {
+                    "action": "mOhrP",
+                    "attributes": {
+                        "product": "Shoe"
+                    },
+                    "platform": "Windows",
+                    "app_version": "581",
+                    "user_time": "1712568861457",
+                    "current_time": "1712568861457"
+                }
+            ]
+        }
+            ]
+}'
+```
+
+</CodeGroup>
+
+## User Identity Resolution
+
+In MoEngage, data ingestion uses an ID to create or update a user. For workspaces in MoEngage with Identity Resolution enabled,  Bulk Import API can be used to create or update users using a specific identifier, such as a mobile number or email ID, these identifiers need to be enabled for the workspace in Identity Resolution dashboard.
+
+You can:
+
+* Create users through Server-to-Server Data APIs even when they do not have an ID (but have other identifiers).
+* Create a user or track events of a user when identifiers other than ID (for example, email ID or phone number) are known.
+
+### Request Body
+
+The following is a sample cURL request for a Bulk Import API consisting of the following payloads:
+
+* User payload:  Attribute parameters must contain at least one of the identifiers you have configured based on which users in MoEngage will be created, updated, or merged.
+* Event payload: Identifiers set up in the workspace must be mentioned within the *user\_identifiers* parameter, as shown in the below example where *moe\_mobile* is one of the identifiers in the workspace:  
+
+<CodeGroup>
+```ruby JSON
+"user_identifiers":{
+    "moe_mobile":"{{Mobile_Number}}"
+}
+```
+
+</CodeGroup>
+
+#### **Sample cURL Request for Bulk Import API:**
+
+**The following Bulk Import API consists of payloads for users and events.**
+
+<CodeGroup>
+``` cURL
+curl --location 'https://api-0X.moengage.com/v1/transition/{{appId}}?app_id={{appId}}' \
+      --header 'Content-Type: application/json' \
+      --header {"Authorization": "Basic Base64_ENCODED_APPKEY_APIKEY"} \
+      --data '{
+        "type": "transition",
+        "elements": [
+        {
+          "type": "customer",
+          "attributes": {
+            "moe_mobile": "{{Mobile_Number}}",
+            "first_name": "John"
+          }
+        },
+        {
+          "type": "event",
+          "user_identifiers": {
+            "moe_mobile": "{{Mobile_Number}}"
+          },
+          "actions": [
+          {
+            "action": "AddToCart",
+            "attributes": {
+              "product": "MacBook Air",
+              "Brand": "Apple"
+            }
+          }
+          ]
+        }
+        ]
+      }'
+```
+
+</CodeGroup>
+
+For more information, refer [User Identity Resolution](https://help.moengage.com/hc/en-us/articles/24050999467284-User-Identity-Resolution).
+
+## Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/request/3182294-7e0944a2-67c2-49dc-a801-aeaba1eab47d) to view it in Postman.
+
+## FAQs
+
+arrow\_drop\_down **Do the internal MoEngage validations of Track User API and Create Event API apply in Bulk API as well?**
+
+Yes, Track User API validations apply to the type *Customer payload*. Create Event API validations apply to the type *Event payload* within the Bulk API request.
+
+arrow\_drop\_down **How do we reduce the 5xx errors because of too many requests per second or minute?**
+
+Please attempt an exponential backoff of requests to ensure that there is no data loss due to 5xx errors.
+
+arrow\_drop\_down **How do I know if my user data has been ingested into MoEngage?**
+
+Getting a 200 status code as a response from MoEngage only indicates that the users in your API payload have been accepted for processing. It does not ensure that the users sent to MoEngage have been successfully ingested.  
+However, this happens very rarely and you can search for the newly ingested users in:  
+**Segment** > **Create Segment** > **Search for users using their IDs**

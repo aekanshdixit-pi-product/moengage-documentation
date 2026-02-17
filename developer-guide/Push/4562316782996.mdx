@@ -1,0 +1,381 @@
+---
+title: "Notification Center 11.x.x"
+description: ""
+---
+
+<Info>
+To use these modules you need to use 11.2.00 or a later version of **moe-android-sdk**. If you are using an older version of **moe-android-sdk**. For more information about integration with versions lesser than 11.2.00, refer to [Notification Center for the 11.1.00 version](https://developers.moengage.com/hc/en-us/articles/4403893700756).
+</Info>
+# Overview
+
+The Notification Center shows your push notification history, allowing you to provide an option for the end-user to scroll back and see what they have missed. MoEngage provides out-of-box inbox support with a fully customizable default UI and also provides an option to build your own Notification Center.
+
+# Using MoEngage's default Notification Center
+
+## Installing using BOM
+
+Integration using BOM  is the recommended way of integration; refer to the Install Using BOM document. Once you have configured the BOM add the dependency in the *app/build.gradle* file as shown below
+
+build.gradle
+
+```
+dependencies {
+    ...
+    implementation("com.moengage:inbox-ui")
+}
+```
+
+Once the BOM is configured, include the specific MoEngage modules required for the application.   
+Note: Version numbers are not required for these dependencies; the BOM automatically manages them.
+
+## Adding the default Notification Center to your app
+
+To use the default Notification Center UI you can either launch the Activity provided by the SDK or add the Fragment provided by the SDK.
+
+### Use Activity
+
+The activity is already declared in the SDK's manifest file and can be inflated using the below code.
+
+<CodeGroup>
+```auto Kotlin
+//launching the default InboxActivity
+val intent = Intent(this, InboxActivity::class.java)
+startActivity(intent)
+```
+
+```auto Java
+Intent intent = new Intent(this, InboxActivity.class);
+startActivity(intent);
+```
+
+</CodeGroup>
+### Use Fragment
+
+You can embed `InboxFragment` provided by the SDK in your app's activity. For information on how to add a Fragment to an Activity, refer to [Google documentation on Fragments](https://developer.android.com/guide/fragments).
+
+# Adding parent Activity to the inbox.
+
+Optionally if you want to define the parent activity for the Inbox then use the below code. Replace `[PARENT\_ACTIVITY\_NAME] ` with the name of the parent activity.
+
+<CodeGroup>
+```auto XML
+//launching the default InboxActivity
+val intent = Intent(this, InboxActivity::class.java)
+startActivity(intent)
+```
+
+</CodeGroup>
+# Customizing Default Notification Center
+
+SDK provides a certain set of UI customization options. The `InboxActivity` is already in the SDK's manifest file, if a change in label/theme of the default activity is required the activity should be declared again in your app's manifest file and override the attributes.
+
+## Activity Label customization
+
+The default label for the Inbox Activity is `Notification Inbox`, which you can override by declaring the `moe_inbox_notification_title` in the `strings.xml` of your application.
+
+<CodeGroup>
+```auto strings.xml
+<resources>
+  <string name="moe_inbox_notification_title">[LABEL]</string>
+</resources>
+```
+
+</CodeGroup>
+### Activity theme
+
+To customize the theme you can either re-declare the activity in your app's manifest and provide the desired theme or you can override the SDK defaults as described below.
+
+The default theme applied to `InboxActivity` is `MoEInboxTheme.NoActionBar`. You can declare a theme with the same name in the application's `styles.xml` or `themes.xml` or equivalent file.
+
+Below is the definition of the default theme
+
+<CodeGroup>
+```auto styles.xml
+<style name="MoEInboxTheme.NoActionBar">
+    <item name="colorPrimary">@color/moe_inbox_color_primary</item>
+    <item name="colorPrimaryDark">@color/moe_inbox_color_primary_dark</item>
+    <item name="colorControlNormal">@color/moe_inbox_control_color</item>
+    <item name="android:background">@color/moe_inbox_background_color</item>
+</style>
+
+<style name="MoETheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+<style name="MoETheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
+</style>
+```
+
+</CodeGroup>
+To customize the theme, override any of the color attributes by defining the color attributes with the same name in your application's `colors.xml` file.
+
+<CodeGroup>
+```auto color.xml
+<!-- Theme customisation -->
+<color name="moe_inbox_color_accent">#1C64D0</color>
+<color name="moe_inbox_color_primary_dark">@color/moe_black</color>
+<color name="moe_inbox_color_primary">@color/moe_white</color>
+<color name="moe_inbox_control_color">@color/moe_black</color>
+```
+
+</CodeGroup>
+For example, if you want to customize the primary dark color, define `moe_inbox_color_primary_dark` in your app's `colors.xml` as shown below.
+
+<CodeGroup>
+```auto XML
+<color name="moe_inbox_color_primary_dark">[YOUR_COLOR]</color>
+```
+
+</CodeGroup>
+Similarly, you can customize
+
+* Toolbar Style
+* Message Text Appearance
+	+ Header
+	+ Message
+	+ Timestamp
+* Scrollbar style
+* Empty Notification Center style
+
+You can override the below SDK's default attributes to customize the theme.
+
+<CodeGroup>
+```auto XML
+<!--  Toolbar Text Style-->
+<style name="MoEInboxToolbarTextStyle" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+    <item name="android:textColor">@color/moe_inbox_toolbar_text_color</item>
+    <item name="android:fontFamily">@font/roboto</item>
+    <item name="android:textSize">@dimen/moe_inbox_tab_font_size</item>
+    <item name="android:textStyle">bold</item>
+</style>
+
+<!-- Header style -->
+<style name="MoEInboxHeaderTextStyle">
+    <item name="android:background">@color/moe_inbox_transparent_color</item>
+    <item name="android:textSize">@dimen/moe_inbox_header_font_size</item>
+    <item name="android:singleLine">true</item>
+    <item name="android:ellipsize">marquee</item>
+    <item name="android:textColor">@color/moe_inbox_header_color</item>
+    <item name="android:fontFamily">@font/roboto</item>
+    <item name="android:textStyle">bold</item>
+</style>
+
+<!-- Message style -->
+<style name="MoEInboxMessageTextStyle">
+    <item name="android:background">@color/moe_inbox_transparent_color</item>
+    <item name="android:textSize">@dimen/moe_inbox_content_font_size</item>
+    <item name="android:maxLines">3</item>
+    <item name="android:ellipsize">end</item>
+    <item name="android:textColor">@color/moe_inbox_message_color</item>
+    <item name="android:fontFamily">@font/roboto</item>
+</style>
+
+<!-- List Item Separator style -->
+<style name="MoEInboxSeparatorStyle">
+    <item name="android:background">@drawable/moe_inbox_item_divider</item>
+</style>
+    
+<!-- Timestamp Style -->
+<style name="MoEInboxTimeTextStyle">
+    <item name="android:background">@color/moe_inbox_transparent_color</item>
+    <item name="android:textSize">@dimen/moe_inbox_time_font_size</item>
+    <item name="android:singleLine">true</item>
+    <item name="android:ellipsize">marquee</item>
+    <item name="android:textColor">@color/moe_inbox_timestamp_color</item>
+    <item name="android:fontFamily">@font/roboto</item>
+</style>
+
+<!--  Empty List Style-->
+<style name="MoEInboxEmptyBoxTextStyle">
+  <item name="android:background">@color/moe_inbox_transparent_color</item>
+  <item name="android:textSize">@dimen/moe_inbox_empty_box_text_size</item>
+  <item name="android:textColor">@color/moe_inbox_message_color</item>
+  <item name="android:fontFamily">@font/roboto</item>
+</style>
+
+<!--  Scrollbar style-->
+<style name="MoEInboxScrollbarStyle">
+    <item name="android:scrollbarAlwaysDrawVerticalTrack">true</item>
+    <item name="android:scrollbarStyle">outsideOverlay</item>
+    <item name="android:scrollbars">vertical</item>
+    <item name="android:fadeScrollbars">true</item>
+    <item name="android:scrollbarThumbVertical">@drawable/moe_inbox_vertical_scroller_thumb</item>
+    <item name="android:scrollbarSize">30dp</item>
+</style>
+```
+
+</CodeGroup>
+## InboxAdapter Customization
+
+You can override `InboxAdapter` to customize the look and feel of the notification Items.
+
+<Info>
+In the case of using a custom `InboxAdapter`, the app should make sure to invoke `InboxListAdapter#onItemClicked()` on the message item click for the SDK to handle the notification click action. Otherwise, the click event will not be tracked, and the on-click action will not be executed.
+</Info>
+Once your custom InboxAdapter is ready, set the custom Adapter in `MoEInboxUiHelper` before launching the `InboxActivity`.
+
+<CodeGroup>
+```auto Kotlin
+MoEInboxUiHelper.getInstance().setInboxAdapter(InboxCustomAdapter())
+```
+
+</CodeGroup>
+## Advanced customization options
+
+1. Deleting Notification from Notification Center  
+You can delete a particular notification from Notification Center by calling `deleteItem(Int, InboxMessage)` .
+
+<CodeGroup>
+```auto Kotlin
+public fun onBind(position: Int, inboxMessage: InboxMessage, inboxListAdapter: InboxListAdapter) {
+  deleteButton.setOnClickListener{
+      //Call `deleteItem` method to remove Notification 
+      //with item's position and the `InboxMessage` object.
+      inboxListAdapter.deleteItem(position, inboxMessage)
+  }
+}
+```
+
+```auto Java
+public void onBind(int position, InboxMessage inboxMessage, InboxListAdapter inboxListAdapter) {
+  deleteButton.setOnClickListener(v -> {
+    //Call `deleteItem` method to remove Notification 
+    //with item's position and the `InboxMessage` object.
+    inboxListAdapter.deleteItem(position, inboxMessage);
+  });
+}
+```
+
+</CodeGroup>
+
+Now, your Notification will get deleted from Notification Center and Notification Center will get updated.
+2. Custom notification item click handling
+
+In case you are using the default Notification Center or using the `InboxFragment` in your app without overriding `InboxAdapter`, by default, the SDK will handle the notification click action but you can opt to handle the click action in your app by setting `OnMessageClickListener` .
+
+<CodeGroup>
+```auto Kotlin
+//set the Message click listener
+MoEInboxUiHelper.getInstance().setOnMessageClickListener(listener)
+//Remove the Message click listener
+MoEInboxUiHelper.getInstance().setOnMessageClickListener(null)
+```
+
+```auto Java
+//set the Message click listener
+MoEInboxUiHelper.getInstance().setOnMessageClickListener(listener);
+//Remove the Message click listener
+MoEInboxUiHelper.getInstance().setOnMessageClickListener(null);
+```
+
+</CodeGroup>
+
+ # Self Handled Notification Center
+
+MoEngage SDK provides helper APIs to fetch the relevant inbox data to display, track events, delete messages, etc that can be used to build your Notification Centre.
+
+## Adding dependency
+
+<CodeGroup>
+```auto build.gradle.kts (Kotlin)
+implementation("com.moengage:inbox-core")
+```
+
+</CodeGroup>
+MoEngage recommends using the [Bill of Materials (BOM)](https://developers.moengage.com/hc/en-us/articles/44622788607892) to integrate the Android SDK. By defining a single BOM version, you ensure that all MoEngage modules, such as Push Kit, Rich Media, and Geofence, automatically use compatible versions. BOM simplifies dependency management, prevents version conflicts, and eliminates the need to manually track version numbers for each individual artifact.
+
+The below helper APIs can be used to build your own Notification Center.
+
+## Get all messages
+
+<CodeGroup>
+```auto Kotlin
+// synchronous API should not be called on the main thread
+MoEInboxHelper.getInstance().fetchAllMessages(context)
+// asynchronous API, where listener is an instance of `OnMessagesAvailableListener`
+MoEInboxHelper.getInstance().fetchAllMessagesAsync(applicationContext, listener)
+```
+
+```auto Java
+// synchronous API should not be called on the main thread
+MoEInboxHelper.getInstance().fetchAllMessages(context);
+// asynchronous API, where listener is an instance of `OnMessagesAvailableListener`
+MoEInboxHelper.getInstance().fetchAllMessagesAsync(applicationContext, listener);
+```
+
+</CodeGroup>
+## Get UnClicked Notifications count
+
+<CodeGroup>
+```auto Kotlin
+ MoEInboxHelper.getInstance().getUnClickedMessagesCount(applicationContext)
+```
+
+```auto Java
+ MoEInboxHelper.getInstance().getUnClickedMessagesCount(applicationContext)
+```
+
+</CodeGroup>
+## Track Inbox Notification Clicks
+
+<CodeGroup>
+```auto Kotlin
+MoEInboxHelper.getInstance().trackMessageClicked(context, inboxMessage)
+```
+
+```auto Java
+MoEInboxHelper.getInstance().trackMessageClicked(context, inboxMessage);
+```
+
+</CodeGroup>
+## Delete Inbox Message
+
+<CodeGroup>
+```auto Kotlin
+MoEInboxHelper.getInstance().deleteMessage(context, inboxMessage)
+```
+
+```auto Java
+MoEInboxHelper.getInstance().deleteMessage(context, inboxMessage);
+```
+
+</CodeGroup>
+## Check if the notification has a coupon code
+
+<CodeGroup>
+```auto Kotlin
+MoEInboxHelper.getInstance().hasCouponCode(inboxMessage)
+```
+
+```auto Java
+MoEInboxHelper.getInstance().hasCouponCode(inboxMessage);
+```
+
+</CodeGroup>
+## Get coupon code
+
+<CodeGroup>
+```auto Kotlin
+MoEInboxHelper.getInstance().getCouponCode(inboxMessage);
+```
+
+```auto Java
+MoEInboxHelper.getInstance().getCouponCode(inboxMessage);
+```
+
+</CodeGroup>
+Refer to [API reference](https://moengage.github.io/android-api-reference-v11/inbox-core/com.moengage.inbox.core/-mo-e-inbox-helper/index.html) for more details.
+
+# Version Compatibility
+
+The `inbox-core` and `inbox-ui` artifacts/modules are dependent on the Core SDK or `moe-android-sdk` artifact/module.  
+Based on the version of the Core SDK you are using, choose the right version of the Inbox module.
+
+`inbox-core` compatibility
+
+| Core SDK Version | Inbox-Core Version |
+| --- | --- |
+| 11.4.02 - 11.6.01 | 1.0.00 |
+`inbox-ui` version compatibility
+
+| Core SDK Version | Inbox-Core Version |
+| --- | --- |
+| 11.4.02 - 11.6.01 | 2.1.00 |

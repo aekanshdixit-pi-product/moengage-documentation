@@ -1,0 +1,165 @@
+---
+title: "Push Callback 8.2.0"
+description: ""
+---
+
+### Push Token Callback
+
+MoEngage plugin triggers the`pushTokenGenerated` event whenever device token is generated. This event is a common trigger for both iOS and Android platforms and is available from plugin version `6.0.0`. Refer to the below code to set listener to the same:
+
+<CodeGroup>
+```typescript TypeScript
+import ReactMoE from 'react-native-moengage' 
+ReactMoE.setEventListener("pushTokenGenerated", (payload) => { 
+  console.log("pushTokenGenerated", payload); 
+});
+```
+
+</CodeGroup>
+Payload received in the callback is a `MoEPushToken` instance with the following definition:
+
+<CodeGroup>
+```typescript TypeScript
+class MoEPushToken {
+ /// Native platform from which the callback was triggered.(ios/android)
+ platform: MoEPlatform;
+ /// push type associated with platform
+ pushService: MoEPushService;
+ /// push token value
+ token: String;
+}
+```
+
+</CodeGroup>
+### Push Click Callback
+
+MoEngage plugin triggers the`pushClicked` event whenever a notification is clicked. This event is a common trigger for both iOS and Android platforms and is available from plugin version `6.0.0`. Refer to the below code to set listener to the same:
+
+<Warning>
+Make sure you are calling `initialize()` method of the plugin to receive these callbacks. Refer [Initialise React-Native Component](https://developers.moengage.com/hc/en-us/articles/4404205878676) for more info.
+</Warning>
+
+<CodeGroup>
+```typescript TypeScript
+import ReactMoE from 'react-native-moengage' 
+ReactMoE.setEventListener("pushClicked", (notificationPayload) => { 
+  console.log("pushClicked", notificationPayload); 
+});
+```
+
+</CodeGroup>
+Make sure this callback is set as soon as the application is initialized. Preferably in the constructor of your `App.js`.
+
+NotificationPayload received in the callback is a `MoEPushPayload` instance with the following definition:
+
+<CodeGroup>
+```typescript TypeScript
+class MoEPushPayload {
+  /// account payload for which callback is received
+  accountMeta: MoEAccountMeta;
+  /// Push click payload
+  data: MoEPushCampaign;
+  /// Native platform from which the callback was triggered.(ios/android)
+  platform: MoEPlatform;
+}
+class MoEPushCampaign {
+  /// notification payload
+  payload: Map<String, Object>
+  ///boolean value indicating if the user clicked on the default content or not.
+  isDefaultAction: Boolean;
+  ///Action to be performed on notification click.
+  clickAction: Map<String, Object>;
+}
+```
+
+</CodeGroup>
+Payload Structure for `clickedAction` Map
+
+<CodeGroup>
+```json JSON
+{
+  "clickedAction": {
+    "type": "navigation/customAction",
+    "payload": {
+      "type": "screenName/deepLink/richLanding",
+      "value": "",
+      "kvPair": {
+        "key1": "value1",
+        "key2": "value2",
+        ...
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+`platform` - Native platform from which callback is triggered. Possible values - `android`, `ios`  
+`isDefaultAction` - This key is present only for the Android Platform. It's a boolean value indicating if the user clicked on the default content or not. true if the user clicks on the default content else false.  
+`clickedAction` - Action to be performed on notification click.  
+`clickedAction.type` - Type of click action. Possible values `navigation` and `customAction`. Currently, `customAction` is supported only on Android.  
+`clickAction.payload` - Action payload for the clicked action.  
+`clickedAction.payload.type` - Type of navigation action defined. Possible values `screenName`, `deepLink`, `richLanding`. Currently, in the case of iOS, richlanding and deep-link URL are processed internally by the SDK and not passed in this callback therefore possible value in case of iOS is only `screenName`.  
+`clickAction.value` - value entered for navigation action or custom payload.  
+`clickAction.kvPair` - Custom key-value pair entered on the MoEngage Platform.  
+`payload` - Complete campaign payload.
+
+## Android Payload
+
+If the user clicks on the default content of the notification the key-value pair and campaign payload can be found inside the `payload` key. If the user clicks on the action button or a push template action the action payload would be found inside `clickedAction`.  
+You can use the `isDefaultAction` key to check whether the user clicked on the default content or not and then parse the payload accordingly.
+
+## iOS Payload
+
+In the case of iOS, you would always receive the key-value pairs with respect to clicked action in `clickedAction` the property. Refer to this [Notification Payload](https://developers.moengage.com/hc/en-us/articles/23448115571732-Custom-Notification-Handling#h_01H92ZQDWJWX6615STBKN7NRYJ) to know the iOS notification payload structure.
+
+## Self-Handled Push Click Android (Optional)
+
+By default, when the user clicks on a notification the SDK redirects the user to the defined Activity and passes the callback to the Application to load the specific react-native component.
+
+When the application is in the foreground it might seem like the application is reloading and not a very good user experience. You might just want to navigate the user to the specific react-native component. To do so follow the below steps.
+
+While initializing the React-Native Plugin, enable foreground click callback in the ***MoEPushConfig*** object.
+
+<CodeGroup>
+```typescript TypeScript
+import { MoEPushConfig, MoEInitConfig } from "react-native-moengage";
+ReactMoE.initialize(
+    "YOUR_APP_ID",
+    new MoEInitConfig(new MoEPushConfig(true))
+);
+```
+
+</CodeGroup>
+You must call the ***initialize()*** when the React Component is mounted and the application comes to the foreground.
+
+Enable the Self-Handled callback in the SDK initialization in the Application class as shown below 
+
+<CodeGroup>
+```kotlin Kotlin
+val moEngage = MoEngage.Builder(this, "YOUR_APP_ID")
+MoEInitializer.initializeDefaultInstance(applicationContext, moEngage, true)
+```
+
+```java Java
+MoEngage.Builder moEngage = new MoEngage.Builder(this, "YOUR_APP_ID");
+MoEInitializer.INSTANCE.initializeDefaultInstance(getApplicationContext(), moEngage, true);
+```
+
+</CodeGroup>
+Add the below Activity to your AndroidManifest.xml
+
+<CodeGroup>
+```xml XML
+<manifest ...>
+    <application ...>
+        <activity
+            android:name="com.moengage.pushbase.activities.PushTracker"
+            android:launchMode="singleInstance"
+            tools:replace="android:launchMode" />
+    </application>
+<manifest/>
+```
+
+</CodeGroup>
+Notification click callbacks that are triggered when the application is in the foreground(and the above flow is enabled) will have an additional key i.e. ***selfHandledPushRedirection*** with value as ***true***

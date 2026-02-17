@@ -1,0 +1,108 @@
+---
+title: "Configuring HMS Push Kit 11.x.x"
+description: ""
+---
+
+# Prerequisites
+
+* Ensure that you have configured Push Kit on your application.  
+For more information, refer to [HMS Push Kit documentation](https://developer.huawei.com/consumer/en/doc/development/HMSCore-Guides/service-introduction-0000001050040060).
+* Ensure that you configure MoEngage SDK for receiving push notifications
+
+# Configure your account on MoEngage
+
+Navigate to the Settings Page `Dashboard --> Settings --> Channel --> Push --> Mobile Push --> Push Amp+` on the MoEngage Dashboard and add the Huawei Push Settings under the Push Amp+ Tab
+
+![601c695-Screenshot_2020-09-09_at_1.44.24_PM.png](4562416921108)
+
+# SDK Installation
+
+## Installing Using BOM
+
+Integration using BOM is the recommended way of integration; refer to the [Install Using BOM](https://developers.moengage.com/hc/en-us/articles/44622788607892) document to configure BOM if not done already. Once you have configured the BOM add the dependency in the ***app/build.gradle*** file as shown below
+
+<CodeGroup>
+```auto build.gradle
+dependencies {
+      ...
+      implementation("com.moengage:hms-pushkit")
+}
+```
+
+</CodeGroup>
+Alternatively, you can add the dependency using Artifact ID as described in [Installation using Artifact ID](https://developers.moengage.com/hc/en-us/articles/18790373028884#HMSPushkit). However, installation using BOM is the recommended approach as installing using Artifact ID may lead to version mismatch if mapped incorrectly. 
+
+# Push Token Management
+
+When using MoEngage SDK, you can either register for a token and pass it on to the MoEngage SDK or simply let MoEngage SDK register for Push Token.
+
+## Token Registration Handled by Application
+
+If your application is registering for Push Notification, use the below API to pass the Push token to the MoEngage SDK.
+
+<CodeGroup>
+```kotlin Kotlin
+MoEPushKitHelper.getInstance().passPushToken(context, token)
+```
+
+```java Java
+MoEPushKitHelper.Companion.getInstance().passPushToken(context, token);
+```
+
+</CodeGroup>
+## Token Registration Handled by MoEngage
+
+By default, the MoEngage SDK does not register for push tokens. You can enable the token registration using the below API in the `MoEngage.Builder` while initializing the SDK
+
+<CodeGroup>
+```kotlin Kotlin
+val moEngage = MoEngage.Builder(this, "XXXXXXXX")
+    .enablePushKitTokenRegistration()
+    .build()
+MoEngage.initialise(moEngage)
+```
+
+```java Java
+MoEngage moEngage =
+    new MoEngage.Builder(this, "XXXXXXXXXX")
+        .enablePushKitTokenRegistration()
+        .build();
+MoEngage.initialise(moEngage);
+```
+
+</CodeGroup>
+Add the below Service to your application's Manifest file.
+
+<CodeGroup>
+```xml AndroidManifest.xml
+ <service
+    android:name="com.moengage.hms.pushkit.MoEPushKitMessageService"
+    android:exported="false">
+  <intent-filter>
+    <action android:name="com.huawei.push.action.MESSAGING_EVENT" />
+  </intent-filter>
+</service>>
+```
+
+</CodeGroup>
+When MoEngage SDK handles push registration, it optionally provides a callback to the Application whenever a new token is registered, or the token is refreshed.  
+An application can get this callback by implementing `PushKitEventListener` and registering for a callback in the Application class `onCreate()` using `MoEPushKitHelper.getInstance().addEventListener()`
+
+<Info>
+To use Push Kit, you need to update the `moe-android-sdk` to 10.3.00 or above.
+</Info>
+## Version Compatibility
+
+The `hms-pushkit` artifact/module is dependent on the Core SDK or `moe-android-sdk` artifact/module.  
+Based on the version of the Core SDK you are using, choose the right version of the Push Kit module.
+
+| Core SDK Version | Push Kit Version |
+| --- | --- |
+| 11.4.00 - 11.6.00 | 2.4.00 - 3.0.0 |
+| 11.2.00 - 11.3.01 | 2.2.00 - 2.3.00 |
+| 11.1.00 | 2.1.00 |
+| 11.0.03 - 11.0.05 | 2.0.01, 2.0.02 |
+| 11.0.01 - 11.0.02 | 2.0.00 |
+| 10.6.00 | 1.2.00 |
+| 10.4.00 - 10.5.00 | 1.1.00 |
+| 10.3.00 | 1.0.00 |

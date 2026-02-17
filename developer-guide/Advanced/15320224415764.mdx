@@ -1,0 +1,72 @@
+---
+title: "Add-On-Security"
+description: ""
+---
+
+# Encrypted Storage
+
+By default, all the data stored by the SDK on the device is inside the application sandbox. This prevents other applications from accessing the data(both read and write). Due to compliance standards or any other use cases, you might want additionally encrypt the data stored on the SDK.
+
+## Keychain Set Up
+
+To ensure the encryption works as expected, follow the below steps to set up the Keychain Sharing.
+
+1. Turn on Keychain sharing in Xcode with the below steps: 
+  a. Select your app target and click the ***Signing & Capabilities*** tab.
+
+  b. Turn on the ***Keychain Sharing*** capability.
+![Screenshot_2023-03-30_at_12.21.36_PM.png](15320359672468)
+2. Specify the Keychain group name
+![Screenshot_2023-03-30_at_12.23.06_PM.png](15320349011604)
+3. App ID Prefix and Keychain group name: Xcode automatically prefixes keychain groups with your team ID. This ensures that your groups are specific to your development team. In order to see how it works, click on the *.entitlements* file and look at the value of the *Keychain Access Groups* array.
+![Screenshot_2023-03-30_at_12.24.23_PM.png](15320388302356)
+4. Get your AppID: The App ID Prefix (also called Team ID) is a unique text identifier associated with your Apple developer account that allows the sharing of keychain and pasteboard items between your apps.
+Assume the AppID is ***AB123CDE45***, Keychain group name is ***AB123CDE45.com.example.sharedItems***. Make sure to pass the same keychain group name to MoEngage SDK via the [***keyChainConfig***](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKConfig.html#/c:@M@MoEngageCore@objc(cs)MoEngageSDKConfig(py)keyChainConfig) property on [***MoEngageSDKConfig***](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKConfig.html) object.
+
+## Enabling Encryption
+
+You can enable the storage encryption by setting the [***storageConfig***](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKConfig.html#/c:@M@MoEngageCore@objc(cs)MoEngageSDKConfig(py)storageConfig) property on the [***MoEngageSDKConfig***](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKConfig.html) while initializing the SDK.
+
+<CodeGroup>
+```Swift Swift
+let sdkConfig = MoEngageSDKConfig(withAppID: "YOUR_APP_ID")
+  sdkConfig.storageConfig = MoEngageStorageConfig(encryptionConfig: MoEngageStorageEncryptionConfig(isEncryptionEnabled: true))
+  sdkConfig.keyChainConfig = MoEngageKeyChainConfig(groupName: "YOUR_KEYCHAIN_GROUP_NAME")
+```
+
+```objectivec Objective-C
+MoEngageSDKConfig* sdkConfig = [[MoEngageSDKConfig alloc] initWithAppID:@"YOUR Workspace ID"];        sdkConfig.storageConfig = [[MoEngageStorageConfig alloc] initWithEncryptionConfig: [[MoEngageStorageEncryptionConfig alloc] initWithIsEncryptionEnabled:true]];
+  sdkConfig.keyChainConfig = [[MoEngageKeyChainConfig alloc] initWithGroupName:@"YOUR_KEYCHAIN_GROUP_NAME"];
+```
+
+</CodeGroup>
+
+<Info>
+Once storage encryption is enabled and a build is released to production(App Store), you should not disable encryption. Disabling the encryption after the build is released will result in a new user being created in the MoEngage system when the user updates the application.
+</Info>
+
+# Encrypted Network Communication
+
+By default, we use HTTPS protocol for all requests made from the SDK; HTTPS encrypts the requests by default. MoEngage SDK optionally adds another layer of encryption apart from the encryption done by HTTPS.
+
+## Enabling Encryption
+
+You can enable the storage encryption setting in the [***networkConfig***](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKConfig.html#/c:@M@MoEngageCore@objc(cs)MoEngageSDKConfig(py)networkConfig) property on the [***MoEngageSDKConfig***](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKConfig.html) while initializing the SDK.
+
+<CodeGroup>
+```Swift Swift
+let sdkConfig = MoEngageSDKConfig(withAppID: appId)
+sdkConfig.networkConfig = MoEngageNetworkRequestConfig(dataSecurityConfig:  MoEngageNetworkDataSecurityConfig(isEncryptionEnabled: true, encryptionKeyDebug: "YOUR_TEST_ENVIRONMENT_ENCRYPTION_KEY", encryptionKeyRelease: "YOUR_LIVE_ENVIRONMENT_ENCRYPTION_KEY"))
+```
+
+```objectivec Objective-C
+MoEngageSDKConfig* sdkConfig = [[MoEngageSDKConfig alloc] initWithAppID:@"YOUR Workspace ID"];
+sdkConfig.networkConfig = [[MoEngageNetworkRequestConfig alloc] initWithDataSecurityConfig:[[MoEngageNetworkDataSecurityConfig alloc] initWithIsEncryptionEnabled:true encryptionKeyDebug:@"YOUR_TEST_ENVIRONMENT_ENCRYPTION_KEY" encryptionKeyRelease:@"YOUR_LIVE_ENVIRONMENT_ENCRYPTION_KEY"]];;
+```
+
+</CodeGroup>
+
+<Info>
+1. When using encrypted network communication, we strongly recommend you enable Storage encryption as well.
+2. Adding the above dependency and enabling the flag isn't enough for this feature to work; there is some additional configuration required on our side to enable this feature completely. In case you want to use this feature, reach out to your account manager or the MoEngage Support team.
+</Info>

@@ -1,0 +1,161 @@
+---
+title: "Push Callback 3.x.x"
+description: ""
+---
+
+# Configuring Push Callbacks
+
+MoEngage Plugin provides listeners for push events. These events are a common trigger for both iOS and Android platforms. Refer to the below code to set the listener to the same:
+
+<Warning>
+Make sure you are calling **initialize()** method of the plugin to receive these callbacks. Refer [Initialise Capacitor Component](https://developers.moengage.com/hc/en-us/articles/4417377582100-SDK-Integration#integrate-native-platforms-0-1) for more info.
+</Warning>
+## Push Token Generated Observer
+
+Add a listener to listen to the **pushTokenGenerated** as shown below.
+
+<CodeGroup>
+```typescript TypeScript
+import { MoECapacitorCore, MoEPushTokenData } from 'capacitor-moengage-core'
+MoECapacitorCore.addListener("pushTokenGenerated", (data: MoEPushTokenData) => {
+ console.log(" Received callback 'pushTokenGenerated',  data: " + JSON.stringify(data))
+});
+```
+
+</CodeGroup>
+## Notification Click Observers
+
+Add a listener to listen to the **pushClicked** as shown below.
+
+<CodeGroup>
+```typescript TypeScript
+import { MoECapacitorCore, MoEPushCampaignData } from 'capacitor-moengage-core'
+MoECapacitorCore.addListener("pushClicked", (data: MoEPushCampaignData) => {
+ console.log(" Received callback 'pushClicked',  data: " + JSON.stringify(data))
+});
+```
+
+</CodeGroup>
+# Payload
+
+PushToken received in the callback is a **MoEPushTokenData** instance with the following definition:
+
+<CodeGroup>
+```typescript TypeScript
+/**
+ * Push token object
+ */
+ export interface MoEPushTokenData {
+    /**
+     * Platform type
+     */
+    platform: MoEPlatform;
+    /**
+     * Type of push service
+     */
+    pushService: MoEPushService;
+    /**
+     * Push Token
+     */
+    token: String;
+}
+export declare enum MoEPlatform {
+    iOS = "iOS",
+    ANDROID = "android"
+}
+
+export declare enum MoEPushService {
+    APNS = 0,
+    FCM = 1,
+    MI_PUSH = 2,
+    PUSH_KIT = 3
+}
+```
+
+</CodeGroup>
+NotificationPayload received in the callback is a **MoEPushCampaignData** instance with the following definition:
+
+<CodeGroup>
+```typescript TypeScript
+/**
+ * Push event data
+ */
+export interface MoEPushCampaignData {
+    /**
+     * Account information
+     */
+    accountMeta: MoEAccountMeta;
+    /**
+     * Push campaign object
+     */
+    pushCampaign: MoEPushCampaign;
+    /**
+     * Platform data
+     */
+    platform: MoEPlatform;
+}
+
+/**
+ * Push campaign object
+ */
+export interface MoEPushCampaign {
+    /**
+     * Is the click action a defualt action
+     */
+    isDefaultAction: boolean;
+    /**
+     * Clicked Action data
+     */
+    clickedAction: Map<String, object>;
+    /**
+     * Key-Value Pair entered on the MoEngage Platform during campaign creation.
+     */
+    payload: Map<String, object>;
+}
+
+export declare enum MoEPlatform {
+    iOS = "iOS",
+    ANDROID = "android"
+}
+```
+
+</CodeGroup>
+Payload Structure for `clickedAction` Map
+
+<CodeGroup>
+```json JSON
+{
+  "clickedAction": {
+    "type": "navigation/customAction",
+    "payload": {
+      "type": "screenName/deepLink/richLanding",
+      "value": "",
+      "kvPair": {
+        "key1": "value1",
+        "key2": "value2",
+        ...
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+`platform` - Native platform from which callback is triggered. Possible values - `android`, `ios`  
+`isDefaultAction` - This key is present only for the Android Platform. It's a boolean value indicating if the user clicked on the default content or not. true if the user clicks on the default content else false.  
+`clickedAction` - Action to be performed on notification click.  
+`clickedAction.type` - Type of click action. Possible values `navigation` and `customAction`. Currently, `customAction` is supported only on Android.  
+`clickAction.payload` - Action payload for the clicked action.  
+`clickedAction.payload.type` - Type of navigation action defined. Possible values `screenName`, `deepLink`, `richLanding`. Currently, in the case of iOS, richlanding and deep-link URLs are processed internally by the SDK and not passed in this callback therefore possible value in the case of iOS is only `screenName`.  
+`clickAction.value` - value entered for navigation action or custom payload.  
+`clickAction.kvPair` - Custom key-value pair entered on the MoEngage Platform.  
+`payload` - Complete campaign payload.
+
+## Android Payload
+
+If the user clicks on the default content of the notification the key-value pair and campaign payload can be found inside the `payload` key. If the user clicks on the action button or a push template action the action payload would be found inside `clickedAction`.  
+You can use the `isDefaultAction` key to check whether the user clicked on the default content or not and then parse the payload accordingly.
+
+## iOS Payload
+
+In the case of iOS, you would always receive the key-value pairs with respect to clicked action in `clickedAction` property. Refer to this [Notification Payload](https://developers.moengage.com/hc/en-us/articles/23448115571732-Custom-Notification-Handling#h_01H92ZQDWJWX6615STBKN7NRYJ) for knowing the iOS notification payload structure.

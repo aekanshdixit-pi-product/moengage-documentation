@@ -1,0 +1,102 @@
+---
+title: "iOS SDK Initialization 2.x.x"
+description: ""
+---
+
+# Include MoEngage Configuration
+
+After the MoEngage package is imported, include `MoEngageConfiguration.h` file in your Asset folder  
+(`Asset > Import New Asset`). Download this configuration file from [here](https://github.com/moengage/MoEngage-Unity-SDK/blob/master/iOS/MoEngageConfiguration.h).
+
+![0e13f3f-Screenshot_2020-07-06_at_10.14.40.png](18159626222996)
+
+In your configuration file, set MoEngage App ID and Region along with other constants as shown below:
+
+<CodeGroup>
+```objectivec Objective-C
+#define kMoEngageAppID @"Your Workspace ID"
+#define kMoEngageRegion @"DEFAULT"  // DEFAULT / EU / SERV3
+#define kMoEngageLogsEnabled NO
+#define kDefaultIDFATrackingOptedOut YES
+#define kDefaultIDFVTrackingOptedOut NO
+#define kMoEngageUnityControllerSwizzlingEnabled YES
+```
+
+</CodeGroup>
+
+* `kMoEngageAppID`: Provide your MoEngage workspace's Workspace ID here. In MoEngage Dashboard, go to `Settings > General Settings` to obtain the same.
+* `kMoEngageLogsEnabled`: Set this value to `YES` for printing SDK logs, which will be required only to troubleshoot issues.
+
+<Info>
+The OptedOut Tracking status can be updated later after getting consent from the user.
+</Info>
+
+* `kDefaultIDFATrackingOptedOut` and `kDefaultIDFVTrackingOptedOut`: Set the default tracking status of **IDFA**(Advertising identifier) and **IDFV**(Vendors Identifier) tracking here. Set the value `YES` if you wish to opt out of tracking the attribute.
+* `kMoEngageUnityControllerSwizzlingEnabled`: Set this value to `YES` to enable UnityAppController Swizzling to initialize the SDK. For more info, refer to the below section.
+
+# Unity App Controller Swizzling
+
+There are two approaches using which the SDK can be initialized:
+
+1. **Unity App Controller Subclass:**  
+SDK contains the `MoEUnityAppController` class which is the subclass of UnityAppController. Here we get a callback on AppLaunch to initialize MoEngage SDK.
+2. **UnityAppController swizzling:**  
+Define `kMoEngageUnityControllerSwizzlingEnabled` in the configuration file and set it to `YES` to enable UnityAppController swizzling. Here `application:didfinishLaunchinWithOptions:` method is swizzled to initialize MoEngage SDK.
+
+<Warning>
+UnityAppController swizzling(2nd approach) will be required if your project has multiple implementations of UnityAppController subclasses(1st approach), here the subclass defined in the plugin might not work reliably because here only one of the subclasses in the project will get the callbacks.
+</Warning>
+
+# Geofence
+
+If you would like to support Geofence based push campaigns in your app, import `MoEngageGeofenceiOS` by navigating to `Assets > Import Package > Custom Package` and import it as shown below:
+
+![6d8aeb8-Screenshot_2020-07-06_at_03.20.30.png](18159598131220)
+
+# Build and Replace
+
+<Info>
+We make use of [CocoaPods](https://cocoapods.org/) for managing native dependencies, therefore make sure the same is installed in your system.
+</Info>
+
+Once required packages are imported go to `File > Build Settings`, switch to iOS platform, and click on `Build`. Select `Replace` in the pop-up. It's necessary to select **Replace** on first-time integration, this is because we will be updating the build settings of the Xcode project for MoEngage SDK and also install the native dependencies via CocoaPods.
+
+![93728c4-Screenshot_2020-07-06_at_03.24.30.png](18159636080148)
+
+# Embed MoEngage Frameworks
+
+<Info>
+* This step is required for Unity version `2019.*` and above.
+* This step is only required on first-time integration OR whenever you `Replace` the build. If you Build and Append hereafter, this step would not be required.
+</Info>
+
+After building the project in Unity Editor. Open **Xcode**, then select `Unity-iPhone` app target and go to `Frameworks, Libraries, and Embedded Content` as shown below:
+
+![427b4f8-Screenshot_2020-07-06_at_10.56.04.png](18159626226452)
+
+Here click on the `(+) button > Add Other > Add Files` and add all the framework files of the MoEngage SDK from Pods Folder.
+
+![57a54fb-Screenshot_2020-07-06_at_03.04.36.png](18159598135700)
+
+Below is how the settings would look like after embedding all the required frameworks. `MOGeofence` is only required if you have integrated `MoEngageGeofence` package:
+
+![74b6e93-Screenshot_2020-07-06_at_11.06.05.png](18159622045332)
+
+Once the frameworks are integrated, run the App to make sure everything is working fine.
+
+# IDFA/ IDFV Tracking OptOuts
+
+IDFA(Advertising Identifier) and IDFV tracking opt-out statuses can be updated with the help of below methods:
+
+<CodeGroup>
+``` C#
+using MoEngage;
+
+// Send true if you would like to optout of IDFA tracking
+MoEngageClient.OptOutOfIDFATracking(true/false);
+
+// Send true if you would like to optout of IDFV tracking
+MoEngageClient.OptOutOfIDFVTracking(true/false);
+```
+
+</CodeGroup>

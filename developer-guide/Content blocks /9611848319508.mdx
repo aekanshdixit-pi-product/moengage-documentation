@@ -1,0 +1,152 @@
+---
+title: "Search content block"
+description: ""
+---
+
+You can use this API to search for the available content blocks in your MoEngage account.
+
+## API Endpoint
+
+<CodeGroup>
+```json API Endpoint
+POST https://api-0X.moengage.com/v1/external/campaigns/content-blocks/search
+```
+
+</CodeGroup>
+
+The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage maintains different data centres for different clients. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage).
+
+## Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username: password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization": "Basic Base64\_ENCODED\_APPKEY\_APIKEY"}
+
+You can obtain the username and password details from the MoEngage UI.
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Campaign report/Business events/Custom templates** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+## Request Headers
+
+| Key | Value | Description |
+| --- | --- | --- |
+| MOE-APPKEY | The Workspace ID for your MoEngage account. | You can find your MoEngage Workspace key at **Settings** -> **Account** -> **APIs** -> **Workspace ID**. |
+| Content-Type | application/json | -- |
+
+## Request Body
+
+| Filters | Value | Value | Description |
+| --- | --- | --- | --- |
+| content type | Optional | HTML/Plain Text | Type of the content block - HTML/Text |
+| team\_ids | Optional | List of team ids | Name of the teams for which the content block is enabled. This is only applicable to the accounts where Teams is enabled. For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage). |
+| tag\_ids | Optional | List of tags ids | Ids of the tags |
+| status | Optional | Active/Archived | Status of the content block |
+| updated\_by | Optional | Email id | Email id of the user who updated the content block |
+| search\_text | Optional | String | You can use this to search content block by content block name |
+
+<Info>
+You can send empty filters if you want all the content blocks. 
+
+```
+{   "filters" : {}}
+```
+</Info>
+
+## Response
+
+| Status Code | Request State | Description | Response Body |
+| --- | --- | --- | --- |
+| HTTP 202 | Success | Content block data | { "data": [{}]} |
+| HTTP    400 | Bad Request |  | {      "title": "Invalid Field Value",      "description": "app\_key - Some of the field values are invalid: app\_key : None",      "code": "nGpUNpDQ"   } |
+| HTTP 5xx | Failure | Server issue | { "title": "Internal Server Error", ... } |
+
+## Request Parameters
+
+### Sample cURL request
+
+<CodeGroup>
+``` cURL
+curl --location --request POST 'https://api-0X.moengage.com/v1/external/campaigns/content-blocks/search' \
+--header 'MOE-APPKEY: {{Workspace-KEY}}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "filters": {
+    }
+}’
+```
+
+</CodeGroup>
+
+###  Sample Request Body
+
+<CodeGroup>
+``` JSON
+{
+    "filters": {
+    "content_type": ["TEXT"],
+    "team_ids": ["0"],
+    "tag_ids": ["6141c7ec9b4cbd0b57c872e5"],
+    "status": ["ACTIVE"],
+    "updated_by": ["geetima@moengage.com"],
+    "search_text": "BT_non_personaliation”
+    }
+}
+```
+
+</CodeGroup>
+
+### Sample Response Body
+
+<CodeGroup>
+``` JSON
+{
+   "data": [
+       {
+           "id": "61dd90a4cdfd67a8d48ef681",
+           "name": "BT_non_personaliation",
+           "label": "BT_non_personaliation",
+           "description": "BT_non_personaliation",
+           "content_type": "TEXT",
+           "status": "ACTIVE",
+           "created_by": "geetima@moengage.com",
+           "created_at": "2022-01-11T14:13:56.063000",
+           "updated_by": "geetima@moengage.com",
+           "updated_at": "2022-01-11T14:15:31.254000",
+           "tag_ids": [
+               "6141c7ec9b4cbd0b57c872e5",
+               "61409d091202397cc82f8356",
+               "6059bd3bfdc964536aa9e2ac"
+           ],
+           "team_ids": [
+               "0"
+           ]
+       }
+   ]
+}
+```
+
+</CodeGroup>
+
+## Attribute Mapping
+
+| Key | Data type | Description |
+| --- | --- | --- |
+| id | string | Content block id that was passed in the request |
+| name | string | Name of the content block |
+| description | string | Description of the content block |
+| content\_type | string | Type of the content block - HTML/Text |
+| content | string | Content of the content block |
+| created\_by | string | Email id of the user who created the content block |
+| created\_at | string | Date Time of the content block creation |
+| updated\_by | string | Email id of the user who updates the content block |
+| updated\_at | string | Date Time of the content block update |
+| tag\_ids | array of strings | Tags associated with the content block |
+| team\_ids | array of strings | Name of the teams for which the content block is enabled. This is only applicable to the accounts where Teams is enabled. For more information, refer to [Teams](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage). |
+
+## Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/request/3486165-946c8e6a-eefc-4b5e-b287-8a905f474852?action=share&source=copy-link&creator=3486165&ctx=documentation) to view it in Postman.

@@ -1,0 +1,94 @@
+---
+title: "iOS SDK Initialization 7.x.x"
+description: ""
+---
+
+# SDK Initialization
+
+## Default Initialization
+
+By default, the project gets initialized with Configuration from `Info.plist` as shown below:
+
+![747820d-Screenshot_2021-03-31_at_7.47.02_PM.png](18922884795540)
+
+<Info>
+**For Plugin version 3.2.0 and below:**
+
+Prior to SDK version 7.1.1, only MoEngage\_APP\_ID could be configured from your plist file. Now from version 7.1.1 and above, there are additional properties that can be configured along with the AppID as shown in the above image.
+</Info>
+
+Following are the additional properties of SDK that can be configured in `Info.plist` [From Plugin Version `7.1.1`]:
+
+| Property | Description |
+| --- | --- |
+| APP\_GROUP\_ID | Provide the app Group ID configured for Push Notifications and to share data between App and Extensions |
+| DATA\_CENTER | Specify the Data Center(Cluster) where your account is present. Possible values are DATA\_CENTER\_01 / DATA\_CENTER\_02 / DATA\_CENTER\_03/ DATA\_CENTER\_04. |
+| DISABLE\_PERIODIC\_FLUSH | SDK by default syncs the data tracked periodically with the backend, in case you would want to disable the same set this property to true. |
+| PERIODIC\_FLUSH\_DURATION | In case you want to define the interval for periodic sync, set the value in seconds here. Please note that the value should be greater than 60 secs. |
+| ENCRYPT\_NETWORK\_REQUESTS | Set this property to true, in case you would want to encrypt all the network requests sent from the SDK. |
+| OPT\_OUT\_DATA\_TRACKING | Set this property to true if you would want to opt-out of Data tracking from the SDK. |
+| OPT\_OUT\_PUSH\_NOTIFICATIONS | Set this property to true if you would like to stop push campaigns to be sent to the app, by default this is set to false. |
+| OPT\_OUT\_INAPP | Set this property to true if you would like to block the InApp campaigns in the app, by default this is set to false. |
+| OPT\_OUT\_IDFA\_TRACKING | Set the property to true if you want to opt-out of Advertising ID(IDFA) tracking, by default this is set to false |
+| OPT\_OUT\_IDFV\_TRACKING | Set the property to true if you want to opt-out of IDFV tracking, by default this is set to false. |
+
+## Code Initialisation
+
+From plugin version 7.1.1 and above, we support code initialization as well. For this first, disable the default SDK initialization from `Info.plist` by doing the following:
+
+* Go to info.plist of your project.
+* Inside MoEngage dictionary, Add **DISABLE\_PLIST\_INITIALIZATION** key and set it to true.
+
+<Warning>
+**DISABLE\_PLIST\_INITIALIZATION** key must be present in `Info.plist` to support Code Initialization as shown in the image below.
+</Warning>
+
+![afce7c2-Screenshot_2021-03-31_at_7.58.57_PM.png](18922876285332)
+* Post disabling default Initialization, call any one of the below-given initialization methods in `application:didFinishLaunchingWithOptions:` method. The method accepts the `MOSDKConfig` instance as its parameter. Refer [doc](https://developers.moengage.com/hc/en-us/articles/4403905438228) for more info on all the properties which can be configured using `MOSDKConfig`.
+
+<CodeGroup>
+```objectivec Objective-C
+/// @param sdkConfig MOSDKConfig instance for SDK configuration
+/// @param launchOptions Launch Options dictionary
+- (void)initializeMoEngageSDKWithConfig:(MOSDKConfig*)sdkConfig andLaunchOptions:(NSDictionary*)launchOptions;
+
+/// @param sdkConfig MOSDKConfig instance for SDK configuration
+/// @param isSdkEnabled Bool indicating if SDK is Enabled/Disabled
+/// @param launchOptions Launch Options dictionary
+- (void)initializeMoEngageSDKWithConfig:(MOSDKConfig*)sdkConfig withSDKState:(BOOL)isSdkEnabled andLaunchOptions:(NSDictionary*)launchOptions;
+```
+
+</CodeGroup>
+
+* Sample code to initialise from `application:didFinishLaunchingWithOptions:` method:
+
+<CodeGroup>
+```objectivec Objective-C
+#import "AppDelegate.h"
+#import "MainViewController.h"
+  
+// Make sure to import "AppDelegate+MoEngage.h"
+#import "AppDelegate+MoEngage.h"
+
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions
+{
+    self.viewController = [[MainViewController alloc] init];
+    
+    MOSDKConfig *sdkConfig = [[MOSDKConfig new] initWithAppID: @"Your MoEngage Workspace ID"];
+    sdkConfig.moeDataCenter = DATA_CENTER_01 // Possible Values DATA_CENTER_01/DATA_CENTER_02/ DATA_CENTER_03/ DATA_CENTER_04
+    sdkConfig.appGroupID = "App Group ID"
+
+    // ---
+    // Update other Parameters of SDK Config
+    // ---
+    [self initializeMoEngageSDKWithConfig:sdkConfig andLaunchOptions:launchOptions];
+    
+    return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+
+@end
+```
+
+</CodeGroup>

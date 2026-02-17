@@ -1,0 +1,282 @@
+---
+title: "In-App NATIV 11.x.x"
+description: ""
+---
+
+In-App NATIV Campaigns target your users by showing a message while the user is using your app. They are very effective in providing contextual information and help to cross-sell/up-sell on desired screens of your app or/and on desired actions performed by the user in your app.
+
+![7e6cdb1-Screenshot_2016-02-11-17-18-06.png](4562367312276)
+
+# Call Show InApp
+
+Call `MoEInAppHelper.getInstance().showInApp(context)` in the `onResume()` of your Fragment or `onStart()` of your activity. Refer to the API [documentation](https://moengage.github.io/android-api-reference-v11/inapp/com.moengage.inapp/-mo-e-in-app-helper/index.html) for more details.
+
+Additionally, you can block in-app on a specific screen or handle the status bar visibility using the `InAppConfig` object and pass it to the SDK using the `MoEngage.Builder` object. Use the `configureInApps()` to pass on the configuration to the SDK.  
+Refer to the [InAppConfig](https://moengage.github.io/android-api-reference-v11/core/com.moengage.core.config/-in-app-config/index.html) API reference for all possible options.
+
+<CodeGroup>
+``` Kotlin
+// Set of activity classes on which in-app should not be shown
+val inAppOptOut = mutableSetOf<Class<*>>()
+inAppOptOut.add(SplashActivity::class.java)
+
+val moengage = MoEngage.Builder(application, "XXXXXXXX")
+    .configureInApps(InAppConfig(true, inAppOptOut))
+    .build()
+MoEngage.initialise(moengage)
+```
+
+``` Java
+Set<Class<?>> inAppOptOut = new HashSet<>();
+inAppOptOut.add(SplashActivity.class);
+MoEngage.Builder builder = new MoEngage.Builder(application, "XXXXXXXXXX")
+    .configureInApps(new InAppConfig(true, inAppOptOut));
+MoEngage.initialise(builder.build());
+```
+
+</CodeGroup>
+
+# Implementing Nudges
+
+Nudges are non-disruptive messages which can be placed anywhere in the activity.
+
+![5b6d918-Screenshot_20160210-223723.png](4562396550420)
+
+Add the following code in the activity/fragment layout file.
+
+<CodeGroup>
+``` XML
+<com.moengage.widgets.NudgeView
+    android:id="@+id/nudge"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+</com.moengage.widgets.NudgeView>
+```
+
+</CodeGroup>
+
+## Using in an Activity
+
+Get an instance of the nudge view in the `onCreate()` and initialize the nudge view in the `onStart()` of the Activity.
+
+## Using in a Fragment
+
+Get an instance of the nudge view in the `onCreateView()` and initialize the nudge view in the `onResume()` of the fragment.
+
+Use the below code to get the instance of the `NudgeView` and initialize it.
+
+<CodeGroup>
+``` Kotlin
+// get instance of the view
+val nudge = findViewById(R.id.nudge)
+// initialize
+nudge.initialiseNudgeView(activity)
+```
+
+``` Java
+// get instance of the view
+NudgeView nv = (NudgeView)findViewById(R.id.nudge);
+// initialize
+nv.initialiseNudgeView(getActivity());
+```
+
+</CodeGroup>
+
+# Contextual InApp
+
+You can restrict the in-apps based on the user context in the application apart from restricting InApp campaigns on a specific activity.  
+The context is not the same context as [Android Context](https://developer.android.com/reference/android/content/Context?hl=en).  The user context in the application flow.
+
+## Set Context
+
+<CodeGroup>
+``` Kotlin
+val contextList = arrayListOf<String>("C1", "C2", "C3", "C4")
+MoEHelper.getInstance(requireContext()).appContext = contextList
+```
+
+``` Java
+List<String> contextList = new ArrayList<>();
+    contextList.add("C1");
+    contextList.add("C2");
+    contextList.add("C3");
+    contextList.add("C4");
+MoEHelper.getInstance(getApplicationContext()).setAppContext(contextList);
+```
+
+</CodeGroup>
+
+## Reset Context
+
+<CodeGroup>
+``` Kotlin
+MoEHelper.getInstance(requireContext()).resetAppContext()
+```
+
+``` Java
+MoEHelper.getInstance(requireContext()).resetAppContext();
+```
+
+</CodeGroup>
+
+<Info>
+Contextual InApp is supported starting SDK version **10.0.00**.
+</Info>
+
+# GIF In Apps
+
+In-App messages support GIFs with [Glide](https://bumptech.github.io/glide/).  
+To use GIFs you need to add the below dependency in your `build.gradle` file.
+
+<CodeGroup>
+``` Groovy
+implementation "com.github.bumptech.glide:glide:4.9.0"
+annotationProcessor "com.github.bumptech.glide:compiler:4.9.0"
+```
+
+</CodeGroup>
+
+When using the SDK version below 10.0.00 use [Fresco](https://frescolib.org/docs/) instead of Glide for using gifs. Ensure to add the animated-gif artifact as well.
+
+# Self Handled InApps
+
+Self-handled In Apps are messages which are delivered by the SDK but showing it has to be done by the App.  
+To show In-Apps call  use the following:
+
+<CodeGroup>
+``` Kotlin
+MoEInAppHelper.getInstance().getSelfHandledInApp(context)
+```
+
+``` Java
+MoEInAppHelper.getInstance().getSelfHandledInApp(context);
+```
+
+</CodeGroup>
+
+This method should be called in the `onResume()` of your Fragment or `onStart()` of your activity.  
+The above method is asynchronous and does not return the payload immediately.  
+To get the payload implement the `InAppMessageListener` and override the `onSelfHandledAvailable()`. Once the payload is available this method will be called with the payload.  
+The payload can be accessed using `MoEInAppCampaign.selfHandledCampaign`
+
+For more information, refer to the [InAppMessageListener](https://moengage.github.io/android-api-reference-v11/inapp/com.moengage.inapp.listeners/-in-app-message-listener/index.html) and [MoEInAppCampaign](https://moengage.github.io/android-api-reference-v11/inapp/com.moengage.inapp.model/-mo-e-in-app-campaign/index.html).
+
+To get the above callback you would need to register the listener with the SDK using `MoEInAppHelper.getInstance().registerListener()`
+
+## Tracking Statistics for Self Handled In-Apps
+
+The application needs to notify MoEngage SDK whenever the In-App messages are displayed, clicked on, or dismissed as the application controls these actions. The following methods are called to notify the SDK. The campaign object provided to the application in the callback for self-handled in-app should be passed as a parameter to the following APIs.
+
+<CodeGroup>
+``` Kotlin
+// call whenever in-app is shown
+MoEInAppHelper.getInstance().selfHandledShown(context, inAppCampaign)
+// call whenever in-app is clicked
+MoEInAppHelper.getInstance().selfHandledClicked(context, inAppCampaign)
+ // call whenever in-app is dismissed
+MoEInAppHelper.getInstance().selfHandledDismissed(context, inAppCampaign)
+```
+
+``` Java
+// call whenever in-app is shown
+MoEInAppHelper.getInstance().selfHandledShown(context, inAppCampaign);
+// call whenever in-app is clicked
+MoEInAppHelper.getInstance().selfHandledClicked(context, inAppCampaign);
+ // call whenever in-app is dismissed
+MoEInAppHelper.getInstance().selfHandledDismissed(context, inAppCampaign);
+```
+
+</CodeGroup>
+
+For more information, refer to the [API documentation](https://moengage.github.io/android-api-reference-v11/inapp/com.moengage.inapp/-mo-e-in-app-helper/index.html).
+
+# In-Apps Callback
+
+## Lifecycle callback
+
+For InApp lifecycle callbacks like shown, dismissed implement the `InAppLifeCycleListener`. Refer to the [API Reference](https://moengage.github.io/android-api-reference-v11/inapp/com.moengage.inapp.listeners/-in-app-life-cycle-listener/index.html) for more details.  
+Note: This Listener was introduced in SDK version `11.4.00` if you are using an older version use `InAppMessageListener`
+
+## Deprecated Lifecycle Callback
+
+Deprecated since `11.4.00`
+
+SDK provides callbacks to the client application whenever is shown or closed/dismissed.  
+To get a callback implement the `InAppMessageListener` and override the `onShown()` and `onClosed()` respectively.  
+To get the above callback you would need to register the listener with the SDK using `MoEInAppHelper.getInstance().registerListener()`
+
+Refer to the documentation of [InAppMessageListener](https://moengage.github.io/android-api-reference-v11/inapp/com.moengage.inapp.listeners/-in-app-message-listener/index.html) and [MoEInAppCampaign](https://moengage.github.io/android-api-reference-v11/inapp/com.moengage.inapp.model/-mo-e-in-app-campaign/index.html) for more details.
+
+ 
+# Handling Configuration change
+
+Starting SDK version `11.4.00` in-apps are supported in both portrait and landscape modes. SDK internally handles in-app display on orientation change when the activity restart is handled by the system.
+
+In case your activity is handling the configuration change by itself, you have to notify the SDK by invoking `MoEInAppHelper.onConfigurationChanged()` API for SDK to redraw the in-app when the activity receives `onConfigurationChanged()` callback.
+
+<CodeGroup>
+```kotlin Kotlin
+override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+    MoEInAppHelper.getInstance().onConfigurationChanged()
+}
+```
+
+```java Java
+@Override public void onConfigurationChanged(@NonNull Configuration newConfig) {   
+    super.onConfigurationChanged(newConfig);
+    MoEInAppHelper.getInstance().onConfigurationChanged();
+}
+```
+
+</CodeGroup>
+
+ 
+# Testing In-App
+
+Refer to this [link](https://help.moengage.com/hc/en-us/articles/360047789092-Testing-your-In-App-Nativ-Campaigns) to read more about how to create and test in-apps.
+
+# SDK version below 11.0.00
+
+Starting SDK version `10.0.00` showing of InApp automatically on Activity launch is deprecated. Use `showInApp()` instead.
+
+To ensure backward compatibility despite the deprecation the SDK still shows in-app automatically on Activity launch.
+
+To use **shownInApp()** follow these steps.
+
+## Opt-out default In-App Display
+
+Opt-out of the default behavior on lifecycle callbacks. To opt-out call `optOutDefaultInAppDisplay()` in the MoEngage Builder when initializing the SDK.
+
+<CodeGroup>
+``` Kotlin
+val moEngage = MoEngage.Builder(this, "XXXXXXXXXXX")
+        .optOutDefaultInAppDisplay()
+        .build()
+MoEngage.initialise(moEngage)
+```
+
+``` Java
+MoEngage moEngage = new MoEngage.Builder(this, "XXXXXXXXXXX")
+        .optOutDefaultInAppDisplay()
+        .build();
+MoEngage.initialise(moEngage);
+```
+
+</CodeGroup>
+
+## Suppressing In-App
+
+If you want to suppress the In-APP in a particular activity e.g., the Payment page or splash screen add the activity list in the initializer object as described:
+
+<CodeGroup>
+``` Java
+ArrayList inAppOptOut = new ArrayList<>();
+inAppOptOut.add(MainActivity.class);
+MoEngage moEngage = new MoEngage.Builder(this, "XXXXXXXXXX")
+            .optOutInAppOnActivity(inAppOptOut)
+            .build();
+MoEngage.initialise(moEngage);
+```
+
+</CodeGroup>

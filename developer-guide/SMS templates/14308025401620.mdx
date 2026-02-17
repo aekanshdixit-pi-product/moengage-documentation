@@ -1,0 +1,189 @@
+---
+title: "Update SMS Template API"
+description: ""
+---
+
+This API can be used to update an SMS template by specifying its external template ID. You can specify whether the updated version of the template can be used in active campaigns in the request.
+
+# API Endpoint
+
+<CodeGroup>
+``` API Endpoint
+PUT https://api-0X.moengage.com/v1.0/custom-templates/sms
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization":"Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY="}
+
+You can obtain the username and password details from the MoEngage Dashboard.
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Campaign report/Business events/Custom templates** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Content-Type | Required | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Required | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#01GT0WSQVV011QR4NX5BNBB9WC). |
+
+# Request Body
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| external\_template\_id | Required | String | This field contains the unique identifier that is generated during the creation of the template. |
+| update\_campaigns | Optional | Boolean | This field contains a flag that is used to update all the campaigns that are currently using the template being updated to the newer version(that is being updated in this request). The default value for this flag is false. |
+| basic\_details | Required | JSON Object | This field contains the basic details of the SMS template.   **Structure of basic\_details Object:**   "basic\_details": {       "message": "Sample Template message"   }   The basic\_details object contains the following fields:   * **message**: This field contains the updated message template. It is a String and is mandatory. |
+| meta\_info | Mandatory | JSON Object | This field contains information about the template being created, such as the name, version, and id of the template and the creator's details.   **Structure of meta\_info**:   "meta\_info": {       "template\_name": "<template name>",       "updated\_by": "<email of the person updating the template>",       "template\_version": "OPTIONAL\_VERSION\_FIELD"   }   The meta\_info object contains the following fields:   * template\_name - This field contains the name of the template being updated. * updated\_by - This field contains the email id of the person updating the template. * template\_version - This field contains the version of the template. This is an optional field   **Note**: All the fields in the meta\_info object are String fields. All fields in the meta\_info object except *template\_version* are mandatory. |
+
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| external\_template\_id | String | This field contains the unique template id corresponding to a successful template updation request. |
+| error | JSON Object | This field contains the reason for the request's failure.   Structure:    "error": {       "code": "<error\_code>",        "message": "<error\_message>",        "details": [],       "request\_id": "<unique identifier for the request>   }   The error object contains the following fields:   * code - This field contains the error code that provides a brief explanation of the error and is a String. For example, 400 - Bad Request, 401- Authentication required, and so on. This field is present in the response only in the case of errors. * message - This field describes why the request has failed and is a String. For example, in the case of a duplicate request (400- Bad Request), the following message will be present: 'Duplicate - template\_id and template\_version'. * details - This is a List of the error details objects. Each object contains the following information:              {                 "code": "<Descriptive Error Code>",                "target": "<Denotes the field causing the issue or a brief description of the error message in some cases >",                 "message": "<Descriptive Error Message>"               }   * request\_id -  This field contains the unique id pertaining to the request.   For example, in the case of a 400 request where the request is trying to update a template using an invalid template-id, the following error object is returned.   {   "error": {   "code": "400 Bad Request",   "message": "Invalid template id",   "details": [   {   "code": "Missing Value",   "target": "<template\_id>",   "message": "<template\_id>is invalid template id"    }   ],   "request\_id": "cLCcgLQj"   } |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request or when the provided parameters are invalid. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+
+# Rate Limit
+
+The rate limit is 100 RPM.
+
+# Sample cURL Request
+
+<CodeGroup>
+``` cURL
+curl --location --request PUT 'https://api-{{0X}}.moengage.com/v1.0/custom-templates/sms' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic Base64_ENCODED_APP_ID_APP_SECRET_KEY' \
+--data '{
+    "external_template_id": "ID_OF_TEMPLATE_TO_BE_UPDATED",
+    "update_campaigns": false,
+    "basic_details": {
+        "message": "MESSAGE"
+    },
+    "meta_info": {
+        "template_name": "NAME_OF_THE_TEMPLATE",
+        "updated_by": "john.doe@yourbrand.com"
+    }
+}'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<Tabs>
+  <Tab title="200">
+    ```
+    {
+       "external_template_id": "eca024b7-a8ea-4f31-9154-5b80c85d18a9"
+    }
+    ```
+  </Tab>
+  <Tab title="400">
+    ```
+    Sample Response for Invalid temnplate id
+    {
+    "error": {
+       "code": "400 Bad Request",
+        "message": "Invalid template id",
+        "details": [
+           {
+              "code": "MissingValue",
+              "target": "9925c8",
+              "message": "9925c8 is invalid template id."
+            }
+         ],
+         "request_id": "BTkUaYgU"
+    }
+    }
+    ```
+
+    ```
+
+    Sample Response for Invalid request format
+    {
+        "response_id": "jyNoAPhO",
+        "type": "custom_segment",
+        "error": {
+            "code": "Invalid request",
+            "message": "Invalid request format. Please check the documentation to ensure that the request has been formed correctly."
+        }
+    }
+    Sample Response for Invalid db-name/app-key
+    {
+        "response_id": "FkrgtCVr",
+        "type": "custom_segment",
+        "error": {
+            "code": "Request Error",
+            "message": "MoEngage Client not found. Please check values for headers - MOE-APPKEY or MOE-DBNAME"
+        }
+    }
+    Sample Response for when there are HTML characters that are not allowed or only whitespaces in custom-segment name present in the request
+        "response_id": "XtVyUnlJ",
+        "type": "custom_segment",
+        "error": {
+            "code": "Invalid Request",
+            "message": "Invalid request. Please ensure that the filters are correct and the custom-segment name doesn't contain HTML characters/only whitespaces."
+        }
+    }
+    ```
+
+    ```
+
+    Sample Response for when a forbidden operation is present in the request
+    {
+        "response_id": "xuLAWeCN",
+        "type": "custom_segment",
+        "error": {
+            "code": "Forbidden operation",
+            "message": "Update isn't supported for file-segments, internally created custom-segments, custom-segments imported from Analyze and archived custom-segments."
+        }
+    }
+    ```
+
+    ```
+
+    Sample Response for when the custom-segment id used in the request doesn’t exist
+    {
+        "response_id": "UAMMfmuU",
+        "type": "custom_segment",
+        "error": {
+            "code": "Entity Not Found",
+            "message": "Custom segment not found with the given id: 638a051185b6b50a018cacc"
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="5XX">
+    ```
+    Sample Response for server side errors
+    {
+    
+       "title": "Internal Server Error",
+       "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-7980d47d-248a-4060-96d2-a7d9ebc3e22d?action=share&creator=3182294&ctx=documentation) to view it in Postman.

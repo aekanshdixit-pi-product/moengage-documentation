@@ -1,0 +1,174 @@
+---
+title: "Troubleshooting and FAQs 11.x.x"
+description: ""
+---
+
+## How to enable MoEngage SDK's debug logs for un-signed/debug builds?
+
+<CodeGroup>
+```auto Java
+MoEngage moEngage =
+    new MoEngage.Builder(this, "XXXXXXXXXX")
+        .configureLogs(new LogConfig(LogLevel.VERBOSE, false))
+        .build();
+MoEngage.initialise(moEngage);
+```
+
+</CodeGroup>
+## How to enable MoEngage SDK's debug logs for signed builds?
+
+<CodeGroup>
+```auto Java
+MoEngage moEngage =
+    new MoEngage.Builder(this, "XXXXXXXX")
+        .enableLogsForSignedBuild()
+        .configureLogs(new LogConfig(LogLevel.VERBOSE, true))
+        .build();
+MoEngage.initialise(moEngage);
+```
+
+</CodeGroup>
+
+<Info>
+Ensure to remove the above lines before the application is pushed to production.
+</Info>
+## Unable to see data on the dashboard?
+
+If you don't see data on the dashboard, check if you have implemented the below steps correctly  
+- Initialize the SDK correctly. For more information about initialization verification, refer to [SDK Initialization](https://developers.moengage.com/hc/en-us/articles/4401984811796).  
+- Verify if you checking in the right environment.
+
+Test/Debug Build --> Data flows to Test environment  
+Signed/Live Build --> Data flows to Live environment.
+
+## Blank Push Notifications?
+
+Blank push notifications can come up because of the following reasons :  
+1. Push from multiple servers not handled: Blank push notification if you don't handle push received from different servers correctly. Make sure the app does not try to show a notification if the notification is from MoEngage. For more information, refer to [Push Notification](https://developers.moengage.com/hc/en-us/articles/360061216011).
+
+2. Custom Handling of notification: In case the app is doing some custom handling of notification make sure that silent push(used for uninstall ) is handled by the app. For more information, refer to [Uninstall Tracking](https://developers.moengage.com/hc/en-us/articles/4403442558228-Push-Display-Handled-by-Application#01H8KP6QT4EKJQRAGTXPNBVVJ3).
+
+## How to delete a notification from your inbox?
+
+To delete a notification from Inbox, refer to Notification Center(doc:notification-center#section-deleting-notification-from-notification-center)
+
+## Why are multiple notifications shown for one campaign?
+
+Multiple Notifications can show up only if both the App and MoEngage SDK try to display the notification. If the payload is from MoEngage, the App should pass the payload to the MoEngage SDK and not take any other action on it.  
+For more information, refer to [Push Notification](https://developers.moengage.com/hc/en-us/articles/360061216011).
+
+## Events visible in the test environment but not on Live?
+
+If the data is visible in the Test environment and not in the Live environment, most likely, you are using a test/debug build.  
+The SDK detects whether the build is a debug/test build or a signed build. Based on the type of build, data is sent to the respective environment.
+
+Test/Debug Build --> Data flows to Test environment  
+Signed/Live Build --> Data flows to Live environment.
+
+## How to fix multiple receivers?
+
+Multiple receivers are the scenario where the manifest contains multiple services with the intent filters: **com.google.firebase.MESSAGING\_EVENT**  
+Ideally, your manifest file should contain only one service with the above intent filter. For more information, refer to [Push Notification](https://developers.moengage.com/hc/en-us/articles/360061216011).
+
+## Why does sending push fail?
+
+Sending push can fail because of the following reasons :
+
+1. No Active device token - Push token not passed to MoEngage SDK or refresh token not passed. For more information about how to pass push tokens, refer to [Push Notification](https://developers.moengage.com/hc/en-us/articles/360061216011). 
+
+2. Not Registered - The application has been uninstalled hence cannot send push. Please re-install the application and try.
+
+3. Mismatch Sender Id - The sender id and Server key provided are from different GCM/FCM projects. Please check the sender id and Server key. In the case of an FCM project sender-id is part of the `google-services.json` file.
+
+4. Invalid Registration - The format of the push token passed is not correct. Please check the token passing logic.
+
+## Why push is not visible even after it was successfully sent?
+
+The following are the possible reasons for the push not being shown even after it was successfully sent :
+
+- Push Payload not passed to MoEngage - This can happen when the app has its own push receiver and has not passed the payload to the MoEngage SDK. For more information, refer to [Push Notification](https://developers.moengage.com/hc/en-us/articles/360061216011).
+
+- Internet Connectivity - Please check your internet connectivity on the device. We would recommend you to toggle the network connection once and try.
+
+- Device-Specific Issue - Some of the OEMs force stop the app when the application is removed from the recent/overview screen. Please ensure the application is running in the background.
+
+- Build does not belong to the correct environment - The SDK detects whether the build is a debug/test build or a signed build. Based on the type of build data is sent to the respective environment.
+
+- Small icon not added - To post a notification small icon is mandatory. Please make sure you have added the meta-data required for push notification. For more information, refer to [Push Notification](https://developers.moengage.com/hc/en-us/articles/360061216011).
+
+Test/Debug Build --> Use Test Environment to send notifications to your device.  
+Signed/Live Build --> Use Live Environment to send notifications to your device.
+
+## Why push is visible but clicks are not recorded?
+
+The following are the reasons for click events not being recorded with MoEngage :
+
+1. Push Payload not passed to SDK - The push payload is consumed by the application and the application takes care of showing push. This is based on the type of library you are using to pass payload to MoEngage SDK.
+
+2. Data not synced to MoEngage Server - Click attribution data would be sent to the MoEngage server only when the application is sent to the background. Please make sure that the application is sent to the background and wait for a couple of minutes.
+
+## Why do we recommend that MoEngage handle push registration?
+
+Push token registration is very important for sending push notifications.  
+Push registration consists of two things - Token Registration and Refreshing Token  
+Token registration can fail due to poor internet connection or null returned by the registration API. In such cases, one should retry registering for a push after an exponential backoff time rather than waiting for the next app to open.  
+Refresh Token can be missed out because of some OEM level customizations. Many Chinese OEMs force stops the app once it is removed from the recent. This results in missing token refresh callbacks.  
+MoEngage SDK has fallbacks to overcome the above issue. Hence, we suggest using MoEngage's Push Registration mechanism.  
+MoEngage SDK provides a callback using which the app can get the push token. For more information, refer to [Push Configuration](https://developers.moengage.com/hc/en-us/articles/4473128211476).
+
+## Android Vitals says MoEAlarmReceiver is causing excessive wake-ups. Why is MoEngage using Alarms and waking-up devices?
+
+Android Vitals report all alarms used by the app. Generally, alarms are used to trigger background tasks like downloading/uploading data to the server, which wakes up the CPU if the device is in an idle state and causes battery drain.  
+MoEngage SDK MoEAlarmReceiver is used to send tracked events and attributes to the MoEngage Server. This alarm is triggered within 3-5 seconds after the application goes to the background. Since the CPU does not sleep so quickly, no additional battery drain is done here.  
+Our SDK intentionally delays this sync by 3-5 seconds to ensure data accuracy due to certain customizations done by OEMs. Without the delay, data accuracy becomes a problem.
+
+## How to get extras after redirection?
+
+All the extra parameters passed along while campaign creation will be a part of the bundle extras if the activity is inflated via the activity name. If the activity is inflated using a deep link URL, all extras will be a part of the query params of the URL.
+
+## How does the SDK decide whether data should be sent to Test/Live Environment?
+
+SDK detects the build type of the installed application and the basis that it decides whether data should be sent to the Test/Live Environment of the MoEngage Platform.
+
+| Build Type | Environment |
+| --- | --- |
+| Debug | Test |
+| Signed | Live |
+## What is a token drop, and how to fix it?
+
+For more information, refer to the [How to Fix Token Drop?](https://developers.moengage.com/hc/en-us/articles/4403887185556-How-to-fix-Token-Drop-)
+
+## Failed resolution of: Landroidx/lifecycle/ProcessLifecycleOwner
+
+<CodeGroup>
+```auto Java
+java.lang.NoClassDefFoundError: Failed resolution of: Landroidx/lifecycle/ProcessLifecycleOwner;
+        at com.moe.pushlibrary.MoEHelper.r(:1005)
+        at com.moengage.core.MoEngage.a(:210)
+```
+
+</CodeGroup>
+If you are seeing the above stack trace you have missed out on adding the `androidx.lifecycle:lifecycle-process` dependency in your application.  
+Add the `androidx.lifecycle:lifecycle-process` and the issue should be fixed. You can refer to the [SDK Integration](https://developers.moengage.com/hc/en-us/articles/44622788607892) documentation to know more about the dependencies required by the SDK.
+
+## Why are some of the components marked as `export=true` in the case of Xiaomi Push? Is it a security concern?
+
+The following components need the flag export=true, otherwise, it will affect the basic push function:
+
+`com.xiaomi.mipush.sdk.PushMessageHandler`
+
+* On clicking the notification in the notification bar, before jumping to the app UI interface, the SDK first parses the intent content through PushMessageHandler and execute startActivity() to jump;
+* The intent content is encrypted, and the forged intent cannot penetrate the decryption link, and there is no security problem;
+
+`com.xiaomi.push.service.receivers.NetworkStatusReceiver`
+
+* Receives system network change broadcast, notify and change the long connection status; because it is a system broadcast, there is no need to worry about the broadcast being forged;
+
+`com.moengage.mi.MoEMiPushReceiver`
+
+* Receives the result callback of registration, set an alias, subscribe, and other interfaces;
+* Added permission protection, intent encryption protection, forged intents cannot penetrate the decryption link, and there is no security problem.
+
+## Will initializing the SDK on the main thread affect my application start-up time?
+
+No, the initialization API is The initialization approximately around 10-15 milliseconds on average. Refer to the [SDK Performance](https://developers.moengage.com/hc/en-us/articles/4414072599700) document for more details.

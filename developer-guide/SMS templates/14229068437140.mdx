@@ -1,0 +1,266 @@
+---
+title: "Create SMS Template API"
+description: ""
+---
+
+The Create SMS Template  API can be used to create an SMS template in MoEngage. This API helps you upload templates created outside the MoEngage ecosystem to MoEngage and use them for campaign creation.
+
+# API Endpoint
+
+<CodeGroup>
+``` API Endpoint
+POST https://api-0X.moengage.com/v1.0/custom-templates/sms
+```
+
+</CodeGroup>
+
+Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+
+# Authentication
+
+The API request will be authenticated through Basic Authentication. Basic Authentication sends a Base64-encoded string containing your username and password with every API request. It encodes a 'username:password' string in Base64 and appends the encoded string with 'Basic '. This string is included in the authorization header as shown below:
+
+{"Authorization":"Basic Base64\_ENCODED\_WORKSPACEID\_APIKEY="}
+
+You can obtain the username and password details from the MoEngage Dashboard.
+
+1. Navigate to **Settings** -> **Account** -> **APIs**.
+2. Copy the following details:
+	* Username: Under **Workspace ID (earlier app id)**, click the copy icon to copy the username.
+	* Password: In the **API keys** section, click the copy icon in the **Campaign report/Business events/Custom templates** tile to copy the API key.
+3. Use these details to authenticate the API requests.
+
+# Request Headers
+
+| Key | Required | Sample Values | Description |
+| --- | --- | --- | --- |
+| Content-Type | Required | {"Content-Type": "application/json"} | Set the Content-Type header to application/json. |
+| Authorization | Required | {"Authorization": "Basic bmF2ZWVua3VtYXI6bW9lbmdhZ2U=="} | This authentication parameter, used for access control, must be passed along with the request. To generate the authentication header, refer to [Authentication](#01GQRA6BGSEKV3P4EV4SK51F5J). |
+
+# Request Body
+
+| Key | Required | Values | Description |
+| --- | --- | --- | --- |
+| basic\_details | Required | JSON Object | This field contains the basic details of the SMS template.   **Structure of basic\_details Object:**   "basic\_details": {       "message": "Sample Template message"}   The basic\_details object contains the following fields:   * **message**: This field contains the message template. It is a String and is mandatory. |
+| meta\_info | Required | JSON Object | This field contains information about the template being created, such as the name, version, and id of the template and the creator's details.   **Structure of meta\_info**:   "meta\_info": {       "created\_by": "<creator details>",       "template\_id": "<template id>",       "template\_name": "<template name>",       "template\_version": "<template version>"   }   The meta\_info object contains the following fields:   * created\_by - This field contains details about who created the template. This value should be provided by you. * template\_id - This field contains the ID for the template and is unique. This ID should be provided by you. * template\_name - This field contains the name of the template. This value should be provided by you and would be used for identifying the template. * template\_version - This field contains the version of the template. This value should be provided by you and would be used for tracking the template's version.   **Note**: All the fields in the meta\_info object are String fields and are mandatory. |
+
+# Response
+
+| Key | Data Type | Description |
+| --- | --- | --- |
+| external\_template\_id | String | This field contains the unique template id corresponding to a successful template creation request. |
+| error | JSON Object | This field contains the reason for the request's failure.   Structure:    "error": {       "code": "<error\_code>",        "message": "<error\_message>",        "details": [],       "request\_id": "<unique identifier for the request>   }   The error object contains the following fields:   * code - This field contains the error code that provides a brief explanation of the error and is a String. For example, 400 - Bad Request, 401- Authentication required, and so on. This field is present in the response only in the case of errors. * message - This field describes why the request has failed and is a String. For example, in the case of a duplicate request (400- Bad Request), the following message will be present: 'Duplicate - template\_id and template\_version'. * details - This is a List of the error details objects. Each object contains the following information:              {                 "code": "<Descriptive Error Code>",                "target": "<Denotes the field causing the issue or a brief description of the error message in some cases >",                 "message": "<Descriptive Error Message>"               }   * request\_id -  This field contains the unique id pertaining to the request.   For example, in the case of a 400 request where the request is trying to create a template that is already present, the following error object is returned.   {   "error": {   "code": "400 Bad Request",   "message": "Duplicate - template\_id and template\_version",   "details": [   {   "code": "InvalidValue",   "target": "Duplicate - template\_id and template\_version",   "message": "template\_id:<template\_id> template\_version:<template\_version> is already present."   }   ],   "request\_id": "cLCcgLQj"   } |
+
+# Response Codes
+
+| Status Code | Request State | Description |
+| --- | --- | --- |
+| 200 | Success | This response is returned when the request is processed successfully. |
+| 400 | Bad Request | This response is returned when the required parameters are missing from the request or when the provided parameters are invalid, or when a template already exists with the same version, name, or id. |
+| 401 | Authorization Failure | This response is returned when the authorization parameters are missing in the HTTP Auth Header. |
+| 403 | Unauthorized Access | This response is returned when the authorization fails due to incorrect values for the APP KEY/ HTTP Auth Header. |
+| 415 | Unsupported File Type | This response is returned when the header Content-Type is not provided/is not supported. |
+| 429 | Rate Limit Breach | This response is returned when the number of requests per minute has exceeded the rate limit or the number of templates has exceeded the allowed quota per channel. |
+| 5xx | Internal Server Error | This response is returned when the system runs into an unexpected error. |
+
+# Rate Limit
+
+The rate limit is 100 RPM. You can upload a maximum of 100 templates per channel.
+
+# Sample cURL Request
+
+<CodeGroup>
+``` cURL
+curl --location 'https://api-0X.moengage.com/v1.0/custom-templates/sms/' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic e3tBUFBfSUR9fTp7e0FQSV9TRUNSRVR9fQ==' \
+--data '{
+  "basic_details": {
+    "message": "Sample SMS Template message"
+  },
+  "meta_info": {
+    "created_by": "John Doe",
+    "template_id": "BasicTemplate1",
+    "template_name": "BasicMessageTemplate",
+    "template_version": "1"
+  }
+}'
+```
+
+</CodeGroup>
+
+# Sample Response
+
+<CodeGroup>
+``` 200
+Sample Response for a successful request
+{
+  "external_template_id": "d05a44f0-a7cf-471a-bcb6-63054800a367"
+}
+```
+
+``` 400
+Sample Response for validation failure due to invalid request data
+{
+    "error": {
+        "code": "400 Bad Request",
+        "message": "Validation failed because of invalid request data",
+        "details": [
+            {
+                "code": "NotSupported",
+                "target": "['summary']",
+                "message": "['summary'] are not expected in this request."
+            },
+            {
+                "code": "MissingValue",
+                "target": "platform",
+                "message": "Template Body is missing for ANDROID."
+            },
+            {
+                "code": "MissingValue",
+                "target": "platform",
+                "message": "IOS is missing in meta_info but template body is passed for IOS."
+            }
+        ],
+        "request_id": "LMwPhRMB"
+    }
+}
+Sample Response for when the Template Name is empty in the Request
+{
+    "error": {
+        "code": "400 Bad Request",
+        "message": "Validation failed because of invalid request data",
+        "details": [
+            {
+                "code": "MissingValue",
+                "target": "template_name",
+                "message": "template_name value is required but value is passed empty."
+            }
+        ],
+        "request_id": "jUxStmFn"
+    }
+}
+Sample Response for Missing Mandatory Fields in the Request
+{
+   "error": {
+       "code": "400 Bad Request",
+       "message": "Validation failed because of invalid request data",
+       "details": [
+           {
+               "code": "MissingValue",
+               "target": "title",
+               "message": "title value is required but value is passed empty."
+           }
+       ],
+       "request_id": "eYXFWciv"
+   }
+}
+Sample Response for Duplicate Request
+{
+  "error": {
+    "code": "400 Bad Request",
+    "message": "Duplicate - template_id and template_version",
+    "details": [
+      {
+        "code": "InvalidValue",
+        "target": "Duplicate - template_id and template_version",
+        "message": "template_id:basicios12 template_version:12 is already present."
+      }
+    ],
+    "request_id": "cLCcgLQj"
+}
+Sample Response for Maximum Template Limit Breach
+{
+   "error": {
+       "code": "400 Bad Request",
+       "message": "Maximum Template limit exceeded",
+       "details": [
+           {
+               "code": "NotSupported",
+               "target": "Maximum Template limit exceeded",
+               "message": "You have already created maximum allowed template allowed for client"
+           }
+       ],
+       "request_id": "eLeZXIlW"
+   }
+}
+```
+
+``` 401
+Sample Response for Authentication/Authorization failure
+{
+   "title": "Authentication required",
+   "description": "MOE-APPKEY missing in Authentication Header"
+}
+```
+
+``` 403
+Sample Response for Invalid App Secret key
+{
+   "error": {
+       "code": "403 Forbidden",
+       "message": "Authentication required",
+       "details": [
+           {
+               "code": "InvalidValue",
+               "target": "APP_SECRET_KEY",
+               "message": "Invalid APP_SECRET_KEY is provided."
+           }
+       ],
+       "request_id": "oZEMYhqA"
+   }
+}
+Sample Response for when Invalid App ID is used
+{
+   "error": {
+       "code": "403 Forbidden",
+       "message": "Authentication required",
+       "details": [
+           {
+               "code": "InvalidValue",
+               "target": "APP_ID",
+               "message": "Invalid APP_ID is provided."
+           }
+       ],
+       "request_id": "TWdrwUMN"
+   }
+}
+```
+
+``` 415
+Sample Response for Unsupported Media Type
+{
+   "title": "Unsupported media type",
+   "description": "Content type is not supported"
+}
+```
+
+``` 429
+Sample Response for Rate Limit Breach
+{
+    "response_id": "OUUkHvcn",
+    "type": "custom_segment",
+    "error": {
+        "code": "Too Many Requests",
+        "message": "API rate limit breached. Current limit: n/m mins"
+    }
+}
+```
+
+``` 5xx
+Sample Response for server side errors
+{ 
+    "title": "Internal Server Error",
+    "message": "An unexpected error was encountered while processing this request. Please contact MoEngage Team"
+}
+```
+
+</CodeGroup>
+
+# Postman Collections
+
+We have made it easy for you to test the APIs. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/collection/3182294-7980d47d-248a-4060-96d2-a7d9ebc3e22d?action=share&creator=3182294&ctx=documentation) to view it in Postman.
+
+# FAQs
+
+* **Can I create multiple templates with the same name?**Yes, you can create multiple templates with the same name, provided they have different versions.
