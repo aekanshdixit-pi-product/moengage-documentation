@@ -1,0 +1,256 @@
+---
+title: "Tracking user attributes"
+---
+
+User Attributes are pieces of information you know about a user. They could be demographics like age or gender, account-specific like plan, or whether a user has seen a particular A/B test variation. User attributes are a customer identity you can reference throughout the customer’s lifetime.
+
+# Identifying Users
+
+For SDK versions below 9.23.0 refer to [this document](/hc/en-us/articles/35580768711060).
+
+Setting identifiers is important to:
+
+- To tie user behavior across platforms, i.e., iOS, Android, Web, etc.
+- This is to ensure unnecessary or stale users are not created.
+- To identify users across installs/re-installs.
+
+## Single Identifier
+
+Call the API below to pass the identifier on to the MoEngage SDK.
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKAnalytics.sharedInstance.identifyUser(identity: "identifier")
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKAnalytics sharedInstance] identifyUserWithIdentity:@"identifier" workspaceId:nil];
+    ```
+  </Tab>
+</Tabs>
+
+_Note_: This method is a replacement for the deprecated **_setUniqueId()_**. If you are using \*\*\*setUniqueId() \*\*\*in your application, consider replacing it with **_identifyUser()_**
+
+## Multiple Identifiers
+
+If your application has multiple identifiers using which you identify a user you can pass all the identifiers to the SDK using the below API
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKAnalytics.sharedInstance.identifyUser(
+        identities: [
+            "identifierName1": "identifierValue1", "identifierName2" to "identifierValue2"
+        ]
+    )
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKAnalytics sharedInstance] identifyUserWithIdentities:@{
+        "identifierName1": "identifierValue1", "identifierName2" to "identifierValue2"
+    } workspaceId:nil];
+    ```
+  </Tab>
+</Tabs>
+
+If you call `identifyUser()` multiple times with different identifier names, the SDK will append this identifier to the already set identifiers.
+
+<Info>
+  **Information**
+
+  Updates are made to SDK functions to improve user identification and session management.
+
+  - **Forced Logout**: The MoEngage SDK no longer automatically logs out the previous user when a new user is detected on the device. Logout should now be explicitly called for workspaces enabled with Identity resolution to avoid data corruption.
+  - **SetUniqueID**: _IdentifyUser_ function supports multiple identifiers, which replaces the need of using _SetUniqueID_ function for user identification. Note that _SetUniqueID_ is marked for removal in the future releases of SDK versions - it is important to use _identifyUser_ instead especially if you are using Identity resolution in your workspace.
+  - **SetAlias**: For workspaces with the Identity resolution feature enabled, MoEngage SDK stores the previous identifier values. When _IdentifyUser_ function is used to track the new identifier values, MoEngage SDK detects the change in identifier value and reports accordingly.
+</Info>
+
+Refer to our help [document](https://help.moengage.com/hc/en-us/articles/24050999467284-User-Identity-Management) to learn more about the feature.
+
+## Logout
+
+The application needs to notify the MoEngage SDK whenever the user is logged out of the application. Call the API whenever the user is logged out of the application to notify the SDK.
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKAnalytics.sharedInstance.resetUser()
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKAnalytics sharedInstance] resetUser];
+    ```
+  </Tab>
+</Tabs>
+
+# Default User Attributes
+
+Some default SDK User Attribute can be set for eg. email-id, mobile number, gender, user name, birthday. The default attributes tracked by SDK can be set as shown below :
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKAnalytics.sharedInstance.setName(userName)
+    MoEngageSDKAnalytics.sharedInstance.setLastName(userLastname)
+    MoEngageSDKAnalytics.sharedInstance.setFirstName(userFirstName)
+    MoEngageSDKAnalytics.sharedInstance.setEmailID(userEmailID)
+    MoEngageSDKAnalytics.sharedInstance.setMobileNumber(userPhoneNo)
+    MoEngageSDKAnalytics.sharedInstance.setGender(.male) //Use UserGender enumerator for this
+    MoEngageSDKAnalytics.sharedInstance.setDateOfBirth(userBirthdate)//userBirthdate should be a Date instance
+    MoEngageSDKAnalytics.sharedInstance.setLocation(MoEngageGeoLocation(withLatitude: userLocationLat, andLongitude: userLocationLng)) //userLocationLat and userLocationLng are double values of the location coordinates
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKAnalytics sharedInstance] setName:userName];
+    [[MoEngageSDKAnalytics sharedInstance] setLastName:userLastname];
+    [[MoEngageSDKAnalytics sharedInstance] setFirstName:userFirstName];
+    [[MoEngageSDKAnalytics sharedInstance] setEmailID:userEmailID];
+    [[MoEngageSDKAnalytics sharedInstance] setMobileNumber:userPhoneNo];
+    [[MoEngageSDKAnalytics sharedInstance] setGender:UserGenderMale]; // Use UserGender enumerator for this
+    [[MoEngageSDKAnalytics sharedInstance] setDateOfBirth:userBirthdate];//userBirthdate should be a NSDate instance  
+    [[MoEngageSDKAnalytics sharedInstance] setLocation:[[MoEngageGeoLocation alloc] initWithLatitude:userLocationLat andLongitude:userLocationLng]];//userLocationLat and userLocationLng are double values of the location coordinates
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>
+  **Note**
+
+  - We support strings and numbers as values for UserAttributes. NSURL is not supported. If you wish to use it, please convert them to string.
+  - User Phone No / Mobile Number must be tracked as a string to work properly in MoEngage systems.
+  - For more information on supported data types and data tracking policies, please refer to [Data Tracking Policies](https://help.moengage.com/hc/en-us/articles/360037314991#h_01H9QNZ61VNHSMFQC28MAZJXS9).
+</Warning>
+
+# Custom User Attributes
+
+To set custom attributes just provide custom keys different to the ones present in [here](https://help.moengage.com/hc/en-us/articles/360042512472-Default-iOS-SDK-Data-Collection#%5BhardBreak%5DDefault-User-Attributes-Tracked:). Following is an example :
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKAnalytics.sharedInstance.setUserAttribute("Bengaluru", withAttributeName: "Current_city")
+    MoEngageSDKAnalytics.sharedInstance.setUserAttribute(["Bengaluru","Delhi","Chennai"], withAttributeName: "Current_cities")
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKAnalytics sharedInstance] setUserAttribute:@"Bengaluru" withAttributeName:@"Current_city"];
+    NSArray *myArray = @[@"Bengaluru", @"Delhi", @"Chennai"];
+    [[MoEngageSDKAnalytics sharedInstance] setUserAttribute:myArray withAttributeName:@"Current_cities"];
+    ```
+  </Tab>
+</Tabs>
+
+User Attributes have the following restrictions :
+
+- User Attribute Names should not contain dot(.)
+- User Attribute Names should not start with dollar sign(\$)
+- User Attribute Values should be a String or Number
+
+<Info>
+  **Note**
+
+  You can not use "moe\_" as a prefix while naming events, event attributes, or user attributes. It is a system prefix and using it might result in periodic blacklisting without prior communication.
+</Info>
+
+## JSON Attributes
+
+From MoEngage-iOS-SDK **_v9.17.5_**, we have added support for JSON and array of JSON user attributes. Following is an example
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKAnalytics.sharedInstance.setUserAttribute(["item-id" : 123,"item-type" : "books","item-cost" : ["amount" : 100,"currency" : "USD"]],withAttributeName: "product")
+    
+    MoEngageSDKAnalytics.sharedInstance.setUserAttribute([["item-id" : 123,"item-cost" : ["amount" : 100,"currency" : "USD"]],["item-id" : 323,"item-cost" : ["amount" : 90,"currency" : "USD"]]],withAttributeName: "products")
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [MoEngageSDKAnalytics.sharedInstance setUserAttribute:@{@"item-id" : @123,@"item-type" : @"books",@"item-cost" : @{@"amount" : @100,@"currency" : @"USD"}} withAttributeName:@"product"];
+    
+    [MoEngageSDKAnalytics.sharedInstance setUserAttribute:@[@{@"item-id" : @123,@"item-cost" : @{@"amount" : @100,@"currency" : @"USD"}} , @{@"item-id" : @323,@"item-cost" : @{@"amount" : @90,@"currency" : @"USD"}}] withAttributeName:@"products"];
+    ```
+  </Tab>
+</Tabs>
+
+# Date and Time User Attributes
+
+Date and time attributes can be set as user attributes. For this refer to the methods in the code block below:
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    //1. Track UserAttribute using Date instance
+    MoEngageSDKAnalytics.sharedInstance.setUserAttributeDate(Date(), withAttributeName: "Date Attr 1")
+    
+    //2. Track UserAttribute using ISO Date String in format "yyyy-MM-dd'T'HH:mm:ss'Z'"
+    MoEngageSDKAnalytics.sharedInstance.setUserAttributeISODate("2020-01-12T18:45:59Z", withAttributeName: "Date Attr 2")
+    
+    //3. Track UserAttribute using Epoch value
+    MoEngageSDKAnalytics.sharedInstance.setUserAttributeEpochTime(663333, withAttributeName: "Date Attr 3")
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    //1. Track UserAttribute using Date instance
+    [[MoEngageSDKAnalytics sharedInstance] setUserAttributeDate:[NSDate date] withAttributeName:@"DateAttr1"];
+     
+    //2. Track UserAttribute using ISO Date String in format "yyyy-MM-dd'T'HH:mm:ss'Z'"
+    [[MoEngageSDKAnalytics sharedInstance] setUserAttributeISODate:@"2020-01-12T18:45:59Z" withAttributeName:@"DateAttr2"];
+     
+    //3. Track UserAttribute using Epoch value
+    double timestampEpochValue = [[NSDate date] timeIntervalSince1970];
+    [[MoEngageSDKAnalytics sharedInstance] setUserAttributeEpochTime:timestampEpochValue withAttributeName:@"LastPurchaseDate"];
+    ```
+  </Tab>
+</Tabs>
+
+# Location Attributes
+
+The location of a user or any location can be set as user attribute. For this use [_setLocation(\_:withAttributeName:)_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)setLocation:withAttributeName:) method and pass lat, the long value of the location as shown in the following example :
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKAnalytics.sharedInstance.setLocation(MoEngageGeoLocation.init(withLatitude: 72.90909, andLongitude: 12.34567), withAttributeName: "attribute name")
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKAnalytics sharedInstance] setLocation:[[MoEngageGeoLocation alloc] initWithLatitude:23.33 andLongitude:26.22] withAttributeName:@"attribute name"];
+    ```
+  </Tab>
+</Tabs>
+
+## Reserved keywords for User Attributes
+
+Below is the list of keys that should not be used when tracking user attributes.
+
+- USER_ATTRIBUTE_UNIQUE_ID
+- USER_ATTRIBUTE_USER_EMAIL
+- USER_ATTRIBUTE_USER_MOBILE
+- USER_ATTRIBUTE_USER_NAME
+- USER_ATTRIBUTE_USER_GENDER
+- USER_ATTRIBUTE_USER_FIRST_NAME
+- USER_ATTRIBUTE_USER_LAST_NAME
+- USER_ATTRIBUTE_USER_BDAY
+- MOE_TIME_FORMAT
+- MOE_TIME_TIMEZONE
+- USER_ATTRIBUTE_NOTIFICATION_PREF
+- USER_ATTRIBUTE_OLD_ID
+- MOE_TIME_FORMAT
+- MOE_TIME_TIMEZONE
+- USER_ATTRIBUTE_DND_START_TIME
+- USER_ATTRIBUTE_DND_END_TIME
+- MOE_GAID
+- MOE_ISLAT
+- INSTALL
+- UPDATE
+- status
+- user_id
