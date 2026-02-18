@@ -1,4 +1,156 @@
 ---
 title: 'Push Handled by Application'
 ---
+<Info>
+  **SDK Version**
 
+  *   **General Messaging:** Supported from version 9.13.0
+  *   **Background Updates (Self handled):** Supported from version 10.10.0
+</Info>
+
+## Track Notification Received
+
+Call SDK's ***logNotificationReceived(withPayload: )*** function to track notification received impression as shown below.
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKMessaging.sharedInstance.logNotificationReceived(withPayload:notification.request.content.userInfo) {
+        // updated content in contentHandler here 
+    }
+    ```
+  </Tab>
+
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKMessaging sharedInstance] logNotificationReceivedWithPayload:notification.request.content.userInfo completion: ^(void) {
+        // updated content in contentHandler here
+    }];
+    ```
+  </Tab>
+</Tabs>
+
+## Track Notification Click
+
+To track the notification clicked event using the payload, call the SDK's ***logNotificationClicked*** function, as shown below.
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKMessaging.sharedInstance.logNotificationClicked(withPayload: notification.request.content.userInfo)
+    ```
+  </Tab>
+
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKMessaging sharedInstance] logNotificationClickedWithPayload:notification.request.content.userInfo];
+    ```
+  </Tab>
+</Tabs>
+
+To accurately track clicks or dismissals, use the ***logNotificationClicked(withResponse: )*** method.
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKMessaging.sharedInstance.logNotificationClicked(withResponse: UNNotificationResponse)
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  **Note**
+
+  To use above functions, Appdelegate swizzling should be disabled. To see how to disable swizzling, please see the [link](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45ED56HJA1KZP43JP0ZGG1F).
+</Note>
+
+## Validate if the notification belongs to MoEngage
+
+Call SDK's ***isPushFromMoEngage(withPayload:)*** function to validate if the notification belongs to MoEngage as shown below
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+     let isPushFromMoEngage = MoEngageSDKMessaging.sharedInstance.isPushFromMoEngage(withPayload: notification.request.content.userInfo))
+    ```
+  </Tab>
+
+  <Tab title="Objective-C">
+    ```objectivec
+    BOOL isPushFromMoEngage = [[MoEngageSDKMessaging sharedInstance] isPushFromMoEngageWithPayload:notification.request.content.userInfo];
+    ```
+  </Tab>
+</Tabs>
+
+## Handling Background Updates (Self-Handled)
+
+<Note>
+  **Prerequisites for iOS Background Updates**
+
+  *   **Background Modes:** You must enable **Remote notifications** under the *Signing & Capabilities* tab in Xcode.
+  *   **Payload Identifier:** The SDK identifies these payloads by checking for `nt: sh_b` inside the `moeFeatures` dictionary.
+</Note>
+
+The **Background Update** template allows you to send silent data payloads to your application. Because these notifications do not display a UI, the MoEngage SDK provides a specific helper method to identify them so you can execute custom background logic.
+
+For more information on the payload structure and available keys, refer to [Background Update Templates](https://help.moengage.com/hc/en-us/articles/4415622460948-Push-Templates).
+
+<Info>
+  **Implementation Note**
+
+  Background updates must be handled in the `didReceiveRemoteNotification` fetch completion handler. You must also call `logNotificationReceived` manually to ensure these silent events are recorded in your analytics.
+</Info>
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+
+    // 1. Check if it's a MoEngage Background Update payload
+    if MoEngageSDKMessaging.sharedInstance.isSelfHandledBackgroundNotification(payload: userInfo) {
+        
+        // 2. Log notification received impression manually
+        MoEngageSDKMessaging.sharedInstance.logNotificationReceived(withPayload: userInfo) {
+            
+            // 3. Execute your custom background logic here (e.g., sync data, logout)
+            // self.handleCustomBackgroundLogic(userInfo)
+            
+            // 4. Always call the completion handler
+            completionHandler(.newData)
+        }
+    } else {
+        // Handle standard MoEngage or other push notifications
+        MoEngageSDKMessaging.sharedInstance.didReceieveNotification(inApplication: application, withInfo: userInfo)
+    }
+
+
+    }
+    ```
+  </Tab>
+
+  <Tab title="Objective-C">
+    ```objectivec
+    - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
+
+    // 1. Check if it's a MoEngage Background Update payload
+    if ([[MoEngageSDKMessaging sharedInstance] isSelfHandledBackgroundNotificationWithPayload:userInfo]) {
+        
+        // 2. Log notification received impression manually
+        [[MoEngageSDKMessaging sharedInstance] logNotificationReceivedWithPayload:userInfo completion:^{
+            
+            // 3. Execute your custom background logic here (e.g., sync data, logout)
+            // [self handleCustomBackgroundLogic:userInfo];
+            
+            // 4. Always call the completion handler
+            completionHandler(UIBackgroundFetchResultNewData);
+        }];
+    } else {
+        // Handle standard MoEngage or other push notifications
+        [[MoEngageSDKMessaging sharedInstance] didReceieveNotificationInApplication:application withInfo:userInfo];
+    }
+
+
+    }
+    ```
+  </Tab>
+</Tabs>
