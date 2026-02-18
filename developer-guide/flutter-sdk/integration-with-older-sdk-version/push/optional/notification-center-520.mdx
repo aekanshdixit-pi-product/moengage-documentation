@@ -1,0 +1,193 @@
+---
+title: "Notification Center 5.2.0"
+description: ""
+---
+
+![Download](https://img.shields.io/pub/v/moengage_inbox.svg)
+
+# Installation
+
+To add the MoEngage Inbox SDK to your application, edit your application's **pubspec.yaml** file and add the below dependency to it:
+
+<CodeGroup>
+``` pubspec.yaml
+dependencies:
+ moengage_inbox: $latestVersion
+```
+
+</CodeGroup>
+
+Run flutter packages get to install the SDK.
+
+Note: This plugin is dependent on **moengage\_flutter** plugin. Make sure you have installed the **moengage\_flutter** plugin as well. Refer to the [doc](https://developers.moengage.com/hc/en-us/articles/4404304782356) for the same.
+
+## Android Installation
+
+![Download](https://maven-badges.herokuapp.com/maven-central/com.moengage/inbox-core/badge.svg)
+
+Once you install the Flutter Plugin add MoEngage's native Android SDK dependency to the Android project of your application.  
+Navigate to **android/app/build.gradle**. Add the MoEngage Android SDK's dependency in the **dependencies** block.
+
+<CodeGroup>
+``` build.gradle
+dependencies {
+  implementation fileTree(dir: 'libs', include: ['*.jar'])
+  implementation("com.moengage:inbox-core:$sdkVersion")
+}
+```
+
+</CodeGroup>
+
+where **$sdkVersion** should be replaced by the latest version of the MoEngage SDK.
+
+## iOS Installation
+
+In the case of iOS, the native dependency is part of the core SDK itself, so there is no need to include any additional dependency for supporting Notification Center.
+
+<Warning>
+Make sure to configure [AppGroup ID in App Target](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45FKD0XDH4X776R47JA04GJ) and Set up [Notification Service Extension](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K4MBZ6WN3PTSSS6N6K2YQ8S2) in your iOS Project, for the SDK to save the received notifications.
+</Warning>
+
+# Fetch Messages
+
+To fetch all the inbox messages use **fetchAllMessages()** method as shown below, where you would get an instance of **InboxData**.
+
+<CodeGroup>
+``` Dart
+import 'package:moengage_inbox/inbox_data.dart';
+import 'package:moengage_inbox/inbox_message.dart';
+import 'package:moengage_inbox/moengage_inbox.dart';
+MoEngageInbox _moEngageInbox = MoEngageInbox(YOUR_Workspace_ID);
+InboxData data = await _moEngageInbox.fetchAllMessages();
+```
+
+</CodeGroup>
+
+## InboxData Payload
+
+InboxData will be received in the below format:
+
+<CodeGroup>
+``` Dart
+class InboxData {
+  /// Native platform from which the callback was triggered.
+  String platform;
+
+  /// List of [InboxMessage]
+  List messages;
+}
+
+class InboxMessage {
+  /// internal identifier used by the SDK for storage.
+  int id;
+
+  /// Unique identifier for a message.
+  String campaignId;
+
+  /// Text content of the message. Instance of [TextContent]
+  TextContent textContent;
+
+  /// true if the message has been clicked by the user else false
+  bool isClicked;
+
+  /// Media content associated with the message.
+  Media? media;
+
+  /// List of actions to be executed on click.
+  List action;
+
+  /// Tag associated to the message.
+  String tag;
+
+  /// The time in which the message was received on the device.
+  ///
+  /// Format - ISO-8601 yyyy-MM-dd'T'HH:mm:ss'Z'
+  String receivedTime;
+
+  /// The time at which the message expiry.
+  ///
+  /// Format - ISO-8601 yyyy-MM-dd'T'HH:mm:ss'Z'
+  String expiry;
+
+  /// Complete message payload.
+  Map<String, dynamic> payload;
+}
+
+class TextContent {
+  /// Title string for the inbox message.
+  String title;
+
+  /// Message string for the inbox message.
+  String message;
+
+  /// Summary string for the inbox message.
+  ///
+  /// Note: This is present for Android Platform.
+  String summary;
+
+  /// Subtitle string for the inbox message.
+  ///
+  /// Note: This is present only for the iOS Platform.
+  String subtitle;
+}
+
+class Media {
+  /// Content type of the Media.
+  MediaType mediaType;
+
+  /// Url for the media content. Generally a http(s) url.
+  String url;
+}
+
+class Action {
+  /// ActionType - navigation
+  ActionType actionType;
+}
+
+class NavigationAction extends Action {
+  ///navigation type deepLink/richLanding/screenName
+  NavigationType navigationType;
+
+  String value;
+
+  Map<String, dynamic> kvPair;
+}
+```
+
+</CodeGroup>
+
+# Get Unclicked Message Count
+
+To obtain the unclicked messages count from the Inbox use **getUnclickedCount()** method as shown below:
+
+<CodeGroup>
+``` Dart
+MoEngageInbox _moEngageInbox = MoEngageInbox(YOUR_Workspace_ID);
+int count = await _moEngageInbox.getUnClickedCount();
+```
+
+</CodeGroup>
+
+## Track Message Clicks:
+
+To track clicks on the messages inside your Inbox use **trackMessageClicked()** method as shown below:
+
+<CodeGroup>
+``` Dart
+MoEngageInbox _moEngageInbox = MoEngageInbox(YOUR_Workspace_ID);
+_moEngageInbox.trackMessageClicked(message);  //Pass the instance of InboxMessage here
+```
+
+</CodeGroup>
+
+## Delete Message:
+
+To delete a particular message from the list of messages use **deleteMessage()** method as shown below:
+
+<CodeGroup>
+``` Dart
+MoEngageInbox _moEngageInbox = MoEngageInbox(YOUR_Workspace_ID);
+_moEngageInbox.deleteMessage(message);  //Pass the instance of InboxMessage here
+```
+
+</CodeGroup>

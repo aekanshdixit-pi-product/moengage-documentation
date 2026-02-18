@@ -1,0 +1,363 @@
+---
+title: "InApp NATIV"
+description: ""
+---
+
+In-App Messaging is custom views that you can send to a segment of users to show custom messages or give new offers or take to some specific pages. They can be created from your MoEngage account.
+
+![ab8683f-71c6364-f93ec45-vlcsnap-2016-11-08-16h16m41s386.png](16582932508948)
+
+## Installing Android Dependency
+
+### **Requirements for displaying images and GIFs in InApp**
+
+Starting InApp version **7.0.0,** SDK requires [Glide](https://bumptech.github.io/glide/) to show images and GIFs in the in-apps. You need to add the below dependency in your **build.gradle** file.
+
+<CodeGroup>
+``` Code
+dependencies {
+ ...
+ implementation("com.github.bumptech.glide:glide:4.16.0")
+}
+```
+
+</CodeGroup>
+
+ 
+
+<Info>
+Additional dependency installation is not required for iOS.
+</Info>
+
+# 
+
+# Show InApp
+
+Call the below API to show an inApp campaign on a screen. You will have to handle the redirection of the user when they click on the inApps unless it's a rich landing navigation.
+
+<CodeGroup>
+``` Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+_moengagePlugin.initialise();
+_moengagePlugin.showInApp();
+```
+
+</CodeGroup>
+
+# Display Nudges
+
+Starting with ***moengage\_flutter*** version **7****.0.0,**MoEngage InApp SDK supports displaying Non-Intrusive nudges. This API is supported only in Android & IOS. You will have to handle the redirection of the user when they click on the inApps unless it's a rich landing navigation.
+
+To show a Nudge InApp Campaign call `showNudge()`
+
+<CodeGroup>
+```javascript Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+      
+_moengagePlugin.showNudge(); // Display Nudge on any available position
+_moengagePlugin.showNudge(position: MoEngageNudgePosition.top); // Display Nudge on the specific position
+```
+
+</CodeGroup>
+
+# InApp/Nudge Redirection default behavior
+
+On clicking an Inapp or Nudge, MoEngage SDKs will handle **only rich landing navigation** redirection. 
+
+For the screen name and deep link redirection, your app code should redirect the user to the right screen or deep link. To handle the screen name and deep link redirection, you must implement inapp click callback methods. MoEngage SDK will just pass the inapp payload to this call back code. Implementation steps are mentioned in the InApp callback section of the Integration.
+
+# Self Handled InApps
+
+Self-handled In Apps are messages that are delivered by the SDK to the application, and the application builds the UI using the delivered payload by the SDK. To get the self-handled in-app, use the below API.
+
+<CodeGroup>
+``` Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+_moengagePlugin.getSelfHandledInApp();
+```
+
+</CodeGroup>
+
+To get the self-handled campaign, register for the callback as shown below.
+
+ 
+
+## Multiple Self-Handled InApps
+
+<Info>
+* This feature requires a minimum moengage\_flutter version **9.0.0**
+* Event-triggered multiple self-handled inapps are not supported.
+</Info>
+
+Fetch Multiple Self Handled Campaigns using *[getSelfHandledInApps()](https://pub.dev/documentation/moengage_flutter/latest/moengage_flutter/MoEngageFlutter/getSelfHandledInApps.html)*. The MoEngage SDK will return up to 5 campaigns(in the order of campaign priority set at the time of campaign creation). The function will return self-handled in-app data in the future. 
+
+<CodeGroup>
+``` Dart
+
+import 'package:moengage_flutter/moengage_flutter.dart';
+MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+_moengagePlugin.getSelfHandledInApps().then((campaignsData) {
+     // Show the Self Handled InApps
+}).catchError((e) {
+  // Error occurred while fetching the campaigns
+});
+```
+
+</CodeGroup>
+
+It will return data of type [SelfHandledInAppsData](https://pub.dev/documentation/moengage_flutter/latest/moengage_flutter/SelfHandledCampaignsData-class.html). 
+
+### Tracking Statistics for Multiple Self-Handled In-Apps
+
+The *onCampaignsAvailable()* callback method returns *[SelfHandledCampaignsData](https://moengage.github.io/android-api-reference/inapp/com.moengage.inapp.model/-self-handled-campaigns-data/index.html)***,**which contains a list of *[SelfHandledCampaignData](https://moengage.github.io/android-api-reference/inapp/com.moengage.inapp.model/-self-handled-campaign-data/index.html)* objects. The statistics for each *SelfHandledCampaignData* object must be tracked individually below APIs.
+
+### Fetching Contextual Multiple Self-Handled InApps
+
+To fetch contextual multiple self-handled inapps, set the inapp contexts using *[setCurrentContext()](https://pub.dev/documentation/moengage_flutter/latest/moengage_flutter/MoEngageFlutter/setCurrentContext.html)* before calling *[getSelfHandledInApps()](https://pub.dev/documentation/moengage_flutter/latest/moengage_flutter/MoEngageFlutter/getSelfHandledInApps.html).*This will return a list of contextual and non-contextual inapps(in the order of campaign priority set at the time of campaign creation).
+
+ 
+
+## Tracking Statistics for Self-Handled In-Apps
+
+The application must notify MoEngage SDK whenever the In-App messages are displayed, clicked on, or dismissed, as the application controls these actions. The following methods are called to notify the SDK. The data object provided to the application in the callback for self-handled in-app should be passed as a parameter to the following APIs.
+
+<CodeGroup>
+``` Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+// call this method to notify campaign was shown.
+_moengagePlugin.selfHandledShown(message);
+// call this method to noftify campaign was clicked.
+_moengagePlugin.selfHandledClicked(message);
+// call this method to notify campaign was dismissed.
+_moengagePlugin.selfHandledDismissed(message);
+```
+
+</CodeGroup>
+
+# InApp Callbacks
+
+We provide callbacks for in-app shown, in-app clicked,  in-app dismissed, and self-Handled in-app available events. You can register for the same as shown below.
+
+| warning | **Warning**   The callbacks must be registered before inapps are displayed either via show methods or triggered events. Make sure you are calling `initialise()` the method of the plugin after you set up these callbacks. Refer [doc](https://developers.moengage.com/hc/en-us/articles/4404205878676) for more info. |
+| --- | --- |
+
+<CodeGroup>
+``` Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+
+  void _onInAppClick(ClickData message) {
+    print("This is a inapp click callback from native to flutter. Payload " +
+        message.toString());
+  }
+
+  void _onInAppShown(InAppData message) {
+    print("This is a callback on inapp shown from native to flutter. Payload " +
+        message.toString());
+  }
+
+  void _onInAppDismiss(InAppData message) {
+    print("This is a callback on inapp dismiss from native to flutter. Payload " +
+        message.toString());
+  }
+
+  void _onInAppSelfHandle(SelfHandledCampaignData? message) {     
+      if (message == null) {
+      debugPrint('$tag _onInAppSelfHandle(): SelfHandled InApp Data is Null');
+      return; 
+      }
+    print("This is a callback on inapp self handle from native to flutter. Payload " +
+        message.toString());
+  }
+
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+//Register for callbacks
+_moengagePlugin.setInAppClickHandler(_onInAppClick);
+_moengagePlugin.setInAppShownCallbackHandler(_onInAppShown);
+_moengagePlugin.setInAppDismissedCallbackHandler(_onInAppDismiss);
+_moengagePlugin.setSelfHandledInAppHandler(_onInAppSelfHandle);
+
+//NOTE: set up callbacks before initialise()
+_moengagePlugin.initialise();
+```
+
+</CodeGroup>
+
+# Contextual InApp
+
+You can restrict the in-apps based on the user's context in the application apart from restricting InApp campaigns on a specific screen. To set the user's context in the application use *setCurrentContext()* API as shown below. 
+
+## Set Context
+
+Call the below method to set the context in the *initState()* method of the widget before calling *showInApp().*
+
+<CodeGroup>
+``` Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+_moengagePlugin.setCurrentContext(['C1', 'C2']);
+```
+
+</CodeGroup>
+
+## Reset Context
+
+Once the user is moving out of the context use the *resetCurrentContext()* API to reset/clear the existing context. 
+
+<CodeGroup>
+``` Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+_moengagePlugin.resetCurrentContext();
+```
+
+</CodeGroup>
+
+For more information on Contextual InApp, refer to the video tutorial available in [Troubleshooting and FAQs](https://developers.moengage.com/hc/en-us/articles/4403843909396-Troubleshooting-and-FAQs#01JS1HR2PEN3Y4TRQ12M12F8JD).
+
+# InApp Payload
+
+InApp Data will be received in the below format:
+
+<CodeGroup>
+``` Dart
+class InAppData {
+  /// Native platform from which the callback was triggered.
+  Platforms platform;
+  
+  //Account Data
+  AccountMeta accountMeta;
+  
+  ///In-App Campaign Data
+  CampaignData campaignData;
+}
+
+class CampaignData {
+  /// Unique identifier for each campaign.
+  String campaignId;
+  
+  ///Campaign Name
+  String campaignName;
+  ...
+}
+
+class ClickData {
+  /// Native platform from which the callback was triggered.
+  Platforms platform;
+
+  /// Account Data
+  AccountMeta accountMeta;
+
+  /// In-App Campaign Data
+  CampaignData campaignData;
+
+  /// Action data with type navigation/custom
+  Action action;
+}
+
+class NavigationAction extends Action {
+  /// Type of Navigation action.
+  /// Possible value deep_linking or screen
+  NavigationType navigationType;
+
+  /// Deeplink Url or the Screen Name used for the action.
+  String navigationUrl;
+
+  /// [Map] of Key-Value pairs entered on the MoEngage Platform for
+  /// navigation action of the campaign.
+  Map<String, dynamic> keyValuePairs;
+}
+
+class CustomAction extends Action {
+  ///Key-Value Pair entered on the MoEngage Platform during campaign creation.
+  Map<String, dynamic> keyValuePairs;
+}
+
+class SelfHandledCampaignData { 
+  /// Native platform from which the callback was triggered.
+  Platforms platform;
+  
+  /// Account Data
+  AccountMeta accountMeta;
+  
+  /// In-App Campaign Data
+  CampaignData campaignData;
+  
+  //Self handled data
+  SelfHandledCampaign campaign;
+}  
+
+class SelfHandledCampaign {
+  /// Self handled campaign payload.
+  String payload;
+
+  /// Interval after which in-app should be dismissed, unit - Seconds
+  int dismissInterval;
+
+  /// InApp Campaign Display Rules
+  Rules displayRules;
+}
+      
+class Rules {
+  /// Screen name on which the campaign should be shown.
+  @Deprecated('This field is deprecated and will be removed in future releases. Use [screenNames] instead')
+  String? screenName;
+
+  /// Context for which the campaign should be shown.
+  List context;
+
+  /// Screen Names on which the campaign can be shown.
+  /// @since 10.0.0
+  List screenNames;
+}
+```
+
+</CodeGroup>
+
+# Handling Orientation Change
+
+<Info>
+This is only for the Android platform
+</Info>
+
+Starting SDK version `4.1.0` in-apps are supported in both portrait and landscape modes.  
+SDK has to be notified when the device orientation changes for SDK to handle in-app display.
+
+There are two ways to do it:
+
+1. Add the API call in the Android native part of your app
+2. Call MoEngage plugin's `onOrientationChanged()`
+
+## Add the API call in the Android native part of your app
+
+Notify the SDK when **onConfigurationChanged()** API callback is received in your App's Activity class.
+
+<CodeGroup>
+``` Dart
+public class MainActivity extends FlutterActivity {
+  ...
+  @Override
+  public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    MoEFlutterHelper.getInstance().onConfigurationChanged();
+    ...
+  }
+  ...
+}
+```
+
+</CodeGroup>
+
+## Call MoEngage plugin's orientation change API
+
+Call the below API to notify SDK of the orientation change.
+
+<CodeGroup>
+``` Dart
+_moengagePlugin.onOrientationChanged();
+```
+
+</CodeGroup>
