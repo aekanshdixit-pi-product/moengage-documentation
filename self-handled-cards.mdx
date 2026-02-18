@@ -9,7 +9,7 @@ Create targeted or automated App Inbox/NewsFeed messages that can be grouped int
 
 ## Install using Swift Package Manager
 
-MoEngageCards is supported through SPM from SDK version 3.2.0. To integrate use the following GitHub URL link and set the branch as master or version as 4.11.1 and above [https://github.com/moengage/MoEngage-iOS-Cards.git](https://github.com/moengage/MoEngage-iOS-Cards.git)
+MoEngageCards is supported through SPM from SDK version 3.2.0. To integrate use the following GitHub URL link and set the branch as master or version as 4.11.1 and above [https://github.com/moengage/MoEngage-iOS-Cards.git](https://github.com/moengage/MoEngage-iOS-Cards.git).
 
 ## Install using CocoaPod
 
@@ -29,7 +29,7 @@ Integrate the MoEngageCards framework by adding the dependency in the pod file a
   </Tab>
 </Tabs>
 
-Now run `pod install` to install the framework
+Now run `pod install` to install the framework.
 
 ## Manual Integration
 
@@ -39,169 +39,166 @@ Now run `pod install` to install the framework
   To integrate the `MoEngageCards` SDK manually to your project follow this [doc](/hc/en-us/articles/4404183451412).
 </Info>
 
-# Displaying AppInbox/Feeds
+Use the below APIs to fetch the card's data and build your own UI. 
 
-Once the module is integrated, use the below-provided methods to display the `MoEngageCardsListViewController` with the transition:
+## Fetch Categories
 
-<Tabs>
-  <Tab title="Swift">
-    ```swift
-    // To Push MoEngageCardsListViewController
-    MoEngageSDKCards.sharedInstance.pushCardsViewController(toNavigationController: self.navigationController!)
-
-    // To Present MoEngageCardsListViewController
-    MoEngageSDKCards.sharedInstance.presentCardsViewController()
-    ```
-  </Tab>
-  <Tab title="Objective-C">
-    ```objectivec
-    // To Push MoEngageCardsListViewController
-    [[MoEngageSDKCards sharedInstance] pushCardsViewControllerToNavigationController:navigationController withUIConfiguration:nil withCardsViewControllerDelegate:nil forAppID:@"YOUR Workspace ID"];
-
-    // To Present MoEngageCardsListViewController
-    [[MoEngageSDKCards sharedInstance] presentCardsViewControllerWithUIConfiguration:nil withCardsViewControllerDelegate:nil forAppID:@"YOUR Workspace ID"];
-    ```
-  </Tab>
-</Tabs>
-
-So as shown above, in the SDK we have provided support for Push and Present transition. In case you want to handle the transition while displaying the Inbox, use the [*getCardsViewController(withUIConfiguration:withCardsViewControllerDelegate:forAppID:withCompletionBlock:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)getCardsViewControllerWithUIConfiguration:withCardsViewControllerDelegate:forAppID:withCompletionBlock:) method as shown below to obtain the view controller instance:
+To fetch all the categories for which cards are configured use the API [*getCardsCategories(forAppID:withCompletionBlock:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)getCardsCategoriesForAppID:withCompletionBlock:)
 
 <Tabs>
   <Tab title="Swift">
     ```swift
-    MoEngageSDKCards.sharedInstance.getCardsViewController(withUIConfiguration: nil, withCardsViewControllerDelegate: nil, forAppID: "YOUR Workspace ID") { cardsController in
-     print("fetched CardsController")
+    MoEngageSDKCards.sharedInstance.getCardsCategories { categories, accountMeta in
+            print("Fetched Cards Categories \(categories)")
     }
     ```
   </Tab>
   <Tab title="Objective-C">
     ```objectivec
-    [[MoEngageSDKCards sharedInstance] getCardsViewControllerWithUIConfiguration:nil withCardsViewControllerDelegate:nil forAppID:@"YOUR Workspace ID" withCompletionBlock:^(MoEngageCardsListViewController * _Nullable) {
-            self.cardsController = cardsController;
+    [[MoEngageSDKCards sharedInstance] getCardsCategoriesForAppID:@"Your Workspace Id" withCompletionBlock:^(NSArray * _Nonnull, MoEngageAccountMeta * _Nullable) {
+            NSLog(@"Fetched Cards Categories");
     }];
     ```
   </Tab>
 </Tabs>
 
-# Customizing Inbox UI
+## Fetch Cards for Categories
 
-The earlier snapshots indicate what the default UI of the Inbox would look like. But we have also added support for customizing the App Inbox screen according to your App Theme. For customizing the screen make use of [*MoEngageCardsUIConfiguration*](https://moengage.github.io/ios-api-reference/Classes/MoEngageCardsUIConfiguration.html) instance and pass the same in the above-mentioned methods. Refer to the example below:
+To fetch cards eligible for display for a specific category use the API [*getCards(forCategory:forAppID:withCompletionBlock:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)getCardsForCategory:forAppID:withCompletionBlock:)
 
 <Tabs>
   <Tab title="Swift">
     ```swift
-    let uiConfig = MoEngageCardsUIConfiguration()
-    // Do customization using uiConfig
-    // provide the argument while obtaining the MoEngageCardsListViewController instance
-
-    // Present Cards View Controller
-    MoEngageSDKCards.sharedInstance.presentCardsViewController(withUIConfiguration: uiConfig)
-
-    // Push Cards View Controller 
-    MoEngageSDKCards.sharedInstance.pushCardsViewController(toNavigationController: self.navigationController!, withUIConfiguration: uiConfig)
-
-    // Obtaining the ViewController
-    MoEngageSDKCards.sharedInstance.getCardsViewController(withUIConfiguration: uiConfig, withCardsViewControllerDelegate: uiConfig, forAppID: "YOUR Workspace ID") { cardsController in
-        self.cardsController = cardsController
+    MoEngageSDKCards.sharedInstance.getCards(forCategory: "CATEGORY") { cards, accountMeta in
+              print("Fetched cards for given category")
     }
     ```
   </Tab>
-</Tabs>
-
-![130870b-IMG_0047.png](/guide-media/01GW7CNN0DAVS3QBBTKKM7THHC)
-
-The example of how the UI of Inbox can be completely customized according to your need. Below we have mentioned about what all UI attributes which can be customized using [*MoEngageCardsUIConfiguration*](https://moengage.github.io/ios-api-reference/Classes/MoEngageCardsUIConfiguration.html) instance:
-
-## Customizing Navigation Bar:
-
-Navigation Bar customization includes updating the title, navigation bar color, title color, title font, etc. Create an instance of [*MoEngageCardsNavigationBarStyle*](https://moengage.github.io/ios-api-reference/Classes/MoEngageCardsNavigationBarStyle.html) and set all the attributes as shown below, post that assign the same to your [*MoEngageCardsUIConfiguration*](https://moengage.github.io/ios-api-reference/Classes/MoEngageCardsUIConfiguration.html) instance:
-
-<Tabs>
-  <Tab title="Swift">
-    ```swift
-     let uiConfig = MoEngageCardsUIConfiguration()
-                  
-    // Navigation Bar Customizations
-    let navBarStyle = MoEngageCardsNavigationBarStyle()
-    navBarStyle.navigationBarColor = UIColor(hex: "#0A1D1F")
-    navBarStyle.navigationBarTitleFont = UIFont.systemFont(ofSize: 20.0, weight: .semibold)
-    navBarStyle.navigationBarTitleColor = UIColor(hex: "#FFFFFF")
-    navBarStyle.navigationBarTintColor = UIColor(hex: "#FFFFFF")
-    navBarStyle.navigationBarTransluscent = true
-
-    uiConfig.navigationBarTitle = "Hello!!!"
-    uiConfig.navigationBarStyle = navBarStyle
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKCards sharedInstance] getCardsForCategory:@"CATEGORY" forAppID:@"YOUR Workspace ID" withCompletionBlock:^(NSArray * _Nonnull, MoEngageAccountMeta * _Nullable) {
+            NSLog(@"Fetched cards for given category");
+    }];
     ```
   </Tab>
 </Tabs>
 
-## Customizing Category TabBar:
-
-Directly set the attributes of [*MoEngageCardsUIConfiguration*](https://moengage.github.io/ios-api-reference/Classes/MoEngageCardsUIConfiguration.html) instance, you would like to change for the Category Tabs Bar view as shown below:
+Instead of using separate APIs to fetch the Cards and categories you can use the method [*getCardsData(forAppID:withCompletionBlock:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)getCardsDataForAppID:withCompletionBlock:) to fetch all the information in one go.
 
 <Tabs>
   <Tab title="Swift">
     ```swift
-      let uiConfig = MoEngageCardsUIConfiguration()
-     // Category Tabs Customizations
-     uiConfig.categoryTabsContainerBGColor = UIColor(hex: "#6EA6CF")
-     uiConfig.categoryTabsBGColor = UIColor(hex: "#6EA6CF")
-     uiConfig.categoryTabsTextColor = UIColor(hex: "#0A1D1F")
-     uiConfig.categorySelectedTabBGColor = UIColor(hex: "#BB4D3E")
-     uiConfig.categorySelectedTabTextColor = UIColor(hex: "#FFFFFF")
-     uiConfig.categorySelectionIndicatorBarColor = UIColor(hex: "#B0BF40")
-     uiConfig.categoryTabFont = UIFont.systemFont(ofSize: 12.0, weight: .medium)
-     uiConfig.categorySelectedTabFont = UIFont.systemFont(ofSize: 16.0, weight: .bold)
+    MoEngageSDKCards.sharedInstance.getCardsData { cardsData, accountMeta in
+                      print("Cards category \(cardsData?.cardCategories)")
+                      print("Cards Data \(cardsData?.cards)")
+    }
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKCards sharedInstance] getCardsDataForAppID:@"YOUR Workspace ID" withCompletionBlock:^(MoEngageCardsData * _Nullable, MoEngageAccountMeta * _Nullable) {
+           NSLog(@"Cards category %@", cardsData.cardCategories);
+           NSLog(@"Cards Data %@", cardsData.cards);
+    }];
     ```
   </Tab>
 </Tabs>
 
-## Customizing Empty Inbox:
+## Track Statistics for Cards
 
-In the case of an empty inbox, we provide the option of setting a message and image. By default, the empty inbox will look as described in the following image:
+Since the UI/display of the cards is controlled by the application to track statistics on delivery, display, click we need the application to notify the SDK.
 
-![38d1c48-IMG_6834BE2FB8CF-1.jpeg](/guide-media/01GW7TDTW4HEMW5JH355SGRG08)
+### Delivered
 
-This can again be customized by using the UI configuration instance as shown below:
+To track delivery to the card section of the application use the API [*cardDelivered(\_:forAppID:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)cardDelivered:forAppID:) when the cards section of the application is loaded by passing the instance of [*MoEngageCardCampaign*](https://moengage.github.io/ios-api-reference/Classes/MoEngageCardCampaign.html).
 
 <Tabs>
   <Tab title="Swift">
     ```swift
-    let uiConfig = MoEngageCardsUIConfiguration()
-
-    // Empty Inbox Customization
-    uiConfig.emptyInboxText = "No New Messages!!!"
-    uiConfig.emptyInboxTextColor = UIColor(hex:"#BB4D3E") ?? .white
-    uiConfig.emptyInboxTextFont = UIFont.systemFont(ofSize: 28.0, weight: .bold)
-    uiConfig.emptyInboxImage = UIImage(named: "emptyInbox")
+    MoEngageSDKCards.sharedInstance.cardDelivered(cardCampaign, forAppID: "YOUR Workspace ID")    
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKCards sharedInstance] cardDelivered:cardCamapigns forAppID:@"YOUR Workspace ID"];    
     ```
   </Tab>
 </Tabs>
 
-## Customising Inbox Container:
+### Impression
 
-In case any of the property of `MoEngageCardsListViewController` has to be customized, refer to the below example:
+Call the method [*cardShown(\_:forAppID:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)cardShown:forAppID:) when a specific card is visible on the screen.
 
 <Tabs>
   <Tab title="Swift">
     ```swift
-    let uiConfig = MoEngageCardsUIConfiguration()
+    MoEngageSDKCards.sharedInstance.cardShown(cardCampaign, forAppID: "YOUR Workspace ID")
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKCards sharedInstance] cardShown:cardCamapign forAppID:@"YOUR Workspace ID"];    
+    ```
+  </Tab>
+</Tabs>
 
-    // Cards Container customization
-    uiConfig.cardsViewControllerBGColor = UIColor(hex:"#0A1D1F")
-    uiConfig.cardsTableViewBGColor = UIColor(hex:"#0A1D1F")
-    uiConfig.pullToRefreshTintColor = UIColor(hex:"#BB4D3E")
-            
-    // To disable Pull to refresh set it to false, set to true by default
-    uiConfig.enablePullToRefresh = false
-           
-    // To change the Delete/Cancel text in Action Sheet
-    uiConfig.actionSheetDeletionText = "Remove"
-    uiConfig.actionSheetCancelText = "Never Mind" // New Updates Button Customizations
-    uiConfig.newUpdatesButtonTitle = "Updates Available!!"
-    uiConfig.newUpdatesButtonFont = UIFont.systemFont(ofSize: 14.0, weight: .semibold)
-    uiConfig.newUpdatesButtonBGColor = UIColor(hex:"#BB4D3E")
-    uiConfig.newUpdatesButtonTextColor = UIColor(hex: "#FFFFFF")
+### Click
+
+Call the method [*cardClicked(\_:withWidgetID:forAppID:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)cardClicked:withWidgetID:forAppID:) whenever a user clicks on a card, along with the card object widget identifier for the UI element clicked should also be passed.
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKCards.sharedInstance.cardClicked(cardCampaign, withWidgetID: widgetID);
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKCards sharedInstance] cardClicked:cardCamapigns withWidgetID:widgetID forAppID:@"YOUR Workspace ID"];    
+    ```
+  </Tab>
+</Tabs>
+
+## Delete Card
+
+Call the method [*deleteCards(\_:forAppID:andCompletionBlock:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)deleteCards:forAppID:andCompletionBlock:) to delete a card by passing an array of [*MoEngageCardCampaign*](https://moengage.github.io/ios-api-reference/Classes/MoEngageCardCampaign.html) as parameter.
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKCards.sharedInstance.deleteCards([cards]) { isDeleted, accountMeta in
+         print("Card deletion was \(isDeleted)")
+    }
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKCards sharedInstance] deleteCards:[cardCamapigns] forAppID:nil andCompletionBlock:^(BOOL isDeleted, MoEngageAccountMeta * _Nullable accountMeta) {
+            NSLog(@"Card deletion was %d", isDeleted);
+    }];
+    ```
+  </Tab>
+</Tabs>
+
+The above API has an overloaded method that accepts a list of cards to be deleted.
+
+## Refresh Cards from the Server
+
+Use the [*fetchCards(forAppID:withCompletion:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)fetchCardsForAppID:withCompletion:) API to refresh cards from the MoEngage server if required, [*MoEngageCardData*](https://moengage.github.io/ios-api-reference/Classes/MoEngageCardData.html) is provided in callback with refreshed [*MoEngageCardCampaign*](https://moengage.github.io/ios-api-reference/Classes/MoEngageCardCampaign.html) in *cards* property and account meta-data [*MoEngageAccountMeta*](https://moengage.github.io/ios-api-reference/Classes/MoEngageAccountMeta.html) in *accountMeta*.
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    MoEngageSDKCards.sharedInstance.fetchCards { data in
+        print("Refreshed cards: \(data?.cards) for account \(data?.accountMeta)")
+    }
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    [[MoEngageSDKCards sharedInstance] fetchCardsForAppID:nil withCompletion:^(MoEngageCardData * _Nullable data) {
+        NSLog(@"Refreshed cards: %@ for account %@", data.cards, data.accountMeta);
+    }];
     ```
   </Tab>
 </Tabs>
@@ -209,155 +206,6 @@ In case any of the property of `MoEngageCardsListViewController` has to be custo
 <Info>
   **Note**
 
-  We have supported pull to refresh in the Inbox, the activity indicator color for the same can be updated as shown above.
+  *   The SDK automatically refreshes/fetches cards from the MoEngage server whenever the application comes to the foreground. 
+  *   This API has a FUP if breached the existing cards i.e. the ones in the local storage of the device will be passed on in the callback.
 </Info>
-
-## Customizing Card Properties:
-
-We have provided options to customize your Card in the dashboard while creating the campaign, but along with it you can also set the default attribute values so that you don't have to set it every time while creating the campaign, refer to the example below:
-
-<Tabs>
-  <Tab title="Swift">
-    ```swift
-    let uiConfig = MoEngageCardsUIConfiguration()
-
-    // Cards Default parameters
-    uiConfig.defaultCardBackgroundColor = UIColor(hex:"#6EA6CF")
-
-    // On highlighting the cell
-    uiConfig.cardSelectionTintColor = UIColor(hex:"#333333")
-
-    // Header Label textcolor and font
-    uiConfig.cardHeaderLabelFont = UIFont.init(name: "AmericanTypewriter", size: 20.0)!
-    uiConfig.cardHeaderLabelDefaultTextColor = UIColor(hex:"#0A1D1F")
-
-    // Message Label textcolor and font
-    uiConfig.cardMessageLabelFont  = UIFont.init(name: "Baskerville", size: 16.0)!
-    uiConfig.cardMessageLabelDefaultTextColor = UIColor(hex:"#0F2E2A")
-
-    // TimeStamp Date Format, Label textcolor and font
-    uiConfig.timestampDateFormat = "dd/MM, HH:mm"
-    uiConfig.cardTimestampLabelFont  = UIFont.init(name: "Courier", size: 14.0)!
-    uiConfig.cardTimestampLabelDefaultTextColor = UIColor(hex:"#0F2E2A")
-
-    // CTA Button customizations
-    uiConfig.cardButtonFont  = UIFont.init(name: "SavoyeLetPlain", size: 16.0)!
-    uiConfig.cardButtonDefaultTextColor = UIColor(hex:"#FFFFFF")
-    uiConfig.cardButtonDefaultBGColor = UIColor(hex:"#BB4D3E")
-
-    // Image Customizations
-    uiConfig.cardImageBackgroundColor = UIColor.clear
-    uiConfig.cardPlaceholderImage  = UIImage(named: "card-placeholder")
-
-    // Card Pinned Indicator
-    uiConfig.cardPinnedImage  = UIImage(named: "pinned")
-
-    // Unclicked Indicator
-    // Either Color OR Image NOT Both, If both are set then image will be considered
-    uiConfig.cardUnclickedIndicatorColor = UIColor(hex:"#7EC247")
-    uiConfig.cardUnclickedIndicatorImage = UIImage(named: "unclicked")
-
-    // Separator
-    uiConfig.cardSeparatorBackgroundColor = UIColor(red: 10.0/255.0, green: 90.0/255.0, blue: 190.0/255.0, alpha: 0.30)
-    ```
-  </Tab>
-</Tabs>
-
-# Getting Cards Count APIs
-
-## Getting New Cards Count:
-
-A Card is considered new if it's not yet seen by the user. To get the number/count of new cards use the [*getNewCardsCount(forAppID:withCompletionBlock:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)getNewCardsCountForAppID:withCompletionBlock:) method as shown below:
-
-<Tabs>
-  <Tab title="Swift">
-    ```swift
-    MoEngageSDKCards.sharedInstance.getNewCardsCount(forAppID: "YOUR Workspace ID") { count, accountMeta in
-       print("Card count is \(count)")
-    })
-    ```
-  </Tab>
-</Tabs>
-
-## Getting Unclicked Cards Count:
-
-To get the number/count of cards which are not clicked by the user, use the [*getUnclickedCardsCount(forAppID:withCompetionBlock:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)getUnclickedCardsCountForAppID:withCompletionBlock:) method as shown below:
-
-<Tabs>
-  <Tab title="Swift">
-    ```swift
-    MoEngageSDKCards.sharedInstance.getUnclickedCardsCount(forAppID: "YOUR Workspace ID") { count, accountMeta in
-      print("UnClicked Card count is \(count)")
-    }
-    ```
-  </Tab>
-</Tabs>
-
-# Callbacks using MoEngageCardsDelegate
-
-Use [*MoEngageCardsDelegate*](https://moengage.github.io/ios-api-reference/Protocols/MoEngageCardsDelegate.html) protocol for getting the callbacks from the Cards Module:
-
-<Tabs>
-  <Tab title="Swift">
-    ```swift
-    @objc public protocol MoEngageCardsDelegate {
-       // Called when the Cards data is synced successfully
-        @objc optional func cardsSyncedSuccessfully(forAccountMeta accountMeta: MoEngageAccountMeta)
-    }
-    ```
-  </Tab>
-</Tabs>
-
-Set [*setCardsDelegate(delegate:forAppID:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html#/c:@M@MoEngageCards@objc(cs)MoEngageSDKCards(im)setCardsDelegateWithDelegate:forAppID:) property of [*MoEngageSDKCards*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKCards.html) instance as shown below to get the above callbacks:
-
-<Tabs>
-  <Tab title="Swift">
-    ```swift
-    class DelegateClass: MoEngageCardsDelegate {
-    //  ...
-    MoEngageSDKCards.sharedInstance.setCardsDelegate(delegate: self)// Pass delegate instance
-    ```
-  </Tab>
-</Tabs>
-
-# Callbacks using MoEngageCardsViewControllerDelegate
-
-Use `MoEngageCardsViewControllerDelegate` protocol for getting the callbacks from the Cards Module:
-
-<Tabs>
-  <Tab title="Swift">
-    ```swift
-    @objc public protocol MoEngageCardsViewControllerDelegate {
-        // Called when MoEngageCardsListViewController is dismissed after being presented
-       @objc optional func cardsViewControllerDismissed(forAccountMeta accountMeta: MoEngageAccountMeta)
-        
-        // Called when a Card is deleted
-        @objc optional func cardDeleted(withCardInfo card: MoEngageCardCampaign, forAccountMeta accountMeta: MoEngageAccountMeta)
-        
-        // Called when a Card is clicked by the user
-        @objc optional func cardClicked(withCardInfo card: MoEngageCardCampaign, andAction action:MoEngageCardAction, forAccountMeta accountMeta: MoEngageAccountMeta) -> Bool
-    }
-    ```
-  </Tab>
-</Tabs>
-
-Set `MoEngageCardsViewControllerDelegate` by passing the delegate as parameter in the below functions.
-
-<Tabs>
-  <Tab title="Swift">
-    ```swift
-    class DelegateClass: MoEngageCardsViewControllerDelegate {
-    //  ...
-    //Pass delegate instance when presenting the controller
-    MoEngageSDKCards.sharedInstance.presentCardsViewController(withUIConfiguration: nil, withCardsViewControllerDelegate: self)
-           
-    //Pass delegate instance when pushing the controller
-    MoEngageSDKCards.sharedInstance.pushCardsViewController(toNavigationController: self.navigationController!, withUIConfiguration: nil, withCardsViewControllerDelegate: self)
-
-    //Pass delegate instance when fetching the controller
-     MoEngageSDKCards.sharedInstance.getCardsViewController(withUIConfiguration: uiConfig, withCardsViewControllerDelegate: uiConfig, forAppID: "YOUR Workspace ID") { cardsController in
-                
-    }
-    ```
-  </Tab>
-</Tabs>
