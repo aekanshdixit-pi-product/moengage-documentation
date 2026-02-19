@@ -1,3 +1,92 @@
 ---
 title: "Troubleshooting and FAQs"
 ---
+# Enable SDK logs
+
+By default, we have disabled logs from the SDK. For debugging if you want to see the SDK logs in your console, use the configuration below:
+
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    sdkConfig.consoleLogConfig = MoEngageConsoleLogConfig(isLoggingEnabled: true, loglevel: .verbose)
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec
+    MoEngageConsoleLogConfig *consoleLogConfig = [[MoEngageConsoleLogConfig alloc] initWithIsLoggingEnabled:TRUE loglevel:MoEngageLoggerTypeVerbose];
+    ```
+  </Tab>
+</Tabs>
+
+_All MoEngage logs are prefixed by the keyword "MoEngage"._
+
+# FAQs
+
+## Don't see events in the dashboard?
+
+*   Make sure that the [SDK initialization](/hc/en-us/articles/4403905438228) is done properly. Check if the App ID provided in the initialization method is correct.
+*   Once the App ID is checked, make sure you are checking in the right MoEngage environment. While initializing the SDK, you must make use of the **DEBUG** macro in your project. By default behavior, if the build configuration is set to Debug then events will show up in **Test Environment**, or else if build configuration is set to Release then events will be tracked in **Live Environment**.
+*   In the SDK we reject events with invalid event attributes. Event attribute values can only have Strings, Numbers, and dictionaries, or else events might get rejected. For confirming enable the SDK logs and check if the events list sent while the app goes to the background has the event you are tracking, if not then events are getting rejected by the SDK.
+*   If neither of the above then sometimes it takes a little time to show up in the dashboard, so wait for about 10-15 mins for the events to show up. :)
+
+## Seeing events of one user in another user's profile?
+
+*   Make sure you have implemented user unique ID tracking properly. Please set [**User Attribute Unique ID**](/hc/en-us/articles/4403905883796) **unique** to your users that are logged, don't hardcode this value.
+*   Make sure [resetUser](/hc/en-us/articles/4403905883796) method is called on the logout feature of the App so that SDK can differentiate between the users.
+
+## IDFA not getting tracked?
+
+*   SDK tracks IDFA (Advertising Identifier) only when `AdSupport` framework is included in the project. This is to make sure to track IDFA only for apps that use `AdSupport` to show ads in the App. Also, there is an AppStore restriction on using IDFA without showing Ads in the app, which may result in rejection of the build.
+*   Also, we track IDFA only if the user has not limited the Ad Tracking in the device settings.
+*   If your app is not showing any ads then we advise you to remove `AdSupport` the framework to avoid rejection in the AppStore review process.
+
+## Not getting push notifications on your devices?
+
+*   First, check if the [implementation](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45FKD0XDH4X776R47JA04GJ) is done correctly. Ensure you registered your app for push notifications correctly, check if you are getting the device token while trying to register for Remote Notification, and the same is sent to the SDK correctly.
+*   Refer this [link](/hc/en-us/articles/4403944011028) and verify uploaded APNS pem file is valid.
+*   The dashboard says notification sent, but the device didn’t receive it - Check if notification settings for the app were disabled.
+
+## Getting BadDeviceToken Error while sending the push notifications?
+
+*   This error comes whenever you try to send push notifications from the TEST environment to AppStore/AdHoc Build **OR** from a LIVE environment to development build.
+*   Set Build Configuration correctly and test in the correct environment. Refer [link](/hc/en-us/articles/4403905438228-SDK-Initialisation#test-live-environment-0-3) for more info.
+
+## Getting DeviceTokenNotForTopic Error while sending the push notifications?
+
+*   You will get this error when **Bundle-ID** of the build-in which you are expecting the push notifications and that of APNS certificate uploaded in the dashboard (`pem` file) are different.
+
+## Push notification clicks not getting updated?
+
+*   Ensure that you are calling MoEngage SDK methods in callback methods which are called on receiving remote notifications.
+
+## Rich landing not working for push notifications?
+
+*   **If HTTP link**: HTTP URLs aren't supported in iOS9 and above unless explicitly specified in the plist. Include **App Transport Security Settings** Dictionary in your **Info.plist** and inside this set **Allow Arbitrary Loads to YES**.
+*   Check if the Rich Landing URL is valid.
+
+## Images/Video/Audio in Rich Notifications(iOS10 and above) not showing in push notifications?
+
+*   Make sure you have implemented the [Rich Notification](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K4MBZ6WN3PTSSS6N6K2YQ8S2) feature correctly.
+*   **If HTTP link**: HTTP URLs aren't supported in iOS9 and above unless explicitly specified in the plist. Include **App Transport Security Settings** Dictionary in your Notification Service Extensions **Info.plist** and inside this set **Allow Arbitrary Loads to YES**.
+*   Check if the Image/Audio/Video URL is valid.
+
+## Not Getting notifications that are not clicked by users in the Notification Center(Inbox)?
+
+*   Make sure that the SDK Version is above 4.4.0, and confirm if you have implemented Notification Service Extension as mentioned [here](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45FKD0XDH4X776R47JA04GJ).
+*   Along with it make sure that the App Group IDs are set correctly for both the [App Target](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45FKD0XDH4X776R47JA04GJ) and the Service Extension target.
+
+## Not getting Screen Names drop-down in the Navigation Action while creating the campaign?
+
+*   MoEngage iOS SDK doesn't track screen Names in your app. The possible values for screenName parameter are something that has to be defined by developers in the project. Therefore, there will be no dropdown in case of iOS and the Screen name value has to be entered by the marketer in the text field while creating the campaign. MoEngage will provide the entered value in the notification payload. The developers will have to implement the part to parse and get the `screenName` parameter's value and to navigate to the mentioned screen.
+
+## InApp campaign doesn't show in the app?
+
+*   Make sure **handleInAppMessage** method is called wherever In-App is displayed - [link](/hc/en-us/articles/4404155127828-In-App-NATIV-SDK-Version-6-0-0-and-above-#how-to-show-in-app-message--0-1)
+*   In-App only came once and can’t see/test it again. Then it might be a case where inApp to be shown may not pass a set of rules which we have kept in SDK to make sure the user experience isn't hindered. Refer the [link](/hc/en-us/articles/4404155127828-In-App-NATIV-SDK-Version-6-0-0-and-above-#in-app-messaging-rules-0-13) to know about these rules.
+*   In case image URLs are with HTTP scheme: HTTP URL aren't supported in iOS9 and above unless explicitly specified in the Apps `info.plist`. You will have to include **App Transport Security Settings** Dictionary in your Info.plist and inside this set **Allow Arbitrary Loads** to **YES**.
+*   [Enable SDK logs](/hc/en-us/articles/4404197969812-Troubleshooting-And-FAQs#enable-sdk-logs-0-0) to get more details on why inApp didn't show up and share it with MoEngage Team.
+
+## Why are you getting Missing Purpose String in Info.plist File warning from App Store?
+
+Very recently you would have started getting this warning mail from Apple on uploading the build to AppStore. This mail informs about a restriction that will be applied by Apple starting from Spring 2019.
+As a fix for this issue, we have separated SDK's Geofence module to [MOGeofence](http://cocoapods.org/pods/MOGeofence) from MoEngage-iOS-SDK [version 4.3.0](/hc/en-us/articles/4404198236564#v4-3-0-0-28), and going forward has to be integrated separately into a project. Also because of this, there are few changes in the implementation of geofence campaigns. Please follow the [docs](/hc/en-us/articles/4404022268308) here to know more.
