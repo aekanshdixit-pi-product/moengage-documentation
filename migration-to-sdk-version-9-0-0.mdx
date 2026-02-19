@@ -1,45 +1,139 @@
 ---
 title: 'Migration to SDK version 9.0.0'
 ---
-To install the frameworks manually, follow the steps below:
+We have made some class name updates in SDK version 9.0.0 and if you are someone who was using an 8.2.0 and above version of our SDK and planning to move to version 9.0.0 or above, here are the changes to be made while migrating.
 
-Download the latest SDKs from our GitHub repository. You can find the download URLs for each SDK in [package.json](https://github.com/moengage/apple-sdk/blob/master/package.json).
+# Initialization Method Changes
 
-![manualintegrationppp.png](/guide-media/01KADPRAKB2A3ZAV505PJQCJRW)
+We have updated the initialization method of SDK with SDKConfig as the required parameter and sdkState as an optional parameter.
 
-# Embedded Frameworks in App Target
+### Deprecated methods
 
-Make sure to embed the required frameworks to App Target as described in the following image, set the Embed option to **Embed & Sign** for MoEngage framework files:
+<Tabs>
+  <Tab title="Swift">
+    ```swift
+    let sdkConfig = MOSDKConfig(withAppID: "YOUR Workspace ID")
+    #if DEBUG
+    	MoEngage.sharedInstance().initializeDefaultTestInstance(with: sdkConfig, andLaunchOptions: launchOptions)
+    #else
+    	MoEngage.sharedInstance().initializeDefaultLiveInstance(with: sdkConfig, andLaunchOptions: launchOptions)
+    #endif
+    ```
+  </Tab>
 
-![10_x_xcframeworks.png](/guide-media/01KAE8CZ0FKDJ0CSXV7KDXP2SW)
+  <Tab title="Objective-C">
+    ```objectivec
+    MOSDKConfig* sdkConfig = [[MOSDKConfig alloc] initWithAppID:@"YOUR Workspace ID"];
+    #ifdef DEBUG
+       [[MoEngage sharedInstance] initializeDefaultTestInstanceWithConfig:sdkConfig andLaunchOptions:launchOptions];
+    #else
+       [[MoEngage sharedInstance] initializeDefaultLiveInstanceWithConfig:sdkConfig andLaunchOptions:launchOptions];
+    #endif
+    ```
+  </Tab>
+</Tabs>
 
-Required Frameworks:
+For information on the new initialization methods, refer to this [link](https://developers.moengage.com/hc/en-us/articles/4403905438228-SDK-initialisation).
 
-| Frameworks | Status | Purpose |
-| :--- | :--- | :--- |
-| MoEngageCore | Required | Provides the foundational services, initialization, and lifecycle management for the SDK. |
-| MoEngageSDK | Required | Serves as the primary public interface and orchestrator for all MoEngage SDK functionalities. |
-| MoEngageSecurity | Required | Enables data protection during access and transmission. |
-| MoEngageMessaging | Required | Manages push notification registration, payload handling, and core messaging features. |
-| MoEngageCampaignsCore | Required | Manages campaign payload handling and display. |
+# Setting Region/Data Center
 
-Add-on Frameworks:
+MoEngageDataCenter: DataCenter class name has been updated in the SDK version `9.0.0`. Following are the existing ones used in the SDK version in `8.2.0` and above.
 
-| Frameworks | Status | Purpose |
-| :--- | :--- | :--- |
-| MoEngageTriggerEvaluator | Optional | Enables the display of in-app messages and device triggered push notifications, based on AND trigger conditions. |
-| MoEngageInApps | Optional | Enables the display of in-app messages, such as pop-ups and modals. |
-| MoEngageGeofence | Optional | Enables geofence monitoring for location-based campaign triggers. |
-| MoEngageInbox | Optional | Enables a persistent notification center (inbox) within the application. |
-| MoEngageCards | Optional | Enables the display and management of Content Cards. |
-| MoEngageRichNotification | Optional | Enables rich media content (images, video, audio) and templates in push notifications. |
-| MoEngageRealTimeTrigger | Optional | Facilitates high-frequency, real-time campaign triggers based on user events. |
-| MoEngageLiveActivity | Optional | Manages live activities registration, payload handling, and tracking. |
+| SDK Version 8.2.0 | SDK Version 9.0.0 |
+| :--- | :--- |
+| MODataCenter | MoEngageDataCenter |
 
-# Link MoEngageRichNotification framework in App Extensions
+For information on the new DataCenter value, refer to this [link](https://developers.moengage.com/hc/en-us/articles/4403910162452-Data-Center).
 
-This is only required if you are using the `MoEnagageRichNotification` framework in the project. Make sure to link the framework in the Extension targets as shown below and set the **Embed** option to **Do Not Embed** in this case, as it is already embedded in your App Target:
+# Install/Update differentiation
 
-![Screenshot_2022-03-16_at_2.56.37_PM.png](/guide-media/01GW7XY1D2MY83R9ES37G2D97F)
+| SDK Version 8.x.x | SDK Version 9.0.0 |
+| :--- | :--- |
+| MoEngage.sharedInstance().appStatus(.install) | MoEngageSDKAnalytics.sharedInstance.appStatus(.install) |
 
-In extension target build settings, add `@executable_path/../../Frameworks` as additional `LD_RUNPATH_SEARCH_PATHS`.
+For information on the new DataCenter value, refer to this [document](https://developers.moengage.com/hc/en-us/articles/4403910297620-Install-Update-differentiation).
+
+# Analytics:
+
+From SDK version `9.0.0`, we have updated methods related to Analytics. Refer to the table below to use the updated one.
+
+| SDK Version 8.x.x | SDK Version 9.0.0 |
+| :--- | :--- |
+| MOAnalytics | MoEngageSDKAnalytics |
+
+For information on tracking user attributes methods, refer to this [document](https://developers.moengage.com/hc/en-us/articles/4403922636308-Tracking-events).
+
+# Inapps
+
+From SDK version `9.0.0`, we have updated methods related to Inapps. Refer to the table below to use the updated one.
+
+| SDK Version 8.x.x | SDK Version 9.0.0 |
+| :--- | :--- |
+| MOInapp | MoEngageSDKInApp |
+| MOInApp.sharedInstance().showCampaign() | MoEngageSDKInApp.sharedInstance.showInApp() |
+| MOInApp.sharedInstance().showNudge(at: NudgePositionTop) | MoEngageSDKInApp.sharedInstance.showNudge(atPosition: NudgePositionTop) |
+| MOInAppNativeDelegate  | MoEngageInAppNativeDelegate |
+| func inAppShown(withCampaignInfoinappCampaign: MOInAppCampaign, foraccountMeta: MOAccountMeta) | func inAppShown(withCampaignInfoinappCampaign: MoEngageInAppCampaign, forAccountMetaaccountMeta: MoEngageAccountMeta) |
+| `func inAppDismissed(withCampaignInfoinappCampaign: MOInAppCampaign, foraccountMeta: MOAccountMeta)` | `func inAppDismissed(withCampaignInfoinappCampaign: MoEngageInAppCampaign,forAccountMetaaccountMeta: MoEngageAccountMeta)` |
+| `func inAppClicked(withCampaignInfoinappCampaign: MOInAppCampaign, andCustomActionInfocustomAction: MOInAppAction, foraccountMeta: MOAccountMeta)` | `func inAppClicked(withCampaignInfoinappCampaign: MoEngageInAppCampaign, andCustomActionInfocustomAction: MoEngageInAppAction, forAccountMetaaccountMeta: MoEngageAccountMeta)` |
+| `func inAppClicked(withCampaignInfoinappCampaign: MOInAppCampaign, andNavigationActionInfonavigationAction: MOInAppAction, foraccountMeta: MOAccountMeta)` | `func inAppClicked(withCampaignInfoinappCampaign: MoEngageInAppCampaign, andNavigationActionInfonavigationAction: MoEngageInAppAction, forAccountMetaaccountMeta: MoEngageAccountMeta)` |
+| `func selfHandledInAppTriggered(withInfoinappCampaign: MOInAppSelfHandledCampaign, foraccountMeta: MOAccountMeta)` | `func selfHandledInAppTriggered(withInfoinappCampaign: MoEngageInAppSelfHandledCampaign, forAccountMetaaccountMeta: MoEngageAccountMeta)` |
+
+For more details, refer to the [InApp Native developer documentation](https://developers.moengage.com/hc/en-us/articles/4404155127828-In-App-Nativ).
+
+# Cards
+
+From SDK version `9.0.0`, we have updated methods related to Cards. Refer to the table below to use the updated one.
+
+| SDK Version 8.x.x | SDK Version 9.0.0 |
+| :--- | :--- |
+| MOCards | MoEngageSDKCards |
+| MOCardsDelegate | MoEngageCardsDelegate |
+| MOCardsViewControllerDelegate | MoEngageCardsDelegate |
+| `@objc optional func cardsSyncedSuccessfully(forAccountMeta accountMeta: MOAccountMeta)` | `@objc optional func cardsSyncedSuccessfully(forAccountMeta accountMeta: MoEngageAccountMeta)` |
+
+# Push Notification
+
+From SDK version `9.0.0`, we have updated methods related to Push Notifications. Refer to the table below to use the updated one.
+
+| SDK Version 8.x.x | SDK Version 9.0.0 |
+| :--- | :--- |
+| MORichNotification | MoEngageSDKRichNotification |
+| `MoEngage.sharedInstance().registerForRemoteNotification(withCategories: nil, withUserNotificationCenterDelegate: self)` | `MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification(withCategories: nil, andUserNotificationCenterDelegate: self)` |
+| `MoEngage.sharedInstance().setPushToken(deviceToken)` | `MoEngageSDKMessaging.sharedInstance.setPushToken(deviceToken)` |
+| `MoEngage.sharedInstance().didFailToRegisterForPush()` | `MoEngageSDKMessaging.sharedInstance.didFailToRegisterForPush()` |
+| `MoEngage.sharedInstance().userNotificationCenter(center, didReceive: response)` | `MoEngageSDKMessaging.sharedInstance.userNotificationCenter(center, didReceive: response)` |
+| `MoEngage.sharedInstance().didReceieveNotificationinApplication(application, withInfo: userInfo)` | `MoEngageSDKMessaging.sharedInstance.didReceieveNotification(inApplication: application, withInfo: userInfo)` |
+| `MoEngage.sharedInstance().setDisableBadgeReset(true)` | `MoEngageSDKMessaging.sharedInstance.disableBadgeReset(true)` |
+| `MOMessaging.sharedInstance.setMessagingDelegate(self)` | `MoEngageSDKMessaging.sharedInstance.setMessagingDelegate(self)` |
+
+# RealTimeTrigger:
+
+From SDK version `9.0.0`, we have updated methods related to RealTime Trigger. Refer to the table below to use the updated one.
+
+| SDK Version 8.x.x | SDK Version 9.0.0 |
+| :--- | :--- |
+| MORealTimeTrigger | MoEngageSDKRealTimeTrigger |
+
+For more details, refer to [Real-Time Triggers.](https://developers.moengage.com/hc/en-us/articles/4404012829204-Real-Time-Triggers)
+
+# Location Triggered
+
+From SDK version `9.0.0`, we have updated methods related to Location Trigger. Refer to the table below to use the updated one.
+
+| SDK Version 8.x.x | SDK Version 9.0.0 |
+| :--- | :--- |
+| MOGeofence | MoEngageSDKGeofence |
+| `MOGeofenceHandler.sharedInstance().delegate = self` | `MoEngageSDKGeofence.sharedInstance.setGeofenceDelegate(self)` |
+
+For more info on the Geofence feature, refer to our documentation [here.](https://developers.moengage.com/hc/en-us/articles/4404022268308-Location-triggered)
+
+# Inbox
+
+| SDK Version 8.x.x | SDK Version 9.0.0 |
+| :--- | :--- |
+| MOInbox | MoEngageSDKInbox |
+| MOInboxViewController | MoEngageInboxViewController |
+| `func getInboxViewController(withUIConfiguration uiConfig: MOInboxUIConfiguration? = nil, withInboxWithControllerDelegate delegate: MOInboxViewControllerDelegate? = nil, forAppID appID: String? = nil, withCompletionBlock completionBlock: @escaping (MOInboxViewController?)->())` | `func getInboxViewController(withUIConfiguration uiConfig: MoEngageInboxUIConfiguration? = nil, withInboxWithControllerDelegate delegate: MoEngageInboxViewControllerDelegate? = nil, forAppID appID: String? = nil, withCompletionBlock completionBlock: @escaping (MoEngageInboxViewController?)->())` |
+
+For more information on the Geofence feature, refer to this [document.](https://developers.moengage.com/hc/en-us/articles/4403961980308-Actionable-Notifications)
