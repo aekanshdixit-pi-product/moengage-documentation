@@ -1,17 +1,17 @@
 ---
 title: "Push Callback"
-description: ""
 ---
 
 ## Push Click Callback
 
 MoEngage's Flutter plugin optionally provides a callback on push clicks.
 
-To register for the callback, call the **setPushClickCallbackHandler()** on the **MoEngageFlutter** object in your dart code.  
+To register for the callback, call the **setPushClickCallbackHandler()** on the **MoEngageFlutter** object in your dart code.\
 This API takes a method as input with whose **typedef** is **PushClickCallbackHandler(PushCampaignData data).**
 
 <CodeGroup>
-``` Dart
+
+```Dart Dart
 import 'package:moengage_flutter/moengage_flutter.dart';
 void _onPushClick(PushCampaignData message) {
     print("_onPushClick(): Push click callback from native to flutter. Payload " +
@@ -32,7 +32,8 @@ Make sure the callback is set before calling the initialize **()** of the MoEnga
 NotificationPayload received in the callback is an `PushCampaignData` instance with the following definition:
 
 <CodeGroup>
-``` Dart
+
+```Dart Dart
 class PushCampaignData {
   Platforms platform;
   AccountMeta accountMeta;
@@ -45,7 +46,8 @@ class PushCampaignData {
 **platform** - Native platform from which callback is triggered. Possible values - **android**, **ios**. **data**- **PushCampaignData** object
 
 <CodeGroup>
-``` Dart
+
+```Dart Dart
 class PushCampaign {
   bool isDefaultAction;
   Map<String, dynamic> clickedAction;
@@ -62,6 +64,7 @@ class PushCampaign {
 Payload Structure for **clickedAction** Map
 
 <CodeGroup>
+
 ```json JSON
 {
   "clickedAction": {
@@ -81,18 +84,18 @@ Payload Structure for **clickedAction** Map
 
 </CodeGroup>
 
-**clickedAction.type**- Type of click action. Possible values **navigation** and **customAction**. Currently, **customAction** is supported only on Android.  
-**clickAction.payload** - Action payload for the clicked action.  
+**clickedAction.type**- Type of click action. Possible values **navigation** and **customAction**. Currently, **customAction** is supported only on Android.\
+**clickAction.payload** - Action payload for the clicked action.\
 **clickedAction.payload.type** - Type of navigation action defined. Possible values **screenName**, **deepLink**,  and **richLanding**.
 
-Currently, in the case of iOS, rich landing and deep-link URLs are processed internally by the SDK and not passed in this callback; therefore possible value in the case of iOS is only **screenName**.  
-**clickAction.value** - value entered for navigation action or custom payload.  
-**clickAction.kvPair** - Custom key-value pair entered on the MoEngage Platform.  
+Currently, in the case of iOS, rich landing and deep-link URLs are processed internally by the SDK and not passed in this callback; therefore possible value in the case of iOS is only **screenName**.\
+**clickAction.value** - value entered for navigation action or custom payload.\
+**clickAction.kvPair** - Custom key-value pair entered on the MoEngage Platform.\
 **payload** - Complete campaign payload.
 
 ## Android Payload
 
-If the user clicks on the default content of the notification, the key-value pair and campaign payload can be found inside the **payload** key. If the user clicks on the action button or a push template action, the action payload would be found inside **clickedAction**.  
+If the user clicks on the default content of the notification, the key-value pair and campaign payload can be found inside the **payload** key. If the user clicks on the action button or a push template action, the action payload would be found inside **clickedAction**.\
 You can use the **isDefaultAction** key to check whether the user clicked on the default content and then parse the payload accordingly.
 
 ## iOS Payload
@@ -105,10 +108,11 @@ By default, when the user clicks on a notification the SDK redirects the user to
 
 When the application is in the foreground it might seem like the application is reloading and not a very good user experience. You might just want to navigate the user to the specific flutter component. In order to handle the push click by yourself when the Application is in the foreground follow the below steps.
 
-While initializing the Flutter Plugin, enable foreground click callback in the ***PushConfig*** object.
+While initializing the Flutter Plugin, enable foreground click callback in the **_PushConfig_** object.
 
 <CodeGroup>
-``` Dart
+
+```Dart Dart
 import 'package:moengage_flutter/moengage_flutter.dart';
 ...
 final MoEngageFlutter _moengagePlugin = MoEngageFlutter(
@@ -127,6 +131,7 @@ final MoEngageFlutter _moengagePlugin = MoEngageFlutter(
 Enable the **lifecycleAwareCallback** flag in the SDK initialization in the Application class as shown below.
 
 <CodeGroup>
+
 ```kotlin Kotlin
 val moEngage = MoEngage.Builder(this, "YOUR_Workspace_ID")
 MoEInitializer.initialiseDefaultInstance(
@@ -135,6 +140,7 @@ MoEInitializer.initialiseDefaultInstance(
   lifecycleAwareCallbackEnabled = true)
 ```
 
+
 ```java Java
 MoEngage.Builder moEngage = new MoEngage.Builder(this, "YOUR_Workspace_ID");
 MoEInitializer.INSTANCE.initializeDefaultInstance(getApplicationContext(), moEngage, true);
@@ -142,12 +148,13 @@ MoEInitializer.INSTANCE.initializeDefaultInstance(getApplicationContext(), moEng
 
 </CodeGroup>
 
-You must call the ***initialize()*** whenever the Application comes to the foreground by adding **WidgetsBindingObserver** in the root widget of your app.
+You must call the **_initialize()_** whenever the Application comes to the foreground by adding **WidgetsBindingObserver** in the root widget of your app.
 
 So you would need to call **initialise()** in two places, one in **initState()** as usual and another time in **didChangeAppLifecycleState()** in the root widget of your app.
 
 <CodeGroup>
-``` Dart
+
+```Dart Dart
 class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
@@ -175,7 +182,8 @@ class _MyAppState extends State with WidgetsBindingObserver {
 Handle the redirection as shown below:
 
 <CodeGroup>
-``` Dart
+
+```Dart Dart
 void _onPushClick(PushCampaignData message) {
     if (message.data.selfHandledPushRedirection) {
 	// Handle Redirection for Deeplinking or ScreenName
@@ -187,9 +195,10 @@ void _onPushClick(PushCampaignData message) {
 
 </CodeGroup>
 
-Add the below Activity to your AndroidManifest.xml under **<application>** tag.
+Add the below Activity to your AndroidManifest.xml under **application** tag.
 
 <CodeGroup>
+
 ```xml XML
 <manifest ...>
     <application ...>
