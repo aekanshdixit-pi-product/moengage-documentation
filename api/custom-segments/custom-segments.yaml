@@ -1,11 +1,11 @@
 openapi: 3.0.3
 info:
-  title: MoEngage Custom Segments API
+  title: MoEngage Segments API
   description: |
-    Use the MoEngage Custom Segments API to create, update, and manage your file and filter segments.
+    Use the MoEngage Segments API to create, update, and manage your file and filter segments.
     
     - **v2 API:** Manage File Segments and segment lifecycle (Archive/Unarchive).
-    - **v3 API:** Create, read, update, and list filter-based Custom Segments.
+    - **v3 API:** Create, read, update, and list filter-based Segments.
   version: '3.0'
 servers:
   - url: https://api-{dc}.moengage.com
@@ -15,19 +15,19 @@ servers:
         description: Your account's Data Center (e.g., 01, 02, 03).
         default: '01'
 tags:
-  - name: Custom Segments - File
+  - name: File Segments
     description: |
       If you need to create segments by importing a large number of users, we recommend utilising the File segment API. This API allows you to easily generate a file segment by initiating a call to the file segment API endpoint. To proceed, you will need to compile a CSV file containing the relevant users (ensuring that the users are already present in MoEngage). It is essential to provide the public path of the file, which allows for downloading and identification of users in order to successfully create the file segment.
       
-      Use the Custom File Segment API to:
-      * Create a new Custom File Segment
-      * Add Users to an existing Custom Segment
-      * Remove Users from an existing Custom Segment
-      * Replace Users from an existing Custom Segment
+      Use the File Segment API to:
+      * Create a new file segment
+      * Add users to an existing segment
+      * Remove users from an existing segment
+      * Replace users from an existing segment
    
-  - name: Custom Segments - Lifecycle
+  - name: Segments - Lifecycle
     description: |
-      Archiving and unarchiving through APIs makes it easy to retrieve and reuse custom segments whenever required for purposes such as A/B testing, maintaining regulatory compliance, and improving system performance.
+      Archiving and unarchiving through APIs makes it easy to retrieve and reuse segments whenever required for purposes such as A/B testing, maintaining regulatory compliance, and improving system performance.
       
       You can access the archived segments and utilize them to analyze and market campaigns without the need to recreate them from scratch.
     x-mint:
@@ -36,9 +36,9 @@ tags:
         <Warning>
           Archived segments will not be shown beyond 180 days.
         </Warning>
-  - name: Custom Segments - Filters
+  - name: Filter Segments
     description: |
-      If you need to create a segment based on the events or actions performed by your users on your application or website, the recommended approach is to use the filter segment API. With this API, you can create a custom segment by specifying the desired filter conditions.
+      If you need to create a segment based on the events or actions performed by your users on your application or website, the recommended approach is to use the filter segment API. With this API, you can create a segment by specifying the desired filter conditions.
       
       The filter segment API supports various operations, including create, update, get, and list, allowing you to effectively manage your segments based on specific criteria.
     x-mint:
@@ -53,32 +53,16 @@ tags:
         | `Content-Type` | Yes | Set to `application/json`. |
         | `Authorization` | Yes | Basic Auth. `{"Authorization": "Basic Base64_ENCODED_WORKSPACEID_APIKEY="}` |
         | `MOE-APPKEY` | Yes | Your MoEngage App ID. Found in Settings -> Account -> APIs -> App ID. |
-        
-        ## FAQs
-        
-        <AccordionGroup>
-          <Accordion title="How can I generate the payload for custom segment creation?">
-            You can simply generate the payload from the MoEngage dashboard. Log in to the MoEngage dashboard and navigate to the **Test & Debug** -> **Segment Payload section**. Choose your filters and click on **Generate Payload**.
-          </Accordion>
-          <Accordion title="How do I get the id of a custom segment I created earlier but didn't save?">
-            You can use the LIST Custom Segment API with the name query param filter to get the id of the custom segment.
-          </Accordion>
-          <Accordion title="Why am I getting 409 Conflict even with a different name?">
-              Both the name and the definition of a custom segment are unique. If the definition of the custom segment in the request matches an existing segment, we return a conflict 409 error.
-          </Accordion>
-          <Accordion title="How do I know which existing segment is conflicting?">
-            In the case of 409 Conflict, we return a conflicting name/id in the response payload. You can check the payload to get the existing custom segment with the same definition.
-          </Accordion>
-        </AccordionGroup>
+
 security:
   - basicAuth: []
 paths:
   /v2/custom-segments/file-segment:
     post:
       tags:
-        - Custom Segments - File
+        - File Segments
       summary: Create File Segment
-      description: This API creates a new Custom File Segment from a CSV file URL.
+      description: This API creates a new file segment from a CSV file URL.
       operationId: createFileSegment
       parameters:
         - name: Content-Type
@@ -112,7 +96,7 @@ paths:
          
          | Rate Limit Name | Rate Limit |
          | :--- | :--- |
-         | total active segment | The limit of the total number of active custom segments at a time for a client is 1000. |
+         | total active segment | The limit of the total number of active segments at a time for a client is 1000. |
          | file_segment ops per hour | The total number of file segment operations (create/add/remove) per hour per client allowed is 10. |
          | file_segment ops per day | The total number of file segment operations (create/add/remove) per day per client allowed is 100. |
          | file_segment users per day | The total number of users uploaded via the File segment is limited to 2 million per day. (This limit is customizable, contact the MoEngage Support team). |
@@ -122,7 +106,7 @@ paths:
            **Notes**
            * Breaching the limits will reject the request.
            * Per hour and per day limits will consider the calculation based on the last hour and last 24 hrs respectively.
-           * The limit of 1000 custom file segments is calculated only for the file segments that are active. Most of our customers utilize only 30-40% of this limit at any given point.
+           * The limit of 1000 file segments is calculated only for the file segments that are active. Most of our customers utilize only 30-40% of this limit at any given point.
            </Note>
           
            #### CSV File Requirements
@@ -136,7 +120,7 @@ paths:
          
            #### Segment Processing and Availability
           
-            As soon as the request is received at the MoEngage system, MoEngage creates a custom segment with zero users. After this, the file is processed and users are added to the custom segment. If the created custom segment is queried in between the file processing, it will show zero or partial user count.
+            As soon as the request is received at the MoEngage system, MoEngage creates a segment with zero users. After this, the file is processed and users are added to the segment. If the created segment is queried in between the file processing, it will show zero or partial user count.
 
       requestBody:
         description: Configuration for the new file segment.
@@ -269,7 +253,7 @@ paths:
   /v2/custom-segments/file-segment/add-users:
     put:
       tags:
-        - Custom Segments - File
+        - File Segments
       summary: Add users to file segment
       description: This API adds a list of users from a CSV file to an existing file segment.
       operationId: addUsersToFileSegment
@@ -345,7 +329,7 @@ paths:
   /v2/custom-segments/file-segment/remove-users:
     put:
       tags:
-        - Custom Segments - File
+        - File Segments
       summary: Remove users from File Segment
       description: This API removes a list of users from a CSV file from an existing file segment.
       operationId: removeUsersFromFileSegment
@@ -421,7 +405,7 @@ paths:
   /v2/custom-segments/file-segment/replace:
     put:
       tags:
-        - Custom Segments - File
+        - File Segments
       summary: Replace users from File Segment
       description: This API replaces all users in an existing file segment with a new list of users from a CSV file.
       operationId: replaceUsersInFileSegment
@@ -451,7 +435,7 @@ paths:
           <Note>
           **Notes:**
 
-            * This API drops all existing users from the custom segment and adds the new users provided in the File URL.
+            * This API drops all existing users from the segment and adds the new users provided in the File URL.
             * Only the newly added users are counted towards the daily file segment user limit.
           </Note>
       requestBody:
@@ -505,9 +489,9 @@ paths:
   /v2/custom-segments/archive:
     patch:
       tags:
-        - Custom Segments - Lifecycle
-      summary: Archive Custom Segment
-      description: This API archives an existing custom segment (File or Filter). Archiving and unarchiving through APIs makes it easy to retrieve and reuse custom segments whenever required for purposes such as A/B testing, maintaining regulatory compliance, and improving system performance. You can access the archived segments and utilize them to analyze and market campaigns without the need to recreate them from scratch.
+        - Segments - Lifecycle
+      summary: Archive Segment
+      description: This API archives an existing segment (File or Filter). Archiving and unarchiving through APIs makes it easy to retrieve and reuse segments whenever required for purposes such as A/B testing, maintaining regulatory compliance, and improving system performance. You can access the archived segments and utilize them to analyze and market campaigns without the need to recreate them from scratch.
       operationId: archiveCustomSegment
       x-mint:
         content: |
@@ -515,7 +499,7 @@ paths:
             Archived segments will not be shown beyond 180 days.
           </Warning>
       requestBody:
-        description: The name of the custom segment to be archived.
+        description: The name of the segment to be archived.
         required: true
         content:
           application/json:
@@ -525,7 +509,7 @@ paths:
               name: "custom_segment_unique_name"
       responses:
         '202':
-          description: Custom-segment archive request accepted.
+          description: Segment archive request accepted.
           content:
             application/json:
               schema:
@@ -545,12 +529,12 @@ paths:
   /v2/custom-segments/unarchive:
     patch:
       tags:
-        - Custom Segments - Lifecycle
-      summary: Unarchive Custom Segment
-      description: This API unarchives an existing custom segment, making it active again.
+        - Segments - Lifecycle
+      summary: Unarchive Segment
+      description: This API unarchives an existing segment, making it active again.
       operationId: unarchiveCustomSegment
       requestBody:
-        description: The name of the custom segment to be unarchived.
+        description: The name of the segment to be unarchived.
         required: true
         content:
           application/json:
@@ -560,7 +544,7 @@ paths:
               name: "custom_segment_unique_name"
       responses:
         '202':
-          description: Custom-segment unarchive request accepted.
+          description: Segment unarchive request accepted.
           content:
             application/json:
               schema:
@@ -580,9 +564,9 @@ paths:
   /v3/custom-segments:
     get:
       tags:
-        - Custom Segments - Filters
-      summary: List Custom Segments
-      description: This API lists all custom segments. You can optionally filter segments by an exact name match.
+        - Filter Segments
+      summary: List Segments
+      description: This API lists all segments. You can optionally filter segments by an exact name match.
       operationId: listCustomSegments
       x-mint:
         content: |
@@ -605,9 +589,9 @@ paths:
           $ref: '#/components/responses/500_FilterSegmentError'
     post:
       tags:
-        - Custom Segments - Filters
+        - Filter Segments
       summary: Create Filter Segment
-      description: This API creates a new custom segment based on a set of filter conditions.
+      description: This API creates a new segment based on a set of filter conditions.
       operationId: createFilterSegment
       x-mint:
         content: |
@@ -663,9 +647,9 @@ paths:
   /v3/custom-segments/{id}:
     get:
       tags:
-        - Custom Segments - Filters
-      summary: Get Custom Segment by ID
-      description: This API fetches a specific custom segment (File or Filter) by its ID.
+        - Filter Segments
+      summary: Get Segment by ID
+      description: This API fetches a specific segment (File or Filter) by its ID.
       operationId: getCustomSegment
       x-mint:
         content: |
@@ -688,9 +672,9 @@ paths:
           $ref: '#/components/responses/500_FilterSegmentError'
     patch:
       tags:
-        - Custom Segments - Filters
+        - Filter Segments
       summary: Update Filter Segment
-      description: This API updates an existing custom filter segment by its ID.
+      description: This API updates an existing filter segment by its ID.
       operationId: updateFilterSegment
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
@@ -744,7 +728,7 @@ components:
       properties:
         name:
           type: string
-          description: Name of the custom segment. Must be unique for creation.
+          description: Name of the segment. Must be unique for creation.
         attribute_name:
           type: string
           description: Name of the user attribute to use as an identifier (e.g., 'ID', 'email').
@@ -792,7 +776,7 @@ components:
       properties:
         name:
           type: string
-          description: The name of the custom segment.
+          description: The name of the segment.
       required:
         - name
     ApiResponseSuccessV2:
@@ -807,7 +791,7 @@ components:
           description: Indicates if the request was accepted.
         cs_name:
           type: string
-          description: The unique name of the custom segment being processed.
+          description: The unique name of the segment being processed.
     ApiErrorV2:
       type: object
       properties:
@@ -1017,11 +1001,11 @@ components:
         - primary_time_range
     FilterSegmentRequestV3:
       type: object
-      description: Request schema for creating a filter-based custom segment.
+      description: Request schema for creating a filter-based segment.
       properties:
         name:
           type: string
-          description: A unique name for the custom segment.
+          description: A unique name for the segment.
         included_filters:
           description: The filtering criteria used for segmentation. Users satisfying this set of filters will be part of the segment.
           $ref: '#/components/schemas/FilterGroupV3'
@@ -1030,11 +1014,11 @@ components:
         - included_filters
     FilterSegmentUpdateRequestV3:
       type: object
-      description: Request schema for updating an existing filter-based custom segment.
+      description: Request schema for updating an existing filter-based segment.
       properties:
         name:
           type: string
-          description: A new unique name for the custom segment.
+          description: A new unique name for the segment.
         included_filters:
           description: The updated filtering criteria for the segment. Users satisfying this set of filters will be part of the segment.
           $ref: '#/components/schemas/FilterGroupV3'
@@ -1046,42 +1030,42 @@ components:
         - included_filters
     FilterSegmentDataV3:
       type: object
-      description: Detailed information about a custom segment.
+      description: Detailed information about a segment.
       properties:
         name:
           type: string
-          description: The name of the custom segment.
+          description: The name of the segment.
         id:
           type: string
-          description: The unique identifier of the custom segment.
+          description: The unique identifier of the segment.
         created_time:
           type: string
           format: date-time
-          description: The timestamp when the custom segment was created (ISO 8601 format).
+          description: The timestamp when the segment was created (ISO 8601 format).
         updated_time:
           type: string
           format: date-time
-          description: The timestamp when the custom segment was last updated (ISO 8601 format). The updated time can change due to internally running services.
+          description: The timestamp when the segment was last updated (ISO 8601 format). The updated time can change due to internally running services.
         type:
           type: string
-          description: The type of the custom segment. This is used for internal classification. Fixed value for filter-based segments.
+          description: The type of the segment. This is used for internal classification. Fixed value for filter-based segments.
           example: ELASTIC_SEARCH
         source:
           type: string
-          description: The source of custom segment creation. Fixed value for API-created segments.
+          description: The source of segment creation. Fixed value for API-created segments.
           example: API
         description:
           type: string
-          description: A textual description summarizing the custom segment definition.
+          description: A textual description summarizing the segment definition.
         included_filters:
-          description: The filter criteria used for this custom segment.
+          description: The filter criteria used for this segment.
           $ref: '#/components/schemas/FilterGroupV3'
     FilterSegmentResponseV3:
       type: object
       description: Response schema for filter segment operations (create/update).
       properties:
         data:
-          description: Information about the custom segment.
+          description: Information about the segment.
           $ref: '#/components/schemas/FilterSegmentDataV3'
         response_id:
           type: string
@@ -1092,33 +1076,33 @@ components:
           example: custom_segment
     SegmentListItemV3:
       type: object
-      description: Summary information about a custom segment in a list.
+      description: Summary information about a segment in a list.
       properties:
         name:
           type: string
-          description: The name of the custom segment.
+          description: The name of the segment.
         id:
           type: string
-          description: The unique identifier of the custom segment.
+          description: The unique identifier of the segment.
         created_time:
           type: string
           format: date-time
-          description: The timestamp when the custom segment was created (ISO 8601 format).
+          description: The timestamp when the segment was created (ISO 8601 format).
         type:
           type: string
-          description: The type of the custom segment. This is used for internal classification.
+          description: The type of the segment. This is used for internal classification.
           example: ELASTIC_SEARCH
         source:
           type: string
-          description: The source of custom segment creation.
+          description: The source of segment creation.
           example: API
     SegmentListResponseV3:
       type: object
-      description: Response schema for listing custom segments.
+      description: Response schema for listing segments.
       properties:
         data:
           type: array
-          description: Array of custom segments matching the query criteria.
+          description: Array of segments matching the query criteria.
           items:
             $ref: '#/components/schemas/SegmentListItemV3'
         response_id:
@@ -1140,10 +1124,10 @@ components:
           description: A detailed error message describing why the request failed.
         existing_cs_name:
           type: string
-          description: (Conflict errors only) The name of the existing custom segment that conflicts with the request.
+          description: (Conflict errors only) The name of the existing segment that conflicts with the request.
         existing_cs_id:
           type: string
-          description: (Conflict errors only) The ID of the existing custom segment that conflicts with the request.
+          description: (Conflict errors only) The ID of the existing segment that conflicts with the request.
         actual_count:
           type: integer
           description: (Rate limit errors only) The actual count of segments or requests.
@@ -1206,14 +1190,14 @@ components:
     SegmentIdPath:
       name: id
       in: path
-      description: The ID of the custom segment.
+      description: The ID of the segment.
       required: true
       schema:
         type: string
     SegmentNameQuery:
       name: name
       in: query
-      description: The URL-encoded name of the custom segment to retrieve.
+      description: The URL-encoded name of the segment to retrieve.
       required: false
       schema:
         type: string
@@ -1265,14 +1249,14 @@ components:
             title: "Authentication required"
             description: "<message>"
     '404_FileSegmentNotFound':
-      description: Entity Not Found. The custom segment name does not exist.
+      description: Entity Not Found. The segment name does not exist.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiErrorV2'
           example:
             title: "Entity Not Found"
-            description: "Custom segment not found with the given name: <custom_segment_unique_name>"
+            description: "Segment not found with the given name: <custom_segment_unique_name>"
     '409_FileSegmentConflict':
       description: Conflict. File-segment creation attempt with duplicate name.
       content:
@@ -1281,7 +1265,7 @@ components:
             $ref: '#/components/schemas/ApiErrorV2'
           example:
             title: "Resource not created"
-            description: "Name already exists : <custom_segment_name>"
+            description: "Name already exists : <segment_name>"
     '429_FileSegmentRateLimit':
       description: Too Many Requests. The number or rate of requests exceeds the allowed limit.
       content:
@@ -1301,7 +1285,7 @@ components:
             title: "Internal Server Error"
     # --- V3 Responses ---
     '200_SegmentListV3':
-      description: Successful retrieval of custom segments. Returns a list of custom segments matching the query criteria. An empty list is returned if no segments match.
+      description: Successful retrieval of segments. Returns a list of segments matching the query criteria. An empty list is returned if no segments match.
       content:
         application/json:
           schema:
@@ -1316,15 +1300,15 @@ components:
             response_id: "WYanfieM"
             type: "custom_segment"
     '200_SegmentUpdatedV3':
-      description: Custom segment updated successfully. Returns the updated segment details including the new filter definition and metadata.
+      description: Segment updated successfully. Returns the updated segment details including the new filter definition and metadata.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/FilterSegmentResponseV3'
           example:
             data:
-              name: "your custom-segment name"
-              id: "your custom-segment id"
+              name: "your segment name"
+              id: "your segment id"
               created_time: "2022-12-20T06:21:44.112000"
               updated_time: "2022-12-20T06:21:44.160000"
               type: "ELASTIC_SEARCH"
@@ -1358,15 +1342,15 @@ components:
             response_id: "cNjnTEJw"
             type: "custom_segment"
     '201_SegmentCreatedV3':
-      description: Custom segment created successfully. Returns the newly created segment details including its unique ID, filter definition, and metadata.
+      description: Segment created successfully. Returns the newly created segment details including its unique ID, filter definition, and metadata.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/FilterSegmentResponseV3'
           example:
             data:
-              name: "custom-segment name"
-              id: "custom-segment id"
+              name: "segment name"
+              id: "segment id"
               created_time: "2022-12-20T06:21:44.112000"
               updated_time: "2022-12-20T06:21:44.160000"
               type: "ELASTIC_SEARCH"
