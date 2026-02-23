@@ -1,16 +1,14 @@
 ---
-title: 'Session and Source Tracking'
+title: "Session and Source Tracking"
 ---
-From [SDK Version 5.2.2](/developer-guide/release-notes/ios-sdk/2023-and-older) we have started supporting Session and Source Tracking, and this is enabled by default in the SDK. Refer to the following docs to get more info on:
 
-*   [Sessions in MoEngage Analytics](https://help.moengage.com/hc/en-us/articles/360031402891-Understanding-Sessions-in-MoEngage-Analytics)
-*   [Source Analysis in MoEngage Analytics](https://help.moengage.com/hc/en-us/articles/360031146052-Source-Analysis-in-MoEngage-Analytics)
+From [SDK Version 5.2.2](/developer-guide/release-notes/ios-sdk/2023-and-older) we have started supporting Session and Source Tracking, and this is enabled by default in the SDK. 
 
 <Info>
   **Note**
 
-  *   To view Session And Source information tracked in the dashboard, get the same enabled by contacting the MoEngage support team.
-  *   To track source information accurately, make use of the UTM parameters in your deep links and push notification payloads. Refer to this [doc](https://help.moengage.com/hc/en-us/articles/360031146052-Source-Analysis-in-MoEngage-Analytics#h_6ddc58b5-45e7-476a-b2cd-98da161aeab9) for more information on setting **Source Properties**.
+  - To view Session And Source information tracked in the dashboard, get the same enabled by contacting the MoEngage support team.
+  - To track source information accurately, make use of the UTM parameters in your deep links and push notification payloads. 
 </Info>
 
 # Capture Deep-link Source
@@ -18,10 +16,10 @@ From [SDK Version 5.2.2](/developer-guide/release-notes/ios-sdk/2023-and-older) 
 <Info>
   **AppDelegate Swizzling**
 
-  Calling of [*processURL(\_:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc(cs)MoEngageSDKAnalytics(im)processURL:) method is not required if AppDelegate Swizzling is enabled for SDK. For more info on AppDelegate Swizzling, refer to this [link](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45ED56HJA1KZP43JP0ZGG1F).
+  Calling of [_processURL(\_:)_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)processURL:) method is not required if AppDelegate Swizzling is enabled for SDK. For more info on AppDelegate Swizzling, refer to this [link](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45ED56HJA1KZP43JP0ZGG1F).
 </Info>
 
-For capturing source information via the deep-link call [*processURL(\_:)*](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc(cs)MoEngageSDKAnalytics(im)processURL:) method in all the AppDelegate callbacks that you receive when a link is opened, please refer to the code block below.
+For capturing source information via the deep-link call [_processURL(\_:)_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)processURL:) method in all the AppDelegate callbacks that you receive when a link is opened, please refer to the code block below.
 
 <Tabs>
   <Tab title="Swift">
@@ -32,7 +30,7 @@ For capturing source information via the deep-link call [*processURL(\_:)*](http
         //rest of the implementation
         return true
     }
-
+    
     func application(_ application: UIApplication,
                      continue userActivity: NSUserActivity,
                      restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool
@@ -44,15 +42,15 @@ For capturing source information via the deep-link call [*processURL(\_:)*](http
         //rest of the implementation
         return true;
     }
-
+    
     //MARK:- Methods Deprecated from iOS9
-
+    
     func application(_ application: UIApplication, handleOpen url: URL) -> Bool {
         MoEngageSDKAnalytics.sharedInstance.processURL(url)
         //rest of the implementation
         return true
     }
-
+    
     func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
         MoEngageSDKAnalytics.sharedInstance.processURL(url)
         //rest of the implementation
@@ -68,11 +66,11 @@ Events that should not affect the session duration calculation in anyways in MoE
 
 These events:
 
-*   Do not start a new session, even when the app is in the foreground
-*   Do not extend the session
-*   Do not have information on source and session
+- Do not start a new session, even when the app is in the foreground
+- Do not extend the session
+- Do not have information on source and session
 
-For example, events that are tracked when the app is in the background to refresh the app content, are not initiated by users and hence can be marked as non-interactive. To mark an event as non-interactive use [*setNonInteractive()*](https://moengage.github.io/ios-api-reference/Classes/MoEngageProperties.html#/c:@M@MoEngageAnalytics@objc(cs)MoEngageProperties(im)setNonInteractive) method of [*MoEngageProperties*](https://moengage.github.io/ios-api-reference/Classes/MoEngageProperties.html) while tracking the event as shown below:
+For example, events that are tracked when the app is in the background to refresh the app content, are not initiated by users and hence can be marked as non-interactive. To mark an event as non-interactive use [_setNonInteractive()_](https://moengage.github.io/ios-api-reference/Classes/MoEngageProperties.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageProperties\(im\)setNonInteractive) method of [_MoEngageProperties_](https://moengage.github.io/ios-api-reference/Classes/MoEngageProperties.html) while tracking the event as shown below:
 
 <Tabs>
   <Tab title="Swift">
@@ -81,15 +79,14 @@ For example, events that are tracked when the app is in the background to refres
     let dict = ["NewsCategory":"Politics"]
     let properties = MoEngageProperties(withAttributes: dict)
     properties.addDateAttribute(Date(), withName:"refreshTime")
-
+    
     //Set the Event as Non-Interactive
     properties.setNonInteractive()
-
+    
     //Track event
     MoEngageSDKAnalytics.sharedInstance.trackEvent("App Content Refreshed", withProperties: properties)
     ```
   </Tab>
-
   <Tab title="Objective-C">
     ```objectivec
     //Set Attributes
@@ -97,10 +94,10 @@ For example, events that are tracked when the app is in the background to refres
     eventDict[@"NewsCategory"] = @"Politics";
     MoEngageProperties* properties = [[MoEngageProperties alloc] initWithAttributes:eventDict];
     [properties addDateAttribute:[NSDate date] withName:@"refreshTime"];
-
+    
     //Set the Event as Non-Interactive
     [properties setNonInteractive];
-
+    
     //Track event
     [[MoEngageSDKAnalytics sharedInstance] trackEvent:@"App Content Refreshed" withProperties:properties];
     ```
