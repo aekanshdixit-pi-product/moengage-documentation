@@ -1,208 +1,376 @@
 ---
-title: "Web SDK Integration"
+title: 'Web SDK Integration'
 ---
 
 # Overview
 
 You can integrate the Web SDK for any of the supported frameworks (CDN, NPM, GTM, SPA, AMP, Flutter, and Shopify) using one of the following two methods:
 
-* **Script-based Initialization (Recommended):** Use the form-based interface to generate a validated code snippet or access module-specific configurations. For more information, refer to [Script-based Initialization (Recommended)](#option-1-script-based-initialization-recommended).
+* **Script-based Initialization (Recommended):** Use the form-based interface to generate a validated code snippet or access module-specific configurations. For more information, refer to [Script-based Initialization (Recommended)](#script-based-initialization).
 * **Manual Integration:** Manually configure the SDK parameters and initialization code. For more information, refer to [Option 2: Manual Integration](#manual-approach).
 
-<Info>
-  **Prerequisites**
-
-  You must have your **Workspace ID (App ID)** and **Data Center**. You can retrieve these details by navigating to `Settings > App > General` on the Dashboard.
-</Info>
-
-
+<Check>
+You must have your **Workspace ID (App ID)** and **Data Center**. You can retrieve these details by navigating to `Settings > App > General` on the Dashboard.
+</Check>
 # Option 1: Script-based Initialization (Recommended)
 
 To ensure a reliable and streamlined setup, we recommend using the **Script-based initialization** method. This method generates a validated JavaScript snippet, eliminating potential syntax errors and automatically including required flags based on the application type.
 
-<Info>
-  **Prerequisites**
-
-  * **Workspace Details:** Ensure you have your **Workspace ID (App ID)** and **Data Center** (found in `Settings > App > General` on the Dashboard).
-  * **Service Worker (For Web Push):** If enabling Web Push, create a file named `serviceworker.js` in your **root directory**.
-  * **Whitelisting (CSP):** If your site uses a Content Security Policy, whitelist the necessary MoEngage URLs. For more information, refer [here](/developer-guide/web-sdk/web-sdk-overview/web-sdk-integration).
-</Info>
-
+<Check>
+* **Workspace Details:** Ensure you have your **Workspace ID (App ID)** and **Data Center** (found in `Settings > App > General` on the Dashboard).
+* **Service Worker (For Web Push):** If enabling Web Push, create a file named `serviceworker.js` in your **root directory**.
+* **Whitelisting (CSP):** If your site uses a Content Security Policy, whitelist the necessary MoEngage URLs. For more information, refer [here](https://developers.moengage.com/hc/en-us/articles/360060713252-Web-SDK-Integration#h_01J6V629GF3CCYAJRX4ADQ5RGP).
+</Check>
 Follow these steps to generate your initialization script:
 
-<Steps>
-  <Step title="Navigate to the tool">
-    Navigate to the [Web SDK Initialization Website](https://app-cdn.moengage.com/sdk/integration/config/index.html).
-  </Step>
-  <Step title="Configure your application">
-    Configure the values based on your application requirements. Refer to the [Configuration Parameters](#configuration-parameters) table below for detailed descriptions of each field.
-  </Step>
-  <Step title="Generate Code">
-    Click **Generate Code** at the bottom of the form to create your validated JavaScript snippet.
-  </Step>
-  <Step title="Implement the Generated Code">
-    Copy the code snippets displayed by the tool and paste them into your project as follows:
+1. Navigate to the [Web SDK Initialization Website.](https://app-cdn.moengage.com/sdk/integration/config/index.html)
+2. Configure the values based on your application requirements. Refer to the [Configuration Parameters](#h_01KC5VD65H5EY6YPTC3DP98EKG) table below for detailed descriptions of each field.
+3. Click **Generate Code** at the bottom of the form to create your validated JavaScript snippet.
+4. Implement the Generated Code: Copy the code snippets displayed by the tool and paste them into your project as follows:
+	* **Update Service Worker (If Web Push Enabled):** Add the generated `importScripts(...)` line to the top of your `serviceworker.js` file.
+	* **HTML File Changes (If Web Personalization Enabled):** Add the generated `<link>` tags and the Personalization `<script>` tag to the top of the `<head>` section of your root HTML file.
+	* **Initialize the SDK:**
+		+ For **CDN**: Paste the initialization script directly into the `<head>` tag.
+		+ For **NPM**: Paste the `import` statement and the `Moengage.initialize({...})` block into your main JavaScript file.
 
-    * **Update Service Worker (If Web Push Enabled):** Add the generated `importScripts(...)` line to the top of your `serviceworker.js` file.
-    * **HTML File Changes (If Web Personalization Enabled):** Add the generated `<link>` tags and the Personalization `<script>` tag to the top of the `<head>` section of your root HTML file.
-    * **Initialize the SDK:**
-        * **For CDN:** Paste the initialization script directly into the `<head>` tag.
-        * **For NPM:** Paste the `import` statement and the `Moengage.initialize({...})` block into your main JavaScript file.
-  </Step>
-</Steps>
+<Info>
+**Post-requisite**
 
-<Check>
-  **Post-requisite**
-
-  After integrating, verify the setup by opening your browser's Developer Tools (Network tab). Reload the page and confirm that requests are successfully reaching MoEngage endpoints (e.g., `cdn.moengage.com` or `sdk-0X.moengage.com`).
-</Check>
-
----
-
+ After integrating, verify the setup by opening your
+ browser's
+ Developer Tools (Network tab). Reload the page and
+ confirm
+ that requests are successfully reaching MoEngage
+ endpoints
+ (e.g., `cdn.moengage.com` or
+ `sdk-0X.moengage.com`).
+</Info>
 ## Configuration Parameters
 
-The initialization method requires specific inputs to generate the correct code.
+The initialization method requires specific inputs to generate the correct code. The following table details the available fields in the configuration.
 
-<Accordion title="View Detailed Configuration Parameters">
+arrow\_drop\_down **Configuration Parameters**
+
+ 
+
 | Section | Field Name | Description |
-| :--- | :--- | :--- |
-| **Integration Method** | How will you install the SDK? | Determines the installation method (NPM/Yarn, CDN, or specialized platforms like GTM, Shopify, etc.). |
-| **Core Configuration** | MoEngage Workspace ID | Unique App ID identifying your app in the MoEngage dashboard. |
-| | MoEngage Data Center | Specifies the data center associated with your dashboard. |
-| | MoEngage Environment | Sets data reporting to `TEST` or `LIVE`. |
-| | Log Level | `0`: No logs; `1`: Critical logs/errors; `2`: Verbose debug logs. |
-| | Use Latest SDK Version | Automatically targets the most recent Web SDK version. |
-| **Application Profile** | SPA Support | Indicates if your website is a Single Page Application. |
-| | Browser Extension | Prevents cookie storage and disables cross-subdomain user sharing if selected. |
-| **Feature Configuration** | Enable Web Push | Module for push tokens and browser notifications. |
-| | Enable On-Site Messaging | Module for pop-ups and interstitials. |
-| | Enable Cards | Enables Notification Inbox and UI customization. |
-| | Disable SDK at Init | Initializes in a disabled state; requires `Moengage.enableSdk()`. |
-| **Web Push Details** | Service Worker Path | Path to your file (Default: `/serviceworker.js`). |
-| **Cards & UI** | CSS Selector | The ID or Class (e.g., `#bell-icon`) that opens the inbox. |
-| | Styling | Customize colors, positions, fonts, and z-index for the Inbox and Icons. |
-</Accordion>
+| --- | --- | --- |
+| **Integration Method** | How will you install the SDK? | Determines the installation method:   * **NPM / Yarn:** Selects bundlers like Webpack or Rollup. * **CDN:** Selects standard HTML Script Tag installation. * **Other Integration:** Displays direct documentation links for specialized platforms including **GTM (Google Tag Manager)**, **AMP (Accelerated Mobile Pages)**, **Shopify**, **Flutter**, and **Smart TV**. |
+| **Core Configuration** | MoEngage Workspace ID | Identifies the application within the MoEngage dashboard using a unique App ID. |
+| MoEngage Data Center | Specifies the data center associated with the dashboard URL. Refer [here](https://developers.moengage.com/hc/en-us/articles/8489937322004-Data-Center) for more details. |
+| MoEngage Environment | Sets the data reporting environment. Use `'TEST'` to send data to your test environment or `'LIVE'` for production data. |
+| Log Level | Controls the verbosity of SDK logs in the browser console:   * `0`: No logs shown (Recommended for LIVE). * `1`: Critical SDK logs and errors (Default for TEST). * `2`: All informational, debug, error, and warning logs. |
+| MoEngage Project ID | Identifies the specific project if the [Portfolio](https://help.moengage.com/hc/en-us/articles/40394603054100-Portfolio) feature is enabled. |
+| Use Latest SDK Version | Targets the most recent version of the Web SDK automatically when enabled. |
+| SDK Version | Specifies the SDK version you want to target. This field is not visible if **Use Latest SDK Version** checkbox is selected. |
+| **Application Profile** | My website is a Single Page Application (SPA) | Indicates whether your website operates as a Single Page Application (SPA). |
+| This is for a browser extension | Indicates whether your application is a browser extension.   **Note**: Prevents the SDK from storing cookies and disables cross-subdomain user sharing if selected. |
+| **Feature Configuration** | Enable Web Push Notifications | Includes the module required for collecting push tokens and displaying browser notifications. |
+| Enable On-Site Messaging | Enables the module required to display on-site campaigns, such as pop-ups and interstitials, on the website. |
+| Enable Cards Notification Inbox | Enables the Notification Inbox for Cards module and unlocks the UI Customization section. |
+| Enable Web Personalization | Enables the web personalization module. |
+| Disable SDK at Initialization | Initializes the SDK in a disabled state.   **Note**: Requires an explicit call to the `Moengage.enableSdk()` method to enable tracking if selected. |
+| **Web Push Details**   *(Visible when **Enable Web Push Notifications** is enabled)* | Service Worker Path | Defines the path to your service worker file from the site root. The default path is, `/serviceworker.js`. |
+| Service Worker Scope | Defines which pages the service worker can be active on. The default is /(the entire site). To limit it, enter a specific path, for example, /app/. |
+| **Cards Configuration & UI Customization**   *(Visible when **Enable Cards Notification Inbox** is enabled)* | CSS Selector for Inbox Icon | Identifies the HTML element that opens the inbox when clicked using its unique CSS ID or Class (e.g., `#bell-icon`). |
+| Floating Bell Icon (Desktop) | Configures the settings for the desktop floating bell icon:   * **Icon URL:** Sets the image source for the bell icon. * **Position:** Defines the Top, Right, Bottom, and Left offsets. * **Count Background Color:** Sets the background color of the unread badge. * **Count Text Color:** Sets the text color of the unread badge. * **Icon Background Color:** Sets the background color of the bell itself. * **Font URL:** Specifies a custom font file URL. * **z-index:** Sets the z-axis stack order of the bell icon. |
+| Floating Bell Icon (Mobile) | Configures the settings for the mobile floating bell icon:   * **Icon URL:** Sets the image source for the bell icon. * **Position:** Defines the Top, Right, Bottom, and Left offsets. * **Count Background Color:** Sets the background color of the unread badge. * **Count Text Color:** Sets the text color of the unread badge. * **Icon Background Color:** Sets the background color of the bell itself. * **Font URL:** Specifies a custom font file URL. * **z-index:** Sets the z-axis stack order of the bell icon. |
+| General & Icons | Configures the global styling and icons for the inbox container:   * **Background Color:** Sets the background color of the inbox container. * **Overlay Color:** Sets the color of the overlay mask behind the inbox. * **DateTime Color:** Sets the text color for the date and time display on cards. * **Unclicked Indicator Color:** Sets the color of the indicator dot for unread messages. * **Option Button Color:** Sets the color of the options/menu button on cards. * **Icon URLs:** Defines custom URLs for the *Pin Icon*, *Refresh Icon*, *Close (Web) Icon*, and *Close (Mobile) Icon*. |
+| Card Dismissal | Controls the ability for users to dismiss cards.   * **Enable Dismiss Option:** Allows users to dismiss cards when enabled. * **Text Color:** Sets the color of the dismiss text or icon. |
+| Navigation Bar | Configures the settings for the top header of the inbox.   * **Text:** Defines the header title text. * **Text Color:** Sets the color of the header title text. * **Background Color:** Sets the background color of the navigation bar. * **Font Size:** Sets the font size of the header title. * **Font URL:** Specifies the URL for a custom font file for the header. |
+| Tabs | Configures the category tabs (e.g., "All", "Unread").   * **Active Tab Text Color:** Sets the text color of the currently selected tab. * **Active Tab Underline Color:** Sets the color of the line indicating the active tab. * **Active Tab Background Color:** Sets the background color of the active tab. * **Inactive Tab Text Color:** Sets the text color of unselected tabs. * **Background Color:** Sets the background color of the tabs container. * **Font Size:** Sets the font size of the tab text. * **Font URL:** Specifies the URL for a custom font file for the tabs. |
+| Card Content | Configures the typography and separation style of the cards.   * **Header Font Size:** Sets the font size of the card title/header. * **Description Font Size:** Sets the font size of the card body text. * **CTA Font Size:** Sets the font size of the call-to-action button or link. * **Font URL:** Specifies the URL for a custom font file for the card content. * **Separator Color:** Sets the color of the divider line between cards. |
+| Empty State | Configures the visual elements displayed when there are no messages.   * **Image URL:** Specifies the source URL for the image displayed when the inbox is empty. * **Text:** Defines the message text displayed when the inbox is empty. |
+| Cards Inbox z-index | **z-index Value:** Sets the z-axis stack order of the inbox container. |
+ 
 
-### Common Configuration Scenarios
+## Common Configuration Scenarios
+
+You can configure environment selection and log verbosity independently to suit your development and debugging needs:
 
 | Environment (`env`) | Log Level (`logLevel`) | Data Destination | Console Output |
-| :--- | :--- | :--- | :--- |
+| --- | --- | --- | --- |
 | `'TEST'` | `0` | Test Dashboard | Clean console (no SDK logs). |
-| `'TEST'` | `1` | Test Dashboard | Critical logs and errors (Recommended). |
+| `'TEST'` | `1` | Test Dashboard | Critical logs and errors (Recommended for testing). |
 | `'LIVE'` | `0` | Production Dashboard | Production settings. No logs shown. |
-| `'LIVE'` | `1` | Production Dashboard | Enables error logs for troubleshooting. |
-
-
+| `'LIVE'` | `1` | Production Dashboard | Enables SDK error logs in production for troubleshooting. |
 # Option 2: Manual Integration
 
-You can manually integrate the SDK by configuring the initialization parameters directly in your codebase.
+You can manually integrate the SDK by configuring the initialization parameters directly in your codebase. Select your platform or framework from the list below to view the specific manual integration guide:
 
-### Supported Platforms
-* [CDN](#method-1-moengage-cdn)
-* [NPM](#method-2-using-npm)
-* [Google Tag Manager (GTM)](/developer-guide/web-sdk/other-supported-web-sdk-integration/google-tag-manager-gtm-templates)
-* [Single Page App (SPA) Support](/developer-guide/web-sdk/other-supported-web-sdk-integration/single-page-app-spa-support)
-* [Flutter SDK](/developer-guide/flutter-sdk/overview/getting-started-with-flutter-sdk)
-* [Shopify App](/developer-guide/ecommerce-platforms/shopify/shopify-20)
+* [CDN](#h_01J6V5X94EQ1H2KVJQFA0SPQ15)
+* [NPM](#h_01J6V629GF3CCYAJRX4ADQ5RGP)
+* [Google Tag Manager(GTM)](https://developers.moengage.com/hc/en-us/articles/17390387490324-Google-Tag-Manager-GTM-Templates)
+* [Single Page App (SPA) Support](https://developers.moengage.com/hc/en-us/articles/360062008652-Single-Page-App-SPA-Support)
+* [Configure and Integrate AMP Web Push](https://partners.moengage.com/hc/en-us/articles/7191693090068-Configure-and-Integrate-AMP-Web-Push?_gl=1%2A13dv20e%2A_gcl_au%2ANDk1MDUxMzkxLjE3NjE2NDc5ODQuMTEzNDE4NjU1MC4xNzY1NTIzNDMyLjE3NjU1MjM0MzE.%2A_ga%2AMTU4NTM0MzI0NS4xNzI3MTcwMzYy%2A_ga_SEBHW7YTZ7%2AczE3NjYzNzkxNzckbzEyMCRnMSR0MTc2NjM4NTIwNCRqNjAkbDAkaDA.)
+* [Flutter SDK](https://developers.moengage.com/hc/en-us/articles/20661421128084-Getting-Started-with-Flutter-SDK#h_01HEJAHP5W49AASNSHF5614AHP)
+* [Shopify App](https://developers.moengage.com/hc/en-us/articles/18058275070612-Shopify-2-0#01H7Z7PSDHFP0H89AE9YHTT3AN)
 
-<Note>
-  For any manual integration, ensure you specify the MoEngage Data Center and complete URL Whitelisting.
-</Note>
+For any manual integration, ensure you complete the following configuration steps:
 
+1. Specify the MoEngage Data Center for Web SDK data collection.
+2. Enable Whitelisting.
 
+<Info>
+This is a required step for all web modules.
+</Info>
 ## Method 1: MoEngage CDN
 
-### Data Center Mapping
+### TEST Integration
+
+#### Data Center
+
+Following details of the different data centers you need to set based on the dashboard hosts
 
 | Dashboard host | Data Center |
-| :--- | :--- |
-| dashboard-01.moengage.com | `dc_1` |
-| dashboard-02.moengage.com | `dc_2` |
-| dashboard-03.moengage.com | `dc_3` |
-| dashboard-04.moengage.com | `dc_4` |
-| dashboard-06.moengage.com | `dc_6` |
+| --- | --- |
+| dashboard-01.moengage.com | dc\_1 |
+| dashboard-02.moengage.com | dc\_2 |
+| dashboard-03.moengage.com | dc\_3 |
+| dashboard-04.moengage.com | dc\_4 |
+| dashboard-06.moengage.com | dc\_6 |
+Keep the proper Data center handy as it will be used below for integration purpose.
 
-### Integration Script
+MoEngage recommends that you perform the integration in the test environment first and then integrate it into the production or live environment.
 
-Insert the following code in the `<head>` tag. Replace `{DC}` with your Data Center value and `{WorkspaceID}` with your App ID.
+To integrate into the test environment:
 
-<Tabs>
-  <Tab title="Without Portfolio">
-```html
+1. Insert the following code in the `<head>` tag of every page that requires tracking.
+2. Replace "APP ID" available in the settings page of MoEngage Dashboard.  
+Navigate to `Dashboard --> Settings --> App --> General` and copy the APP ID.
+3. Replace the value of sdkVersion with the version of Web SDK you intend to use. It is recommended to use the format x (major)
+4. Replace "DC" with the data center form the above table.
+5. if you have *Portfolio* enabled for your workspace, you need to pass the `project_id` key and the project ID of your project as value.
+
+<CodeGroup>
+```auto Without Portfolio
 <script type="text/javascript">
-var moeDataCenter = "{DC}"; 
-var moeAppID = "{WorkspaceID}"; 
-var sdkVersion = "2"; 
-!function(e,n,i,t,a,r,o,d){if(!moeDataCenter||!moeDataCenter.match(/^dc_[0-9]+$/gm))return console.error("Data center error.");var s=e[a]=e[a]||[];if(s.invoked=0,s.initialised>0||s.invoked>0)return !1;e.moengage_object=a;var l={},g=function n(i){return function(){var n=arguments;(e.moengage_q=e.moengage_q||[]).push({f:i,a:n})}},u=["track_event","add_user_attribute","add_first_name","add_last_name","add_email","add_mobile","add_user_name","add_gender","add_birthday","destroy_session","add_unique_user_id","update_unique_user_id","moe_events","call_web_push","track","location_type_attribute","identifyUser","getUserIdentities"],m={onsite:["getData","registerCallback","getSelfHandledOSM"]};for(var c in u)l[u[c]]=g(u[c]);for(var v in m)for(var f in m[v])null==l[v]&&(l[v]={}),l[v][m[v][f]]=g(v+"."+m[v][f]);r=n.createElement(i),o=n.getElementsByTagName("head")[0],r.async=1,r.src=t,o.appendChild(r),e.moe=e.moe||function(){return(s.invoked=s.invoked+1,s.invoked>1)?!1:(d=arguments[0],l)},r.addEventListener("load",function(){if(d)return e[a]=e.moe(d),e[a].initialised=e[a].initialised+1||1,!0}),r.addEventListener("error",function(){return !1})}(window,document,"script","[https://cdn.moengage.com/release/](https://cdn.moengage.com/release/)"+moeDataCenter+"/versions/"+sdkVersion+"/moe_webSdk.min.latest.js","Moengage");
+var moeDataCenter = "{DC}"; // Replace "DC" with the actual Data center value from the above table
+var moeAppID = "{WorkspaceID}"; // Replace "WorkspaceID" available in the settings page of MoEngage Dashboard.
+var sdkVersion = "2"; // Replace this value with the version of Web SDK that you intend to use. It is recommended to use the format x (major)
+!function(e,n,i,t,a,r,o,d){if(!moeDataCenter||!moeDataCenter.match(/^dc_[0-9]+$/gm))return console.error("Data center has not been passed correctly. Please follow the SDK installation instruction carefully.");var s=e[a]=e[a]||[];if(s.invoked=0,s.initialised>0||s.invoked>0)return console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1;e.moengage_object=a;var l={},g=function n(i){return function(){for(var n=arguments.length,t=Array(n),a=0;a<n;a++)t[a]=arguments[a];(e.moengage_q=e.moengage_q||[]).push({f:i,a:t})}},u=["track_event","add_user_attribute","add_first_name","add_last_name","add_email","add_mobile","add_user_name","add_gender","add_birthday","destroy_session","add_unique_user_id","update_unique_user_id","moe_events","call_web_push","track","location_type_attribute","identifyUser","getUserIdentities"],m={onsite:["getData","registerCallback","getSelfHandledOSM"]};for(var c in u)l[u[c]]=g(u[c]);for(var v in m)for(var f in m[v])null==l[v]&&(l[v]={}),l[v][m[v][f]]=g(v+"."+m[v][f]);r=n.createElement(i),o=n.getElementsByTagName("head")[0],r.async=1,r.src=t,o.appendChild(r),e.moe=e.moe||function(){return(s.invoked=s.invoked+1,s.invoked>1)?(console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1):(d=arguments.length<=0?void 0:arguments[0],l)},r.addEventListener("load",function(){if(d)return e[a]=e.moe(d),e[a].initialised=e[a].initialised+1||1,!0}),r.addEventListener("error",function(){return console.error("Moengage Web SDK loading failed."),!1})}(window,document,"script","https://cdn.moengage.com/release/"+moeDataCenter+"/versions/"+sdkVersion+"/moe_webSdk.min.latest.js","Moengage");
+
+      Moengage = moe({
+        app_id: moeAppID,
+        env: 'TEST',
+        logLevel: 1
+        });
+</script>
+```
+
+```auto With Portfolio
+<script type="text/javascript">
+  var moeDataCenter = "{DC}"; // Replace "DC" with the actual Data center value from the above table
+  var moeAppID = "{WorkspaceID}"; // Replace "WorkspaceID" available in the settings page of MoEngage Dashboard.
+  var sdkVersion = "2"; // Replace this value with the version of Web SDK that you intend to use. It is recommended to use the format x (major)
+  !function(e,n,i,t,a,r,o,d){if(!moeDataCenter||!moeDataCenter.match(/^dc_[0-9]+$/gm))return console.error("Data center has not been passed correctly. Please follow the SDK installation instruction carefully.");var s=e[a]=e[a]||[];if(s.invoked=0,s.initialised>0||s.invoked>0)return console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1;e.moengage_object=a;var l={},g=function n(i){return function(){for(var n=arguments.length,t=Array(n),a=0;a<n;a++)t[a]=arguments[a];(e.moengage_q=e.moengage_q||[]).push({f:i,a:t})}},u=["track_event","add_user_attribute","add_first_name","add_last_name","add_email","add_mobile","add_user_name","add_gender","add_birthday","destroy_session","add_unique_user_id","update_unique_user_id","moe_events","call_web_push","track","location_type_attribute","identifyUser","getUserIdentities"],m={onsite:["getData","registerCallback","getSelfHandledOSM"]};for(var c in u)l[u[c]]=g(u[c]);for(var v in m)for(var f in m[v])null==l[v]&&(l[v]={}),l[v][m[v][f]]=g(v+"."+m[v][f]);r=n.createElement(i),o=n.getElementsByTagName("head")[0],r.async=1,r.src=t,o.appendChild(r),e.moe=e.moe||function(){return(s.invoked=s.invoked+1,s.invoked>1)?(console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1):(d=arguments.length<=0?void 0:arguments[0],l)},r.addEventListener("load",function(){if(d)return e[a]=e.moe(d),e[a].initialised=e[a].initialised+1||1,!0}),r.addEventListener("error",function(){return console.error("Moengage Web SDK loading failed."),!1})}(window,document,"script","https://cdn.moengage.com/release/"+moeDataCenter+"/versions/"+sdkVersion+"/moe_webSdk.min.latest.js","Moengage");
+  
+  Moengage = moe({
+    app_id: moeAppID,
+    project_id: 'your_project_id',
+    env: 'TEST',
+    logLevel: 1
+  });
+  </script>
+```
+
+</CodeGroup>
+### PRODUCTION or LIVE Integration
+
+To integrate into the production or live environment:
+
+1. Insert the following code in the `<head>` tag of every page that requires tracking.
+2. Replace "APP ID" available in the settings page of MoEngage Dashboard.  
+Navigate to `Dashboard --> Settings --> App --> General` and copy the APP ID.
+3. Replace the value of sdkVersion with the version of Web SDK you intend to use. It is recommended to use the format x (major)
+4. Replace "DC" with the data center form the above table
+5. If you have [*Portfolio*](https://help.moengage.com/hc/en-us/articles/40394603054100-Portfolio) enabled for your workspace, you need to pass the `project_id` key and the projectID of you project as value.
+
+<CodeGroup>
+```auto Without Portfolio
+<script type="text/javascript">
+var moeDataCenter = "{DC}"; // Replace "DC" with the actual Data center value from the above table
+var moeAppID = "{WorkspaceID}"; // Replace "WorkspaceID" available in the settings page of MoEngage Dashboard.
+var sdkVersion = "2"; // Replace this value with the version of Web SDK that you intend to use. It is recommended to use the format x (major)
+!function(e,n,i,t,a,r,o,d){if(!moeDataCenter||!moeDataCenter.match(/^dc_[0-9]+$/gm))return console.error("Data center has not been passed correctly. Please follow the SDK installation instruction carefully.");var s=e[a]=e[a]||[];if(s.invoked=0,s.initialised>0||s.invoked>0)return console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1;e.moengage_object=a;var l={},g=function n(i){return function(){for(var n=arguments.length,t=Array(n),a=0;a<n;a++)t[a]=arguments[a];(e.moengage_q=e.moengage_q||[]).push({f:i,a:t})}},u=["track_event","add_user_attribute","add_first_name","add_last_name","add_email","add_mobile","add_user_name","add_gender","add_birthday","destroy_session","add_unique_user_id","update_unique_user_id","moe_events","call_web_push","track","location_type_attribute","identifyUser","getUserIdentities"],m={onsite:["getData","registerCallback","getSelfHandledOSM"]};for(var c in u)l[u[c]]=g(u[c]);for(var v in m)for(var f in m[v])null==l[v]&&(l[v]={}),l[v][m[v][f]]=g(v+"."+m[v][f]);r=n.createElement(i),o=n.getElementsByTagName("head")[0],r.async=1,r.src=t,o.appendChild(r),e.moe=e.moe||function(){return(s.invoked=s.invoked+1,s.invoked>1)?(console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1):(d=arguments.length<=0?void 0:arguments[0],l)},r.addEventListener("load",function(){if(d)return e[a]=e.moe(d),e[a].initialised=e[a].initialised+1||1,!0}),r.addEventListener("error",function(){return console.error("Moengage Web SDK loading failed."),!1})}(window,document,"script","https://cdn.moengage.com/release/"+moeDataCenter+"/versions/"+sdkVersion+"/moe_webSdk.min.latest.js","Moengage");
 
 Moengage = moe({
   app_id: moeAppID,
-  env: 'TEST',
-  logLevel: 1
+  env: 'LIVE',
+  logLevel: 0
 });
 </script>
 ```
-  </Tab>
-  <Tab title="With Portfolio">
-```javascript
-Moengage = moe({
-  app_id: moeAppID,
-  project_id: 'your_project_id',
-  env: 'TEST',
-  logLevel: 1
-});
+
+```auto With Portfolio
+<script type="text/javascript">
+  var moeDataCenter = "{DC}"; // Replace "DC" with the actual Data center value from the above table
+  var moeAppID = "{WorkspaceID}"; // Replace "WorkspaceID" available in the settings page of MoEngage Dashboard.
+  var sdkVersion = "2"; // Replace this value with the version of Web SDK that you intend to use. It is recommended to use the format x (major)
+  !function(e,n,i,t,a,r,o,d){if(!moeDataCenter||!moeDataCenter.match(/^dc_[0-9]+$/gm))return console.error("Data center has not been passed correctly. Please follow the SDK installation instruction carefully.");var s=e[a]=e[a]||[];if(s.invoked=0,s.initialised>0||s.invoked>0)return console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1;e.moengage_object=a;var l={},g=function n(i){return function(){for(var n=arguments.length,t=Array(n),a=0;a<n;a++)t[a]=arguments[a];(e.moengage_q=e.moengage_q||[]).push({f:i,a:t})}},u=["track_event","add_user_attribute","add_first_name","add_last_name","add_email","add_mobile","add_user_name","add_gender","add_birthday","destroy_session","add_unique_user_id","update_unique_user_id","moe_events","call_web_push","track","location_type_attribute","identifyUser","getUserIdentities"],m={onsite:["getData","registerCallback","getSelfHandledOSM"]};for(var c in u)l[u[c]]=g(u[c]);for(var v in m)for(var f in m[v])null==l[v]&&(l[v]={}),l[v][m[v][f]]=g(v+"."+m[v][f]);r=n.createElement(i),o=n.getElementsByTagName("head")[0],r.async=1,r.src=t,o.appendChild(r),e.moe=e.moe||function(){return(s.invoked=s.invoked+1,s.invoked>1)?(console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1):(d=arguments.length<=0?void 0:arguments[0],l)},r.addEventListener("load",function(){if(d)return e[a]=e.moe(d),e[a].initialised=e[a].initialised+1||1,!0}),r.addEventListener("error",function(){return console.error("Moengage Web SDK loading failed."),!1})}(window,document,"script","https://cdn.moengage.com/release/"+moeDataCenter+"/versions/"+sdkVersion+"/moe_webSdk.min.latest.js","Moengage");
+  
+  Moengage = moe({
+    app_id: moeAppID,
+    project_id: 'your_project_id',
+    env: 'LIVE',
+    logLevel: 0
+  });
+  </script>
 ```
-  </Tab>
-</Tabs>
+
+</CodeGroup>
+### Upgrading the SDK
+
+When you reference the MoEngage Web SDK from our content delivery network, for example, `https://cdn.moengage.com/release/{DC}/versions/{sdkVersion}/moe_webSdk.min.latest.js` where `sdkVersion = x` (using `sdkVersion = x`, i.e. fixing version only till major release is our default integration recommendation), your users will receive new features and bug fixes automatically when they refresh your site.
+
+However, when we release major changes, we require you to upgrade the MoEngage Web SDK manually to ensure that nothing in your integration will be impacted by breaking changes.
+
+You can keep up-to-date with our latest release following our [changelog](https://developers.moengage.com/hc/en-us/articles/4406089292820-Changelog) for a full accounting of our Web SDK release history. To upgrade the MoEngage Web SDK:
+
+* Update the MoEngage library version by changing value of `sdkVersion` in the integration script.
+* If you have web push integrated, update version in the serviceworker cdn url in the service worker file on your site - by default, this is located at `/serviceworker.js` at your site’s root directory, but the location may be customized in some integrations. `importScripts("https://cdn.moengage.com/release/{DC}/versions/[old-version-number]/serviceworker_cdn.min.latest.js");`
+* If you have web personalisation integrated, update the version in the web personalisation script- `https://cdn.moengage.com/release/{DC}/versions/[old-version-number]/moe_webSdk_webp.min.latest.js?app_id={workspace-id}`
 
 <Warning>
-  **Upgrading the SDK**
-  
-  When upgrading major versions, you must update the `sdkVersion` in the main script, the Service Worker URL, and the Web Personalization script simultaneously to ensure functionality.
+These 3 integrations must be updated with the same version number for proper functionality. In case you are using NPM, use the version number of @moengage/web-sdk dependency that is in your package.json file.
 </Warning>
-
-
 ## Method 2: Using NPM
 
-Add the package to your project:
+If your site uses NPM or Yarn package managers, you can add the [Moengage NPM package](https://www.npmjs.com/package/@moengage/web-sdk)  as a dependency.
 
-```bash
+<CodeGroup>
+```auto Add MoEngage NPM Package
 npm install --save @moengage/web-sdk
-# or
-yarn add @moengage/web-sdk
+# or, using yarn:
+# yarn add @moengage/web-sdk
 ```
 
-Initialize the SDK in your main JavaScript file:
+</CodeGroup>
+Once installed, you can `import` or `require` the library in the typical fashion:
 
-```javascript
+<CodeGroup>
+```auto JavaScript
 import moengage from "@moengage/web-sdk";
 
+// or, using `require`
+
+const moengage = require("@moengage/web-sdk");
+```
+
+</CodeGroup>
+Then, initialize it by passing the configurations in all the pages before using it:
+
+<CodeGroup>
+```auto JavaScript
 moengage.initialize({
   app_id: 'XXXXXXXXXXXXXXXX',
   env: 'LIVE',
   logLevel: 0
 });
-
-// Example usage
-moengage.add_email('abc@xyz.com');
 ```
 
+</CodeGroup>
+You can pass any configuration here. For example,
 
+* if you have [*Portfolio*](https://help.moengage.com/hc/en-us/articles/40394603054100-Portfolio) enabled for your workspace, you need to pass the `project_id` key.
+* if you want to change the integration settings for specialized projects, then pass it as shown in the following snippet:
+
+<CodeGroup>
+```auto JavaScript
+moengage.initialize({
+  app_id: 'XXXXXXXXXXXXXXXX', 
+  project_id: 'your_project_id',
+  env: 'LIVE',
+  logLevel: 0
+});
+```
+
+</CodeGroup>
+After that, you can use any method of the Moengage SDK, as shown in the snippet below:
+
+<CodeGroup>
+```auto JavaScript
+moengage.add_email('abc@xyz.com')
+```
+
+</CodeGroup>
+ 
+
+<Info>
+If you wish to always use the latest version of the Web SDK (instead of the version of @moengage/web-sdk mentioned in your package manager), pass the property `useLatest` with value set to `true` in the configuration:
+
+`moengage.initialize({app_id: 'XXXXXXXXXXXXXXXX', useLatest: true});`
+</Info>
+
+<Info>
+Use the version of Web SDK that you intend by altering the version of @moengage/web-sdk dependency in your package manager. More information on how to use specific version or range of versions can be found [here](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#dependencies).
+</Info>
 # Whitelisting URLs
 
-If your website uses a Content Security Policy (CSP), ensure you whitelist the following endpoints:
+<Info>
+Optional step for all web modules
+</Info>
+If your website is configured to block the external endpoints, then all the network calls to MoEngage fails.  
+Ensure that you whitelist the following endpoints for smooth integration.
 
-* **script-src:** `https://cdn.moengage.com/`, `https://app-cdn.moengage.com/`
-* **connect-src:** `https://sdk-01.moengage.com/` through `https://sdk-06.moengage.com/`
-* **image-src:** `https://moe-email-campaigns.s3.amazonaws.com/`, `https://image.moengage.com/` (and DC-specific image URLs).
-* **style-src / font-src:** `https://fonts.bunny.net/`
+**script-src:**
 
+* https://cdn.moengage.com/
+* [https://app-cdn.moengage.com/](https://app-cdn.moengage.com)
+
+**image-src:**
+
+* https://moe-email-campaigns.s3.amazonaws.com/
+* https://image.moengage.com/
+* https://image-eu.moengage.com/
+* https://image-ap1.moengage.com/
+* https://image-04.moengage.com/
+* https://image-06.moengage.com/
+* https://image.moengage.com/all-campaign-images-moe-dc-100/
+
+**connect-src:**
+
+* https://sdk-01.moengage.com/
+* https://sdk-02.moengage.com/
+* https://sdk-03.moengage.com/
+* https://sdk-04.moengage.com/
+* https://sdk-06.moengage.com/
+
+**frame-src:**
+
+* https://cdn.moengage.com/
+
+**style-src:**
+
+* https://cdn.moengage.com/
+* [https://app-cdn.moengage.com/](https://app-cdn.moengage.com)
+* https://fonts.bunny.net/
+
+**font-src:**
+
+* https://fonts.bunny.net/
+
+You will get the error ***Refused to connect to `https://\*\*\*.moengage.com/\*\*\*\*` because it violates the following Content Security Policy directive.*** if you do not whitelist the URLs.
+
+For more information, refer to [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).
 
 # Troubleshooting
 
-### Not able to debug SDK?
-Check that the `logLevel` is set to `1` (or `2` for verbose) while initializing.
+## Not able to debug SDK in the environment.
 
-### What is the difference between TEST & LIVE?
-* `env: 'TEST'`: Routes data to your MoEngage Test dashboard (Staging).
+Check that the `logLevel` is set to `1` (or `2` for verbose) while initializing the MoEngage SDK.
+
+## How to see SDK logs in Live environment?
+
+Configure the `logLevel` to 1 while initializing the MoEngage SDK.
+
+## What is the difference between TEST & LIVE environment?
+
+MoEngage provides a staging environment referred to as the **TEST environment**. The **LIVE environment** contains data about your actual users/customers from your production website.   
+  
+MoEngage Web SDK uses the `env` parameter to route data correctly:
+
+* `env: 'TEST'`: Routes data to your Test dashboard.
 * `env: 'LIVE'`: Routes data to your production dashboard.
+
+You can independently control log verbosity using the `logLevel` parameter regardless of the environment selected.
