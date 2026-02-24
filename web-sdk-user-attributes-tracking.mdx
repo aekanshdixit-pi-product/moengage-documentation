@@ -67,21 +67,21 @@ Use the following MoEngage methods to make use of the standard user attributes.
 
 ID is used to uniquely identify a user within the MoEngage dashboard.
 
-Ensure log in and log out of users are implemented correctly during the visit to your website and users are authenticated.
+Ensure log in and log out of users are implemented correctly during the visit to your website and users are authenticated. 
 
 <Warning>
-  **Warning** If the user [log in](#log-in) and [log out](#log-out) is not handled correctly, user data may get corrupted.
+  If the user [log in](#log-in) and [log out](#log-out) is not handled correctly, user data may get corrupted.
 </Warning>
 
 When you go live with MoEngage web SDK for the first time, ensure that you are setting the ID of your existing website users on page load.
 
-As soon as the user is authenticated, ensure that the user id is passed on to the MoEngage SDK using the login method. After the user logs out of your app, ensure to call the logout method of MoEngage.
+As soon as the user is authenticated, ensure that the user id is passed on to the MoEngage SDK using the login method. After the user logs out of your app, ensure to call the logout method of MoEngage. 
 
 Use the following MoEngage methods on user login, user log out and user update:
 
 ## Log In
 
-For SDK versions below 2.52.2 refer to [this document][/developer-guide/web-sdk/data-tracking/setting-unique-id-for-sdk-versions-below-2-52-2].
+For SDK versions below 2.52.2 refer to [this document](/developer-guide/web-sdk/data-tracking/Setting-Unique-Id-for-SDK-versions-below-2-52-2).
 
 <Note>
   Please ensure that you are using the latest [integration script](/developer-guide/web-sdk/web-sdk-integration/basic-integration/web-sdk-integration) before using the below MoEngage methods.
@@ -101,6 +101,19 @@ For SDK versions below 2.52.2 refer to [this document][/developer-guide/web-sdk/
     ```
   </Tab>
 </Tabs>
+
+<Info>
+  **Information**
+  
+  Updates are made to SDK functions to improve user identification and session management.
+
+  - **Forced Logout**: The MoEngage SDK no longer automatically logs out the previous user when a new user is detected on the device. Logout should now be explicitly called for workspaces enabled with Identity resolution to avoid data corruption.
+  - **SetUniqueID**: *IdentifyUser* function supports multiple identifiers, which replaces the need of using *SetUniqueID* function for user identification. Note that *SetUniqueID* is marked for removal in the future releases of SDK versions - it is important to use *identifyUser* instead especially if you are using Identity resolution in your workspace.
+  - **SetAlias**: For workspaces with the Identity resolution feature enabled, MoEngage SDK stores the previous identifier values. When *IdentifyUser* function is used to track the new identifier values, MoEngage SDK detects the change in identifier value and reports accordingly.
+  - If you call the *IdentifyUser* function without logging out, then the existing logged-in user's ID is updated.
+</Info>
+
+Refer to our help [document](https://help.moengage.com/hc/en-us/articles/24050999467284-User-Identity-Management) to learn more about the feature.
 
 Here, `u_em`, `u_mb`, `uid` are standard user attributes. Please refer to the below table to identify user with standard user attributes:
 
@@ -145,7 +158,9 @@ If you want to retrieve the current state of identities set for the user, you ca
 </Tabs>
 
 <Warning>
-  **Critical - Very Important Integration Guideline** Never use both the login methods - `identifyUser` and `add_unique_user_id` (login method of SDK versions below 2.52.2) in your project. Use only either one of the methods. Using both the methods can lead to inconsistent user profile creation and merging in your MoEngage account.
+  **Critical - Very Important Integration Guideline**
+
+  Never use both the login methods - `identifyUser` and `add_unique_user_id` (login method of SDK versions below 2.52.2) in your project. Use only either one of the methods. Using both the methods can lead to inconsistent user profile creation and merging in your MoEngage account.
 </Warning>
 
 In order the get the value of a tracked user attributes, you can use the below method:
@@ -192,7 +207,9 @@ Logs out the current user.
 </Tabs>
 
 <Warning>
-  **Critical** `identifyUser` and `destroy_session` methods should be called in proper order. So make sure, you track other attributes after these methods are executed completely. Since these return promise, you can track data like this:
+  **Critical**
+
+  `identifyUser` and `destroy_session` methods should be called in proper order. So make sure, you track other attributes after these methods are executed completely. Since these return promise, you can track data like this:
 
   <Tabs>
     <Tab title="JavaScript">
@@ -209,11 +226,11 @@ Logs out the current user.
 
 Ensure that you are tracking user attributes in the following cases:
 
-1. When a new attribute is set for a user.  
+1. When a new attribute is set for a user.
    For example, set the Email Id or Mobile No. attribute for the user after a user logs in or signs up on the website.
 2. When the value of an existing attribute is updated.
 3. When you go live for the first time with MoEngage web SDK integration, ensure that you are passing the user attributes set for your existing website users after page load (if they are not already sent to MoEngage).
-4. For more information on supported data types and data tracking policies, please refer to [Data Tracking Policies](https://help.moengage.com/hc/en-us/articles/360037314991-Data-Tracking-Policies?_gl=1%2A1nx53wd%2A_ga%2AMTU4NTM0MzI0NS4xNzI3MTcwMzYy%2A_ga_SEBHW7YTZ7%2AczE3NzE4MjEwNDEkbzE1NiRnMSR0MTc3MTgyOTk3NCRqNjAkbDAkaDA.#h_01H9QNZ61VYYESY6FRMTQXVWX0).
+4. For more information on supported data types and data tracking policies, please refer to [Data Tracking Policies](https://help.moengage.com/hc/en-us/articles/360037314991#h_01H9QNZ61VNHSMFQC28MAZJXS9).
 
 <Note>
   Make sure that you are not using a single unique id for all the users, this is possible only when the unique id value is hardcoded, instead of retrieving from your servers.
@@ -243,6 +260,5 @@ If you cannot wait for the tracking to complete and need to redirect immediately
 
 Duplicate User Attributes won't be tracked for 6 hours.
 
-For more information about the default attributes collected by MoEngage SDK, refer to [Web SDK Data Collection](https://help.moengage.com/hc/en-us/articles/360042954831-Default-Web-SDK?_gl=1%2A1q0t46u%2A_ga%2AMTU4NTM0MzI0NS4xNzI3MTcwMzYy%2A_ga_SEBHW7YTZ7%2AczE3NzE4MjEwNDEkbzE1NiRnMSR0MTc3MTgzMDA0MiRqNjAkbDAkaDA.).
+For more information about the default attributes collected by MoEngage SDK, refer to [Web SDK Data Collection](https://help.moengage.com/hc/en-us/articles/360042954831-Default-Web-SDK-).
 
-For further assistance, please contact your MoEngage Customer Success Manager (CSM) or the Support team.
