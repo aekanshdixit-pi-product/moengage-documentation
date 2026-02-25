@@ -1,0 +1,140 @@
+---
+title: "User Login in AMP (Older Process)"
+description: ""
+---
+
+## Track Login
+
+<CodeGroup>
+``` HTML
+<button id="login" data-vars-unique-id="someUniqueId">Click here to track user login</button>
+```
+
+</CodeGroup>
+
+<Tabs>
+  <Tab title="HTML">
+    ```
+    <amp-analytics type="moengage" id="moengage">
+    <script type="application/json">
+    {
+    "vars": {
+    "appId": "XXXXXXXXXXXXXXXX",
+    "dataCenter": "sdk-01"
+    },
+    "triggers": {
+        "clickTrigger": {
+          "on": "click",
+          "selector": "#login",
+          "request": "event",
+          "extraUrlParams": {
+            "a": {
+             "USER_ATTRIBUTE_UNIQUE_ID": "${unique-id}"
+            },
+            "e": "EVENT_ACTION_USER_ATTRIBUTE",
+            "identifiers": {
+                "moe_user_id": "${unique-id}"
+            }
+          }
+        }
+      }
+    }
+    </script>
+    </amp-analytics>
+    ```
+  </Tab>
+</Tabs>
+
+Here, "someUniqueId" is the unique ID with which you want to login the user
+
+<Warning>
+Important
+
+After tracking the login, all further attributes and events tracking should have the "identifiers" object defined inside the tracking code (with the "moe\_user\_id") as above, until logout event is performed. Otherwise, that attribute or event tracking will not be associated with this logged-in user in your MoEngage dashboard.
+</Warning>
+
+For example, if we want to track the above logged-in user's last name-
+
+<CodeGroup>
+``` HTML
+<button id="lastName" data-vars-last-name="lastNameOfLoggedInUser">Click here to track logged-in user's last name</button>
+```
+
+</CodeGroup>
+
+<Tabs>
+  <Tab title="HTML">
+    ```
+    <amp-analytics type="moengage" id="moengage">
+    <script type="application/json">
+    {
+    "vars": {
+    "appId": "XXXXXXXXXXXXXXXX",
+    "dataCenter": "sdk-01"
+    },
+    "triggers": {
+        "clickTrigger": {
+          "on": "click",
+          "selector": "#lastName",
+          "request": "event",
+          "extraUrlParams": {
+            "a": {
+             "USER_ATTRIBUTE_USER_LAST_NAME": "${last-name}"
+            },
+            "e": "EVENT_ACTION_USER_ATTRIBUTE",
+            "identifiers": {
+                "moe_user_id": "someUniqueId" //because we logged-in the user with "someUniqueId" as the unique ID
+            }
+          }
+        }
+      }
+    }
+    </script>
+    </amp-analytics>
+    ```
+  </Tab>
+</Tabs>
+
+## Track Logout
+
+<CodeGroup>
+``` HTML
+<button id="logout">Click here to track user logout</button>
+```
+
+</CodeGroup>
+
+<Tabs>
+  <Tab title="HTML">
+    ```
+    <amp-analytics type="moengage" id="moengage">
+    <script type="application/json">
+    {
+    "vars": {
+    "appId": "XXXXXXXXXXXXXXXX",
+    "dataCenter": "sdk-01"
+    },
+    "triggers": {
+        "clickTrigger": {
+          "on": "click",
+          "selector": "#logout",
+          "request": "event",
+          "extraUrlParams": {
+            "a": {},
+            "e": "MOE_LOGOUT"
+          }
+        }
+      }
+    }
+    </script>
+    </amp-analytics>
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>
+Important
+
+After performing the above Moengage logout event, do NOT send "identifiers" with any further tracking code. Because the user had logged-out and further attribute/event tracking must not be associated with this user.
+</Warning>
+
