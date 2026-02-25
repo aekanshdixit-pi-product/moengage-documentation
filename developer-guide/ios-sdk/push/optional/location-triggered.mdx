@@ -1,15 +1,15 @@
 ---
 title: "Location triggered"
-description: ""
 ---
 
-<Info>
-**Important**
+<Warning>
+  **Important**
 
-* Starting from **iOS 14.0**, Apple has provided user control to choose the level of precision of location to be shared in App. Now because of this **region monitoring(Geofence feature) will not work in cases where the precise location is disabled by the user**. Refer [link](https://developer.apple.com/videos/play/wwdc2020/10660/) for more info.
-* Region monitoring is only supported with **Always authorization**. When-in-use authorization doesn't support this feature. Refer [link](https://developer.apple.com/documentation/corelocation/choosing_the_authorization_level_for_location_services) for more info.
-* **Dwell** trigger is **not supported in iOS**, hence the SDK supports only Enter and Exit triggers.
-</Info>
+  - Starting from **iOS 14.0**, Apple has provided user control to choose the level of precision of location to be shared in App. Now because of this **region monitoring(Geofence feature) will not work in cases where the precise location is disabled by the user**. Refer [link](https://developer.apple.com/videos/play/wwdc2020/10660/) for more info.
+  - Region monitoring is only supported with **Always authorization**. When-in-use authorization doesn't support this feature. Refer [link](https://developer.apple.com/documentation/corelocation/choosing_the_authorization_level_for_location_services) for more info.
+  - **Dwell** trigger is **not supported in iOS**, hence the SDK supports only Enter and Exit triggers.
+</Warning>
+
 # How to enable Location Triggered?
 
 ## Required Permissions:
@@ -20,140 +20,165 @@ description: ""
 
 ## Install using Swift Package Manager
 
-MoEngageGeofence is supported through SPM from SDK version 4.2.0. To integrate, use the  GitHub url <https://github.com/moengage/apple-sdk.git> for SDK versions equal and above 9.23.0, or <https://github.com/moengage/MoEngage-iOS-SDK.git> for other SDK versions link and set the branch as master or required version.
+MoEngageGeofence is supported through SPM from SDK version 4.2.0. To integrate, use the  GitHub url https://github.com/moengage/apple-sdk.git for SDK versions equal and above 9.23.0, or https://github.com/moengage/MoEngage-iOS-SDK.git for other SDK versions link and set the branch as master or required version.
 
 ## Install using CocoaPod
 
 <Info>
-CocoaPods is being deprecated. MoEngage recommends using Swift Package Manager for all new integrations. For more info on CocoaPods, refer to [CocoaPods Integration Guide](https://developers.moengage.com/hc/en-us/articles/46198607808148-Integration-through-CocoaPods).
+  **Information**
+
+  CocoaPods is being deprecated. MoEngage recommends using Swift Package Manager for all new integrations. For more info on CocoaPods, refer to [CocoaPods Integration Guide](/developer-guide/ios-sdk/sdk-integration/basic/integration-through-cocoa-pods).
 </Info>
+
 Integrate the MoEngageGeofence framework by adding the dependency in the podfile as show below.
 
-<CodeGroup>
-```auto Ruby
-pod 'MoEngage-iOS-SDK/GeoFence',
-```
+<Tabs>
+  <Tab title="Ruby">
+    ```ruby wrap
+    pod 'MoEngage-iOS-SDK/GeoFence',
+    ```
+  </Tab>
+</Tabs>
 
-</CodeGroup>
-Now run `pod install` to install the framework
+Now run `pod install `to install the framework
 
 ## Manual Integration
 
-To integrate the `MoEngageGeofence` SDK manually to your project follow this [doc](https://developers.moengage.com/hc/en-us/articles/4404183451412).
+To integrate the `MoEngageGeofence` SDK manually to your project follow this [doc](/developer-guide/ios-sdk/manual-integration/manual-integration).
 
 <Warning>
-MOGeofence has been renamed to MoEngageGeofence from version 4.2.0.Do update the podfile and import statement accordingly.
+  **Note**
+
+  MOGeofence has been renamed to MoEngageGeofence from version 4.2.0.Do update the podfile and import statement accordingly.
 </Warning>
+
 ## Start Geofence Monitoring:
 
-After integrating the MoEngageGeofence module call [***startGeofenceMonitoring()***](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKGeofence.html#/c:@M@MoEngageGeofence@objc(cs)MoEngageSDKGeofence(im)startGeofenceMonitoring) method to initiate the geofence module. This will fetch the geofences around the current location of the user.
+After integrating the MoEngageGeofence module call [_startGeofenceMonitoring()_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKGeofence.html#/c:@M@MoEngageGeofence@objc\(cs\)MoEngageSDKGeofence\(im\)startGeofenceMonitoring) method to initiate the geofence module. This will fetch the geofences around the current location of the user.
 
-<CodeGroup>
-```swift Swift
-MoEngageSDKGeofence.sharedInstance.startGeofenceMonitoring()
-```
+<Tabs>
+  <Tab title="Swift">
+    ```swift wrap
+    MoEngageSDKGeofence.sharedInstance.startGeofenceMonitoring()
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec wrap
+    [[MoEngageSDKGeofence sharedInstance] startGeofenceMonitoring];
+    ```
+  </Tab>
+</Tabs>
 
-```objectivec Objective-C
-[[MoEngageSDKGeofence sharedInstance] startGeofenceMonitoring];
-```
+Geofence Handler also has callbacks for `didEnterRegion` and `didExitRegion`. You can get these by confirming to the as `MoEngageSDKGeofence.sharedInstance.setGeofenceDelegate(self)`
 
-</CodeGroup>
-Geofence Handler also has callbacks for `didEnterRegion` and `didExitRegion`. You can get these by confirming to the as `MoEngageSDKGeofence.sharedInstance.setGeofenceDelegate(self)`
-
-<CodeGroup>
-```swift Swift
-extension GeofenceViewController: MoEngageGeofenceDelegate {
-    func geofenceEnterTriggered(withLocationManager locationManager: CLLocationManager?, andRegion region: CLRegion?, forAccountMeta accountMeta: MoEngageAccountMeta) {
-        print("Geofence Entered")
+<Tabs>
+  <Tab title="Swift">
+    ```swift wrap
+    extension GeofenceViewController: MoEngageGeofenceDelegate {
+        func geofenceEnterTriggered(withLocationManager locationManager: CLLocationManager?, andRegion region: CLRegion?, forAccountMeta accountMeta: MoEngageAccountMeta) {
+            print("Geofence Entered")
+        }
+        
+        func geofenceExitTriggered(withLocationManager locationManager: CLLocationManager?, andRegion region: CLRegion?, forAccountMeta accountMeta: MoEngageAccountMeta) {
+            print("Geofence Exited"
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec wrap
+    @interface MyViewController ()<MoEngageGeofenceDelegate>
+    ---
+    - (void)geofenceEnterTriggeredWithLocationManager:(CLLocationManager *)locationManager andRegion:(CLRegion *)region forAccountMeta:(MoEngageAccountMeta *)accountMeta {
+        NSLog(@"Geofence Entered");
     }
     
-    func geofenceExitTriggered(withLocationManager locationManager: CLLocationManager?, andRegion region: CLRegion?, forAccountMeta accountMeta: MoEngageAccountMeta) {
-        print("Geofence Exited"
+    - (void)geofenceExitTriggeredWithLocationManager:(CLLocationManager *)locationManager andRegion:(CLRegion *)region forAccountMeta:(MoEngageAccountMeta *)accountMeta {
+        NSLog(@"Geofence Exited");
     }
-}
-```
+    ```
+  </Tab>
+</Tabs>
 
-```objectivec Objective-C
-@interface MyViewController ()<MoEngageGeofenceDelegate>
----
-- (void)geofenceEnterTriggeredWithLocationManager:(CLLocationManager *)locationManager andRegion:(CLRegion *)region forAccountMeta:(MoEngageAccountMeta *)accountMeta {
-    NSLog(@"Geofence Entered");
-}
-
-- (void)geofenceExitTriggeredWithLocationManager:(CLLocationManager *)locationManager andRegion:(CLRegion *)region forAccountMeta:(MoEngageAccountMeta *)accountMeta {
-    NSLog(@"Geofence Exited");
-}
-```
-
-</CodeGroup>
 # Stop Geofence Monitoring:
 
-After version `9.3.0` we have provided support to stop the monitoring of geofences. To stop geofence monitoring call [***stopGeofenceMonitoring()***](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKGeofence.html#/c:@M@MoEngageGeofence@objc(cs)MoEngageSDKGeofence(im)stopGeofenceMonitoring) method.
+After version `9.3.0` we have provided support to stop the monitoring of geofences. To stop geofence monitoring call [_stopGeofenceMonitoring()_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKGeofence.html#/c:@M@MoEngageGeofence@objc\(cs\)MoEngageSDKGeofence\(im\)stopGeofenceMonitoring) method.
 
-<CodeGroup>
-```swift Swift
-MoEngageSDKGeofence.sharedInstance.stopGeofenceMonitoring()
-```
-
-```objectivec Objective-C
-[[MoEngageSDKGeofence sharedInstance] stopGeofenceMonitoring];
-```
-
-</CodeGroup>
- 
+<Tabs>
+  <Tab title="Swift">
+    ```swift wrap
+    MoEngageSDKGeofence.sharedInstance.stopGeofenceMonitoring()
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec wrap
+    [[MoEngageSDKGeofence sharedInstance] stopGeofenceMonitoring];
+    ```
+  </Tab>
+</Tabs>
 
 # Testing Geofencing
 
 First, create a geofencing campaign on your MoEngage dashboard. You can test geofencing in the following ways:
 
 1. On the simulator:
-	* You can simulate location as shown below.  
-	![607cac9-W6pm9CraSnyt95y5dYs0_iOS_geofence_simulator.png](4404024244628)
-	* Simulate the location for which you have created the campaign on the dashboard.  
-	If you get the respective call back (the delegate methods in MoEngageGeofenceHandler), you are good to go. On simulator, you will not receive push notifications.
-2. On the device:
-	* You can simulate location for real device from the bar above the console as shown below:  
-	![6320d0b-DiSRKNLTCGaPPeKpbdL6_iOS_geofence_location.png](4404024244244)
-	* You can add a gpx file with the locations configured. A sample gpx file looks like this:
-	
-	
-	
-<CodeGroup>
-```auto XML
-<?xml version=“1.0”?>
-<gpx version=“1.0”>
-    <wpt lat=“12.9719” lon=“77.6412”><name>CustomName</name></wpt>
-    <wpt lat=“12.9619” lon=“77.6312”></wpt>
-    <wpt lat=“12.9519” lon=“77.6112”></wpt>
-</gpx>
-```
+   - You can simulate location as shown below. 
 
-</CodeGroup>
+     <Frame>
+       <img
+         src="/images/loctri1.png"
+         alt="Loctri1"
+         title="Loctri1"
+         style={{ width:"81%" }}
+       />
+     </Frame>
+   - Simulate the location for which you have created the campaign on the dashboard. If you get the respective call back (the delegate methods in MoEngageGeofenceHandler), you are good to go. On simulator, you will not receive push notifications.
+2. On the device:
+   - You can simulate location for real device from the bar above the console as shown below: 
+
+     <Frame>
+       ![Loctri2](/images/loctri2.png)
+     </Frame>
+   - You can add a gpx file with the locations configured. A sample gpx file looks like this:
+
+     <Tabs>
+       <Tab title="XML">
+         ```xml wrap
+         <?xml version=“1.0”?>
+         <gpx version=“1.0”>
+             <wpt lat=“12.9719” lon=“77.6412”><name>CustomName</name></wpt>
+             <wpt lat=“12.9619” lon=“77.6312”></wpt>
+             <wpt lat=“12.9519” lon=“77.6112”></wpt>
+         </gpx>
+         ```
+       </Tab>
+     </Tabs>
 
 On the device, once you get the delegate callback for entering or exit in a region, a notification will be sent to the device. This happens instantly, but the notification might take up to 10 minutes.
 
 # Geo Notifications
 
-Once you have received the notification, to identify geo notifications, there is a custom param “cType” = “geo” in the param app\_extra, as shown below:
+Once you have received the notification, to identify geo notifications, there is a custom param “cType” = “geo” in the param app_extra, as shown below:
 
-<CodeGroup>
-```json JSON
-{
-    "app_extra" = {
-            cType = geo;
-            screenData = {
-                "" = "";
-                };
-            screenName = "";
-        };
-        aps = {
-            alert = "exit london- single fence";
-            badge = 1;
-        };
-        moengage = {
-            cid = "55a628bcf4c4073bb66a368b_GEO:55a628bcf4c4073bb66a368c_ABab1:2015-07-15_14:11:33.704706";
-        };
-}
-```
-
-</CodeGroup>
+<Tabs>
+  <Tab title="JSON">
+    ```json wrap
+    {
+        "app_extra" = {
+                cType = geo;
+                screenData = {
+                    "" = "";
+                    };
+                screenName = "";
+            };
+            aps = {
+                alert = "exit london- single fence";
+                badge = 1;
+            };
+            moengage = {
+                cid = "55a628bcf4c4073bb66a368b_GEO:55a628bcf4c4073bb66a368c_ABab1:2015-07-15_14:11:33.704706";
+            };
+    }
+    ```
+  </Tab>
+</Tabs>

@@ -1,179 +1,186 @@
 ---
 title: "Custom Notification Handling"
-description: ""
 ---
 
 # Disable Badge Reset
 
-By default, the SDK sets the notification badge count to **0** on every app launch and this also clears the notifications in the device notification center. In case if you would like to keep the notifications even after the App Launch then disable badge reset by calling the below method before MoEngage SDK is initialized.
+By default, the SDK sets the notification badge count to **0** on every app launch and this also clears the notifications in the device notification center. In case if you would like to keep the notifications even after the App Launch then disable badge reset by calling the below method before MoEngage SDK is initialized.
 
-<CodeGroup>
-```swift Swift
-MoEngageSDKMessaging.sharedInstance.disableBadgeReset(true)
-```
-
-```objectivec Objective-C
-[[MoEngageSDKMessaging sharedInstance] disableBadgeReset:true];
-```
-
-</CodeGroup>
- 
+<Tabs>
+  <Tab title="Swift">
+    ```swift wrap
+    MoEngageSDKMessaging.sharedInstance.disableBadgeReset(true)
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec wrap
+    [[MoEngageSDKMessaging sharedInstance] disableBadgeReset:true];
+    ```
+  </Tab>
+</Tabs>
 
 # Custom Sound for Notification
 
 You can have a custom tone for notifications of your app. iOS platform supports .aiff , .caf and .wav files for custom Notification tone. For this make sure the sound file of tone is included in your app bundle. Once this is done make sure to provide the sound filename for Notification Sound(In Rich Content Section) while creating the campaign in the dashboard as shown below, and it should work:
 
-![CustomSound.png](23448113098900)
+![Customnot1](/images/Customnot1.png)
 
 # Notification Actions
 
 MoEngage provides several actions that can be included in push notifications to enhance user engagement and interaction. Here are some of the actions provided by MoEngage push notifications:
 
 1. RichLanding: The provided URL will be opened within the app using the Safari View Controller, which ensures that the user remains within the application while accessing the URL. This functionality is handled by the SDK.
-
-2. Navigate To Screen: Implement the callback method mentioned in the **Notification Click Callback in the App** of the [doc](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45FKD0XDH4X776R47JA04GJ) to perform the required action.
-
+2. Navigate To Screen: Implement the callback method mentioned in the **Notification Click Callback in the App** of the [doc](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial#step-1-implement-notification-service-extension-nse) to perform the required action.
 3. Deeplink: It is used to navigate users directly to a specific location or content within a mobile app.
 
-If your application  is below iOS 13,  then a deeplink callback is received in the below  ***AppDelegate*** method
+If your application is below iOS 13, then a deeplink callback is received in the below **_AppDelegate_** method
 
-<CodeGroup>
-```swift Swift
-import UIKit
+<Tabs>
+  <Tab title="Swift">
+    ```swift wrap
+    import UIKit
+    
+    // Custom Scheme Link
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+      
+      //Call only if MoEngageAppDelegateProxyEnabled is NO in Info.plist
+      MoEngageSDKAnalytics.sharedInstance.processURL(url) 
+    }
+    
+    // Universal Links
+    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+      if userActivity.activityType == NSUserActivityTypeBrowsingWeb ,
+        let incomingURL = userActivity.webpageURL{
+        //Call only if MoEngageAppDelegateProxyEnabled is NO in Info.plist
+        MoEngageSDKAnalytics.sharedInstance.processURL(incomingURL) 
+      }
+      //rest of the implementation
+      return true
+    }
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec wrap
+    // Custom Scheme Link
+    - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<uiapplicationopenurloptionskey,id> *)options {
+      
+      return  true;
+    }
+    
+    // Universal Link
+    - (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray * _Nullable))restorationHandler {
+      
+      return true;
+    }
+    @end
+    ```
+  </Tab>
+</Tabs>
 
-// Custom Scheme Link
-func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) - Bool {
-  
-  //Call only if MoEngageAppDelegateProxyEnabled is NO in Info.plist
-  MoEngageSDKAnalytics.sharedInstance.processURL(url) 
-}
+If your application is above iOS 13, then a deeplink callback is received in the below **_SceneDelegate_** method
 
-// Universal Links
-func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) - Void) - Bool {
-  if userActivity.activityType == NSUserActivityTypeBrowsingWeb ,
-    let incomingURL = userActivity.webpageURL{
-    //Call only if MoEngageAppDelegateProxyEnabled is NO in Info.plist
-    MoEngageSDKAnalytics.sharedInstance.processURL(incomingURL) 
-  }
-  //rest of the implementation
-  return true
-}
-```
-
-```objectivec Objective-C
-// Custom Scheme Link
-- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<uiapplicationopenurloptionskey,id> *)options {
-  
-  return  true;
-}
-
-// Universal Link
-- (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray * _Nullable))restorationHandler {
-  
-  return true;
-}
-@end
-```
-
-</CodeGroup>
-If your application is above iOS 13, then a  deeplink callback is received in the below  ***SceneDelegate*** method
-
-<CodeGroup>
-```swift Swift
-import UIKit
-
-// Custom Scheme Link
-func scene(_ scene: UIScene, openURLContexts URLContexts: Set) {
-        let url = URLContexts.first?.url
-        MoEngageSDKAnalytics.sharedInstance.processURL(url)
-}
-
-// Universal Scheme Link
-func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
-        if let url =  userActivity.webpageURL {
+<Tabs>
+  <Tab title="Swift">
+    ```swift wrap
+    import UIKit
+    
+    // Custom Scheme Link
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set) {
+            let url = URLContexts.first?.url
             MoEngageSDKAnalytics.sharedInstance.processURL(url)
+    }
+    
+    // Universal Scheme Link
+    func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+            if let url =  userActivity.webpageURL {
+                MoEngageSDKAnalytics.sharedInstance.processURL(url)
+            }
         }
     }
-}
-```
+    ```
+  </Tab>
+</Tabs>
 
-</CodeGroup>
+<Note>
+  **Note**
 
-<Info>
-* While implementing deep links, make sure that you have added the apps URL Scheme to **LSApplicationQueriesSchemes** array in Info.plist to whitelist your app. Without this, the deep links won't work post iOS9.
-</Info>
+  - While implementing deep links, make sure that you have added the apps URL Scheme to **LSApplicationQueriesSchemes** array in Info.plist to whitelist your app. Without this, the deep links won't work post iOS9.
+</Note>
+
 # Notification Payload
 
 An example of the push payload sent to the app:
 
-<CodeGroup>
-```json iOS Push Payload
-{
-  "aps": {
-    "alert": {
-      "title": "Notification Title",
-      "subtitle": "Notification Subtitle",
-      "body": "Notification Body"
-    },
-    "badge": 1,
-    "sound": "default",
-    "category": "INVITE_CATEGORY",
-    "content-available": 1,
-    "mutable-content": 1
-  },
-  "app_extra": {
-    "moe_deeplink": "moeapp://screen/settings",
-    "screenName": "Screen Name",
-    "screenData": {
-      "key1": "val1",
-      "key2": "val2"
+<Tabs>
+  <Tab title="iOS Push Payload">
+    ```json wrap
+    {
+      "aps": {
+        "alert": {
+          "title": "Notification Title",
+          "subtitle": "Notification Subtitle",
+          "body": "Notification Body"
+        },
+        "badge": 1,
+        "sound": "default",
+        "category": "INVITE_CATEGORY",
+        "content-available": 1,
+        "mutable-content": 1
+      },
+      "app_extra": {
+        "moe_deeplink": "moeapp://screen/settings",
+        "screenName": "Screen Name",
+        "screenData": {
+          "key1": "val1",
+          "key2": "val2"
+        }
+      },
+      "moengage": {
+        "silentPush": 1,
+        "cid": "55f2ba15a4ab4104a287bf88",
+        "app_id": "DAO6UGZ73D9RTK8B5W96TPYN_DEBUG",
+        "moe_campaign_id": "55f2ba15a4ab4104a287bf88",
+        "moe_campaign_name": "Campaign Name",
+        "inbox_expiry": "1571905058",
+        "webUrl": "https://google.com",
+        "couponCode": "APP200",
+        "media-attachment": "https://image.moengage.com/testImg.png",
+        "media-type": "image"
+      }
     }
-  },
-  "moengage": {
-    "silentPush": 1,
-    "cid": "55f2ba15a4ab4104a287bf88",
-    "app_id": "DAO6UGZ73D9RTK8B5W96TPYN_DEBUG",
-    "moe_campaign_id": "55f2ba15a4ab4104a287bf88",
-    "moe_campaign_name": "Campaign Name",
-    "inbox_expiry": "1571905058",
-    "webUrl": "https://google.com",
-    "couponCode": "APP200",
-    "media-attachment": "https://image.moengage.com/testImg.png",
-    "media-type": "image"
-  }
-}
-```
+    ```
+  </Tab>
+</Tabs>
 
-</CodeGroup>
 Description of different keys in the payload:
 
-* **aps**: This key is used by the iOS to display the notification, and the following are the keys present within it:
-* **alert** : Message Content.
-	+ **title** : Gives Notification title.
-	+ **subtitle** : Gives Notification subtitle.
-	+ **body** : Gives the message body of the notification
-* **badge**: Gives the badge number to be displayed on top of the App Icon. MoEngage platform supports only two possible values i.e, 0/1. If the value is 1 then the SDK will increment the badge number on the app icon and if it's 0 then the badge number will be reset and there will be no badge displayed on the app icon.
-* **sound**: This key gives the filename of the audio file to be played on receiving the notification. If no filename is provided while creating the campaign, to play the os default sound this key is set to the value "default".
-* **category**: This key is used by OS for deciding the set of action buttons to be displayed for the notification. Also, the same category is used by OS to decide which Notification Content Extension target to display if present.
-* **content-available**: If the value of this key is set to 1, then if the app is present in the background it will get a callback(`application:didReceiveRemoteNotification:fetchCompletionHandle`) to refresh the app content in background. Use this key only if you have to process the push notification in background. By default, this key will be unset.
-* **mutable-content**: This key is by default set to 1 for all the campaigns, this is to make sure that the Notification Service Extension target gets the callback on receiving the notification to be processed by MORichNotification. If set to 0 the extension target won't get the callback.
-* **app\_extra**: This key will contain the keys which are to be used by App Developers, i.e, Custom key value pairs and screenName for navigation.
-* **moe\_deeplink**: This key contains the deeplinking URL if provided during the campaign creation. The SDK will process this key and will attempt to open the deeplink URL if it's valid.
-* **screenName**: This key gives screen name where the user has to be navigated on clicking the notification. This navigation is not done by the SDK. The possible values for this parameter are something which app developers will have to define in their project. If provided while creating the campaign, it will be present in the notification payload. And implementing the part to parse and get `screenName` parameter's value and to navigate to the mentioned screen has to be implemented by the app developers.
-* **screenData**: This contains the custom key-value pairs entered while creating the campaign, which can be made use by the app developers for any of their use-cases.
-* **moengage** : This will contain keys which are to be used by SDK, app developers should not be making any change to this part of the payload and also avoid using this part of the payload, as we may update the structure of this part of payload as per our need. (with the exception being cid, media-attachment, media-type, app\_id which we will not change)
-* **silentPush**: This key is present and set to `1` for silent pushes sent from MoEngage.
-* **cid**: Unique ID for the campaign.
-* **app\_id**: The App ID of the account where the campaign was created.
-* **moe\_campain\_id** and **moe\_campaign\_name** : Used by analytics module to track attributes for Notification related events.
-* **inbox\_expiry**: This key gives the timestamp at which the notification will be deleted from the app inbox.
-* **webUrl**: This key contains the Rich-landing URL if provided during the campaign creation. The SDK will process this key and will open the URL(if valid) in an instance of SFSafariViewController. Use Rich-landing action if you wish to open a web page inside the app on click of the push notification. For e.g. `webUrl` - [https://www.google.com](https://www.google.com/).
-* **couponCode**: This key contains the coupon code if provided during the campaign creation. On clicking the notification, if this key is present in the push payload the SDK will display an alert with the coupon code and will give an option to user to copy the coupon to the os clipboard.For e.g. `couponCode` - APP200.
-* **media-attachment:** The media-attachment key in the payload gives you the URL of the media which you can download.
-* **media-type**: Type of media present in the URL given in media-attachment i.e, image/audio/video.
+- **aps**: This key is used by the iOS to display the notification, and the following are the keys present within it:
+- **alert** : Message Content.
+  - **title** : Gives Notification title.
+  - **subtitle** : Gives Notification subtitle.
+  - **body** : Gives the message body of the notification
+- **badge**: Gives the badge number to be displayed on top of the App Icon. MoEngage platform supports only two possible values i.e, 0/1. If the value is 1 then the SDK will increment the badge number on the app icon and if it's 0 then the badge number will be reset and there will be no badge displayed on the app icon.
+- **sound**: This key gives the filename of the audio file to be played on receiving the notification. If no filename is provided while creating the campaign, to play the os default sound this key is set to the value "default".
+- **category**: This key is used by OS for deciding the set of action buttons to be displayed for the notification. Also, the same category is used by OS to decide which Notification Content Extension target to display if present.
+- **content-available**: If the value of this key is set to 1, then if the app is present in the background it will get a callback(`application:didReceiveRemoteNotification:fetchCompletionHandle`) to refresh the app content in background. Use this key only if you have to process the push notification in background. By default, this key will be unset.
+- **mutable-content**: This key is by default set to 1 for all the campaigns, this is to make sure that the Notification Service Extension target gets the callback on receiving the notification to be processed by MORichNotification. If set to 0 the extension target won't get the callback.
+- **app_extra**: This key will contain the keys which are to be used by App Developers, i.e, Custom key value pairs and screenName for navigation.
+- **moe_deeplink**: This key contains the deeplinking URL if provided during the campaign creation. The SDK will process this key and will attempt to open the deeplink URL if it's valid.
+- **screenName**: This key gives screen name where the user has to be navigated on clicking the notification. This navigation is not done by the SDK. The possible values for this parameter are something which app developers will have to define in their project. If provided while creating the campaign, it will be present in the notification payload. And implementing the part to parse and get `screenName` parameter's value and to navigate to the mentioned screen has to be implemented by the app developers.
+- **screenData**: This contains the custom key-value pairs entered while creating the campaign, which can be made use by the app developers for any of their use-cases.
+- **moengage** : This will contain keys which are to be used by SDK, app developers should not be making any change to this part of the payload and also avoid using this part of the payload, as we may update the structure of this part of payload as per our need. (with the exception being cid, media-attachment, media-type, app_id which we will not change)
+- **silentPush**: This key is present and set to `1` for silent pushes sent from MoEngage.
+- **cid**: Unique ID for the campaign.
+- **app_id**: The App ID of the account where the campaign was created.
+- **moe_campain_id** and **moe_campaign_name** : Used by analytics module to track attributes for Notification related events.
+- **inbox_expiry**: This key gives the timestamp at which the notification will be deleted from the app inbox.
+- **webUrl**: This key contains the Rich-landing URL if provided during the campaign creation. The SDK will process this key and will open the URL(if valid) in an instance of SFSafariViewController. Use Rich-landing action if you wish to open a web page inside the app on click of the push notification. For e.g. `webUrl` - [https://www.google.com](https://www.google.com/).
+- **couponCode**: This key contains the coupon code if provided during the campaign creation. On clicking the notification, if this key is present in the push payload the SDK will display an alert with the coupon code and will give an option to user to copy the coupon to the os clipboard.For e.g. `couponCode` - APP200.
+- **media-attachment:** The media-attachment key in the payload gives you the URL of the media which you can download.
+- **media-type**: Type of media present in the URL given in media-attachment i.e, image/audio/video.
 
 <Warning>
-**HTTP URLs**
+  **HTTP URLs**
 
-Http URL's aren't supported unless explicitly specified in the plist. You will have to include ***App Transport Security Setting*****s** Dictionary in your Info.plist and inside this set ***Allow Arbitrary Loads*** to ***YES***.
+  Http URL's aren't supported unless explicitly specified in the plist. You will have to include **_App Transport Security Setting_** **s** Dictionary in your Info.plist and inside this set **_Allow Arbitrary Loads_** to **_YES_**.
 </Warning>

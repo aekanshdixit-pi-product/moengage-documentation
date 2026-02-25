@@ -1,143 +1,148 @@
 ---
 title: "SDK Initialization"
-description: ""
 ---
 
 # Initializing MoEngage SDK
 
-First, go to `Build Settings` of your `App Target` and ensure that **DEBUG** Preprocessor Macro is defined in `Debug` section as shown in the below image, if not present then add the same by entering `DEBUG=1` in `Debug` section:
+First, go to `Build Settings` of your `App Target` and ensure that **DEBUG** Preprocessor Macro is defined in `Debug` section as shown in the below image, if not present then add the same by entering `DEBUG=1` in `Debug` section:
 
-![12d75b8-Screenshot_2019-01-15_at_15.44.49.png](4403901120916)
+![Sdkini](/images/sdkini.png)
 
-**For Swift Project**, In `App Target` `Build Settings` make sure **-DDEBUG** is added to `Debug` section in the `Other Swift Flags` as described in the image:
+**For Swift Project**, In `App Target` `Build Settings` make sure **-DDEBUG** is added to `Debug` section in the `Other Swift Flags` as described in the image:
 
-![3996025-Screenshot_2019-01-15_at_15.58.49.png](4403901121172)
+![Sdkini2](/images/sdkini2.png)
 
-* in to your MoEngage account, go to **Settings** in the left panel of the dashboard. Under General Settings, you will find your **Workspace ID**. Provide this Workspace ID  along with the Datacenter while initializing the SDK with MoEngageSDKConfig instance . Use [***initializeDefaultTestInstance(\_:)***](https://moengage.github.io/ios-api-reference/Classes/MoEngage.html#/c:@M@MoEngageSDK@objc(cs)MoEngage(im)initializeDefaultTestInstance:) and [***initializeDefaultLiveInstance(\_:)***](https://moengage.github.io/ios-api-reference/Classes/MoEngage.html#/c:@M@MoEngageSDK@objc(cs)MoEngage(im)initializeDefaultLiveInstance:) methods as shown below.
+- in to your MoEngage account, go to **Settings** in the left panel of the dashboard. Under General Settings, you will find your **Workspace ID**. Provide this Workspace ID along with the Datacenter while initializing the SDK with MoEngageSDKConfig instance . Use[**_initializeDefaultTestInstance(\_:)_**](https://moengage.github.io/ios-api-reference/Classes/MoEngage.html#/c:@M@MoEngageSDK@objc\(cs\)MoEngage\(im\)initializeDefaultTestInstance:)  and [**_initializeDefaultLiveInstance(\_:)_**](https://moengage.github.io/ios-api-reference/Classes/MoEngage.html#/c:@M@MoEngageSDK@objc\(cs\)MoEngage\(im\)initializeDefaultLiveInstance:) methods as shown below.
 
-<CodeGroup>
-```swift Swift wrap
-import MoEngageSDK
- func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-  
-      //Add your MoEngage Workspace ID and Data center.
-      let sdkConfig = MoEngageSDKConfig(appId: "YOUR WorkspaceID", dataCenter: DATA_CENTER);
-
+  <Tabs>
+    <Tab title="Swift">
+      ```swift wrap
+      import MoEngageSDK
+       func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        
+            //Add your MoEngage Workspace ID and Data center.
+            let sdkConfig = MoEngageSDKConfig(appId: "YOUR WorkspaceID", dataCenter: DATA_CENTER);
+      
+            // MoEngage SDK Initialization
+            // Separate initialization methods for Dev and Prod initializations
+            #if DEBUG
+                MoEngage.sharedInstance.initializeDefaultTestInstance(sdkConfig)
+            #else
+               MoEngage.sharedInstance.initializeDefaultLiveInstance(sdkConfig)
+            #endif
+       
+        //Rest of the implementation of method
+        //-------
+        return true
+      }
+      ```
+    </Tab>
+    <Tab title="Objective-C">
+      ```objectivec wrap
+      @import MoEngageSDK;
+      - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+           //TODO: Add your MoEngage Workspace ID and Data center.
+           MoEngageSDKConfig* sdkConfig = [[MoEngageSDKConfig alloc] initWithAppId:@"YOUR Workspace ID" dataCenter: DATA_CENTER];
+          
       // MoEngage SDK Initialization
-      // Separate initialization methods for Dev and Prod initializations
-      #if DEBUG
-          MoEngage.sharedInstance.initializeDefaultTestInstance(sdkConfig)
-      #else
-         MoEngage.sharedInstance.initializeDefaultLiveInstance(sdkConfig)
-      #endif
- 
-  //Rest of the implementation of method
-  //-------
-  return true
-}
-```
+          // Separate initialization methods for Dev and Prod initializations
+          #ifdef DEBUG
+               [[MoEngage sharedInstance] initializeDefaultTestInstance:sdkConfig];
+          #else
+               [[MoEngage sharedInstance] initializeDefaultLiveInstance:sdkConfig];
+          #endif
+          
+        //Rest of the implementation of method
+        //-------
+      }
+      ```
+    </Tab>
+  </Tabs>
+- In your MoEnagage account, if your [portfolio](https://help.moengage.com/hc/en-us/articles/40394603054100-Portfolio) is configured with multiple projects, Provide the respective Project ID along with the Datacenter while initializing the SDK with MoEngageSDKConfig instance . Use [initializeDefaultTestInstance(\_:)](https://moengage.github.io/ios-api-reference/Classes/MoEngage.html#/c:@M@MoEngageSDK@objc\(cs\)MoEngage\(im\)initializeDefaultTestInstance:) and[ initializeDefaultLiveInstance(\_:)](https://moengage.github.io/ios-api-reference/Classes/MoEngage.html#/c:@M@MoEngageSDK@objc\(cs\)MoEngage\(im\)initializeDefaultLiveInstance:) methods as shown below:
 
-```objectivec Objective-C
-@import MoEngageSDK;
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-     //TODO: Add your MoEngage Workspace ID and Data center.
-     MoEngageSDKConfig* sdkConfig = [[MoEngageSDKConfig alloc] initWithAppId:@"YOUR Workspace ID" dataCenter: DATA_CENTER];
-    
-// MoEngage SDK Initialization
-    // Separate initialization methods for Dev and Prod initializations
-    #ifdef DEBUG
-         [[MoEngage sharedInstance] initializeDefaultTestInstance:sdkConfig];
+<Tabs>
+  <Tab title="Swift">
+    ```swift wrap
+    let sdkConfig = MoEngageSDKConfig(appId: "YOUR WorkspaceID", dataCenter: DATA_CENTER)
+    sdkConfig.projectConfig = MoEngageProjectConfig(projectID: "YOUR ProjectID")
+    #if DEBUG
+    MoEngage.sharedInstance.initializeDefaultTestInstance(sdkConfig)
     #else
-         [[MoEngage sharedInstance] initializeDefaultLiveInstance:sdkConfig];
+    MoEngage.sharedInstance.initializeDefaultLiveInstance(sdkConfig)
     #endif
-    
-  //Rest of the implementation of method
-  //-------
-}
-```
+    ```
+  </Tab>
+  <Tab title="Objective-C">
+    ```objectivec wrap
+    MoEngageSDKConfig* sdkConfig = [[MoEngageSDKConfig alloc] initWithAppId:@"YOUR Workspace ID" dataCenter: DATA_CENTER];
+    sdkConfig.projectConfig = [[MoEngageProjectConfig alloc] initWithProjectID:@"YOUR Project ID"];
+    #ifdef DEBUG
+    [[MoEngage sharedInstance] initializeDefaultTestInstance:sdkConfig];
+    #else
+    [[MoEngage sharedInstance] initializeDefaultLiveInstance:sdkConfig];
+    #endif
+    ```
+  </Tab>
+</Tabs>
 
-</CodeGroup>
-
-* In your MoEnagage account, if your [portfolio](https://help.moengage.com/hc/en-us/articles/40394603054100-Portfolio) is configured with multiple projects, Provide the respective Project ID along with the Datacenter while initializing the SDK with MoEngageSDKConfig instance . Use [initializeDefaultTestInstance(\_:)](https://moengage.github.io/ios-api-reference/Classes/MoEngage.html#/c:@M@MoEngageSDK@objc(cs)MoEngage(im)initializeDefaultTestInstance:) and [initializeDefaultLiveInstance(\_:)](https://moengage.github.io/ios-api-reference/Classes/MoEngage.html#/c:@M@MoEngageSDK@objc(cs)MoEngage(im)initializeDefaultLiveInstance:) methods as shown below:
-
-<CodeGroup>
-```swift Swift
-let sdkConfig = MoEngageSDKConfig(appId: "YOUR WorkspaceID", dataCenter: DATA_CENTER)
-sdkConfig.projectConfig = MoEngageProjectConfig(projectID: "YOUR ProjectID")
-#if DEBUG
-MoEngage.sharedInstance.initializeDefaultTestInstance(sdkConfig)
-#else
-MoEngage.sharedInstance.initializeDefaultLiveInstance(sdkConfig)
-#endif
-```
-
-```objectivec Objective-C
-MoEngageSDKConfig* sdkConfig = [[MoEngageSDKConfig alloc] initWithAppId:@"YOUR Workspace ID" dataCenter: DATA_CENTER];
-sdkConfig.projectConfig = [[MoEngageProjectConfig alloc] initWithProjectID:@"YOUR Project ID"];
-#ifdef DEBUG
-[[MoEngage sharedInstance] initializeDefaultTestInstance:sdkConfig];
-#else
-[[MoEngage sharedInstance] initializeDefaultLiveInstance:sdkConfig];
-#endif
-```
-
-</CodeGroup>
 Following details of the different data centers you need to set based on the dashboard hosts
 
 | Data Center | Dashboard host |
-| --- | --- |
-| DataCenter.DATA\_CENTER\_1 | dashboard-01.moengage.com |
-| DataCenter.DATA\_CENTER\_2 | dashboard-02.moengage.com |
-| DataCenter.DATA\_CENTER\_3 | dashboard-03.moengage.com |
-| DataCenter.DATA\_CENTER\_4 | dashboard-04.moengage.com |
-| DataCenter.DATA\_CENTER\_5 | dashboard-05.moengage.com |
-| DataCenter.DATA\_CENTER\_6 | dashboard-06.moengage.com |
+| :--- | :--- |
+| DataCenter.DATA_CENTER_1 | dashboard-01.moengage.com |
+| DataCenter.DATA_CENTER_2 | dashboard-02.moengage.com |
+| DataCenter.DATA_CENTER_3 | dashboard-03.moengage.com |
+| DataCenter.DATA_CENTER_4 | dashboard-04.moengage.com |
+| DataCenter.DATA_CENTER_5 | dashboard-05.moengage.com |
+| DataCenter.DATA_CENTER_6 | dashboard-06.moengage.com |
+
 For more information about the detailed list of possible configurations, refer to the [API reference](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKConfig.html).
 
-<Info>
-***data\_center\_06*** is available from MoEngage-iOS-SDK version 9.17.3 onwards
-</Info>
+<Note>
+  **Note**
+
+  **_data_center_06_** is available from MoEngage-iOS-SDK version 9.17.3 onwards
+</Note>
 
 <Warning>
-**Important**
+  **Important**
 
-Make sure to call the initialization method in `applicationDidFinishLaunching(_:)` method.  
-In case if you are initializing the SDK at a later stage and not at launch then you will have to call all the notification related methods instead of just relying on [AppDelegate Swizzling](https://developers.moengage.com/hc/en-us/articles/43960004257428-iOS-Push-Integration-Tutorial#h_01K45ED56HJA1KZP43JP0ZGG1F).
+  Make sure to call the initialization method in `applicationDidFinishLaunching(_:)` method. In case if you are initializing the SDK at a later stage and not at launch then you will have to call all the notification related methods instead of just relying on [AppDelegate Swizzling](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial#app-delegate-method-swizzling).
 </Warning>
- 
 
 # Test/Live Environment
 
-As mentioned above while initializing the build, MoEngage SDK makes use of the `DEBUG` preprocessor macro to decide whether the build is meant for TEST/LIVE Environment. Therefore you will have to take care of the same while generating the build and make sure that the **Build Configuration** of the App's target is set as mentioned below:
+As mentioned above while initializing the build, MoEngage SDK makes use of the `DEBUG` preprocessor macro to decide whether the build is meant for TEST/LIVE Environment. Therefore, you will have to take care of the same while generating the build and make sure that the **Build Configuration** of the App's target is set as mentioned below:
 
-* For **Development** Build: Build Configuration should be set to **Debug** (Data will be tracked in **TEST** Environment)
-* For **AdHoc Build/App Store** Build: Build Configuration should be set to **Release** (Data will be tracked in **LIVE** Environment)
+- For **Development** Build: Build Configuration should be set to **Debug** (Data will be tracked in **TEST** Environment)
+- For **AdHoc Build/App Store** Build: Build Configuration should be set to **Release** (Data will be tracked in **LIVE** Environment)
 
 <Warning>
-What if Build Configuration is not set correctly?
+  **What if Build Configuration is not set correctly?**
 
-If the build configuration is not set correctly following might happen:
+  If the build configuration is not set correctly following might happen:
 
-* You will see the data from the development build in LIVE environment
-* **OR** data from AdHoc/Production Build in TEST environment
-* You will get **Bad Device Token** error while trying to send a push notification to the device
+  - You will see the data from the development build in LIVE environment
+  - **OR** data from AdHoc/Production Build in TEST environment
+  - You will get **Bad Device Token** error while trying to send a push notification to the device
 </Warning>
+
 # How to set Build Configuration?
 
 ## Build Configuration on Running the app from Xcode:
 
-Whenever you run the app directly from Xcode without archiving, make sure the build configuration of **Run mode** of the App Target in Edit Scheme is set to **Debug**(set by default settings). Doing this will make sure data is tracked in TEST Environment.
+Whenever you run the app directly from Xcode without archiving, make sure the build configuration of **Run mode** of the App Target in Edit Scheme is set to **Debug**(set by default settings). Doing this will make sure data is tracked in TEST Environment.
 
-![f4b3754-Screen_Shot_2018-04-30_at_17.58.10.png](4403901432724)
+![Sdkini3](/images/sdkini3.png)
 
 ## Build Configuration on Exporting the build:
 
-While exporting the build make sure you set the correct `Build Configuration`. By default for Archive section in `Edit Scheme` the `Build Configuration` will be set to `Release`, but for a development build make sure its changed to `Debug` before exporting the build. To set the **Build Configuration** of the build in your Xcode project go to **App Target > Edit Scheme > Archive > Build Configuration** and set the configuration to **Debug/Release**(depending on the type of build). Refer to the image as described:
+While exporting the build make sure you set the correct `Build Configuration`. By default for Archive section in `Edit Scheme` the `Build Configuration` will be set to `Release`, but for a development build make sure its changed to `Debug` before exporting the build. To set the **Build Configuration** of the build in your Xcode project go to **App Target \> Edit Scheme \> Archive \> Build Configuration** and set the configuration to **Debug/Release**(depending on the type of build). Refer to the image as described:
 
-![2ecf0a4-Screen_Shot_2018-04-30_at_12.35.08.png](4403901588884)
+![Sdkini4](/images/sdkini4.png)
 
 # Switching Environment in Dashboard
 
-In the MoEngage dashboard you can switch between [test and live environment](https://help.moengage.com/hc/en-us/articles/210845683-LIVE-TEST-environments) for your app. 
+In the MoEngage dashboard you can switch between [test and live environment](https://help.moengage.com/hc/en-us/articles/210845683-LIVE-TEST-environments) for your app.
 
 **TEST** Environment is used for all the development and testing-related uses and **LIVE** environment is used for running all the campaigns for AppStore Builds for your app's user base.
