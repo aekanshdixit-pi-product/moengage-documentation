@@ -1,23 +1,23 @@
 ---
 title: "Migration from 4.x to 5.x (One time activity)"
-description: ""
 ---
 
 Follow the installation steps mentioned [here](https://developers.moengage.com/hc/en-us/articles/44622788607892).
 
 Changes required to migrate to 5.x are minimum but some structural changes require you to remove some lines of code. This had to be done to make it loosely coupled and easy to integrate
 
-* No change in Manifest permissions
-* Basic integration points remain same
-* Changes in receivers & services
-* Deprecated few APIs and provided alternatives
-* Inbox moved out of Main SDK and added to add-on lib
+- No change in Manifest permissions
+- Basic integration points remain same
+- Changes in receivers & services
+- Deprecated few APIs and provided alternatives
+- Inbox moved out of Main SDK and added to add-on lib
 
 If using Play Services 7.3 **No Changes in the following receivers**.
 
 <CodeGroup>
+
 ```auto XML
-<!-- MOENGAGE RECEIVER FOR RECEIVING GCM BROADCAST MESSAGES -->
+{/*  MOENGAGE RECEIVER FOR RECEIVING GCM BROADCAST MESSAGES  */}
 <receiver
     android:name="com.moe.pushlibrary.PushGcmBroadcastReceiver"
     android:permission="com.google.android.c2dm.permission.SEND" >
@@ -28,7 +28,7 @@ If using Play Services 7.3 **No Changes in the following receivers**.
         <category android:name="{YOUR_PACKAGE_NAME}" />
     </intent-filter>
 </receiver>
-<!-- MOENGAGE RECEIVER FOR RECEIVING INSTALLATION INTENT -->
+{/*  MOENGAGE RECEIVER FOR RECEIVING INSTALLATION INTENT  */}
 <receiver android:name="com.moe.pushlibrary.InstallReceiver" >
     <intent-filter>
         <action android:name="com.android.vending.INSTALL_REFERRER" />
@@ -37,9 +37,11 @@ If using Play Services 7.3 **No Changes in the following receivers**.
 ```
 
 </CodeGroup>
+
 If using Google Play Services 7.5
 
 <CodeGroup>
+
 ```auto XML
 <receiver
     android:name="com.google.android.gms.gcm.GcmReceiver"
@@ -68,11 +70,13 @@ If using Google Play Services 7.5
 ```
 
 </CodeGroup>
+
 # Remove the following receivers
 
 <CodeGroup>
+
 ```auto Java
-<!-- MOENGAGE RECEIVER FOR RECEIVING PACKAGE UPDATED INTENT -->
+{/*  MOENGAGE RECEIVER FOR RECEIVING PACKAGE UPDATED INTENT  */}
 <receiver android:name="com.moe.pushlibrary.PushUpdateReceiver" >
     <intent-filter>
         <action android:name="android.intent.action.PACKAGE_REPLACED" />
@@ -81,18 +85,20 @@ If using Google Play Services 7.5
             android:scheme="package" />
     </intent-filter>
 </receiver>
-<!-- MOENGAGE SERVICE PROCESSING GCM MESSAGES -->
+{/*  MOENGAGE SERVICE PROCESSING GCM MESSAGES  */}
 <service android:name="com.moe.pushlibrary.PushGCMIntentService" />
-<!-- MOENGAGE RECEIVER FOR INTERNAL PURPOSE -->
+{/*  MOENGAGE RECEIVER FOR INTERNAL PURPOSE  */}
 <receiver android:name="com.moe.pushlibrary.PushGcmRegister" />
-<!-- MOENGAGE RECEIVER FOR TRIGGERING INTERACTION DATA SYNC -->
+{/*  MOENGAGE RECEIVER FOR TRIGGERING INTERACTION DATA SYNC  */}
 <receiver android:name="com.moe.pushlibrary.SendReport" />
 ```
 
 </CodeGroup>
+
 # Add the following Receivers
 
 <CodeGroup>
+
 ```auto XML
 <receiver android:name="com.moe.pushlibrary.AppUpdateReceiver" >
     <intent-filter>
@@ -105,9 +111,11 @@ If using Google Play Services 7.5
 ```
 
 </CodeGroup>
+
 # Add the following Provider
 
 <CodeGroup>
+
 ```auto XML
 <provider
     android:name="com.moe.pushlibrary.providers.MoEProvider"
@@ -116,41 +124,45 @@ If using Google Play Services 7.5
 ```
 
 </CodeGroup>
-# Add the following <meta> tags
+
+# Add the \<meta\> following tags
 
 <CodeGroup>
+
 ```auto XML
-<!-- MANDATORY FIELD: APP ID AS SEEN ON MOENGAGE DASHBOARD APP SETTINGS PAGE -->
+{/*  MANDATORY FIELD: APP ID AS SEEN ON MOENGAGE DASHBOARD APP SETTINGS PAGE  */}
 <meta-data
     android:name="APP_ID"
     android:value="DAO6UGZ73DXXTK7BXX96TPXX" />
-<!-- MANDATORY FIELD: SENDER ID , i.e. THE PROJECT NUMBER AS MENTIONED ON GOOGLE CLOUD CONSOLE PROJECTS PAGE -->
+{/*  MANDATORY FIELD: SENDER ID , i.e. THE PROJECT NUMBER AS MENTIONED ON GOOGLE CLOUD CONSOLE PROJECTS PAGE  */}
 <meta-data
     android:name="SENDER_ID"
     android:value="id:687214452899" />
 
-<!-- MANDATORY FIELD: THE NOTIFICATION SMALL ICON WHICH WILL BE USED TO SET TO NOTIFICATIONS POSTED -->
+{/*  MANDATORY FIELD: THE NOTIFICATION SMALL ICON WHICH WILL BE USED TO SET TO NOTIFICATIONS POSTED  */}
 <meta-data
     android:name="NOTIFICATION_ICON"
     android:value="@drawable/ic_launcher" />
-<!-- MANDATORY FIELD: THE NOTIFICATION LARGE ICON WHICH WILL BE USED TO SET TO NOTIFICATIONS POSTED -->
+{/*  MANDATORY FIELD: THE NOTIFICATION LARGE ICON WHICH WILL BE USED TO SET TO NOTIFICATIONS POSTED  */}
 <meta-data
        android:name="NOTIFICATION_LARGE_ICON"
        android:value="@drawable/large_icon" />
-<!-- OPTIONAL FIELD: THE NOTIFICATION TYPE WHICH WILL BE USED, SINGLE OR MULTIPLE. DEFAULT BEHAVIOR IS SINGLE -->
+{/*  OPTIONAL FIELD: THE NOTIFICATION TYPE WHICH WILL BE USED, SINGLE OR MULTIPLE. DEFAULT BEHAVIOR IS SINGLE  */}
 <meta-data
     android:name="NOTIFICATION_TYPE"
     android:value="@integer/notification_type_multiple" />
-<!-- OPTIONAL FIELD: THE NOTIFICATION TONE THAT WILL BE USED. IF NOT SET WILL PLAY THE DEFAULT SOUND -->
+{/*  OPTIONAL FIELD: THE NOTIFICATION TONE THAT WILL BE USED. IF NOT SET WILL PLAY THE DEFAULT SOUND  */}
 <meta-data
     android:name="NOTIFICATION_TONE"
     android:value="@raw/tring" />
 ```
 
 </CodeGroup>
+
 # Delete the following code
 
 <CodeGroup>
+
 ```auto Java
 //Delete the INITIALISATION METHOD CALL. THIS IS DEPRECATED AND NOT REQUIRED ANY LONGER
 helper.initialize( GCM_SENDER_ID, MOE_APP_ID);
@@ -159,11 +171,13 @@ helper.Register(R.drawable.ic_launcher);
 ```
 
 </CodeGroup>
+
 # Add the following code (optional)
 
 Add this only if you support the change in orientation.
 
 <CodeGroup>
+
 ```auto Java
 /*
  * (non-Javadoc)
@@ -189,6 +203,7 @@ protected void onRestoreInstanceState(Bundle savedInstanceState) {
 ```
 
 </CodeGroup>
+
 # Inbox Users
 
 Change the following:
@@ -196,8 +211,9 @@ Change the following:
 Old declaration
 
 <CodeGroup>
+
 ```auto XML
-<!-- MOENGAGE INBOX ACTIVITY DECLARATION -->
+{/*  MOENGAGE INBOX ACTIVITY DECLARATION  */}
 <activity
     android:name="com.moe.pushlibrary.activities.MoEInboxActivity"
     android:label="@string/app_name" >
@@ -205,9 +221,11 @@ Old declaration
 ```
 
 </CodeGroup>
+
 Change to
 
 <CodeGroup>
+
 ```auto XML
 <activity
     android:name="com.moengage.addon.inbox.MoEInboxActivity"
@@ -216,6 +234,7 @@ Change to
 ```
 
 </CodeGroup>
+
 # Add the Install/Update Differentiator
 
 Add the install update differentiator as mentioned [here](https://developers.moengage.com/hc/en-us/articles/4402050819220).
