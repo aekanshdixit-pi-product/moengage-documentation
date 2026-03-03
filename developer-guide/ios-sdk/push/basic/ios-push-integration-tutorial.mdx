@@ -485,3 +485,61 @@ Adhering to these best practices will ensure a robust and reliable push notifica
     Avoid requesting both standard and provisional authorization at launch. In the device's Settings for your app, confirm "Deliver Quietly" is not enabled. By design, provisional notifications are delivered silently to the Notification Center without an alert or sound.
   </Accordion>
 </AccordionGroup>
+
+<Steps>
+  <Step title="Configure the NSE Code">
+    Replace the entire content of the generated `NotificationService` file with the following:
+
+    <Tabs>
+      <Tab title="Swift">
+
+        ```swift wrap
+        import UserNotifications
+        import MoEngageRichNotification
+
+        class NotificationService: UNNotificationServiceExtension {
+            var contentHandler: ((UNNotificationContent) -> Void)?
+            var bestAttemptContent: UNMutableNotificationContent?
+
+            override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
+                self.contentHandler = contentHandler
+                bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
+
+                MoEngageSDKRichNotification.setAppGroupID("group.com.yourcompany.appname")
+                MoEngageSDKRichNotification.handle(richNotificationRequest: request, withContentHandler: contentHandler)
+            }
+        }
+        ```
+
+      </Tab>
+
+      <Tab title="Objective-C">
+
+        ```objective-c wrap
+        #import <UserNotifications/UserNotifications.h>
+        @import MoEngageRichNotification;
+
+        @interface NotificationService ()
+        @property (nonatomic, strong) void (^contentHandler)(UNNotificationContent *contentToDeliver);
+        @property (nonatomic, strong) UNMutableNotificationContent *bestAttemptContent;
+        @end
+
+        @implementation NotificationService
+
+        - (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler {
+          @try {
+            self.contentHandler = contentHandler;
+            self.bestAttemptContent = [request.content mutableCopy];
+            [MoEngageSDKRichNotification setAppGroupID:@"group.com.yourcompany.appname"];
+            [MoEngageSDKRichNotification handleWithRichNotificationRequest: request withContentHandler:contentHandler];
+          } @catch (NSException *exception) {
+            NSLog(@"MoEngage : exception : %@", exception);
+          }
+        }
+        @end
+        ```
+
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
