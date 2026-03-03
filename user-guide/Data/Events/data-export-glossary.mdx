@@ -1,0 +1,599 @@
+---
+title: "Data Export Glossary"
+sidebarTitle: "Data Export Glossary"
+---
+
+# Introduction
+
+With MoEngage Event Exports, you can forward events to various third-party tools. We offer the following capabilities:
+
+1. **MoEngage Streams** - Streams allow you to forward events like user actions, campaign interaction events, and so on available in MoEngage to a pre-defined API endpoint in near real-time.
+2. **Data Warehouses** - MoEngage supports multiple data warehouses as destinations to forward events directly to your tables. We support:
+   1. [Amazon Redshift](https://help.moengage.com/hc/en-us/articles/13344979528852-Redshift-Exports)
+   2. [Google BigQuery](https://help.moengage.com/hc/en-us/articles/39116816746004-BigQuery-Exports) (via GCS)
+   3. [Snowflake](https://help.moengage.com/hc/en-us/articles/18603435928212-Snowflake-Exports)
+3. **Cloud Storages** - MoEngage also supports multiple cloud storages as destinations to forward events as JSON files in your buckets.
+   1. [Amazon S3](https://help.moengage.com/hc/en-us/articles/8098260902548-S3-Exports)
+   2. [Google Cloud Storages](https://help.moengage.com/hc/en-us/articles/13344999442068-Google-Cloud-Storage-GCS-Exports)
+   3. [SFTP](https://partners.moengage.com/hc/en-us/articles/26763225201172-SFTP)
+
+# Export Schema
+
+The export schema depends on the type of destination. Each category (Data Warehouse, Cloud Storages, APIs) has a consistent schema to account for various MoEngage Events and User-Defined Events.
+
+## Streams (API)
+
+MoEngage will make a Bulk API call to your provided API Endpoint. Here is the generic structure:
+
+JSON
+
+```
+{
+"app\_name": "The name of your app.",
+"source": "MOENGAGE",
+"moe\_request\_id": "MoEngage unique request id for each request.",
+"events": [
+{
+"event\_name": "Name of your event",
+"event\_code": "Event code",
+"event\_uuid": "Unique code of this event. This helps in determining each unique event being captured by MoEngage.",
+"event\_time": "EPOCH\_TIMESTAMP\_OF\_EVENT\_TRIGGERED\_TIME\_IN\_UTC",
+"event\_type": "CAMPAIGN\_EVENT",
+"event\_source": "MOENGAGE",
+"push\_id": "Recipient device’s push token",
+"email\_id": "Recipient's email ID",
+"mobile\_number": "Recipient's mobile number",
+"uid": "MoEngage Customer ID",
+"event\_attributes": {
+"campaign\_id": "ID of the campaign",
+"campaign\_name": "Name of the campaign",
+"campaign\_type": "Type of the campaign",
+"campaign\_channel": "Channel of the campaign"
+},
+"user\_attributes": {
+"moengage\_user\_id": "MoEngage Internal User ID"
+},
+"device\_attributes": {
+"moengage\_device\_id": "MoEngage Device ID"
+}
+}
+]
+}
+```
+
+### Schema
+
+|  |  |
+| --- | --- |
+| **Key Name** | **Description** |
+| app\_name | The name of your app on MoEngage. |
+| source | The source from which this event was captured. |
+| moe\_request\_id | Unique MoEngage API Request ID. |
+| events | Events object array. |
+
+### Event Object Schema
+
+|  |  |
+| --- | --- |
+| **Key Name** | **Description** |
+| event\_name | The display name of the event. |
+| event\_code | The event code or the internal name of the event. |
+| event\_uuid | Unique code of the event that was captured. |
+| event\_time | The epoch timestamp when the event was captured. |
+| event\_type | The type of event:   - ACQUISITION - CAMPAIGN\_ACTIVITY - LIFECYCLE - REACHABILITY - UNINSTALL - USER\_ACTION\_EVENT |
+| source | The source from which this event was captured. |
+| push\_id | The recipient’s device push token. This attribute will only be sent for PUSH-related Campaign Events. |
+| email\_id | The recipient's email ID. This attribute will only be sent for EMAIL-related Campaign Events. |
+| mobile\_number | The recipient's mobile number. This attribute will only be sent for SMS-related Campaign Events. |
+| uid | MoEngage customer\_id to uniquely identify a user in MoEngage. |
+| event\_attributes | Event attributes object in this format:  attribute\_name: value |
+| user\_attributes | User attributes object in this format:  attribute\_name: value |
+| device\_attributes | Device attributes object in this format:  attribute\_name: value |
+
+#### **Event Attributes Object**
+
+The event attributes might vary according to the event being exported. Refer to the event definitions below to see which attributes are exported.
+
+#### **User Attributes Object**
+
+The user attributes might vary according to your configuration. Refer to the user properties definitions below to see which attributes are exported.
+
+- moengage\_user\_id - This attribute is always exported. This is the internal MoEngage ID of your user.
+
+#### **Device Attributes Object**
+
+The device attributes might vary according to your configuration. Refer to the device properties definitions below to see which attributes are exported.
+
+- moengage\_device\_id - This attribute is always exported. This is the internal Device ID of your user.
+
+## Data Warehouses Destinations
+
+MoEngage will create a single table in your Data warehouse and export all your selected events to that table.
+
+### Amazon Redshift
+
+We will create a table called `moengage\_events`.
+
+### Snowflake
+
+We will create a table called `moe\_events\_`.
+
+### Table Structure
+
+The overall structure of the table will remain fixed for all types of events. Any new user property or event attribute that is exported will be part of the `user\_attributes` or `event\_attributes` column respectively. All the events will be dumped in a single table containing all necessary information such as event names, event times, etc for easy analysis.
+
+We follow the below generic schema:
+
+- Any column beginning with *event\_attributes\_* contains an event attribute. This will be followed by the event attribute name like *event\_attributes\_campaign\_name*.
+- Any column beginning with *user\_attributes\_* contains a user attribute. This will be followed by the user attribute name like *user\_attributes\_moengage\_user\_id*.
+- Any column beginning with device\_attributes contains a device attribute. This will be followed by the device attribute name like *device\_attributes\_moengage\_device\_id*.
+- We also have three JSON (or equivalent) fields called *event\_attributes*, *user\_attributes*, and *device\_attributes*. Each of these fields contains raw JSON fields in the form of a dictionary.
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+| **Key Name** | **Type** | **Description** | **NULL** |
+| app\_name | character varying(256) | The name of your app on MoEngage. | NOT NULL |
+| device\_attributes | Either of:   - super - variant | Device attributes dictionary in JSON object format:  JSON  ``` { "attribute": "value", "attribute": "value" } ``` | NULL |
+| device\_attributes\_  moengage\_device\_id | character varying(256) | This is the internal Device ID of your user. | NULL |
+| email\_address | character varying(256) | The recipient's email ID. This attribute will only be sent for EMAIL-related Campaign Events. | NULL |
+| event\_attributes | Either of:   - super - variant | Event attributes dictionary in JSON object format:  JSON  ``` { "attribute": "value", "attribute": "value" } ``` | NULL |
+| event\_attributes\_  app\_version | character varying(256) | Refer to common event attributes. | NULL |
+| event\_attributes\_  campaign\_channel | character varying(256) | Refer to common event attributes of campaign-related events. | NULL |
+| event\_attributes\_  campaign\_id | character varying(256) | Refer to common event attributes of campaign-related events. | NULL |
+| event\_attributes\_  campaign\_name | character varying(256) | Refer to common event attributes of campaign-related events. | NULL |
+| event\_attributes\_  campaign\_type | character varying(256) | Refer to common event attributes of campaign-related events. | NULL |
+| event\_attributes\_  first\_session | boolean | Refer to common event attributes. | NULL |
+| event\_attributes\_  locale\_id | character varying(256) | Tracked when the campaign is sent using Localization. Represents the id of the message locale. | NULL |
+| event\_attributes\_  locale\_name | character varying(256) | Tracked when the campaign is sent using Localization. Represents the name of the message locale. | NULL |
+| event\_attributes\_  logged\_in\_status | character varying(256) | Refer to common event attributes. | NULL |
+| event\_attributes\_  parent\_campaign\_id | character varying(256) | Refer to common event attributes of campaign-related events. | NULL |
+| event\_attributes\_  parent\_flow\_id | character varying(256) | The flow ID. Refer to common event attributes of campaign-related events. | NULL |
+| event\_attributes\_  parent\_flow\_name | character varying(256) | The name of the flow. Refer to common event attributes of campaign-related events. | NULL |
+| event\_attributes\_  platform | character varying(256) | Refer to common event attributes. | NULL |
+| event\_attributes\_  readable\_campaign\_id | character varying(256) | Refer to common event attributes of campaign-related events. | NULL |
+| event\_attributes\_  sdk\_version | character varying(256) | Refer to common event attributes. | NULL |
+| event\_attributes\_  timestamp | Either of:   - bigint - timestamp\_ntz | Refer to common event attributes. | NULL |
+| event\_attributes\_  url | character varying(256) | Tracked when display filter is selected in the in-app campaign. | NULL |
+| event\_attributes\_  variation\_id | character varying(256) | Represents the id of message variation. Refer to common event attributes of campaign-related events. | NULL |
+| event\_code | character varying(256) | The event code or the internal name of the event. | NOT NULL |
+| event\_name | character varying(256) | The display name of the event. | NOT NULL |
+| event\_source | character varying(256) | The source from which this event was captured. | NOT NULL |
+| event\_time | Either of:   - bigint - timestamp\_ntz | The epoch timestamp when the event was captured. | NOT NULL |
+| event\_type | character varying(256) | The type of event:   - ACQUISITION - CAMPAIGN\_ACTIVITY - LIFECYCLE - REACHABILITY - UNINSTALL - USER\_ACTION\_EVENT | NOT NULL |
+| event\_uuid | character varying(256) | Unique code of the event that was captured. | NOT NULL |
+| mobile\_number | character varying(256) | The recipient's mobile number. This attribute will only be sent for SMS-related Campaign Events. | NULL |
+| push\_id | character varying(256) | The recipient’s device push token. This attribute will only be sent for push-related Campaign Events. | NULL |
+| uid | character varying(256) | MoEngage customer\_id to uniquely identify a user in MoEngage. | NULL |
+| user\_attributes | Either of:   - super - variant | User attributes dictionary in JSON object format:  JSON  ``` { "attribute": "value", "attribute": "value" } ``` | NULL |
+| user\_attributes\_  moengage\_user\_id | character varying(256) | This is the internal MoEngage ID of your user. | NULL |
+
+### Google BigQuery (Generic)
+
+MoEngage exports events to your BigQuery tables via GCS Buckets using the BigQuery Transfer File service. There are two ways you can create a table for your events in BigQuery:
+
+1. Create a table specific to your exported events by using the schema of your exported files.
+2. Create a table that has a generic schema.
+
+If you want to create a generic schema and are unsure of your events, you can use this schema:
+
+JSON
+
+```
+[
+{
+"mode": "NULLABLE",
+"name": "db\_name",
+"type": "STRING"
+},
+{
+"mode": "NULLABLE",
+"name": "export\_hour",
+"type": "INTEGER"
+},
+{
+"mode": "NULLABLE",
+"name": "export\_day",
+"type": "DATE"
+},
+{
+"mode": "NULLABLE",
+"name": "event",
+"type": "JSON"
+},
+{
+"mode": "NULLABLE",
+"name": "app\_name",
+"type": "STRING"
+},
+{
+"mode": "NULLABLE",
+"name": "export\_doc\_id",
+"type": "STRING"
+}
+]
+```
+
+## Cloud Storages Destinations
+
+MoEngage will export compressed files to your cloud storage.
+
+### Generic Export Schema
+
+- **File format:** .json.gz
+- Each uncompressed file will have newline-delimited events in JSON format (each line is a single event).
+- Each file can have multiple types of events in them. We don’t create a single file for each type of event.
+- The event JSON format is described below:
+
+JSON
+
+```
+{
+"app\_name": "export\_sample\_files",
+"export\_hour": "13",
+"export\_doc\_id": "63a186ac116xxxxb254fbb23",
+"db\_name": "export\_sample\_files",
+"event": {
+"email\_id": "john.doe@example.com",
+"uid": "user1",
+"event\_type": "CAMPAIGN\_EVENT",
+"event\_code": "MOE\_EMAIL\_SENT",
+"event\_name": "Email Sent",
+"user\_attributes": {
+"moengage\_user\_id": "6387301exxxxxx6c828aee2c"
+},
+"event\_source": "MOENGAGE",
+"event\_attributes": {
+"campaign\_name": "Test email1",
+"campaign\_type": "GENERAL",
+"moe\_campaign\_channel": "Email",
+"moe\_delivery\_type": "One Time",
+"campaign\_id": "63918ad73bbxxxxxxb728ede",
+"campaign\_channel": "EMAIL"
+},
+"event\_uuid": "ffbxxedc-4eb8-xxxx-xxxx-a0c87eaxxxxx",
+"event\_time": 1668600246,
+"device\_attributes": {
+"moengage\_device\_id": "test\_device\_id"
+}
+},
+"export\_day": "2022-12-21"
+}
+```
+
+### Schema
+
+|  |  |
+| --- | --- |
+| **Key Name** | **Description** |
+| app\_name | The name of your app on MoEngage. |
+| export\_hour | The hour at which the export was created. |
+| export\_doc\_id | The document ID of the export. |
+| db\_name | The name of your app on MoEngage. |
+| export\_day | The day on which the export was created. |
+| event | Event object. |
+
+### Event Object Schema
+
+|  |  |
+| --- | --- |
+| **Key Name** | **Description** |
+| event\_name | The display name of the event. |
+| event\_code | The event code or the internal name of the event. |
+| event\_uuid | Unique code of the event that was captured. |
+| event\_time | The epoch timestamp when the event was captured. |
+| event\_type | The type of event:   - ACQUISITION - CAMPAIGN\_ACTIVITY - LIFECYCLE - REACHABILITY - UNINSTALL - USER\_ACTION\_EVENT |
+| event\_source | The source from which this event was captured. |
+| push\_id | The recipient’s device push token. This attribute will only be sent for PUSH-related Campaign Events. |
+| email\_id | The recipient's email ID. This attribute will only be sent for EMAIL-related Campaign Events. |
+| mobile\_number | The recipient's mobile number. This attribute will only be sent for SMS-related Campaign Events. |
+| uid | MoEngage customer\_id to uniquely identify a user in MoEngage. |
+| event\_attributes | Event attributes dictionary in this format:  attribute\_name: value |
+| user\_attributes | User attributes dictionary in this format:  attribute\_name: value |
+| device\_attributes | Device attributes dictionary in this format:  attribute\_name: value |
+
+#### **Event Attributes Object**
+
+The event attributes might vary according to the event being exported. Refer to the event definitions below to see which attributes are exported.
+
+#### **User Attributes Object**
+
+The user attributes might vary according to your configuration. Refer to the user properties definitions below to see which attributes are exported.
+
+- moengage\_user\_id - This attribute is always exported. This is the internal MoEngage ID of your user.
+
+#### **Device Attributes Object**
+
+The device attributes might vary according to your configuration. Refer to the device properties definitions below to see which attributes are exported.
+
+- moengage\_device\_id - This attribute is always exported. This is the internal Device ID of your user.
+
+### Amazon S3
+
+MoEngage will create a pre-defined file path inside the folder you specify while setting up the S3 Exports.
+
+We will dump files in the following locations:
+
+*s3://\<your\_bucket\_name\>/[\<folder\_path\>\_]\<connection\_name\>/export\_day=\<DD-MM-YYYY\>/event\_exports\_\<export\_timestamp\>.json.gz*
+
+### Google Cloud Storage
+
+MoEngage will create a pre-defined file path in your GCS Bucket. We will dump files in the following locations:
+
+*gs://\<your\_bucket\_name\>/event-exports/\<your\_app\_name\>/\<connection\_id\>/export\_day=YYYY-MM-DD/export\_hour=HH/\<file-name\>.json.gz*
+
+### SFTP
+
+MoEngage will create a pre-defined file path on your SFTP Server. We will dump files in the following locations:
+
+*sftp://\<your\_host\_name\>/[\<folder\_path\>/]\<connection\_name\>/export\_day=\<DD-MM-YYYY\>/event\_exports\_\<export\_timestamp\>.json.gz*
+
+# Events Exported
+
+All MoEngage-tracked attributes start with moe\_.
+
+## User Attributes
+
+Lifecycle Acquisition and Uninstall Reachability and Localization Device Data and Email Suppression Type Tracked Standard Attributes
+
+| **Key Name** | **Attribute Key** | **Description** |
+| --- | --- | --- |
+| First Seen | cr\_tcr\_t | First seen time of the user. The time when the user is created in MoEngage systems. |
+| LTV | t\_rev | Life Time Value of the user. This is the total sum of revenue attributes present in the App Conversion Goal event performed by a user. LTV is updated every time the app conversion goal event is executed by the user. |
+| Last Seen | u\_l\_a | The time of the most recent App/Site Open event for the user. |
+| No. of Conversions | t\_trans | No. of conversion events done by the user, Conversion Goal can be modified on the settings page. |
+| No. of Sessions | u\_s\_c | No.of sessions done by the user. This is the number of times a user has performed the App/Site Open event. |
+
+| **Key Name** | **Attribute Key** | **Description** |
+| --- | --- | --- |
+| Campaign Name | campaign\_name | Name of the campaign advertisement through which the user installed the app. |
+| Publisher Name | publisher\_name | Name of the Publisher through which the user installed the app. |
+| Install Status | installed | Current status of the user, If the user has the app installed on his device or user has been active on the web device. |
+| Uninstall Time | uninstall\_time | The time when our system found a user has uninstalled the app. |
+| Device ReInstall | moe\_d\_r\_ins | Tracked when a reinstall is detected on a device. |
+| User ReInstall | moe\_u\_r\_ins | Tracked when an identified user has reinstalled the app. |
+
+| **Key Name** | **Attribute Key** | **Description** |
+| --- | --- | --- |
+| Push Opt In Status (iOS) | PUSH\_PREFERENCE | Push permission status of a user on an iOS device. |
+| Reachability Push Android | moe\_rsp\_android | Reachability status code for Android Push Notifications. |
+| Reachability Push iOS | moe\_rsp\_ios | Reachability Push iOS is True (200) when the user is reachable on at least one iOS device. |
+| Reachability Push Web | moe\_rsp\_web | Reachability Push Web is True (200) when the user is reachable on at least one web device. |
+| Web Push Subscription Page URL | Web Subscription URL | Page URL of the web page on which a user subscribed to web push. Use it to find where the subscriptions are happening on your website or categorize your subscribers to send targeted notifications. |
+| Web Push Subscription Status | moe\_sub\_w | Denotes the web push subscription status of a user - True / False. Use it to find your aggregate subscribers and users who unsubscribed after subscribing once. |
+| Last Known City | moe\_ip\_city | This attribute is based on the user's last known probable location, which is derived using reverse IP lookup. |
+| Last Known Country | moe\_ip\_country |
+| Last Known Pincode/Zipcode | moe\_ip\_pin |
+| Last Known State | moe\_ip\_subdivision |
+| User TimeZone Offset (Mins) | moe\_dtzo | Difference of the user time zone with respect to GMT in minutes. |
+
+| **Key Name** | **Attribute Key** | **Description** |
+| --- | --- | --- |
+| Hard Bounce | moe\_hard\_bounce | Denotes if emails to the user have hard bounced. |
+| Spam | moe\_spam | Denotes if the user has reported an email as spam. |
+| Unsubscribe | moe\_unsubscribe | Denotes if the user has unsubscribed from an email. |
+| Advertising Identifier | ADVERTISING\_IDENTIFIER | Advertising Identifier of the device on which the app is installed. This is only available for iOS & Windows. |
+| Browser Details | moe\_w\_ds | Browser details of web users include - Platform, Browser, and Manufacturer. |
+| Google Advertising ID | MOE\_GAID | Advertising Identifier of the device on which the app is installed. This is only available for Android. |
+| Mobile User | moe\_mweb | Denotes if the user accessed the website on mobile. |
+
+| **Key Name** | **Attribute Key** | **Description** |
+| --- | --- | --- |
+| Birthday | u\_bd | Birth date of the user. This is a standard attribute where the name is provided by MoEngage and the value is provided by the client. |
+| Creation Source | moe\_it | Denotes the source through which a user was created. This is a standard attribute where the name is provided by MoEngage and the value is provided by the client. |
+| Email (Standard) | u\_em | Email address of the user. This is a standard attribute where the name is provided by MoEngage, and the value is provided by the client |
+| Email Unsubscribed Categories | moe\_em\_unsub\_categories | Denotes the List of email categories user has unsubscribed. |
+| First Name | u\_fn | First Name of the user. This is a standard attribute where the name is provided by MoEngage, and the value is provided by the client. |
+| Gender | u\_gd | Gender of the user. This is a standard attribute where the name is provided by MoEngage, and the value is provided by the client. |
+| ID | uid | Unique Id that the app has set for a user. This is a standard attribute where the name is provided by MoEngage, and the value is provided by the client. |
+| Last Name | u\_ln | Last Name of the User. This is a standard attribute where the name is provided by MoEngage, and the value is provided by the client. |
+| Locale Country | LOCALE\_COUNTRY\_DISPLAY | The country of the user derived from the device locale settings, for example, The United States. This is a standard attribute where the name is provided by MoEngage, and the value is provided by the client. |
+| Locale Language | LOCALE\_LANGUAGE\_DISPLAY | The language of the user derived from device locale settings, for example, English. This is a standard attribute where the name is provided by MoEngage, and the value is provided by the client. |
+| Location | geo | Latitude and Longitude of the user. This is a standard attribute where the name is provided by MoEngage, and the value is provided by the client. |
+| Mobile Number (Standard) | u\_mb | Mobile Number of the user. This is a standard attribute where the name is provided by MoEngage, and the value is provided by the client. |
+| Name | u\_n | Full Name of the user. This is a standard attribute where the name is provided by MoEngage and the value is provided by the client. |
+| SMS Subscription Status | moe\_sms\_subscription | SMS Subscription Status of the user. This is a standard attribute where the SMS Subscription Status is tracked based on the user's subscription preferences. |
+
+## Device Attributes
+
+These are properties derived from your users' device data. Note that these attributes will still be shown under user attributes in your exports.
+
+iOS Android Web
+
+| **Key Name** | **Attribute Key** | **Description** | **Optional** |
+| --- | --- | --- | --- |
+| Advertising Identifier (iOS & Windows) | ADVERTISING\_IDENTIFIER | An alphanumeric string unique to each device used only for serving advertisements) - [IDFA](https://developer.apple.com/documentation/adsupport/asidentifiermanager/1614151-advertisingidentifier "https://developer.apple.com/documentation/adsupport/asidentifiermanager/1614151-advertisingidentifier") iOS version 14.5 and above Advertisement identifier will be tracked only if the developer asked permission for it. Below iOS 14.5 it is tracked automatically. | Yes |
+| IDFV | device\_IDFV | An alphanumeric string that uniquely identifies a device to the app’s vendor - [IDFV (identifier for vendor)](https://developer.apple.com/documentation/uikit/uidevice/1620059-identifierforvendor "https://developer.apple.com/documentation/uikit/uidevice/1620059-identifierforvendor") | Yes |
+| OS Version | os\_ver | Current iOS version of the device | No |
+| Device Timezone | moe\_dtzo | Device Timezone | No |
+| model | MODEL |  | No |
+
+| **Key Name** | **Attribute Key** | **Description** | **Optional** |
+| --- | --- | --- | --- |
+| OS Version | OS\_VERSION | Current Android version of the device | Yes |
+| API level | OS\_API\_LEVEL | Os API level/API version: Android API version 16, 20 etc | No |
+| Manufacturer | manufacturer | Device Manufacturer e.g. Samsung | Yes |
+| Google Advertising Identifier(GAID) | MOE\_GAID | GAID of the device | Yes |
+| Device Width | width | Device width in pixel | Yes |
+| Device Height | height | Device height in pixel | Yes |
+| Android Id | android\_id | -- | Yes |
+| Network Type | networkType | Device Network Type e.g. 3G, 5G | No |
+| Device Timezone | moe\_dtzo | Device Time Zone e.g. PST, IST, GMT | No |
+
+| **Key Name** | **Attribute Key** | **Description** | **Optional** |
+| --- | --- | --- | --- |
+| os | os\_key | Web / MWeb | No |
+| os\_platform | os\_platform | User Agent. Information about the browser. | No |
+| os\_ver |  | Browser Name | No |
+| model | MODEL | Browser Name | No |
+| device\_ts | device\_ts | Device Timestamp | No |
+| device\_tz | device\_tz | Device Timezone | No |
+| push\_id | push\_id | Push token generated by SDK | No |
+| mi\_push\_id | mi\_push\_id | Push ID for MI Devices | No |
+
+## MoEngage (Standard) Events
+
+MoEngage, by default, tracks a few standard events.
+
+### Common Event Attributes
+
+These attributes are automatically tracked when MoEngage captures a standard event.
+
+SDK Events Campaign Events
+
+| **Key Name** | **Attribute Key** | **Description** |
+| --- | --- | --- |
+| App Version | appVersion | App version on which this event was tracked. |
+| SDK Version | sdkVersion | MoEngage SDK version on which this event was tracked. |
+| Platform | os | OS on which this event was tracked. |
+| utm\_source | moe\_source | Source of a campaign e.g. search engine, newsletter, MoEngage. |
+| utm\_medium | moe\_source\_medium | Medium of a campaign e.g. CPC, email, push. |
+| utm\_campaign | moe\_source\_campaign\_name | UTM Campaign name e.g. Summer sale |
+| utm\_id | moe\_source\_campaign\_id | UTM campaign ID e.g. 12DSW55 |
+| utm\_content | moe\_source\_content | Content information of the campaign e.g. logoclick |
+| utm\_term | moe\_source\_term | Term used for paid search e.g. red+shirt |
+| First Session | moe\_first\_visit | - Generated for all the events tracked with MoEngage web SDK. - Value is True for the first session of the user only. |
+| Logged In Status | moe\_logged\_in\_status | - Generated for all the events tracked with MoEngage web SDK. - Value is True if the user has logged in on the device. |
+
+| **Key Name** | **Attribute Key** | **Description** |
+| --- | --- | --- |
+| Campaign Id | campaign\_id | Id of the campaign associated with this event. |
+| Campaign Name | campaign\_name | Represents the name of the campaign, the message was part of. |
+| Campaign Channel | campaign\_channel | Represents the channel via which the campaign/message was sent. |
+| Campaign Type | campaign\_type | Represents the type of campaign, the message was part of. |
+| Campaign Tags | moe\_campaign\_tags | Represents the comma-separated values of one or more tags that are attached to a campaign. |
+| Readable Campaign Id | moe\_campaign\_id | Represents the id of the campaign, the message was part of. |
+| Parent Campaign id | parent\_campaign\_id | Tracked when a periodic campaign is run. Represents the campaign ID of the parent periodic campaign, child instances of which are re-run on a recurring basis. |
+| Parent Flow Id | parent\_flow\_id | Tracked when the journey campaign is run. Represents the Flow ID of the parent journey campaign.   - This attribute will only be sent for Flows-related events. |
+| Parent Flow Name | parent\_flow\_name | Tracked when the journey campaign is run. Represents the flow name of the parent journey campaign.   - This attribute will only be sent for Flows-related events. |
+| Locale Id | locale\_id | Tracked when the campaign is sent using Localization. Represents the id of the message locale. |
+| Locale Name | locale\_name | Tracked when the campaign is sent using Localization. Represents the name of the message locale. |
+| Variation Id | variation\_id | Tracked when a campaign is sent using A/B Testing. Represents the id of message variation. |
+
+| **Event Name** | **Event Code** | **Description** | **Platform** |
+| --- | --- | --- | --- |
+| App/Site Opened | MOE\_APP\_OPENED | Tracked when a user session begins on the app or website. Also, this is tracked only if the time difference between the user's Last Active Time and App/Site Open Time is more than 30 min. | Android, iOS, Web |
+| Viewed Web Page | MOE\_PAGE\_VIEWED | Tracked when a user visits a web page. Select page URL as an event attribute to find the number of users visiting a particular page or use it to set up a Drop-off capture" Event-Triggered Web Push. | Web |
+| App Exit | MOE\_APP\_EXIT | Tracked whenever the App goes to background. | Android, iOS |
+| User Logout | MOE\_LOGOUT | Tracked when a user Logs out of the app/site or user reset. | Android, iOS, Web |
+| Push ID Register Android | TOKEN\_EVENT | Tracked when the MoEngage system registers the push ID for Android devices. Attribute registered\_by has the status. | Android |
+| User Merged | MOE\_USER\_MERGED | Tracked for a known user whenever a MoEngage user object is merged with it. | User Merging |
+| App Update | UPDATE | Tracked when a user updates the App. | Android, iOS |
+
+### Standard Events
+
+These events are automatically tracked with MoEngage.
+
+Lifecycle Events Acquisition and Uninstall Events Reachability Events Campaign Activity Events
+
+| **Event Name** | **Event Code** | **Description** | **Platform** |
+| --- | --- | --- | --- |
+| App/Site Opened | MOE\_APP\_OPENED | Tracked when a user session begins on the app or website. Also, this is tracked only if the time difference between the user's Last Active Time and App/Site Open Time is more than 30 min. | Android, iOS, Web |
+| Viewed Web Page | MOE\_PAGE\_VIEWED | Tracked when a user visits a web page. Select page URL as an event attribute to find the number of users visiting a particular page or use it to set up a Drop-off capture" Event-Triggered Web Push. | Web |
+| App Exit | MOE\_APP\_EXIT | Tracked whenever the App goes to background. | Android, iOS |
+| User Logout | MOE\_LOGOUT | Tracked when a user Logs out of the app/site or user reset. | Android, iOS, Web |
+| Push ID Register Android | TOKEN\_EVENT | Tracked when the MoEngage system registers the push ID for Android devices. Attribute registered\_by has the status. | Android |
+| User Merged | MOE\_USER\_MERGED | Tracked for a known user whenever a MoEngage user object is merged with it. | User Merging |
+| App Update | UPDATE | Tracked when a user updates the App. | Android, iOS |
+
+| **Event Name** | **Event Code** | **Description** | **Platform** |
+| --- | --- | --- | --- |
+| Install | INSTALL | Tracked when a user installs the app on the device. | Android, iOS |
+| Device ReInstall | REINSTALL | Tracked when a reinstall is detected on a device. | Android, iOS |
+| Device Uninstall | Device Uninstall | Tracked when a user uninstalls the app on a device. | Android, iOS |
+| User ReInstall | MOE\_USER\_REINSTALL | Tracked when a reinstall is detected for an identified user in MoEngage. | Android, iOS |
+
+| **Event Name** | **Event Code** | **Description** | **Platform** |
+| --- | --- | --- | --- |
+| Accepted Web Push Soft-ask | MOE\_WEB\_OPTIN\_ACCEPTED | Tracked when a user accepts the Push Permission Soft-ask on your website as part of the 2-step Push Opt-in mechanism. | Web |
+| Closed Web Push Soft-ask | MOE\_WEB\_OPTIN\_CLOSED | Tracked when a user closes the Push Permission Soft-ask on your website as part of the 2-step Push Opt-in mechanism. | Web |
+| Denied Web Push Subscription | MOE\_OPT\_IN\_BLOCKED | Tracked when a user denies receiving push notifications on the Web. | Web |
+| Dismissed Web Push Subscription | MOE\_OPT\_IN\_DISMISSED | Tracked when a user dismisses the push subscription prompt. | Web |
+| Overlay clicked in 1-click HTTP subscription | MOE\_HTTP\_OVERLAY\_CLICKED | Tracked when a user clicks a Subscription Message on your website as part of the HTTP Push Subscription flow. | Web |
+| Overlay shown in 1-click HTTP subscription | MOE\_HTTP\_OVERLAY\_SHOWN | Tracked when a user views a Subscription Message on your website as part of the HTTP Push Subscription flow. | Web |
+| Subscribed to Web Push | MOE\_USER\_SUBSCRIBED | Tracked when a user is subscribed to Web Push Notifications. Use it to find the day-wise count of subscribers or set up a Welcome" Event-Triggered Web Push. | Web |
+| Unsubscribed from Web Push | MOE\_WEB\_UNSUBSCRIBED | Tracked when a user directly unsubscribes from the website/chrome settings or GCM communicates that a push token is invalid. | Web |
+| Viewed Web Push Soft-ask | MOE\_WEB\_OPTIN\_BANNER\_LOAD | Tracked when a user views the Push Permission Soft-ask on your website as part of the 2-step Push Opt-in mechanism. | Web |
+
+| **Event Name** | **Event Code** | **Description** | **Platform** |
+| --- | --- | --- | --- |
+| Allowed Web Push Subscription | MOE\_OPT\_IN\_ALLOWED | Tracked when a user allows receiving push notifications on the Web. | Web |
+| Displayed Web Push Subscription | MOE\_OPT\_IN\_SHOWN | When hard ask is shown to the user. | Web |
+| Onsite Message Template clicked | MOE\_ONSITE\_MESSAGE\_CLICKED | On clicking the Onsite Messaging template. | Web |
+| Onsite Message Template shown | MOE\_IN\_APP\_SHOWN | On a load of Onsite Messaging template. | Web |
+| Card Clicked | MOE\_CARD\_CLICKED | Tracked when the user clicks the Card in the App Inbox. | Android, iOS |
+| Card Delivered | MOE\_CARD\_DELIVERED | Tracked when a Card is delivered to the App Inbox after the user has opened the Inbox. | Android, iOS |
+| Card Sent | MOE\_CARD\_SENT | Tracked when a Card notification is sent to the user, doesn't indicate if the notification is delivered to the App Inbox. | Android, iOS |
+| Card Viewed | MOE\_CARD\_IMPRESSION | Tracked when the user views a Card or scrolls down to it in the App Inbox. | Android, iOS |
+| Connector Sent | WEBHOOK\_SENT | Tracked when a connector was sent successfully. | Connector |
+| Email Bounced | MOE\_EMAIL\_HARD\_BOUNCE | Tracked when our system finds an email is hard bounced. Typically happens when an email address doesn't exist. This is tracked uniquely for every user based on the user ID. | Email |
+| Email Clicked | MOE\_EMAIL\_CLICK | Tracked when a user clicks on any link in the email. | Email |
+| Email Complained | MOE\_EMAIL\_SPAM | Tracked when a user marks the email as spam. | Email |
+| Email Deferred | MOE\_EMAIL\_DEFERRED | Tracked when the receiving server delayed acceptance of the email message. | Email |
+| Email Delivered | MOE\_EMAIL\_DELIVERED | Tracked when an email is delivered to the user. | Email |
+| Email Dropped | MOE\_EMAIL\_DROP | Tracked when an email is dropped. Email is dropped, when it's part of the bounce list, the unsubscribe list, or the spam report list. | Email |
+| Email Opened | MOE\_EMAIL\_OPEN | Tracked when a user opens an email. | Email |
+| Email Sent | MOE\_EMAIL\_SENT | Tracked when our system sends an email to a user. | Email |
+| Email Soft Bounced | MOE\_EMAIL\_SOFT\_BOUNCE | Tracked when our system finds an email is soft-bounced. Typically happens when there is a temporary delivery issue. This is tracked uniquely for every user based on the user ID. | Email |
+| Email Subscription Category Updated | MOE\_EMAIL\_SUBSCRIPTION\_UPDATED | Tracked when a user updates their preferences for email subscription categories. | Email |
+| Email Unsubscribed | MOE\_EMAIL\_UNSUBSCRIBE | Tracked when a user unsubscribes from receiving emails. | Email |
+| Email Unsubscribe Drop | MOE\_EMAIL\_DROPPED\_UNSUBSCRIBE | Tracked when an email is dropped because the user is part of an unsubscribe list. This is tracked at SendGrid. This event is currently under BETA. | Email |
+| Email Viewed in Browser | MOE\_EMAIL\_VIB | Tracked when a user clicks on the view in the browser link present in the email. | Email |
+| Facebook Audience Synced | MOE\_FB\_AUDIENCE\_SYNC | Tracked when Facebook API returns 2xx response for add or delete request to an audience. | Facebook |
+| Google Ads Audience Synced | MOE\_GOOGLE\_ADS\_AUDIENCE\_SYNC | Tracked when the Google Ads API returns a 2xx response for an add or delete request to an audience. | Google Ads Audience |
+| In-App Clicked Android | MOE\_IN\_APP\_CLICKED | Tracked when a user clicks In-App message on an Android device. | Android |
+| In-App Clicked iOS | iOS\_IN\_APP\_CLICKED | Tracked when a user clicks In-App message on an iOS device. | iOS |
+| In-App Clicked Windows | WINDOWS\_IN\_APP\_CLICKED | Tracked when a user clicks In-App message on a Windows device. | Windows |
+| In-App Closed Android | MOE\_IN\_APP\_DISMISSED | Tracked when a user dismisses an In-App message by clicking on the close button on an Android device. | Android |
+| In-App Closed iOS | iOS\_IN\_APP\_CLOSE\_CLICKED | Tracked when a user dismisses an In-App message by clicking on the close button on an iOS device. | iOS |
+| In-App Closed Windows | WINDOWS\_IN\_APP\_CLOSE\_CLICKED | Tracked when a user dismisses an In-App message by clicking on the close button on a Windows device. | Windows |
+| In-App Shown Android | MOE\_IN\_APP\_SHOWN | Tracked when an In-App message is shown to the user on an Android device. | Android |
+| In-App Shown iOS | iOS\_IN\_APP\_SHOWN | Tracked when an In-App message is shown to the user on an iOS device. | iOS |
+| In-App Shown Windows | WINDOWS\_IN\_APP\_SHOWN | Tracked when an In-App message is shown to the user on a Windows device. | Windows |
+| Notification Clicked Android | NOTIFICATION\_CLICKED\_MOE | Tracked when a user clicks a notification on an Android device. | Android |
+| Notification Clicked iOS | NOTIFICATION\_CLICKED\_IOS\_MOE | Tracked when a user clicks a notification on an iOS device. | iOS |
+| Notification Clicked Web | NOTIFICATION\_CLICKED\_WEB\_MOE | Tracked when a user clicks a notification on the browser. | Web |
+| Notification Clicked Windows | NOTIFICATION\_CLICKED\_WINDOWS\_MOE | Tracked when a user clicks a notification on a Windows device. | Windows |
+| Notification Dismissed iOS | NOTIFICATION\_DISMISSED\_IOS\_MOE | Tracked when the user dismisses the notification on an iOS device. | iOS |
+| Notification Received Android | NOTIFICATION\_RECEIVED\_MOE | Tracked when a user receives a notification on an Android device. | Android |
+| Notification Received iOS App Active | NOTIFICATION\_RECEIVED\_IOS\_APP\_ACTIVE | Tracked when the app is in foreground and the user receives the notification on iOS. | iOS |
+| Notification Received iOS | NOTIFICATION\_RECEIVED\_MOE | Tracked when a user receives a notification on an iOS device. | iOS |
+| Notification Received Web | NOTIFICATION\_RECEIVED\_WEB\_MOE | Tracked when a user receives a notification on a browser. | Web |
+| Notification Sent Windows |  | Tracked when a user receives a notification on a Windows device. | Windows |
+| Notification Sent iOS | n\_i\_s | Tracked when a user receives a notification on an iOS device. | iOS |
+| Notification Swiped Android | NOTIFICATION\_CLEARED\_MOE | Tracked when a notification is dismissed by the user with a swipe gesture on Android. | Android |
+| On-site Message Shown | MOE\_ONSITE\_MESSAGE\_SHOWN | Tracked when an on-site messaging campaign is shown to a user. | Web |
+| On-site Message Clicked | MOE\_ONSITE\_MESSAGE\_CLICKED | Tracked when an on-site messaging campaign is clicked by a user. | Web |
+| On-site Message Closed | MOE\_ONSITE\_MESSAGE\_DISMISSED | Tracked when an on-site messaging campaign is closed by a user. | Web |
+| Push Preference Changed iOS | MO\_PUSH\_PREFERENCE\_CHANGED | Tracked when iOS device push preference is changed. It has a modified status. | iOS |
+| Web Personalization Message Shown | MOE\_WEBP\_MESSAGE\_SHOWN | Tracked when a web personalization campaign is shown to a user. | Web |
+| Web Personalization Message Clicked | MOE\_WEBP\_MESSAGE\_CLICKED | Tracked when a web personalization campaign is clicked by a user. | Web |
+| Web Personalization Message Closed | MOE\_WEBP\_MESSAGE\_DISMISSED | Tracked when a web personalization campaign is closed by a user. | Web |
+| Web Personalization Message Delivered | MOE\_WEBP\_MESSAGE\_DELIVERED | Tracked when a web personalization campaign is delivered to the user. | Web |
+| SMS Delivered | SMS\_DELIVERED | Tracked when our system receives a delivery receipt for the SMS sent to a user. | SMS |
+| SMS Delivery Failed | MOE\_SMS\_DELIVERY\_FAILED | Tracked when our system receives a delivery failure receipt for the SMS sent to a user. | SMS |
+| SMS Sent | SMS\_SENT | Tracked when our system sends an SMS to a user. | SMS |
+| SMS Clicked | MOE\_SMS\_CLICKED | Tracked when a user clicks on any of the links in the SMS message body. | SMS |
+| User Entered Flow | USER\_ENTERED\_FLOW | Tracked when a user falls in the target audience and has qualified for the entry in the Flow. | Flows |
+| User Exited Flow | USER\_EXITED\_FLOW | Tracked when a user exits from a Stop Cell of the Flow. | Flows |
+| The user was removed from the campaign due to the control group | MOE\_CAMPAIGN\_USER\_REMOVED \_DUE\_TO\_CONTROL\_GROUP | Generated while sending a campaign out with the control group defined. | Flows/Campaign Channels |
+| User added to control group | MOE\_CAMPAIGN\_CONTROL\_GROUP | Generated while creating a global control group. | Flows/Campaign Channels |
+| The user removed from the control group | MOE\_USER\_REMOVED\_FROM\_CONTROL\_GROUP | Generated when the global control group is updated. Specifically when the global control group % is reduced or the global control group is refreshed. | Flows/Campaign Channels |
+| WhatsApp Message Clicked | MOE\_WHATSAPP\_CLICKED | Tracked when a WhatsApp Message is read by the user. It will only be available for users who have read receipts enabled. | Flows/Campaign Channels |
+| WhatsApp Message Delivered | MOE\_WHATSAPP\_DELIVERED | Tracked when a WhatsApp Message is delivered to a user. | Flows/Campaign Channels |
+| WhatsApp Message Delivery Failed | MOE\_WHATSAPP\_DELIVERY\_FAILED | Tracked when the provider failed to send/deliver a WhatsApp Message for a user. | Flows/Campaign Channels |
+| WhatsApp Message Read | MOE\_WHATSAPP\_READ | Tracked when a WhatsApp Message is read by the user. It will only be available for users who have read receipts enabled. | Flows/Campaign Channels |
+| WhatsApp Message Sent | MOE\_WHATSAPP\_SENT | Tracked when a WhatsApp message is sent to a user. | Flows/Campaign Channels |
+
+## User-Defined (Custom) Events
+
+### Common Event Attributes
+
+These attributes are automatically tracked when you track a custom/user-defined event.
+
+|  |  |  |
+| --- | --- | --- |
+| Key Name | Attribute Key | Description |
+| App Version | appVersion | App version on which this event was tracked. |
+| SDK Version | sdkVersion | MoEngage SDK version on which this event was tracked. |
+| MOE Event Category | moe\_event\_category | Represents the Event category   - Example: Tracked User Events |
+| MOE Event Source | moe\_event\_source | Represents the Event Source   - Example: s2s, INTERNAL |

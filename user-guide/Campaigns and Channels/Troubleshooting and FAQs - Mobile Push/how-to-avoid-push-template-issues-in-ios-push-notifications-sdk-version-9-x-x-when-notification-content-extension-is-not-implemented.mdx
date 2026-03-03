@@ -1,0 +1,92 @@
+---
+title: "How to Avoid Push Template Issues in iOS Push Notifications (SDK version 9.x.x) When Notification Content Extension is Not Implemented?"
+sidebarTitle: "How to Avoid Push Template Issues in iOS Push Notifications (SDK version 9.x.x) When Notification Content Extension is Not Implemented?"
+---
+
+## Problem
+
+Push templates (carousel images, background color, font color, and so on) do not display correctly in Push notifications when the Notification Content Extension is not implemented.
+
+## Instruction
+
+Perform the following steps:
+
+1. *Create a Notification Content Extension Target. <img alt="NCE.png" src="/images/moengage_d10ae6.png" />* 
+   - *Name the Extension Target.* Choose a name for the extension target. **Swift** is recommended as the language as it works seamlessly with Objective-C projects too. <img alt="name swift.png" src="/images/moengage_911e54.png" />
+   - Add the **AppGroupId** to the Notification Content Extension’s **Signing & Capabilities** settings. <img alt="signing.png" src="/images/moengage_340deb.png" />
+   - Set the minimum deployment iOS version of the Notification Content Extension to match the main app’s iOS version. <img alt="deployment.png" src="/images/moengage_cf2e7a.png" />
+2. *Integrate the MORichNotification Framework into the Notification Content Extension Target.*
+   - In your podfile, add the Notification Content Extension as a separate target and install the **MORichNotification** framework.
+
+     Swift
+
+     ```ruby
+     target 'MoEngageDemo' do
+     use\_frameworks!
+     pod 'MoEngage-iOS-SDK'
+     end
+     target 'MoEngageNotificationService' do
+     use\_frameworks! #use use\_frameworks only if included in main target as in above scenario
+     pod 'MoEngageRichNotification'
+     end
+     target 'MoegageRichContent" do
+     use\_frameworks! #use use\_frameworks only if included in main target as in above scenario
+     pod 'MoEngageRichNotification'
+     end
+     ```
+3. Code changes in **NotificationViewController.swift** file.
+
+   Swift
+
+   ```ruby
+   import UIKit
+   import UserNotifications
+   import UserNotificationsUI
+   import MoEngageRichNotification
+   class NotificationViewController: UIViewController, UNNotificationContentExtension {
+   @IBOutlet var label: UILabel?
+   override func viewDidLoad() {
+   super.viewDidLoad()
+   MoEngageSDKRichNotification.setAppGroupID("group.com.XXXXXXXXXXXXXXXX")
+   }
+   func didReceive(\_ notification: UNNotification) {
+   if #available(iOSApplicationExtension 12.0, \*) {
+   MoEngageSDKRichNotification.addPushTemplate(toController: self, withNotification: notification)
+   } else {
+   // Fallback on earlier versions
+   }
+   }
+   }
+   ```
+4. Select **MainInterface.storyboard** in the Content extension, remove the default label, and set the background color of the View to clear. <img alt="main.png" src="/images/moengage_b62459.png" />
+5. Info.plist changes:
+
+   Swift
+
+   ```swift
+   NSExtensionAttributes
+
+   UNNotificationExtensionCategory
+   MOE\_PUSH\_TEMPLATE
+   UNNotificationExtensionDefaultContentHidden
+
+   UNNotificationExtensionInitialContentSizeRatio
+   1.2
+   UNNotificationExtensionUserInteractionEnabled
+
+   ```
+
+    *<img alt="NSExtension.png" src="/images/moengage_aaf96d.png" />*
+6. *Check Build Phases in Main App Target.*
+   - In Embed App Extensions/Embed Foundation Extensions, ensure that **Copy only when installing** is not selected. <img alt="copy only.png" src="/images/moengage_48edea.png" />
+7. *Ensure Consistent appGroupId Across Configurations.*
+
+   - Verify that the **appGroupId** is consistent across all schemes and configurations (for example, Debug/Release/QA/UAT) in the project.
+8. *Align Build Configuration.*
+   - When running or archiving the project, make sure that the Build Configuration for the Main Target, Notification Service Extension, and Notification Content Extension Target points to the same scheme/configuration.
+
+   <img alt="debug.png" src="/images/moengage_26e08d.png" />
+
+   <img alt="target.png" src="/images/moengage_3ed4ee.png" />
+
+   <img alt="duplicate.png" src="/images/moengage_c6b4f5.png" />

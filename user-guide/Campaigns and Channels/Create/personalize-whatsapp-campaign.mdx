@@ -1,0 +1,153 @@
+---
+title: "Personalize WhatsApp Campaign"
+sidebarTitle: "Personalize WhatsApp Campaign"
+---
+
+[Personalization](https://help.moengage.com/hc/en-us/articles/30926654573972-Overview) makes your marketing messages feel more relevant to users. By tailoring your WhatsApp campaigns, you can build a stronger connection with your audience and improve how well your messages are received.
+
+This article explains how to use personalization in MoEngage WhatsApp campaigns, including one-time, periodic, and event-triggered messages.
+
+<Info>
+When you create a personalization condition or logic, it appears as a chip. To know more about Chip Actions, refer [here](https://help.moengage.com/hc/en-us/articles/39719238781716-Dynamic-Content-Personalization#h_01JMKXT2S4GE9PS904K9KQS1YH).
+</Info>
+
+To add personalized content to your WhatsApp campaign messages:
+
+1. In the campaign creation process, navigate to [Step 2: Content](https://help.moengage.com/hc/en-us/articles/4411175043220-Create-a-WhatsApp-Campaign#01FX49HAY2M8VWZ99RKT89JN63).
+2. The WhatsApp content field that can be personalized contain the placeholder text **Type @ to personalize**.
+3. In the content field, type the **@** symbol where you want to insert personalized content. The **WhatsApp Personalization** editor appears.
+
+<img alt="WhatsAppPersonlization.gif" src="/images/moengage_f6def8.png" />
+
+In the **WhatsApp Personalization** editor, you can perform the following:
+
+- [Data Personalization](#h_01HEADS5DNFWC71BC215FQ5XK6)
+- [Personalize using Content blocks](#h_01HEADS5DPNJTMXTAT1KNZ76CQ)
+- [Personalize using Auxillary data](#personalization_using_aux_data)
+
+# Data Personalization
+
+You can [personalize your messages](https://help.moengage.com/hc/en-us/articles/30926654573972-Overview) using user attributes, Product Sets (Recommendations), and Content APIs. To insert personalization into a message field, type @. The personalization menu opens, as shown in the following image:
+
+<img alt="Screenshot 2025-09-08 at 4.36.24 PM.png"  src="/images/moengage_86260a.png"  />
+
+### Choose Fallback
+
+When you personalize a message, a fallback option helps ensure content is always displayed, even if the chosen attribute is unavailable for a user or fails to display correctly.
+
+You can select from these fallback options:
+
+- Select **No Fallback** in case there is no alternative to the failed attribute. The personalized attribute will be substituted with an empty string in case of personalization failure.
+- Select **Do not send SMS & RCS** when you choose not to send the WhatsApp messages in case of personalization failure.
+- Select **Replace text** in case you choose to replace the failed attribute with a text of your choice. The personalized attribute will be replaced with the text you provide in the **Fallback text** field in case of personalization failure
+
+<Info>
+Ensure that custom attributes do not have the same names as MoEngage's standard attributes. If a custom attribute and a standard attribute having the same name are used for personalization, it could result in incorrect personalization.
+</Info>
+
+## Personalize Using Recommendations (Product Sets)
+
+Recommendations (Product sets) help you communicate real-time and contextual product recommendations to customers. For more information, refer to [Recommendations](https://help.moengage.com/hc/en-us/sections/16277704408468-Personalize-campaign-with-recommendations).
+
+<Tip>
+- A Recommendation (Product sets) that is set up and mapped to a user action.
+- Have a pre-approved WhatsApp template with placeholders to accommodate the data from the Recommendations (Product sets). For example, if you wish to personalize the user name from the user attributes and add the recommended product's title and link from the Recommendation (Product sets), get a template approved with three placeholders, as explained in the example below.
+</Tip>
+
+To send a dynamic product recommendation using WhatsApp, perform the following:
+
+1. In step 2 of the campaign creation process, select the Sender with whom the Recommendations template has been approved.
+2. Select the approved template.
+3. Fill in the placeholders by typing @. In the personalization screen that appears, choose the user attribute and product set attributes.  
+   1. 1. For product sets, choose the desired product set and click ok. This will add the product set to the placeholder. A product set typically contains a list of items, each with specific attributes such as name, title, id, image link, and so on. Adding a product set as such with display all the contents of the product set in the message.
+      2. To add only one item to the Recommendations set, loop through the product set as explained below and fetch the desired item. For this item, fetch the desired attribute by typing @ inside the for loop and select the desired property from the product set in the personalization window.
+4. Click on the personalized preview to see the message for a specific user.
+
+<img alt="WA_ContentCreation.png" src="/images/moengage_6b5913.png" />
+
+In the example shown below, the template has three placeholders:
+
+1. The first placeholder is used for personalization and is fetched using the *firstname* user attribute.
+2. The second placeholder loops through a product set called `ProductSet` to fetch the first item in the product set and display its title using the following JINJA code. In this example, the Recommended product is **Sneakers**.
+
+JINJA
+
+```
+{% if ProductSet.product\_recommendations%}
+{% for product in ProductSet.Recommendations[0:1]%}
+{{product.title}}
+{% endfor %}
+{% else %}
+MOE\_NOT\_SEND
+{% endif %}
+```
+
+3. The third placeholder loops through the Recommendations product set to fetch the link for the recommended product using the following JINJA code:
+
+JINJA
+
+```
+{% if ProductSet.Recommendations%}
+{% for product in ProductSet.Recommendations[0:1]%}
+{{product.link}}
+{% endfor %}
+{% else %}
+MOE\_NOT\_SEND
+{% endif %}
+```
+
+For more information about JINJA, refer to [MoEngage Templating Language](https://help.moengage.com/hc/en-us/articles/115002757783-MoEngage-Templating-Language-JINJA-).
+
+## Personalize Using Content APIs
+
+WhatsApp campaigns can be personalized using Content APIs to deliver relevant and timely information to users.
+
+### Add Content APIs
+
+Content APIs can be added to the MoEngage dashboard. Using the following navigation to access Content API: **Settings** \> **APIs** \> **Content API,** and click **Add** to add the Content API. For more information, refer to [Personalize Content Using Content APIs](https://help.moengage.com/hc/en-us/articles/30958494853652-Personalize-Content-Using-Content-APIs).
+
+### Create a Personalized Campaign using Content API
+
+1. Type **@** in the content creation step to invoke the personalization editor.
+2. In the **SMS and RCS personalization** pop-up, navigate to the **Data Personalization** tab.
+3. Search for Content API and select the API from the list.
+4. Click **Done**.  
+    <img alt="Screenshot 2025-09-08 at 5.22.32 PM.png"  src="/images/moengage_cf5656.png"  />
+
+# Personalize Using Content Blocks
+
+Content Blocks are reusable content snippets you can use across various campaigns. These are especially helpful for standard elements like headers, footers, signature blocks, or terms and conditions.
+
+To personalize your messages using a content block:
+
+1. Type @ in the content section.
+2. In the personalization menu that appears, click the **Content blocks** tab.
+3. Select the content block to be inserted.
+4. Click **Done** to add the selected Content Block, and it gets added to the message as shown below.
+5. Turn on the **Insert only the content of the content block** toggle to disconnect the content from the existing content block, and any future updates to the content block will not be reflected in the campaign. This step is optional.  For more information, refer to [Content Blocks](https://help.moengage.com/hc/en-us/articles/4414768369172).
+
+# Personalize Using Auxiliary Data
+
+You can personalize your WhatsApp content using auxiliary data by selecting the auxiliary data attributes in the personalization editor.
+
+To personalize content using Auxiliary Data attributes:
+
+1. Enter @ in the fields wherever personalization is supported to invoke the personalization editor.
+2. Select the **Aux Data** tab.
+3. In the **Aux data** drop-down list, select the Auxiliary Data file whose attribute you wish to use for personalization.
+4. In the **Lookup value** drop-down list, select the primary key specified for the Auxiliary Data during import. This will identify the user for whom the Auxiliary Data is being fetched.
+5. In the **Attribute** drop-down list, specify the attribute to be personalized using Auxiliary Data.
+6. Click **Done**. The Auxiliary Data JINJA will get added to the field or the editor.  
+    <img alt="Screenshot 2025-09-08 at 4.49.05 PM.png"  src="/images/moengage_af2977.png"  />
+
+For more information, refer to [Personalize Campaign Content Using Auxiliary Data](https://help.moengage.com/hc/en-us/articles/30958529175316-Personalize-Content-Using-Auxiliary-Data).
+
+# Personalized Preview
+
+The Personalization Preview feature enables you to tailor content effectively, ensuring it meets the needs of your target audience. For more information, refer to [Personalized Preview](https://help.moengage.com/hc/en-us/articles/30958544839828).
+
+<img alt="WA_PersoanlizedPreview.png" src="/images/moengage_cbaa12.png" />
+
+<Info>
+For more information on personalization errors, refer to [Common Personalization Errors and FAQs](https://help.moengage.com/hc/en-us/articles/30958502449300-Common-Personalization-Errors-and-FAQs).
+</Info>

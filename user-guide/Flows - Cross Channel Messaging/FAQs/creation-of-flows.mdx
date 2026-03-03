@@ -1,0 +1,86 @@
+---
+title: "Creation of Flows"
+sidebarTitle: "Creation of Flows"
+---
+
+## What are some good practices to follow while creating a flow?
+
+1. In your onboarding flows where the trigger event is Install/ Sign up/ or any event that creates a profile for the users, please always have Target Audience as "All users". If this is not possible, add *ID exists* as the condition. This setup will help you escape the refresh frequency and the update of these values will be close to realtime even while profile creation.
+2. Avoid using *Wait* Stages just before *Condition* Stages like *Has done event*, *Conditional Splits*. Instead, define the same period in the *Keep evaluating for* within the condition stages. This helps in dynamically moving users using the concerned branch with context.
+3. Copy-paste stages to avoid manual work when the configuration of stages is going to be pretty much the same by hovering over stages.
+4. Use Personalisation in Campaigns to improve the performance.
+5. Use *Exit on Conversion* to remove users when they are no longer contextual to the flow to avoid spamming users.
+
+## How do you personalize within a flow?
+
+To personalize within a flow:
+
+- Type *@*in the message fields of the point channel campaigns (Push, SMS, Email, and so on). The personalization editor is displayed.
+- You can personalize the message with user attributes and event attributes.
+- Event-based personalization is only possible in Event-triggered Flows or in Communications that are added under the *Yes Branch* of *Condition stages*.
+
+## How does a new version get created in a flow, and how does it affect existing users?
+
+A new version of a flow is created when there is a change in one or more of the following:
+
+- Target Audience Condition
+- Entry Condition
+- Tracked Conversion Goals
+- Addition or Deletion of a stage to the canvas, and so on.
+
+When the flow is published, the new version becomes active, and the previous version is retired. All the active users in the previous version of the flow will continue their trips in that version. New users in the flow will move to the new version (if they are not active in any of the previous versions).
+
+For more information, refer to [Versioning in Flows](https://help.moengage.com/hc/en-us/articles/13504504954900).
+
+## How do you stop users from re-entering a flow?
+
+To stop users from re-entering or to define a limit on the number of entries, add the user entry limit in the second step of the flow creation. Specify the user entry limit in the **When users enter the flow** step.
+
+## What does Keep Evaluating For mean? How does it work?
+
+The **Keep Evaluating For** option is available in stages where conditions are added. It denotes the maximum time period for which users are evaluated on the defined checks in the condition stages. This window is dynamic, as users can leave via the Yes path as and when they satisfy the defined conditions. This dynamic evaluation helps you in timing your communications better and in context.
+
+Consider the following example in a flow that targets users who've abandoned their carts (the flow's audience would be users who have added products to their cart but have yet to make a purchase). The Flow has the following stages:
+
+1. a Push Notification stage
+2. a Has done event stage - defined as *Has Executed Product Purchase at least 1 time* and this stage will keep evaluating users who've entered it for an hour.
+
+John is a user who:
+
+- Enters the flow at 10 AM
+- Receives the first push notification and enters the Has done stage at 10:10 AM.
+
+Since this stage will evaluate John for an hour, he will be evaluated for the specified conditions until 11:10 AM and will either move in the *Yes* path or the *No* path of the stage.
+
+The following scenarios can happen:
+
+- If John had performed the event at 10:09 AM, he will move out of the stage along the *Yes* path as soon as he enters.
+- If John performs the event at 11:00 AM, he will wait until 11:00 AM in the stage and move along the *Yes* path at 11:00 AM.
+- If John performs the event at 12:00 PM, he will wait until 11:10 AM in the stage and move along the *No* path as he did not satisfy the criteria specified for the stage during the evaluation window.
+
+## How are users evaluated in the Condition Split Stage in a flow?
+
+In the Condition Split Stage of a flow, users are assessed based on the conditions outlined in the first branch throughout the entire evaluation window. If a user meets those conditions, they are directed down Branch 1.
+
+If they do not satisfy the conditions, MoEngage waits until the end of the evaluation window to ascertain if the user ever does match the conditions within Branch 1 during the defined period. After that, MoEngage considers all alternate branches in the conditional split, and users are directed through the path where they first matched the defined conditions.
+
+The evaluation process involves prioritizing the branches in the conditional split. As such, the first branch has the highest priority, and the priority decreases for each subsequent branch. The default branch has the least priority in this regard.
+
+Consider the following example in a flow that targets users who've abandoned their carts (the flow's audience would be users who have added products to their cart but have yet to make a purchase). The Flow has a Conditional Split with the following branches:
+
+1. Branch 1 - splits users who have wishlisted Electronics to their cart. This branch has the highest priority.
+2. Branch 2 - splits users who have wishlisted Fashion items to their cart. This branch has the second highest priority.
+3. Default branch - allows every other user. This stage is defined to keep evaluating for ten minutes.
+4. a Has done event stage - defined as *Has Executed Product Purchase at least 1 time* and this stage will keep evaluating users who've entered it for an hour.
+
+John is a user who:
+
+- Enters the flow at 10 AM
+- Reaches the conditional split stage at 10 AM
+- Can move to any of the branches within ten minutes
+
+Consider the following scenarios:
+
+- If John has wishlisted both Fashion and Electronics at 10:05 AM and at 10:06 AM respectively, he will move along Branch 1 as it has the highest priority at 10:06 AM.
+- If John has wishilisted Fashion at 10:08 AM, he will be evaluated for Branch 1 till 10:10 AM as Branch 1 has the highest priority. As he does not satisfy Branch 1's condition, he will be evaluated for Branch 2 and the Default branch at 10:10 AM. If he satisfies Branch 2's condition, he will move along Branch 2 at 10:10 AM as it has the second highest priority.
+- If John does not wishlist any thing till 10:10 AM, he will be evaluated for Branch 1 till 10:10 AM as Branch 1 has the highest priority. As he does not satisfy Branch 1's condition, he will be evaluated for Branch 2 and the Default branch at 10:10 AM. As he does not satisfy Branch 2's condition, he will move along the Default Branch at 10:10 AM.

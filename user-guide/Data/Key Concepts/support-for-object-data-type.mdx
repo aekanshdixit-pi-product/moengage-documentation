@@ -1,0 +1,553 @@
+---
+title: "Support for Object Data Type"
+sidebarTitle: "Support for Object Data Type"
+---
+
+<Info>
+To enable this feature for your account, contact your MoEngage CSM (customer success manager) or the [Support](https://help.moengage.com/hc/en-us/articles/19708702327572-Raise-a-Support-Ticket-Through-MoEngage-Dashboard) team.
+</Info>
+
+# Introduction
+
+An *Object* is a versatile data type that holds data in a key-value pair. An object can hold a single or multiple key-value pairs. As a marketer, you may want to segment users depending on a specific item they have added to their cart. There may be enumerable attributes that define the specified item, which can be encapsulated in a single object and can used to identify the item. For example, you want to log a list of users who added the book *Atonement* to their cart. The book can be defined using the following Object:
+
+Code
+
+```ruby
+"book":{
+"product\_name": "Atonement"
+"price" : 100,
+"sku": "abc123"
+}
+```
+
+In addition to the existing data type attributes such as string, numeric, and boolean, you can use the Object data type to run deeper queries and create custom user segments for more personalized marketing campaigns.
+
+# Types of Objects
+
+MoEngage supports the following types of objects:
+
+## Simple Object
+
+A simple object consists of an element holding multiple key-value pairs, as shown below:
+
+Code
+
+```ruby
+"book":{
+"item-id": 123,
+"item-name": "Atonement",
+"item-cost": 100,
+"item-currency": "USD"
+}
+```
+
+## Nested Object
+
+An object inside another object is a nested object, as shown below:
+
+Code
+
+```ruby
+"Stationary":{
+"item-id": 123,
+"item-type": "books",
+"item-cost": {
+"amount": 100,
+"currency": "USD"
+}
+}
+```
+
+## Array of Objects
+
+An array of objects is a collection of elements that individually hold several key-value pairs, as shown below:
+
+Code
+
+```ruby
+"product":[
+{
+"item-id": 123,
+"item-type": "books",
+"item-cost": 100,
+"item-currency": "USD"
+},
+{
+"item-id": 323,
+"item-type": "apparel",
+"item-cost": 90,
+"item-currency": "USD"
+},
+{
+"item-id": 523,
+"item-type": "food",
+"item-cost": 200,
+"item-currency": "USD"
+}
+]
+```
+
+# Nomenclature Used in the Object Data Type
+
+Consider the following object *Stationary*:
+
+Code
+
+```ruby
+"Stationary":{
+Level 1 "item-id": 123,
+Level 1 "item-type": "books",
+Level 1 "item-cost": {
+Level 2 "amount": {
+Level 3 "cost-price": 100,
+Level 3 "discount": 0,
+}
+Level 2 "currency": "USD"
+}
+}
+```
+
+The terms of the Object data type are described below:
+
+| Terms | Description |
+| --- | --- |
+| Object attribute | In the example above, *Stationary* is the object attribute consisting of key-value pairs or sub-attributes.  The *Stationary* object will also be considered a root object, which can have objects nested within it. |
+| Sub-attributes | Sub-attributes are the key-value pairs inside the object attribute. In the example above:  *item-id*, *item-type*, *cost-price*, *discount*, and *currency* are the sub-attributes or the key-value pairs.  *item-cost*, and *amount* are the nested objects which have their own sub-attributes or key-value pairs. |
+| Level 1 sub-attribute | Level 1 is the first level of sub-attribute nesting. |
+| Level 2 sub-attribute | Level 2 is the second level of sub-attribute. |
+| Level 3 sub-attribute | Level 3 is the third level of nesting. |
+
+# Key Factors for Object Data Type Ingestion
+
+| Factors | Description |
+| --- | --- |
+| Max size of Object (bytes) | The default size is 25 KB.  Every object attribute containing key-value pairs should not exceed 25 KB.  For example, an object *book,* as shown below, is considered an object attribute in MoEngage with multiple sub-attributes or key-value pairs: ``` "book":{ "product\_name": "Atonement" "price": 100, "sku": "abc123" } ``` The overall size of the object *book* should not exceed 25 KB. |
+| Max key-value pairs (sub-attributes) | 100 sub-attributes supported inside an object attribute. You can archive unused sub-attributes within an object and ingest new sub-attributes through the Data management dashboard. ``` "book":{ "product\_name": "Atonement" "price": 100, "sku": "abc123" } ``` The above example has three key-value pairs or sub-attributes. |
+| Max number of array elements | 100 is the maximum limit supported for the number of array elements in an Array of objects. ``` "product":[ { "item-id": 123, "item-type": "books", "item-cost": 100, "item-currency": "USD" }, { "item-id": 323, "item-type": "apparel", "item-cost": 90, "item-currency": "USD" }, { "item-id": 523, "item-type": "food", "item-cost": 200, "item-currency": "USD" } ] ``` The example above has three array elements. |
+| Max level of nesting | MoEngage supports a maximum of two levels of nesting, and anything more than that will be stringified.  However, MoEngage ingests any level of nested JSON. ``` "Stationary":{ Level 1 "item-id": 123, Level 1 "item-type": "books", Level 1 "item-cost": { Level 2 "amount": { Level 3 "cost-price": 100, Level 3 "discount" : 0, } Level 2 "Currency": "USD" } } ``` In the example above, sub-attributes such as *cost-price* and *discount* are level 3 nested sub-attributes; they are ingested into MoEngage but in a string datatype. |
+| Key names | Max length is 200 characters.  Key names should not have the following special characters: $, . , %, #. ``` "book":{ "item-id": 123, "item-name": "Atonement", "item-cost": 100, "item-currency": "USD" } ``` *Item-id*, *item-name* are key names which do not exceed 200 character limit. |
+| Key-values | Max limits (default = 512 characters) follow our recommended limit for primitive data types. ``` "book":{ "item-id": 123, "item-name": "Atonement", "item-cost": 100, "item-currency": "USD" } ``` Values corresponding to key names such as *Item-id and* *item-name* are called key values. Here, the key values are *123 and* *Atonement,* which do not exceed the 512-character limit. |
+| Not an identifier | Object attributes should not be marked as primary or secondary IDs in MoEngage.  Object attributes comprising sub-attributes cannot be used as a User Identifier in MoEngage to create or update new users. Primitive data type attributes (for example, CustomerID in string datatype) need to be used. |
+| No logical operation | Object data types do not support logical operations.  Perform such operations on Object.child (if it is of primitive type). ``` "book":{ "item-id": 123, "item-name": "Atonement", "item-cost": 100, "item-currency": "USD" } ``` In the previous example of an object attribute *book*, logical operations can be performed against the sub-attributes inside the *book* object but not on the *book* as a complete object.  For example,  A logical operation that can be considered valid is *book.item-cost \< 150.* A logical operation that is considered invalid is *book \< 150.* |
+| PII or masked or blocked or hide | The entire object attribute can be marked PII or encrypted.  Sub-attributes or individual key-value pairs inside an object cannot be marked as PII, encrypted, blocked, or hidden separately. |
+| Max Object-type Attributes | By default, MoEngage allows a maximum of ten user attributes and five event attributes as Object data types.  That is, ten user attribute objects and five event attribute objects totaling 15 object attributes in a workspace. |
+| Custom attributes only (both User and Event) | Only custom attributes can be an Object data type.  Attempting to send an Object data type on standard attributes will not be accepted.  Standard or derived attributes are data attributes that MoEngage tracks through the MoEngage SDK. You can find these attributes at **Settings** \> **Analytics and Data** \> **Data management** in the MoEngage dashboard. These attributes are not Object data types. |
+| Null handling | If the incoming Object type attribute is Null or empty, it is not ingested into MoEngage.  If an object consists of an attribute that has no values among other attributes which have value, that object is partially ingested whereas the attribute with blank/null value is not ingested: ``` "product":[ { "item-id": 123, "item-type": "books", "item-cost": 100, "item-currency": "USD" }, { "item-id": null, “”: 100 }, { "item-id": 523, "item-type": "food", "item-cost": 200, "item-currency": "USD" } ] ``` Data ingested into MoEngage is as shown below: ``` "product":[ { "item-id": 123, "item-type": "books", "item-cost": 100, "item-currency": "USD" }, { "item-id": 523, "item-type": "food", "item-cost": 200, "item-currency": "USD" } ] ``` |
+
+# Ingest Object Data Type
+
+This section describes how you can ingest the Object data type into MoEngage.
+
+## S2S API
+
+Sample cURL request
+
+```ruby
+curl --location 'https://api-xx.moengage.com/v1/transition?app\_id=O7NIHY0AT1K1FL8DR1J1G' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic {{Authorization\_Key}}' \
+--data-raw '{
+"type": "transition",
+"elements": [
+{
+"type": "customer",
+"customer\_id": "tONX83z\_new",
+"attributes": {
+"name": "xQEC",
+"first\_name": "",
+"last\_name": "",
+"age": "70",
+"email": "Ra4X@xyz. Com",
+"gender": "female",
+"mobile": "238706106351",
+"geo": "88.90 89.00",
+"birthday": "02-12-2001",
+"created\_time": "1716372929998",
+"last\_seen": "1716372929998",
+"source": "FBsuS",
+"object\_with\_nesting\_user\_attribute\_01": {
+"item-id": 123,
+"item-type": "books",
+"item-cost": {
+"amount": 100,
+"currency": "USD"
+}
+},
+"array\_of\_object\_sample\_user\_attribute\_01": [
+{
+"item-id": 123,
+"item-type": "books",
+"item-cost": 100,
+"item-currency": "USD"
+},
+{
+"item-id": 323,
+"item-type": "apparel",
+"item-cost": 90,
+"item-currency": "USD"
+},
+{
+"item-id": 523,
+"item-type": "food",
+"item-cost": 200,
+"item-currency": "USD"
+}
+],
+"platforms": [
+{
+"platform": "ANDROID",
+"active": "true"
+}
+]
+}
+},
+{
+"type": "event",
+"customer\_id": "tONX83z",
+"actions": [
+{
+"action": "object\_event\_s2s\_ios\_level1",
+"attributes": {
+"object\_with\_nesting\_event\_attribute\_01": {
+"item-id": 123,
+"item-type": "books",
+"item-cost\_event\_attribute": {
+"amount": 100,
+"currency": "USD"
+}
+},
+"array\_of\_object\_sample\_event\_attribute\_01": [
+{
+"item-id": 123,
+"item-type": "books",
+"item-cost": 100,
+"item-currency": "USD"
+},
+{
+"item-id": 323,
+"item-type": "apparel",
+"item-cost": 90,
+"item-currency": "USD"
+},
+{
+"item-id": 523,
+"item-type": "food",
+"item-cost": 200,
+"item-currency": "USD"
+}
+]
+},
+"platform": "",
+"app\_version": "3019",
+"user\_time": "1716372929998",
+"current\_time": "1716372929998"
+}
+]
+}
+]
+}'
+```
+
+## SDK
+
+Sample cURL request
+
+```ruby
+curl --location 'endpoint' \
+--header 'Content-Type: application/json' \
+--header 'MOE-APPKEY: {{Workspace\_ID or APP\_ID}}' \
+--data-raw '{
+"viewsInfo": [
+{
+"EVENT\_ACTION": "EVENT\_ACTION\_USER\_ATTRIBUTE",
+"EVENT\_ATTRS": {
+"USER\_ATTRIBUTE\_UNIQUE\_ID": "123"
+},
+"EVENT\_L\_TIME": "22:05:2024:14:02:01",
+"EVENT\_G\_TIME": "1716372930"
+},
+{
+"EVENT\_ACTION": "EVENT\_ACTION\_USER\_ATTRIBUTE",
+"EVENT\_ATTRS": {
+"USER\_ATTRIBUTE\_USER\_NAME": "xQEC"
+},
+"EVENT\_L\_TIME": "22:05:2024:14:02:01",
+"EVENT\_G\_TIME": "1716372930"
+},
+{
+"EVENT\_ACTION": "EVENT\_ACTION\_USER\_ATTRIBUTE",
+"EVENT\_ATTRS": {
+"USER\_ATTRIBUTE\_USER\_FIRST\_NAME": "JgfOr"
+},
+"EVENT\_L\_TIME": "22:05:2024:14:02:01",
+"EVENT\_G\_TIME": "1716372930"
+},
+{
+"EVENT\_ACTION": "EVENT\_ACTION\_USER\_ATTRIBUTE",
+"EVENT\_ATTRS": {
+"USER\_ATTRIBUTE\_USER\_EMAIL": "Ra4X@xyz. Com"
+},
+"EVENT\_L\_TIME": "22:05:2024:14:02:01",
+"EVENT\_G\_TIME": "1716372930"
+},
+{
+"EVENT\_ACTION": "EVENT\_ACTION\_USER\_ATTRIBUTE",
+"EVENT\_ATTRS": {
+"USER\_ATTRIBUTE\_USER\_LOCATION": "104.248,122.203"
+},
+"EVENT\_L\_TIME": "22:05:2024:14:02:01",
+"EVENT\_G\_TIME": "1716372930"
+},
+{
+"EVENT\_ACTION": "EVENT\_ACTION\_USER\_ATTRIBUTE",
+"EVENT\_ATTRS": {
+"object\_with\_nesting\_user\_attribute\_001": {
+"item-id": 123,
+"item-type": "books",
+"item-cost\_0001": {
+"amount": 100,
+"currency": "USD"
+}
+},
+"array\_of\_object\_sample\_user\_attribute\_002": [
+{
+"item-id": 123,
+"item-type": "books",
+"item-cost": 100,
+"item-currency": "USD"
+},
+{
+"item-id": 323,
+"item-type": "apparel",
+"item-cost": 90,
+"item-currency": "USD"
+},
+{
+"item-id": 523,
+"item-type": "food",
+"item-cost": 200,
+"item-currency": "USD"
+}
+]
+},
+"EVENT\_L\_TIME": "22:05:2024:14:02:01",
+"EVENT\_G\_TIME": "1716372930"
+},
+{
+"EVENT\_ACTION": "object\_event\_reports\_ios\_level1",
+"EVENT\_ATTRS": {
+"object\_with\_nesting\_user\_attribute\_003": {
+"item-id": 123,
+"item-type": "books",
+"item-cost": {
+"amount": 100,
+"currency": "USD"
+}
+},
+"array\_of\_object\_sample\_user\_attribute\_004": [
+{
+"item-id": 123,
+"item-type": "books",
+"item-cost": 100,
+"item-currency": "USD"
+},
+{
+"item-id": 323,
+"item-type": "apparel",
+"item-cost": 90,
+"item-currency": "USD"
+},
+{
+"item-id": 523,
+"item-type": "food",
+"item-cost": 200,
+"item-currency": "USD"
+}
+]
+},
+"EVENT\_L\_TIME": "22:05:2024:14:02:01",
+"EVENT\_G\_TIME": "1716372930"
+}
+],
+"viewsCount": 3,
+"identifiers": {}
+}'
+```
+
+## Snowflake
+
+The Object data type is supported in Snowflake as well.
+
+### Store Compatible JSON Data in Snowflake
+
+To store valid JSON inside Snowflake, you must change the data type of the column to *VARIANT* type. For more information, refer [here](https://docs.snowflake.com/en/user-guide/tutorials/json-basics-tutorial).
+
+The JSON stored inside Snowflake should be a valid JSON; otherwise, the values will not be written as JSON. Here is an example JSON column:
+
+JavaScript
+
+```javascript
+{ "Designation": "SSE", "Palace": "Banglore", "age": 30, "name": "Shasha" }
+```
+
+### Import JSON Data via Snowflake
+
+Existing attributes in MoEngage that have been marked as an *Object* type and are available to map to columns in Snowflake:
+
+<img  src="/images/moengage_c80a2c.png"  />
+
+You can always create new Object attributes from the mapping step as well, as shown below:
+
+<img  src="/images/moengage_7a8af3.png"  />
+
+<Info>
+MoEngage does not support mapping with nested attributes. Only top-level attributes are available to map.
+</Info>
+
+## Zapier
+
+Zapier now supports creating users and events with object-type attributes. To mark an attribute as an *object* type, you need to define these attributes inside the *Object-type Attributes* list:
+
+<img  src="/images/moengage_671c7d.png"  />
+
+Any attribute with an invalid JSON value is dropped. The same flow applies to the *Import User Event Action*.
+
+<Info>
+Any attributes that are intended to be Object type but are defined under the *Custom Attributes* list are sent to MoEngage as strings. Here, the default type casting conversion rules of MoEngage are applied based on the attribute’s pinned data type.
+</Info>
+
+### Exceptions
+
+- Only five objects can be ingested for each workspace by default.
+- Elements inside an object or in an array\_objects are dropped if nulls or blanks exist.
+
+| Sr. No. | Sample Payload | MoEngage Behavior |
+| --- | --- | --- |
+| 1 | attribute0 : {} | Dropped |
+| 2 | attribute01 : { } | Dropped |
+| 3 | Attribute61 : [{ "a" : {} }, {"valid" : false}] | [{"valid": false}] is ingested, rest of the elements are dropped |
+| 4 | {"": "value" } | Dropped |
+
+- A heterogeneous array of objects is not supported. An array of objects should only consist of objects as the array elements.
+  - Case 1: If there is a mix of objects and primitive elements, primitive elements are dropped.
+  - Case 2: If there are no objects in the array but the array consists of other primitive elements, MoEngage takes the first element’s datatype as the reference datatype and attempts to typecast the rest of the elements into that datatype. If this attempt is unsuccessful, the elements are dropped.
+
+# Use Object Data Type
+
+This section describes how to use the Object data type.
+
+## Data Management
+
+After ingesting your Object data type attributes in MoEngage, you can manage them in the **Data management** section of the MoEngage dashboard. To edit an Object data type, follow the steps below:
+
+1. Navigate to your MoEngage dashboard and click **Settings** \> **Analytics and Data** \> **Data management** \> **User attributes** or **Events**.
+2. Select the user attribute of the Object data type or search for one using the search bar.  
+    <img  src="/images/moengage_f02bfe.png"  />
+3. Click the vertical ellipsis on the attribute row and click **Edit**.  
+    <img  src="/images/moengage_f08a1a.png"  />
+4. Modify your Object structure. For example, change the string attribute to boolean, numeric to string, and so on.  
+    <img  src="/images/moengage_9d00d4.png"  />
+5. Click **Save**. A warning is displayed on saving the modifications.  
+    <img  src="/images/moengage_9552d1.png"  />
+6. Click **Continue** to confirm.  
+   <Info>
+You can edit the Object attribute once every 24 hours. For the same reason, the edit option will only be activated 24 hours following the current edit.
+</Info>
+
+## Activities Allowed on Object Attributes in Data Management
+
+- You can pin data type as Object or Array of Object for any custom user or event attribute.
+- For any Object or Array of Object data type, the system auto-detects the object's structure and saves it as metadata for segmentation.
+- The structure detected must have all children of the Object and their data type up to two levels.
+- You can manually define each child node for any Object or Array of Object type attribute.
+- If the schema of an Object attribute is defined manually, it cannot be modified for 24 hours (to avoid unwanted issues with any running campaigns/triggers). After the schema is manually defined, any incoming data is validated against it and rejected if it does not conform to the definition.
+- For any Object or Array of the Object type attribute, you can paste a sample JSON to generate a defined Object structure.
+- You can specify the data type of each child node up to two levels. The data types supported are as follows:
+  - Numeric
+  - Boolean
+  - String
+  - Date type
+  - Primitive Array
+  - JSON (to ingest any level of nested object)
+- You can create more than 100 children nodes for any object definition. If an object has more than 100 children nodes, MoEngage accepts only the first 100 children nodes defined earlier.
+- If an existing attribute is pinned as an object, the previous values are not type-casted and left as they are.
+- New values coming in for the attribute are treated differently for different scenarios as follows:
+  - If the incoming value is an object under defined limits, it will be accepted.
+  - If the incoming value is a primitive data type (number, string, bool), it is encapsulated and typecasted as an object.
+- You can change the data type of an attribute pinned as an object to “Any” or any of the primitive data types.
+- You can change Block/Unblock and Show/Hide sub-attributes of the Object data type for only root-level attributes.
+- You can edit the schema of Object data type attributes in the following manner:
+  - Add new sub-attributes to the object for up to two levels of nesting.
+  - Delete existing sub-attributes.
+
+## Exceptions
+
+- An attribute can ingest data as an object or as any primitive data type.
+- Any attribute that has ingested any data point of the object data type cannot be encrypted.
+- Any attribute that has been ingesting data in any primitive data type and marked as PII encrypted attribute cannot ingest object data points going forward.
+
+# User Profile
+
+This section describes the user profile.
+
+## User Info
+
+After you ingest your Object data type attributes in MoEngage, you can view them in the **User Profile** section on your MoEngage dashboard. To view the Object attribute, follow the steps below:
+
+1. Navigate to your MoEngage dashboard and create a Segment with object attributes.
+2. On the Create segment page, scroll down to the **Query Results** section and then select a query.
+3. Select a sample user to navigate to the User Profile page. Alternatively, use the upper right search bar to search for a user with an ID.
+4. You can view all your object-type attributes on the User Profile page under the **Tracked Custom Attributes** section.  
+    <img  src="/images/moengage_57da19.png"  />
+
+## Activity Info
+
+To view the object attribute associated with an event in activity info, follow the steps below:
+
+1. Navigate to your MoEngage dashboard and create a Segment with Object attributes.
+2. On the Create segment page, scroll down to the **Query Results** section and then click a query to expand it.
+3. Select a sample user to navigate to the User Profile page. Or search for a user (using user ID) in the user search box on the upper right corner of the Create segment page.
+4. From the User Profile page, go to the **Activity Info** tab, where you can view all your events and event attributes in the object type section.
+
+# Object Data Type Support in Campaigns and Channels
+
+The table below mentions the delivery type and indicates whether or not the object data type is supported across different campaigns.
+
+| Campaign Type | Push | Email | SMS | WhatsApp | Connector |
+| --- | --- | --- | --- | --- | --- |
+| One Time | Yes | Yes | Yes | Yes | Yes |
+| Periodic | Yes | Yes | Yes | Yes | Yes |
+| Event Triggered | Yes | Yes | Yes | Yes | Yes |
+| Business Event Triggered | No | No | No | NA\* | NA\* |
+| Device Triggered | No | NA\* | NA\* | NA\* | NA\* |
+| Location Triggered | Yes | NA\* | NA\* | NA\* | NA\* |
+
+NA\* indicates that the delivery type is not supported for that particular campaign.
+
+The table below mentions the channels and indicates whether the object data type is supported.
+
+| Channels | In-app | Onsite | Cards | Facebook | Google Ads | Web Personalization |
+| --- | --- | --- | --- | --- | --- | --- |
+| Object data type supported or not | Yes | Yes | No | No | No | Yes |
+
+The table below outlines the steps involved in campaign creation and indicates whether the object data type is supported across different campaigns.
+
+| Campaign Creation Steps | Object Data Type Supported? |
+| --- | --- |
+| Target Users \> Select audience \> All users, Filter users by \> User property, User behavior | Yes |
+| Content \> Link personalization, Image personalization, preview | Yes |
+| Content \> Add new locale \> User Property | No |
+| Schedule and goals \> Conversion goals \> New goal \> Select an event | No |
+
+The table below outlines the steps involved in Flow creation and indicates whether the object data type is supported across different campaigns.
+
+| Flow creation steps | Object Data Type Supported? |
+| --- | --- |
+| When will users enter the flow \> On event trigger \> IF user has executed \> Select an event | Yes |
+| When will users enter the flow \> On flow exit \> When user has exited \> Select by name | Yes |
+| Who will enter the flow \> Audience \> All users, Filter users by\> User property, User behavior | Yes |
+
+# What's Next
+
+Using [Object Data Type in Segmentation](https://help.moengage.com/hc/en-us/articles/26829603206932).

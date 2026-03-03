@@ -1,0 +1,83 @@
+---
+title: "Send Data to Google Analytics"
+sidebarTitle: "Send Data to Google Analytics"
+---
+
+Developers can now send data from **MoEngage to Google Analytics tool using our Connectors** via GA Measurement Protocol.
+
+Google Analytics Measurement Protocol allows developers to make HTTP requests to send raw user interaction data directly to Google Analytics servers. This in turn enables developers to measure how users interact with their business from almost any environment. Developers can then use the Measurement Protocol to:
+
+- Measure user activity in new environments.
+- Tie online to offline behavior.
+- Send data from both the client and server.
+
+# Measurement Protocol (Google Analytics 4)
+
+Google Analytics 4 only supports POST calls. To send an event, make a `HTTP POST` request to the following endpoint:
+
+```
+POST /mp/collect HTTP/1.1
+HOST: www.google-analytics.com
+Content-Type: application/json
+```
+
+Data is sent to Google Analytics using the Measurement Protocol Data in two parts:
+
+1. Query parameters
+2. A `JSON` `POST` body
+
+### Query Parameters
+
+| Parameter Name | Description |
+| --- | --- |
+| `api\_secret` | **Required.**   An `API Secret` that is generated through the Google Analytics UI. An API Secret that is generated through the Google Analytics UI.  To create a new secret, navigate in the Google Analytics UI to:  Admin \> Data Streams \> choose your stream \> Measurement Protocol \> Create |
+| `measurement\_id` | Optional.  Measurement ID. The identifier for a Data Stream. Found in the Google Analytics UI under:  Admin \> Data Streams \> choose your stream \> Measurement ID |
+| `firebase\_app\_id` | **Required only if using a Firebase app.**  Firebase App ID. The identifier for a Firebase app. Found in the Firebase console under:  Project Settings \> General \> Your Apps \> App ID |
+
+[Read more](https://developers.google.com/analytics/devguides/collection/protocol/ga4/reference?client_type=gtag#payload) about the required query parameters of the Measurement Protocol.
+
+### JSON POST body
+
+The payload of your request depends on the events and attributes that you want to track. Below are the required fields:
+
+| Parameter Name | Description |
+| --- | --- |
+| `client\_id` | **Required only if using gtag.js.**  Uniquely identifies a user instance of a web client. See [send event to the Measurement Protocol](https://developers.google.com/gtagjs/reference/api#get_mp_example). |
+| `app\_instance\_id` | **Required only if using a Firebase app.**  Uniquely identifies a specific installation of a Firebase app. This value needs to be retrieved through the Firebase SDK. |
+| `events` | **Required.**  An array of event items. |
+
+[Read more](https://developers.google.com/analytics/devguides/collection/protocol/ga4/reference?client_type=firebase#payload_post_body) about the required JSON post-body parameters of the Measurement Protocol.
+
+# Setting up a connector campaign
+
+To create a connector campaign on MoEngage,
+
+1. On the sidebar menu in MoEngage, hover over the **Engage** icon <img alt="Screenshot 2025-06-04 at 4.32.53 PM.png"  src="/images/moengage_a7dd26.png"  /> . The **Engage** menu appears.
+2. Click **+ New Campaign**.  
+    <img alt="1.png"  src="/images/moengage_f74486.png"  />   
+   You can also click **All Campaigns** on the **Engage** menu and then click **+ Create campaign** on the **All campaigns** page.
+3. On the **New Campaign** dialog box, under **Connectors**, click **Event Triggered**.  
+    <img alt="custom.png"  src="/images/moengage_6377c7.png"  />
+4. Give your campaign a name and relevant tags.
+5. Configure your trigger criteria. You can optionally choose to add a delay as well.  
+    <img  src="/images/moengage_9e50d3.png"  />
+6. Choose your target audience. You can also check the count of your audience.  
+     
+    <img  src="/images/moengage_4e3e64.png"  />
+7. Click next to proceed to the next step.
+8. On step 2 of the campaign,
+   - Select the method as POST.
+   - Add Webhook URL as : `https://www.google-analytics.com//mp/collect?api\_secret=&measurement\_id=`
+   - The URL parameters list should auto-populate. Replace `` with your API Secret Key. You can swap this parameter with `firebase\_app\_id` if you're using a Firebase app. Replace `` with the ID of your Data Stream.
+   - In Headers, add `Content-Type` as `application/json`.
+   - In Body, choose Raw and use the content depending on what events you want to send to Google Analytics. Below is an example:  
+     __PROTECTED_11__
+     - Make sure to replace `` with the client ID (if using `gtag.js`). You can also swap this key with `app\_instance\_id` if you're using a Firebase app.
+
+<img  src="/images/moengage_9cf6b7.png"  />
+
+7. At this point, your campaign should be ready to test and send. You can also test your connector configuration using the Test functionality available in Step 2 of Create Connector Campaign.
+
+<img alt="Screen_Shot_2022-02-22_at_11.12.42_AM.png" src="/images/moengage_1492ae.png"   />
+
+If your Google Analytics account successfully receives the event, your set-up is good to go. You can go ahead and Publish the campaign.

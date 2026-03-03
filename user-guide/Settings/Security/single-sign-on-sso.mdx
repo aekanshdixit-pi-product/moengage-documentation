@@ -1,0 +1,378 @@
+---
+title: "Single Sign-On (SSO)"
+sidebarTitle: "Single Sign-On (SSO)"
+---
+
+Single Sign-On (SSO) is a system that allows you to use one set of login credentials to access multiple applications without having to re-enter their credentials for each individual application. With SSO, you can easily access the MoEngage dashboard using your organization's central identity provider (IdP).
+
+## Advantages of SSO
+
+The advantages of using SSO include:
+
+- **Simplified user experience**: SSO eliminates the need for users to remember and manage multiple usernames and passwords for different applications, making the login process much easier and faster.
+- **Reduced password fatigue**: By consolidating credentials, SSO reduces the burden on users to remember and manage numerous passwords, which can lead to security risks and frustration.
+- **Enhanced security**: Centralized authentication with SSO allows for more effective security controls, such as stronger password policies and multi-factor authentication, and simplifies the process of managing user access and permissions.
+- **Improved productivity**: SSO allows users to spend less time on login processes and more time on core work tasks, leading to increased productivity and efficiency.
+- **Reduced IT costs**: SSO streamlines user access management, reducing the workload for IT teams and minimizing the need for password resets and support calls, leading to cost savings.
+
+## SSO Configuration
+
+MoEngage supports SSO using Security Assertion Markup Language (SAML) 2.0 and acts as an SSO service provider (SP). SAML is an industry-standard protocol that enables user authentication delegation similar to OAuth 2.
+
+Upon login, you are redirected to your internal or external SSO system for authentication and then returned to MoEngage when the response is verified.
+
+<img alt="Screenshot_2022-10-18_at_9.39.29_AM.png"  src="/images/moengage_266f51.png"  />
+
+<Info>
+- Contact your organization's IT team to set up SSO to log in to the MoEngage dashboard.
+- Only administrators can enable SSO for a workspace, which allows their teammates to log in securely using the identity provider credentials.
+- To configure SSO, you need an Admin role with the **Setup & manage** permission for the **Login Settings** component.  
+  Note: The **Login Settings** is now renamed to **Security Settings**.
+</Info>
+
+# Identity Providers (IdPs)
+
+MoEngage uses Identity Providers (IdPs) to simplify and centralize user login. This allows you to securely access MoEngage services using SSO based on the SAML 2.0 standard. MoEngage supports the following IdPs currently:
+
+- Okta
+- Onelogin
+- Azure (Microsoft Entra ID)
+- Google Admin
+- Other (you can configure other IdPs, provided they are SAML 2.0 compliant)
+
+To enable SSO in the MoEngage dashboard, perform the following steps:
+
+1. On the left navigation menu in the MoEngage dashboard, click **Settings** \> **Account** \> **Security**.  
+    <img  src="/images/moengage_7979c2.png"   />
+2. On the Security page, click the **Login** tab.
+3. Click **Single Sign On (SSO) only**.
+4. Under **Single sign on**, click **Configure SSO**.  
+    <img  src="/images/moengage_f5d80e.png"  />   
+   The **Configure SSO** dialog box appears.
+5. In the **Identity Provider** list, select your identity provider.  
+    <img  src="/images/moengage_b511a8.png"  />   
+   Now, you must switch to that specific IdP admin console to configure the SSO settings and ensure the SSO integration between MoEngage and the selected IdP functions as intended.
+
+   <Info>
+If your preferred identity provider is not available in the **Identity Provider** list, you can select *Other* to configure your SSO. This function works with any SAML 2.0-compliant provider.
+</Info>
+
+Configure Okta SSO Configure Onelogin SSO Configure Microsoft Azure SSO Configure Google Admin SSO Configure Other SSO
+
+To set up SSO with Okta, perform the following steps:
+
+1. Navigate to the **Okta Admin Console**.
+2. On the left navigation menu, click **Applications** \> **Applications**.  
+    <img  src="/images/moengage_430dce.png"  />
+3. On the **Applications** page, click **Create App Integration**.  
+    **<img  src="/images/moengage_fbb92e.png"  />**   
+   The Create a new app integration pop-up window appears.
+4. Click the **SAML 2.0** option and then click **Next**.  
+    <img  src="/images/moengage_a8ff78.png"  />   
+   The Create SAML integration page appears. You are taken to the first step, **General Settings**, to define your app.  
+    **<img  src="/images/moengage_b71248.png"  />**
+5. Enter the following details:
+
+   | Field | Required | Description |
+   | --- | --- | --- |
+   | App name | Yes | Type your app name. |
+   | App logo | Optional | Upload an image file (typically PNG, JPG, or GIF) to serve as your application icon. **Note**: The image file must be smaller than 1 MB. |
+   | App visibility | Optional | Select the **Do not display application icon to users** check box adjacent to **App Visibility** to hide the application icon from the users. |
+6. Click **Next.** You will move to the second step, **Configure SAML**, to define the SAML settings.
+7. On the **Configure SSO** dialog box in the MoEngage dashboard, copy the **Single sign-on URL** and **Audience URI (SP Entity ID)**.  
+    <img  src="/images/moengage_4b2e97.png"  />
+8. Under **SAML Settings**, enter the following details:
+
+   | Field | Required | Description |
+   | --- | --- | --- |
+   | Single Sign-On URL | Yes | This URL receives the SAML assertion (the authentication response) from Okta to MoEngage.  Paste the URL copied from the MoEngage dashboard. |
+   | Audience URI (SP Entity ID) | Yes | This URL informs Okta about the specific application (MoEngage) for which the authentication assertion is intended.  Paste the URI copied from the MoEngage dashboard.  **Note**: In this box, you can add multiple entity IDs from different workspaces, separated by commas. |
+   | Name ID format | Yes | Select *EmailAddress*. |
+
+   <img  src="/images/moengage_a05404.png"  />
+9. Scroll to the end of the page and click **Next**. You are taken to the third step, **Feedback**.
+10. Select the **This is an internal app that we have created** check box adjacent to the **App type**.  
+     <img  src="/images/moengage_9b3fe7.png"  />
+11. Click **Finish**. You must now generate the **SAML Signing Certificates** to connect your app to Okta.
+12. By default, you are on the **Sign On** tab. Scroll to the end of the page, and under **SAML Signing Certificates**, find the **Status** marked as *Active* to download the certificate.
+13. Click the **Actions** arrow in the **Actions** column.
+14. Click **Download certificate**.  
+     <img  src="/images/moengage_65d962.png"  />   
+    The metadata will be downloaded in an XML file.
+15. Upload the downloaded XML file in the **Enter XML Configuration** box on the **Configure SSO** dialog box of the MoEngage dashboard.
+16. By default, the **Update the same config for Test Environment** check box is selected. When it is selected, the configuration is applied to both the test and live environments. Clear the check box if you want the configuration to be applied only to the live environment.
+17. Click **Configure**.   
+     <img  src="/images/moengage_b6fce2.png"  />   
+    The Alert pop-up window will appear, prompting you to review the instructions properly.
+18. Select the **Send email to the users of this workspace** check box to notify all users about your workspace's Single Sign-On (SSO) enablement.
+19. Click **Done**.  
+     <img  src="/images/moengage_3c648e.png"  />   
+    The SSO configuration is now successfully completed. You can see the Okta SSO on the **Login** tab.  
+     <img  src="/images/moengage_f5bdef.png"  />
+
+To set up SSO with Onelogin, perform the following steps:
+
+1. Navigate to the **Onelogin Admin Console**.
+2. Click **Administration** next to your profile in the upper-right corner.  
+    <img  src="/images/moengage_6f68bb.png"  />
+3. Click **Applications** \> **Applications**.   
+    <img  src="/images/moengage_6a1782.png"  />
+4. On the Application page, click **Add app**.  
+    <img  src="/images/moengage_edf9eb.png"  />   
+   The Find Applications page appears.
+5. In the **Search** box, type SAML, scroll through the page, and click **SAML Test Connector (IdP)**.  
+    <img  src="/images/moengage_c2db41.png"  />   
+   The Add SAML Test Connector (IdP) page appears.
+6. In the **Display Name** box, type the SAML name being tested. (Optional)
+7. Click **Save**.  
+    <img  src="/images/moengage_024e1e.png"  />   
+   Your SAML is now successfully added, and the SAML Test Connector (IdP) page appears.
+8. Click **Configuration** on the left navigation menu.  
+    <img  src="/images/moengage_2af881.png"  />
+9. On the **Configure SSO** dialog box in the MoEngage dashboard, copy the **Audience, ACS (Consumer) URL Validator**, and **Single Logout Url**.  
+    <img  src="/images/moengage_99a095.png"  />
+10. In the **Application details** section, enter the following details:
+
+    | Field | Required | Description |
+    | --- | --- | --- |
+    | Audience | Yes | This URL specifies the intended recipient of the SAML assertion.  Paste the audience copied from the MoEngage dashboard. |
+    | ACS (Consumer) URL Validator | Yes | This URL adds an additional security to ensure MoEngage only accepts SAML assertions.  Paste the URL validator copied from the MoEngage dashboard. |
+    | ACS (Consumer) URL | Yes | This URL receives and processes the SAML authentication data for MoEngage from Onelogin.  **Note**: Paste the **ACS (Consumer) URL Validator** you copied from the MoEngage dashboard in the **ACS (Consumer) URL** box. |
+    | Single Logout URL | Yes | This URL allows for single logout functionality. |
+
+    <img  src="/images/moengage_caf5be.png"  />
+11. Click **Save**. Your SAML configuration is now successfully updated.  
+     <img  src="/images/moengage_d9255f.png"  />
+12. In the upper-right corner, click the **More Actions** arrow and select **SAML Metadata**. <img  src="/images/moengage_c08391.png"  />   
+    The metadata will be downloaded in an XML file.
+13. Click **Upload** to upload the downloaded XML file on the **Configure SSO** dialog box in the MoEngage dashboard.
+14. By default, the **Update the same config for Test Environment** check box is selected. When it is selected, the configuration is applied to both the test and live environments. Clear the check box if you want the configuration to be applied only to the live environment.
+15. Click **Configure**.  
+     <img src="/images/moengage_796ccd.png" />   
+    The Alert pop-up window will appear, prompting you to review the instructions properly.
+16. Select the **Send email to the users of this workspace** check box to notify all users about your workspace's Single Sign-On (SSO) enablement.
+17. Click **Done**.  
+     <img  src="/images/moengage_3c648e.png"  />   
+    The SSO configuration is now successfully completed. You can see Onelogin SSO on the **Login** tab.  
+     **<img  src="/images/moengage_54d4bd.png"  />**
+
+To set up SSO with Azure, perform the following steps:
+
+1. Navigate to the **Azure Admin Console**.
+2. On the Azure services page, click **Microsoft Entra ID**.  
+    <img  src="/images/moengage_f8dae1.png"  />
+3. On the Overview page, go to the left navigation menu and click **Manage** \> **Enterprise** **applications**.  
+    <img  src="/images/moengage_a6d744.png"  />
+4. On the Enterprise applications | All applications page, click **+ New application**.  
+    <img  src="/images/moengage_a65fbd.png"  />
+5. On the Browse Microsoft Entra Gallery page, in the search box, type **SAML Toolkit.**
+6. Click the **Microsoft Entra SAML Toolkit** tile and create the application.  
+    <img  src="/images/moengage_4cbc0d.png"  />   
+   The created application is listed on the **Enterprise applications**| **All applications** page.
+7. In the **Search by application name or object ID** box, type the name of the application that you created and select the application. <img  src="/images/moengage_96d188.png"  />   
+   Your created application appears.  
+    <img  src="/images/moengage_0d1f80.png"  />   
+   Now, you must configure SSO for the application you created.
+8. On your opened application page, go to the left navigation menu and click **Manage** \> **Single sign-on**.   
+    <img alt="sso2.png"   src="/images/moengage_348d7f.png"   />   
+   The SAML-based Sign-On configuration page for your created application appears.  
+    <img  src="/images/moengage_7c45c0.png"  />
+9. Move to the first step, **Basic SAML Configuration**, to define your metadata.
+10. In the **Basic SAML Configuration** section, click **Edit** in the upper-right corner. The **Basic SAML Configuration** pane appears on the right side.   
+     <img   src="/images/moengage_544830.png"   />
+11. On the **Configure SSO** dialog box in the MoEngage dashboard, copy the **Identifier (Entity ID)** and the **Reply URL (Assertion Consumer Service URL)**. **Note**: Copying the **Sign on URL** is optional and generally not recommended.  
+     <img  src="/images/moengage_e68760.png"  />
+12. In the **Basic SAML Configuration section**, enter the following details:
+
+    | Field | Required | Description |
+    | --- | --- | --- |
+    | Identifier (Entity ID) | Yes | This URL allows MoEngage to verify authentication requests from Azure, ensuring secure and seamless logins.  Paste the ID copied from the MoEngage dashboard. |
+    | Reply URL (Assertion Consumer Service URL) | Yes | This URL receives and processes the SAML authentication data for MoEngage from Azure.  Paste the reply URL copied from the MoEngage dashboard. |
+    | Sign on URL | Optional and generally not recommended. | This URL is the entry point from Azure that triggers the SAML SSO process to access MoEngage.  Paste the sign-on URL copied from the MoEngage dashboard. |
+
+    <img   src="/images/moengage_7294e3.png"   />
+13. Click **Save**.
+14. Your SSO configuration has been successfully saved. To download the XML file, move to the third step, **SAML Certificates**.
+15. In the **SAMLCertificates** section, click **Download** adjacent to the **Federation Metadata XML**.  
+     <img  src="/images/moengage_9fa547.png"  />   
+    The metadata will be downloaded in an XML file.
+16. Click **Upload**to upload the downloaded XML file on the **Configure SSO** dialog box in the MoEngage dashboard.
+17. By default, the **Update the same config for Test Environment** check box is selected. When it is selected, the configuration is applied to both the test and live environments. Clear the check box if you want the configuration to be applied only to the live environment.
+18. Click **Configure**.  
+     <img src="/images/moengage_0e3ec5.png" /> The Alert pop-up window will appear, prompting you to review the instructions properly.
+19. Select the **Send email to the users of this workspace** check box to notify all users about your workspace's Single Sign-On (SSO) enablement.
+20. Click **Done**.  
+     <img  src="/images/moengage_3c648e.png"  />   
+    The SSO configuration is now successfully completed. You can see the Azure SSO on the **Login** tab.  
+     <img  src="/images/moengage_623487.png"  />
+
+To set up SSO with Google Admin, perform the following steps:
+
+1. Navigate to the **Google Admin Console**.
+2. On the left navigation menu, click **Apps** \> click **Web and mobile apps**.  
+    <img  src="/images/moengage_88be0c.png"  />
+3. Click the **Add app** arrow and click **Add custom SAML** **app**.  
+    <img  src="/images/moengage_783989.png"  />   
+   You are taken to the first step, **App details**, to define your app.
+4. On the **App details** page, enter the following details:
+
+   | Field | Required | Description |
+   | --- | --- | --- |
+   | App name | Yes | Name of your  SAML application. |
+   | Description | Yes | Description of your SAML application configuration. |
+   | Upload logo | optional | Upload an image file (typically PNG, JPG, or GIF) to serve as your application icon.  **Note**: The image file must be smaller than 4 MB. |
+
+   <img  src="/images/moengage_1acbb7.png"  />
+5. Click **Continue**. You are taken to the second step, **Google Identity Provider details**.
+6. Under **Option 1: Download IdP metadata**, click **Download Metadata**.  
+   The metadata will be downloaded in an XML file.
+7. Click **Continue**.  
+    <img  src="/images/moengage_b1cfb8.png"  />   
+   You are taken to the third step, **Service provider details**.
+8. On the **Configure SSO** dialog box in the MoEngage dashboard, copy the **ACS URL** and **Entity ID**.  
+    <img src="/images/moengage_a9af29.png" />
+9. On the **Service provider details** page, enter the following details:
+
+   | Field | Required | Description |
+   | --- | --- | --- |
+   | ACS URL | Yes | This URL receives and processes the SAML authentication data for MoEngage from Google Admin.  Paste the URL copied from the MoEngage dashboard. |
+   | Entity ID | Yes | A unique identifier for your application.  Paste the ID copied from the MoEngage dashboard. |
+   | Start URL | Optional | Leave this blank. |
+10. Select the **Signed response** check box to sign the entire SAML response, which includes the assertion and other protocol-related information.
+11. In the **Name ID format** list, select *Email*.
+12. Click **Continue**.  
+     <img  src="/images/moengage_d80ce0.png"  />   
+    You are taken to the fourth step, **Attribute mapping**. Here, you can map optional user attributes (for example, first name, last name, and email address).
+13. Click **Finish**.  
+     <img  src="/images/moengage_9883df.png"  />   
+    Your SAML settings are updated.
+14. On the **Configure SSO** dialog box in the MoEngage dashboard, click **Upload** to upload the XML file that you downloaded in step 6.
+15. By default, the **Update the same config for Test Environment** check box is selected. When it is selected, the configuration is applied to both the test and live environments. Clear the check box if you want the configuration to be applied only to the live environment.
+16. Click **Configure**.  
+     <img src="/images/moengage_45acf5.png" />   
+    The Alert pop-up window will appear, prompting you to review the instructions properly.
+17. Select the **Send email to the users of this workspace** check box to notify all users about your workspace's Single Sign-On (SSO) enablement.
+18. Click **Done**.  
+     <img  src="/images/moengage_3c648e.png"  />   
+    The SSO configuration is now successfully completed. You can see Google SSO on the **Login** tab.  
+     <img  src="/images/moengage_251775.png"  />
+
+<Info>
+If you are using an IDP that is not listed above, you can select the *Other* option from the **Identity Provider** list.
+</Info>
+
+To set up SSO with the **Other** option, perform the following steps:
+
+1. Complete the necessary setup within your IdP admin console.
+2. Add the metadata values displayed on the **Configure SSO** dialog box in the MoEngage dashboard to the corresponding fields in your IdP admin console.
+3. Download and save the SAML metadata file generated by your IdP.
+4. To upload the XML file you downloaded in the **Configure SSO** section of the MoEngage dashboard, click **Upload**.
+5. By default, the **Update the same config for Test Environment** check box is selected. When it is selected, the configuration is applied to both the test and live environments. Clear the check box if you want the configuration to be applied only to the live environment.
+6. Click **Configure**.  
+    <img src="/images/moengage_15ca33.png" />   
+   The Alert pop-up window will appear, prompting you to review the instructions properly.
+7. Select the **Send email to the users of this workspace** check box.
+8. Click **Done**.  
+    <img  src="/images/moengage_3c648e.png"  />   
+   The SSO configuration is now successfully completed.  
+    <img  src="/images/moengage_651f7e.png"  />
+
+# FAQs
+
+<Accordion title="Facing an issue while logging in?">
+
+<img alt="Screenshot_2019-10-16_at_2.55.10_PM.png"  src="/images/moengage_b3cc73.png"  />
+
+***Authentication Failed***
+
+This generally happens when the SAML authentication with the Identity Provider fails. Please contact your identity provider for details.
+
+***Persistent Error***
+
+MoEngage supports the admin login using an email id - password combination. The Admin can go back to the Single Sign On screen (Go to settings \> Security Settings) and disable SSO.
+
+</Accordion>
+<Accordion title="Facing an issue while uploading the config file?">
+
+### ***<img alt="Screenshot_2019-11-14_at_2.17.20_PM.png" src="/images/moengage_afbbc6.png" />***
+
+This generally happens when the uploaded XML file is invalid. Try again with the correct XML file. If the issue persists, check with your identity provider.
+
+</Accordion>
+<Accordion title="Which identity providers are supported by MoEngage?">
+
+MoEngage supports all identity providers (IdPs) that support SAML 2.0
+
+</Accordion>
+<Accordion title="Can different identity providers be used for different workspaces?">
+
+Yes, you can configure different identity providers for different workspaces. For example, you can use Okta to configure SSO for one workspace and Google for another. You can also have different identity providers for test and live environments.
+
+</Accordion>
+<Accordion title="Which identity provider (in case of multiple IdPs) will the user be redirected to after logging in?">
+
+The user will be redirected to the IDP associated with the most recent workspace that they used before the last session ended.
+
+</Accordion>
+<Accordion title="Is there a test environment using which SSO implementation can be tested?">
+
+You can use the test environment to test the SSO setup and verify that everything works as desired. Once you have verified it on the test, you will need to set up SSO again on the live environment. On the other hand, SSO gets configured to the test environment automatically if you configure it first in the live environment.
+
+</Accordion>
+<Accordion title="What happens if the user exists in the identity provider’s directory but not in MoEngage?">
+
+The user will not be able to log in to MoEngage if the user is not a part of the workspace in which the SSO has been enabled.
+
+</Accordion>
+<Accordion title="What happens if the user exists in the identity provider’s directory but does not have access to the SSO workspace linked with MoEngage?">
+
+The user will see the Auth Status Failure error on the MoEngage Dashboard while being redirected back from the identity provider.
+
+</Accordion>
+<Accordion title="Who can enable/disable SSO for a workspace on MoEngage?">
+
+The SSO can only be enabled / disabled / edited by a user with access to the *Setup & Manage* permission under *Login Settings*.
+
+The user with the necessary permissions can go to *Settings -\> Login -\> Authentication,* select *Single Sign On (SSO) Only,* and perform the necessary action.
+
+<img  src="/images/moengage_ff589e.png"  />
+
+</Accordion>
+<Accordion title="What happens if the SSO is not enabled for one of the workspaces or if different identity providers have been used for different workspaces?">
+
+If SSO is not enabled for one of the workspaces or if different identity providers have been used for the workspaces, the user will need to re-authenticate while switching between them.
+
+</Accordion>
+<Accordion title="What happens if the user wants to seamlessly switch between different workspaces after enabling SSO?">
+
+To switch between different workspaces without re-authenticating seamlessly, the user will need to enforce SSO on all the workspaces with the same identity provider in both the Test and Live environments.
+
+</Accordion>
+<Accordion title="Can we configure SSO to allow a specific set of users to log in using SSO and others to log in with ID and Password?">
+
+Only the admins have the option to log in using their MoEngage credentials once SSO is enabled. All other users must log in through SSO.
+
+</Accordion>
+<Accordion title="When using Microsoft Azure, what should be the value of the User Principal Name (UPN) attribute?">
+
+UPN consists of a UPN prefix (the user account name) and a UPN suffix (a DNS domain name). The prefix is joined with the suffix using the "@" symbol. For example, "someone@example.com". A UPN must be unique among all security principal objects within a directory. Read more about it [here](https://learn.microsoft.com/en-us/azure/active-directory/hybrid/connect/plan-connect-userprincipalname).
+
+</Accordion>
+<Accordion title="What are some of the common issues faced by the users?">
+
+Here are some of the common issues faced and their resolutions.
+
+|  |  |
+| --- | --- |
+| Error | Resolution |
+| *Incorrect Cluster URL* | Ensure that the correct login URL (as per your data center) is used to log into your MoEngage Dashboard. For more information, refer to [Data Centers](https://help.moengage.com/hc/en-us/articles/360057030512). |
+| *Incorrect Name ID Format* | The Name ID Format should be in the format mentioned below: *urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress* |
+| *Missing Single Sign On URL* | The Single Sign On URL should be present with a valid value in the SAML metadata file. |
+| *NameIDFormat* | \<NameIDFormat\>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\</NameIDFormat\> \<NameIDFormat\>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\</NameIDFormat\> \<NameIDFormat\>urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName\</NameIDFormat\> \<NameIDFormat\>urn:oasis:names:tc:SAML:1.1:nameid-format:WindowsDomainQualifiedName\</NameIDFormat\> \<NameIDFormat\>urn:oasis:names:tc:SAML:2.0:nameid-format:kerberos\</NameIDFormat\> \<NameIDFormat\>urn:oasis:names:tc:SAML:2.0:nameid-format:entity\</NameIDFormat\> \<NameIDFormat\>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent\</NameIDFormat\> \<NameIDFormat\>urn:oasis:names:tc:SAML:2.0:nameid-format:transient\</NameIDFormat\> |
+
+</Accordion>
+<Accordion title="Does two-factor authentication remain enabled even after enabling SSO authentication?">
+
+Yes, two-factor authentication remains enabled even after you enable SSO for a workspace.
+
+</Accordion>

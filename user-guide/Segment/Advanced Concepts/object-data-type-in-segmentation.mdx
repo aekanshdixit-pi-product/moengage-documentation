@@ -1,0 +1,409 @@
+---
+title: "Object Data Type in Segmentation"
+sidebarTitle: "Object Data Type in Segmentation"
+---
+
+# Overview
+
+<Note>
+This is an Early Access feature. To enable it for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team.
+</Note>
+
+Segmentation provides a structured and organized approach to identifying and querying attributes within an object. This enables effective analysis and decision-making based on the characteristics of the object. For more information, refer to [Support for Object Data Type](https://help.moengage.com/hc/en-us/articles/26829603206932).
+
+- On the **Create segment** page of the MoEngage dashboard, the user segmentation capability of an object data type is displayed under the **User property** and **User** **behaviour** tabs of **Select audience** section.
+- Segmentation supports up to two levels of nesting for an array of objects. Above level two nesting, the attributes are shown in a stringified format.  
+   <img  src="/images/moengage_e6d169.png"  />
+- In case of an *array of object data* type attributes, segmentation will provide the **With** operator and the **And** operator for advanced querying.
+
+# Create Segmentation Queries with Objects
+
+The attributes of an object can be of any primitive data type. This section provides few examples of writing segmentation queries for user attribute and event attribute scenarios using the following data types:
+
+## Query String Attributes
+
+### User Attribute
+
+If you want to segment users who have pet dogs, you can use the string data type *Animal.pets* and the operator *is* to fetch users who have a dog as their pet.
+
+<img  src="/images/moengage_4c6cc2.png"  />
+
+### Event Attribute
+
+If you want to segment users who have *Adopted a pet* at least once in the last 3 days with attributes such as Membership (String data) as *Gold* and users having a pet as *Cat* (Object data).
+
+Description:  
+Here, Membership is an event attribute with a string data type and *Pets.species* is another event attribute with a string Object data type. The **And** operator ensures that the users fetched from the database have fulfilled both conditions.
+
+<img  src="/images/moengage_e47ce6.png"  />
+
+## Query Empty String Values Using Segmentation
+
+If you want to segment users who have an empty string value for a specific attribute. The stored value is "" (The key is set, but the value is null).
+
+Description:  
+Here, *ListOfPets* is an object with *Name* as a user attribute inside it. Thus in the query, the *ListOfPets.Name* attribute is used with the *is empty* filter.
+
+<img  src="/images/moengage_3ac74b.png"  />
+
+## Query Numeric Attributes
+
+### User Attribute
+
+If you want to segment users who have pets younger than 6 years.
+
+Description:  
+Here, *Pets.age* is the user attribute with a numeric data type and *less than* is the relational operator to filter users with pets aged less than 6.
+
+<img  src="/images/moengage_4e7b30.png"  />
+
+### Event Attribute
+
+If you want to segment users who have purchased a t-shirt that costs $500.
+
+Description:  
+Here, the **User behaviour** drop-down displays the Object attribute *product.price* and the value as $500. The segmentation query has the following event attributes:
+
+- *Product.Colour* as the attribute with string data type
+- *Product.Price* as the Object attribute with numeric data type
+- *Product.Currency* as the Object attribute with string data type
+
+<img  src="/images/moengage_14e0f0.png"  />
+
+Example Code
+
+```ruby
+[
+{ product: “t-shirt”, price: “$500”, colour: “red”, currency: “USD” },
+{ product: “trouser”, price: “$800”, colour: “white”, currency: “EUR” },
+{ product: “t-shirt”, price: “$300”, colour: “blue”, currency: “EUR” }
+]
+```
+
+## Query Date Time Attributes
+
+### Event Attribute:
+
+If you want to segment users who have purchased a red t-shirt whose price is $500 and whose purchase date is before 30 May 2024,
+
+Description:  
+Here, the segmentation query has the following Object event attributes:
+
+- *Colour* is an event attribute with string data type Red.
+- *Product.Price* is an event attribute with string data type.
+- *Product.Purchase-date* is an event attribute Object of date data type
+
+<img  src="/images/moengage_0d96fe.png"  />
+
+Example Code
+
+```ruby
+[
+{ product: “t-shirt”, price: “$500”, colour: “blue”, purchase-date: “23-12-2023” },
+{ product: “trouser”, price: “$800”, colour: “white”, purchase-date: “23-12-2023” },
+{ product: “t-shirt”, price: “$300”, colour: “red”, purchase-date: “23-12-2023” }
+]
+```
+
+## Query Array Attributes
+
+### Event Attribute
+
+If you want to segment users whose dogs were vaccinated at least 1 time in the last 60 days, breed as *Lab*, age under 5 years, and *bone* as their favourite treat.
+
+<img  src="/images/moengage_4c1554.png"  />
+
+Example Code
+
+```ruby
+Pets object array: 
+[ 
+{ species : “Dog”, vaccinated: “Yes”, Age : 2, treats : [‘bone’, ‘candy’, ‘pedigree’] },  
+{ species : “Cat”, vaccinated: “Yes”, Age : 2, treats : [ ‘candy’, fish] }, 
+{ species : “Dog”, vaccinated: “No”, Age : 4, treats : [‘bone’, ‘pedigree’] }
+]
+```
+
+## Query Nested Objects
+
+### Event Attribute
+
+If you want to segment users who have purchased a book whose price is 300 USD.
+
+<img height="272.57148713901506" src="/images/moengage_b85303.png"  />
+
+Example Code
+
+```ruby
+[
+{
+"item-id" : 123,
+"item-type" : "books",
+"item-cost" : { "amount" : 100, "currency" : "USD" }
+},
+{
+"item-id" : 456,
+"item-type" : "fruits",
+"item-cost" : { "amount" : 200, "currency" : "USD" }
+},
+{
+"item-id" : 678,
+"item-type" : "books",
+"item-cost" : { "amount" : 140, "currency" : "USD" }
+}
+]
+```
+
+The **Query Results** section in the **Create segment** page displays the history of all queries executed on the dashboard. For each query, you can find the details such as **Query Time**, **Description**, **Source**, **User Count**, and **Reachable Users**.
+
+# Functionality of the “With” Operator
+
+You can use both “With” and AND/OR operators to create queries using the Object data type. The AND/OR operator applies the attribute filters across the objects, whereas the With operator applies the attribute filters within an object.
+
+<img height="286.3327046586883" src="/images/moengage_c1ce2a.png"  />
+
+## Using the With Operator
+
+Consider the following pet object data type as an example of using the With operator to achieve some uses cases below.
+
+Pets Object
+
+```ruby
+[
+{ Breed: “Lab”, Age: “3”, Treat: “Bone” },
+{ Breed: “Lab”, Age: “5”, Treat: “Fish” },
+{ Breed: “Bulldog”, Age: “3”, Treat: “Pedigree” }
+]
+```
+
+### Example 1
+
+If you want to segment users whose dogs were vaccinated 3 times in the last 60 days, whose dogs should be of the breed *Lab*, with their dogs' age less than 5 years old, and with the dog's favourite treat being *Bone*, using the **With** operator:
+
+To achieve this use case, break down the query as listed below:
+
+- Find the users whose pets are dogs of breed *Lab*
+- Amongst the Lab breed, find those dogs whose age is \< 5 years
+- Amongst the Lab breed of \< 5 years, find those dogs whose favourite treat is *Bone*
+
+*<img  src="/images/moengage_b5cab9.png"  />*
+
+Here, the **with** operator will first search for a parent attribute (in the example above - it is pets.age) and then apply the filter to its child attributes (in this case - pets.treat).
+
+This query will return the user mentioned above because in the array of objects, there is a Lab whose age is \< 5 with their favourite treat as Bone.
+
+### Example 2
+
+If you want to segment users whose dogs were vaccinated 3 times in the last 60 days, whose dogs are of the breed *Lab*, with their dog age less than 5 years old, with whose dog’s favourite treat is *Fish*.
+
+**<img  src="/images/moengage_93fac9.png"  />**
+
+This query **will not return** any user mentioned above because though there is a Lab with age \< 5 years, their favourite treat is not Fish. Simultaneously, there is a Lab breed whose favourite treat is Fish, but its age is not less than 5. Thus, this user will not be returned during segmentation.
+
+## Using the And Operator
+
+Consider the following pets object data type as an example of using the And operator to achieve some of the use cases below
+
+Pets Object
+
+```ruby
+[
+{ Breed: “Lab”, Age: “3”, Treat: “Bone” },
+{ Breed: “Lab”, Age: “5”, Treat: “Fish” },
+{ Breed: “Bulldog”, Age: “3”, Treat: “Pedigree” }
+]
+```
+
+### Example 1
+
+If you want to segment users whose dogs were vaccinated three times in the last 60 days, whose pets are dogs of breed *Lab* AND users with pets whose age is \> 3 years AND users whose pets have their favourite treat as *Fish*.
+
+This query will return those users who:
+
+- Have pets that got vaccinated 3 times in the last 60 days
+- Have pets that are dogs of breed *Lab*
+- Have any pets whose age \> 3 years
+- Have any pets with their favourite treat as *Fish*
+
+Thus, the given user will be returned during segmentation because somewhere in the entire array of objects, there is a Lab-breed pet, and some pets are older\> than 3 years. Also, some pets have Fish as their favorite treat. Thus, all three conditions are satisfied independently, as required in the case of the AND condition.
+
+## Using the OR Operator
+
+Consider the following pets object data type as an example of using the OR operator to achieve some of the use cases below
+
+Pets Object
+
+```ruby
+[
+{ Breed: “Lab”, Age: “3”, Treat: “Bone” },
+{ Breed: “Lab”, Age: “5”, Treat: “Fish” },
+{ Breed: “Bulldog”, Age: “3”, Treat: “Pedigree” }
+]
+```
+
+### Example 1
+
+If you want to segment users whose dogs got vaccinated three times in the last 60 days, whose pets are dogs of breed *Lab* OR users with pets whose pets have age is \> 3 years OR users whose pets have their favorite treat as *Duck*.
+
+**<img  src="/images/moengage_0b4aa5.png"  />**
+
+This query will return the user mentioned above because it fulfils the definition of the **OR** operator (which says that at least one of all the conditions must be fulfilled). In this case, only favorite treat condition = *Duck* is not fulfilled, but the other two conditions are fulfilled, which will return the user above during segmentation.
+
+<Info>
+Using the **With** operator, the user will see the attributes with the same nesting level as in the previous field. Other nesting level attributes will not be displayed to maintain consistency. You can use the **And** operator to achieve this use case.
+
+<img  src="/images/moengage_4bf4c1.png"  />
+</Info>
+
+# Query Across Nested Array of Objects
+
+<Note>
+This is an Early Access feature. To get it enabled for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team.
+</Note>
+
+For data structures where an array of objects is nested within another array of objects (up to two levels), you can perform advanced segmentation by creating queries that span across both levels. This allows you to find users based on a combination of attributes from the parent (level 1) array and the nested (level 2) array within the same object element.
+
+When you select an attribute from a nested (level 2) array, the segmentation UI provides two "With" operators.
+
+- The first "With" operator, which is indented, lets you add more conditions for attributes at the same nested level (level 2).
+- The second "With" operator lets you add conditions for attributes at the parent level (level 1).
+
+### Example
+
+Consider a user attribute "nations," which is an array of objects. Each nation object contains details like name and population, as well as a nested array of objects called "cities." Each city object in turn contains its own attributes.
+
+Nations Object Example
+
+```json
+{
+"nations": [
+{
+"name": "India",
+"capital": "New Delhi",
+"population": 1.4,
+"date": "2025-06-04T00:00:00Z",
+"bool\_attr": true,
+"array\_strr": ["one", "two", "three"],
+"array\_number": [1, 2, 3],
+"last\_level": { "key1": "value1", "key2": 123 },
+"cities": [
+{
+"name1": "Mumbai",
+"population1": 20,
+"landmarks1": ["Gateway of India1", "Chhatrapati Shivaji Maharaj Terminus"],
+"date1": "2025-06-04T00:00:00Z",
+"bool\_attr1": true,
+"array\_strr1": ["one", "two", "three"],
+"array\_number1": [1, 2, 3],
+"last\_level1": { "key1": "value1", "key2": 123 }
+},
+{
+"name1": "Bengaluru Urban",
+"population1": 8,
+"landmarks1": ["Vidhana Soudha", "Lal Bagh"],
+"date1": "2025-06-04T00:00:00Z",
+"bool\_attr1": true,
+"array\_strr1": ["one", "two", "three"],
+"array\_number1": [1, 2, 3],
+"last\_level1": { "key1": "value1", "key2": 123 }
+}
+]
+},
+{
+"name": "India",
+"date": "2025-06-04T00:00:00Z",
+"bool\_attr": false,
+"capital": "New Delhi",
+"population": 1.4,
+"array\_strr": ["one", "two", "three"],
+"array\_number": [1, 2, 3],
+"cities": [
+{
+"name1": "Bengaluru Rural",
+"population1": 7,
+"landmarks1": ["Vidhana Soudha", "Lal Bagh"],
+"date1": "2025-06-04T00:00:00Z",
+"bool\_attr1": true,
+"array\_strr1": ["one", "two", "three"],
+"array\_number1": [1, 2, 3],
+"last\_level1": { "key1": "value1", "key2": 123 }
+}
+]
+},
+{
+"name": "Japan",
+"date": "2025-06-04T00:00:00Z",
+"bool\_attr": true,
+"capital": "Tokyo",
+"population": 125,
+"array\_strr": ["one", "two", "three"],
+"array\_number": [1, 2, 3],
+"cities": [
+{
+"name1": "Tokyo",
+"population1": 37,
+"landmarks1": ["Tokyo Skytree", "Shibuya Crossing"],
+"date1": "2025-06-04T00:00:00Z",
+"bool\_attr1": true,
+"array\_strr1": ["one", "two", "three"],
+"array\_number1": [1, 2, 3],
+"last\_level1": { "key1": "value1", "key2": 123 }
+},
+{
+"name1": "Kyoto",
+"population1": 1.5,
+"landmarks1": ["Kinkaku-ji", "Fushimi Inari-taisha"],
+"date1": "2025-06-04T00:00:00Z",
+"bool\_attr1": true,
+"array\_strr1": ["one", "two", "three"],
+"array\_number1": [1, 2, 3],
+"last\_level1": { "key1": "value1", "key2": 123 }
+}
+]
+}
+]
+}
+```
+
+Now, let's create a segment of users for whom a nation has a population of over 1 billion, and within that same "nation" object, there is a city with a population greater than 10 million.
+
+1. On the **Create Segment** page, click the **User property** tab.
+2. Start by filtering for the attribute: `nations.population` is greater than 1
+3. An indented "With" operator appears. You could use this to add another condition on a city attribute, such as `nations.cities.name1`.
+4. A second "With" operator appears below the first. Use this to add the condition for the level 1 attribute: `nations.cities.population1` is greater than 10.
+
+<img alt="Screenshot 2025-06-24 at 3.21.59 PM.png" src="/images/moengage_61c83e.png" />
+
+This query uses the "With" operator to ensure both conditions are met within the same "nations" element. It will find users associated with the "India" object because its population is over 1 billion (represented as 1.4), and it contains a city ("Mumbai") with a population over 10 million (represented as 20). The "Japan" object would be excluded because its national population is less than 1 billion.
+
+# Considerations for Object Data Type
+
+While object data types offer powerful segmentation capabilities, it's important for you to be aware of their current scope within MoEngage. Understanding them will help you plan your data ingestion strategies and know what can be achieved with object-based segmentation.
+
+- **File uploads**: The object data type is currently not supported in the *File segment* upload feature.
+- **User exports**: User export through CSV does not support object user attributes. When exporting user data, object attributes will not be included in the CSV.
+- **Aggregation support**: Aggregation of an array of objects is not supported. However, aggregation of individual objects and nested objects (that are not arrays) is supported.
+- **Attribute comparison**: Object-to-object attribute comparison is not supported in user attribute comparison. However, object-to-primitive attribute comparison (for example, comparing a value within an object to a simple string or number) is still supported.
+- **Features without object data support**: The following MoEngage features currently do not fully support object data types:
+  - Custom segment filter based public API
+  - Segment payload generator
+  - App marketplace (Custom destination for Sync segment)
+  - Real-time segmentation
+  - User affinity (when defined directly on object attributes)
+
+  For scenarios requiring object data in these unsupported features, consider transforming your data into simpler, primitive types before ingestion.
+
+# FAQs
+
+<Accordion title="What happens if I send different data types, like an object and a string, for the same attribute?">
+
+If multiple data types are ingested for the *same* attribute, MoEngage automatically prioritizes and chooses the *first* data type it encounters for querying. It is not possible to query the second data type value for that attribute.
+
+**Workaround:** To query both an object and an array of object values for similar data, we recommend using two separate attributes in your data ingestion. Configure each as an object in data management, and pass the object values into one attribute and the array of object values into the other. This ensures both can be queried independently.
+
+</Accordion>
+<Accordion title="Are value suggestions available for object data type attributes when creating a segment?">
+
+Yes, Value Suggestions are now supported for object data type attributes. When creating a segment, you can search for specific values within an object. Value suggestions for object data follow the same rules for generation as primitive data types. For more information, refer [here](https://help.moengage.com/hc/en-us/articles/360001062103).
+
+</Accordion>

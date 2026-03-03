@@ -1,0 +1,85 @@
+---
+title: "Algorithmic Explanation - Advanced Recommendations"
+sidebarTitle: "Algorithmic Explanation - Advanced Recommendations"
+---
+
+# **Algorithmic Details**
+
+Each of these models has a different algorithm to learn and generate recommendations.
+
+|  |  |  |
+| --- | --- | --- |
+| **Recommendation model** | **Algorithm** | **Data points** |
+| **Recommended Items**  **(Similar Users)** | Hierarchical Recurrent Neural Network (HRNN) | - Product viewed items - Added to Cart items - Added to Wishlist items - Product purchased items - User attributes |
+| **Similar Items** | Item-item Collaborative filtering +  Item attribute Similarity | - Product viewed items - Added to Cart items - Added to Wishlist items - Product purchased items - Catalog attributes |
+| **Frequently Bought Together** | Item-item Collaborative filtering | - Product purchased items |
+| **Frequently Viewed Together** | Item-item Collaborative filtering | - Product viewed items |
+
+<Info>
+For each model, there should be a minimum of 1000 user action events where a minimum of 25 unique users should have performed 2 interactions each. It's essential to note that this is only the minimum criteria for the model to function. The more data you have, the better results your model will yield.
+</Info>
+
+## **Hierarchical Recurrent Neural Network (HRNN)**
+
+HRNN identifies patterns in how users interact with different items on your platform. By doing so, it can predict which item a user is likely to be interested in next, based on their past behavior. This approach assumes that if user A has the same opinion as user B (where B is a similar user in terms of interaction patterns) in a session, A is more likely to have B's opinion on a different session than that of a random user.
+
+1. **User Behavior Patterns:** The key to HRNN's effectiveness is its ability to deduce relationships between items based on their interaction patterns, even if the items don't have explicit attributes linking them. These patterns might include which items are viewed together or in close sequence.
+2. **Embedding Layers:** In HRNN, both users and items are represented by embeddings, which are dense vectors of floating-point values. The model uses these embeddings to represent the 'closeness' of items and users in a high-dimensional space. Items that are frequently interacted with by users are positioned closer to each other in this space.
+3. **Recurrent Layers**: The HRNN uses recurrent layers to remember patterns across long sequences of data, allowing it to make better predictions and identify complex relationships between items. The timestamp of the interaction event gives the temporal edge to recommendations beyond sequences.
+
+## **Collaborative Filtering**
+
+Item-item collaborative filtering is a specific approach focusing on the relationships between items rather than between users. Item-item collaborative filtering tends to be more stable (but less personalized) than Similar User behavior models because item preferences change less frequently than user preferences.
+
+This approach examines the co-interactions of users with items and then determines the similarity of items at a global level based on interaction data. To give an idea, refer to the following basic interpretation of how the computation is done.
+
+|  |  |  |
+| --- | --- | --- |
+| **User ID** | **Item ID** | **Timestamp** |
+| **U1** | **P1** | 2023-07-23 11:24:02.112 |
+| **U1** | **P2** | 2023-07-24 12:20:05.096 |
+| **U1** | **P3** | 2023-08-12 04:34:34.234 |
+| **U2** | **P1** | 2023-07-05 12:30:00.090 |
+| **U2** | **P2** | 2023-08-02 14:45:45.010 |
+| **U3** | **P1** | 2023-08-25 15:52.12.020 |
+| **U4** | **P4** | 2023-08-24 05:52.12.020 |
+| **U4** | **P1** | 2023-06-24 03:25.12.020 |
+| **U4** | **P2** | 2023-07-09 06:37.25.100 |
+| **U4** | **P5** | 2023-08-04 09:35.14.080 |
+| **U4** | **P1** | 2023-06-24 01:25.12.456 |
+| **U5** | **P2** | 2023-07-14 04:15.22.030 |
+| **U5** | **P4** | 2023-08-04 10:25.12.120 |
+
+This can be transformed to an item-item matrix based on no of users who interacted with the items, as following
+
+|  |  |  |  |  |  |
+| --- | --- | --- | --- | --- | --- |
+|  | **P1** | **P2** | **P3** | **P4** | **P5** |
+| **P1** | 5 | 4 | 1 | 2 | 1 |
+| **P2** | 4 | 4 | 1 | 2 | 1 |
+| **P3** | 1 | 1 | 1 | 0 | 0 |
+| **P4** | 2 | 2 | 0 | 2 | 1 |
+| **P5** | 1 | 1 | 0 | 1 | 1 |
+
+Hence, excluding the relationship of the item with itself, the recommendation results will be as follows:
+
+|  |  |
+| --- | --- |
+| **Anchor item** (last interacted item) | **Results from Collaborative filtering** |
+| P1 | P2, P4, P3, P5 |
+| P2 | P1, P4, P3, P5 |
+| P3 | P1, P2 |
+| P4 | P1, P2, P5 |
+| P5 | P1, P2, P4 |
+
+***Note:*** *the above explanation is merely a basic representation of logic. The actual algorithm is much more complicated than this.*
+
+## **Item Attributes Similarity**
+
+To capture the relationships among items, the item metadata embedding is created for each item ID that is essentially represented in multi-dimensional space, where each dimension corresponds to a hidden variable or latent factor. These embeddings represent the attributes of the items, such as genre or category.
+
+After generating item embeddings from user-item interactions and item metadata, they're merged in a fusion layer. This layer, during training, learns to adjust weights based on item characteristics and user preferences. It decides the importance of embeddings from user interactions versus those from item metadata. Through a deep learning model, it effectively balances recommendations by weighing both interaction data and item metadata similarities.
+
+## **Popularity Count**
+
+Popularity count is a weighted aggregation-based model, but it suggests the most popular items based on overall interaction counts. This plays a role of fallback for scenarios where historical data is minimal or unavailable.

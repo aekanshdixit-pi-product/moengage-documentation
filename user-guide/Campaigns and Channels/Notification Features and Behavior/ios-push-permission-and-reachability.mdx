@@ -1,0 +1,155 @@
+---
+title: "iOS Push Permission and Reachability"
+sidebarTitle: "iOS Push Permission and Reachability"
+---
+
+# Overview
+
+iOS push permission is a system that allows an app to send notifications to a user's device, even when the app is not actively being used. To enable push notifications, the user must grant permission to the app to send them notifications.  
+Provisional push is a feature introduced in iOS 12 that allows apps to send notifications to users without explicitly asking for permission upfront. Instead, the app can send "quiet" notifications that appear in the Notification Center but do not show up on the lock screen or make a sound. The idea behind provisional push is to let users experience the value of push notifications before deciding whether to grant full push permission.
+
+# How Push Permissions Work in iOS
+
+The following diagram depicts how push permissions work in iOS based on the user response.  
+ <img alt="iOS Push permission (3).jpg" src="/images/moengage_25423b.png" />   
+By default, any app does not have permission to send push notifications.
+
+### For Provisional Push Permission
+
+<img alt="provisional push.png"  src="/images/moengage_48845c.png"  />
+
+- The app automatically grants permission to send provisional push notifications when provisional permission is requested.
+- When a notification is displayed with provisional permission, the user can either keep or deny push permission. Note that campaign actions are not displayed on provisional push notifications.
+- MoEngage SDK tracks the outcome of provisional push only on the next app open.
+- When the user decides to keep the notification, permission is granted only to display it in the notification center. Displaying alerts, sounds, and badges is not granted; the user needs to grant permission to them separately by navigating to settings.
+- Provisional notification cannot be requested if the user has explicitly accepted or denied push permission.
+
+### For Explicit Push Permission <img alt="push permission.png"  src="/images/moengage_5eebc3.png"  />
+
+- A user can grant push permission either through a push prompt or notification settings.
+- Apps can control when and where the push prompt is displayed to obtain permission from the user.
+- A push prompt can be displayed only once for an app on an iOS device.
+- If the user grants permission, the app can send notifications to the user.
+- If the user denies or ignores the permission, the app cannot send notifications to the user. After this, the user will not be prompted again unless the app is reinstalled.
+- The user can always go to the app's notification settings and change the permission.
+- The push prompt is displayed regardless of whether the provisional push permission is granted or not.
+- The push notification permission on iOS devices is reset on every reinstall and clear data. However, this permission is retained on operating system upgrades.
+
+# Track Push Permission
+
+## Track Push Permissions at a User Level
+
+MoEngage SDK tracks the opt-in status of the user’s devices by default using the *Reachability Push iOS* user attribute. This attribute can have the following values:
+
+| Value | Description |
+| --- | --- |
+| 200 - Reachable and opt-in status unknown | This applies to all users who are:   - Allowed to receive provisional push notifications - On older MoEngage SDK versions where push permission status is not tracked and has a valid push token.   To enable push notification opt-in or opt-out tracking on iOS, upgrade to the MoEngage Core SDK version after September 9, 2024. |
+| 201 - Reachable and opted in | This applies to all the users who have opted in for push notifications through:  - Clicking **Allow** on the push prompt - Clicking **Keep** on a provisional push notification - Turning on push permission via App notification settings |
+| 202 - Not reachable due to opt-out | This applies to all users who have neither provisional nor explicit push permissions. |
+
+## Track Push Permissions Trends Over Time
+
+The Reachability Dashboard at MoEngage shows you the reachability trends of all users who opted in to receive your Push notifications and those who have not. You can access the Reachability Dashboard by navigating to **Dashboards** \> **Reachability**.
+
+<img alt="iOSrechabilityfinalll.png" src="/images/moengage_4b34b7.png" />
+
+For more information, refer to [Push Reachability Dashboard](https://help.moengage.com/hc/en-us/articles/34174479717780-Reachability).
+
+## Track Changes in Push Permission
+
+The following are the events for iOS Push reachability:
+
+| Value | Description | Platform |
+| --- | --- | --- |
+| Subscribed to Push | Tracked when a user explicitly subscribes to push notifications on a device. This event is not triggered when a device is granted provisional push permission. | iOS |
+| Unsubscribed to Push | Tracked when a user directly unsubscribes from push notifications.  This event is only triggered when a user changes push permission from explicitly granted to explicitly denied via settings. This does not get triggered when the user denies push permission via a push permission prompt or via responding to a provisional push. | iOS |
+
+## Track Opt-In Rates
+
+Perform the following steps to track the opt-in rate for users who are active on your app:
+
+1. Navigate to **Analytics** \> **Users** on the MoEngage dashboard.
+2. In the **User property** section, select the user property as *Reachability Push iOS.*
+3. In the **Filter Users** section, select the **Filter users by** option.
+4. Select the filter condition for the user property *- Reachability Push iOS* is equal to a Constant value such as *200 - Reachable and option status unknown*, *201 - Reachable and opted in*, or *202 - Reachable but opted out*.
+5. You can optionally select the filter condition to track opt-in rates for the last 60 days by selecting the *App version*. Note that this app version must have the SDK released after September 9, 2024.
+6. In the **User analysis options**, select the **Analysis type** as *Unique count*, **Split by** as *Reachability Push iOS*, and click **Apply**.
+7. In the **Behavior Chart** section, select the Pie Chart visualization. You can modify the query to get the opt-in rates for users.
+
+# Opt-In Methods
+
+## Request for Provisional Push
+
+The request for this opt-in method triggers provisional push permission for the user without displaying any prompt. A push token is generated for this request. The user can either keep or deny the provisional push request. If explicit push permission is already granted or explicitly denied by the user, provisional push permission is not granted. For more details, refer to the provisional push permission part in the section [above](#h_01J6BX15D9WPR2KND220Y546R7).
+
+## Request for Push Permission
+
+The request for this opt-in method triggers the display of the iOS native push prompt to the user. A push token is generated for the same if not generated earlier. The push prompt is displayed to the user only once, and if permission is already granted or explicitly denied by the user, the prompt will not be displayed again. For more details, refer to the explicit push permission part of the [above](#h_01J6BX1N4H37R6MXVGX2Y9JQB5) section.
+
+## Request Push Permission via Two-Step Opt-In with In-Apps
+
+iOS Push permission uses the Two Step Opt-In method to obtain opt-ins from users:
+
+**<img alt="Screenshot" src="/images/moengage_82d3b6.png" />**A double or two-step opt-in involves asking the user's permission in two steps. In the first step, you set the context and then take the user to the notification settings to enable push notifications from your app. The prerequisite and campaign setup for the two-step opt-in method are discussed below.  
+Using in-app notifications, you can create pre-permission messages that explain to the user why they should allow push notifications for your app. Because you cannot trigger the iOS native push prompt if the user explicitly denies permission, they must go to the app's notification settings and change the permission.
+
+### Campaign Setup to Display the Two-Step Opt-In Prompt
+
+#### Actions
+
+- Request notification permission  
+  If the user is eligible, this action triggers the iOS native notification permission. If the user has already declined the prompt, they are directed to the application notification settings screen manually, where they can manage notification permission.
+- Navigate to notification settings  
+  This action takes the user to the application notification settings screen, where the user can manage notification permission.
+
+#### Segmentation
+
+Unless there is a specific use case for filtering out a segment of users, it is recommended to use *All users* as the segmentation condition. For in-app notifications that contain any of the actions above, MoEngage automatically filters out irrelevant users who have already opted-in.
+
+#### Priority
+
+Campaigns with the actions above are automatically set to critical-functional priority, which prioritizes them over other campaigns with the same trigger condition.
+
+#### Minimum Delay
+
+You can choose to add a minimum delay to nudge the users every few days instead of asking them for permission in every session.
+
+# Using Provisional Push Permissions in Campaigns
+
+<Info>
+This applies only to devices on the new SDK version released after September 9, 2024.
+</Info>
+
+While creating Push campaigns, you can select options to filter out devices that have enabled provisional push under **Target Platforms**. Perform the following steps to access this option:
+
+1. In the MoEngage dashboard, navigate to **Create New**.
+2. Click **Campaign** \> **Push,** and click the desired push campaign type.
+3. Under **Step 1 - Target users** \> **Target Platforms,** select **iOS.** You can see three options:
+   - **Send this campaign to all eligible devices -**Use this option to maximise reach for the campaign. Users with provisional access may turn off push permission if the content is not important to them from this notifcation.
+   - **Exclude provisional push devices -** Use this option if the campaign content is promotional and may turn off users with provisional push permission from opting in.
+   - **Send this campaign to only provisional push enabled devices -** Use this option if the campaign is indented to nudge users into opting in for push notifcations.   
+       
+     You can select any of the options above based on your specific needs to send the campaign.
+
+After selecting the option above, you can proceed to the next steps of creating push campaigns. For more information, refer to [Create Push Campaigns.](https://help.moengage.com/hc/en-us/articles/206541583-Create-Push-Campaigns)  
+ <img alt="Provisional push, target platforms.png" src="/images/moengage_cec6a6.png" />
+
+# Recommended Best Practices
+
+The following are some recommended best practices for setting up explicit and provisional push permissions.
+
+### For Explicit Push Permissions
+
+- Set up two-step permission in the first session and repeat requests every few days. Note that the iOS native permission prompt can be shown to the user only once.
+- Use the two-step opt-in method and avoid showing the permission prompt until the user is ready.
+  - While requesting permission via two-step opt-in, the first session gives the maximum opt-in rates as the user is more receptive to accepting permissions in the first session. If the user is not ready, they will deny the two-step opt-ins and you will have opportunities later to request permission from the user.
+- Set up a minimum delay of a few days in your generic push notification campaigns to ensure that you request push permissions from your users at intervals. For example, maintain a minimum delay of 5 or 15 days to request the user for push permission."
+
+### For Provisional Push Permissions
+
+- Request provisional push permission during the first session whenever the user installs that app. This ensures maximum reachability for first-time users. Note that provisional push notifications do not require explicit push permission from the user. However, provisional push notifications do not allow actions to be displayed; alerts, sound, and badges are not granted if permission is granted via provisional push.
+- To maximize opt-in rates using provisional push:
+  - Use provisional push notifications to exclusively switch a user from provisional permission to explicit push permission and set up provisional exclusive campaigns to target users with engaging content.
+  - Ensure to exclude provisional users from the promotional campaigns you have set up, specifically targeting only those users who have explicitly granted permission.
+- To maximize reach for a particular campaign:
+  - Include provisional users if your goal is to reach maximum users. However, if the content is not very relevant to the user, they might discard the provisional permission, which inhibits your ability to interact with them through push notifications in the future.

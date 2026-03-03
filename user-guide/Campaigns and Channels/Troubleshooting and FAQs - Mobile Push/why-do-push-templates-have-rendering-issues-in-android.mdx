@@ -1,0 +1,90 @@
+---
+title: "Why Do Push Templates Have Rendering Issues in Android?"
+sidebarTitle: "Why Do Push Templates Have Rendering Issues in Android?"
+---
+
+Push template notifications look slightly different than the default notifications and also rendering issues.
+
+## Size of Push Template Notifications
+
+| Notification Type | Height in Collapse Mode | Height in Expand Mode |
+| --- | --- | --- |
+| Native notification (Basic) | 100 dp | ~300 dp |
+| Custom notification  SDK version below 11.4.02 and Push templates module version below 2.4.0 | 64 dp | 256 dp |
+| Custom notification  SDK version 11.4.02 and above and Push templates module version 2.4.0 and above | 100 dp | 287 dp |
+
+## Push Templates with 64 dp Height
+
+The dimensions for custom Push notification are inline with the [Android guidelines for custom notifications](https://developer.android.com/training/notify-user/custom-notification).
+
+Because of the lesser height in custom notifications, the height of the default notification is bigger than the customized notification. The reason for this is that the custom Push notification with height \> 64 dp was failing on some devices. And because dynamic layouts are not feasible, MoEngage restricted the height to the dimensions according to Android guidelines.
+
+In the expanded mode, the available area for an image is as follows:
+
+| Available Image Height | Buttons Present |
+| --- | --- |
+| 192 dp | No |
+| 152 dp | Yes |
+
+Because of the restricted space in the expanded mode, the images might get cropped even though those images appear fine in the native notifications.
+
+### Push Templates with 100 dp Height
+
+- The new and improved Push templates with more area are available for SDK version 11.4.02 and above and the Push templates module version 2.4.0 and above.
+- The look and feel of the improved notifications is similar to that of basic notifications in terms of font size, spacing, and padding.
+- MoEngage supports customization of the app name and color. MoEngage is testing more original equipment manufacturers (OEMs) and will whitelist the OEMs.
+- The 100 dp notifications will only work for whitelisted OEMs because the 100 dp customization doesn't render properly on all devices, mostly due to various skin customizations done by OEMs on top of the operating system. As of now, Google, OnePlus, Samsung, Oppo, Vivo, and Motorola are whitelisted. MoEngage is working on adding more OEMs to this list.
+- In addition to this, we have the provision of whitelisting OEMs at the workspace level. This means that you can choose to whitelist more OEMs or blacklist the one that is already whitelisted, after doing due diligence at your end. Please contact your MoEngage Customer Success Manager (CSM) or the Support team to modify the set of whitelisted OEMs.
+- Whitelisting approach:
+  - For each OEM, we have tested the latest 3 skin versions because the notification behavior changes with reference to different skin versions. This will cover the latest 3 Android versions (Android 11, 10, and 9). Android 12 is not on the consideration list because the notification layout for Android 12 is very different.
+  - If 100 dp renders fine for all the 3 latest skin versions, MoEngage will whitelist the OEM else will consider each OEM on a case-by-case basis.
+  - If MoEngage does not support the 100 dp for a device/OEM, the 64 dp custom push notification will be rendered
+
+For best results in image rendering, follow these guidelines for all notifications:
+
+- Maintain an Image Aspect Ratio of ~2:1.  
+  Cropping is minimal when the image is close to this aspect ratio. However, you might notice some cropping on a few devices despite images following this aspect ratio. This is because of the following reasons:
+
+- - The varying device sizes in Android.
+  - Some OEMs add further customizations on top. For eg: In RedMi devices, additional padding is added around push notifications which leads to further cropping of the Push notification & the image.
+- Create images such that the content is center aligned.   
+  This would ensure that the main content doesn't get truncated even if some cropping is happening around the margins.
+
+<img alt="mceclip6.png" src="/images/moengage_9f2789.png" />
+
+## Users Receive Stylized Push Notifications Without Background Color
+
+Some users received the Push notification with HTML content but without the background color. The following are the possible reasons for this issue:
+
+Whenever you configure a Push template notification with:
+
+- HTML text (meaning, you have either set the text as bold, italic, underlined, strike-through, or added some text color) and
+- Background color
+- Image
+
+The SDK renders the notification in the following sequence:
+
+- Renders a basic push notification with HTML text fields and app icon.
+- Then, the SDK tries to draw the custom layout containing the background color. If you configure an image, SDK will try to download the image in parallel.
+
+Since SDK only gets ~10 secs to render the entire notification, sometimes due to poor Internet connectivity or other network issues, the background rendering or image rendering or both might fail. If both fail, this would result in showing a Push notification with only the stylized text and no background color.
+
+### Impact of Background Color Rendering Failure
+
+- If you set your text color as white, users see a blank notification as shown below if their device theme is set as *light mode*: *<img alt="mceclip0.png" src="/images/moengage_196c23.png" />*
+- If you set your text color as *black*, users see a blank notification as shown below if their device theme is set as *dark mode*: *<img alt="mceclip1.png" src="/images/moengage_c7e271.png" />*
+
+So, MoEngage suggests that:
+
+- Wherever possible, use text colors that contrast with light and dark backgrounds.
+- While creating campaigns on the MoEngage dashboard, check the preview in both dark and light modes to make sure the notification looks fine in both modes.
+
+## Color Inversion in Dark Mode (Device-Specific Issue)
+
+Some colors get inverted in dark mode when a Stylized Push is sent. This has been observed only on a few Oppo devices running on Android 10. This happens because of a bug with ColorOS (an operating system created by OPPO), which is beyond the scope of MoEngage.
+
+## Personalization Failure
+
+Consider a scenario where you have personalized both the template and backup notifications but not added the personalization fallback. In this situation, if the personalization fails for either the template or backup, the notification will not be sent to any users. This is because template and backup are considered to be part of one payload and since personalization fallback is not present, MoEngage won't have any alternate message to send to the user in case of failure.
+
+To avoid this issue, make sure that you add a personalization backup to your messages. For more information on personalization failure, refer to [Common Personalization Errors and FAQs](https://help.moengage.com/hc/en-us/articles/30958502449300).

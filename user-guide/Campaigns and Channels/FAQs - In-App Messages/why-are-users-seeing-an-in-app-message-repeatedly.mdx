@@ -1,0 +1,51 @@
+---
+title: "Why Are Users Seeing an In-App Message Repeatedly?"
+sidebarTitle: "Why Are Users Seeing an In-App Message Repeatedly?"
+---
+
+## What is the Issue?
+
+Users are seeing your In-app messages multiple times, even after you have set the delivery controls condition to show only once.
+
+<img alt="Screenshot_2023-02-13_at_10.03.34_PM.png" src="/images/moengage_e0cd0c.png" />
+
+## When Can Such Scenarios Occur?
+
+- When a user has logged in with the same user profile on multiple devices and has performed the trigger criteria on both devices.
+- If a user logs out and then logs back in to perform the In-app trigger condition.
+- When you have an application that logs users out due to session expiry or inactivity and they log back in to use the app.
+
+## Why Does This Happen?
+
+In-app message has been designed to show pop-up windows based on the device ID of the user. When a user logs out, the user is set to an anonymous user and the delivery controls of the device are refreshed. When the user logs back in, the campaign will be shown again on performing the trigger criteria because the old delivery controls were removed, and the count of maximum times the user can see the campaign was reset to 0.
+
+## What Is the Expected Behavior?
+
+According to the design, when users log in with the same user ID from multiple devices or when the users manually log out and log back in again, they will see the campaign once more. This cannot be solved. MoEngage can avoid showing of campaign multiple times only when the logout is app-initiated and not user-initiated.
+
+## How Can You Solve This Issue?
+
+If the app logs out a user due to session expiry or inactivity, they will be shown the campaign again on login. To avoid this, your app must remove the call to MoEngage SDK whenever the user is logged out automatically. You can do so:
+
+- For Android, remove the following function from the auto-logout call. Do not call the logout function of MoEngage when you call logout from your end.
+
+  Kotlin Java
+
+  ```
+  MoECoreHelper.logoutUser(context)
+  ```
+
+  ```
+  MoECoreHelper.INSTANCE.logoutUser(context);
+  ```
+- For IOS, remove the following function from the auto-logout call. Do not call the logout function of MoEngage when you call logout from your end.
+
+  Objective C Swift
+
+  ```
+  [[MoEngageSDKAnalytics sharedInstance] resetUser];
+  ```
+
+  ```
+  MoEngageSDKAnalytics.sharedInstance.resetUser()
+  ```

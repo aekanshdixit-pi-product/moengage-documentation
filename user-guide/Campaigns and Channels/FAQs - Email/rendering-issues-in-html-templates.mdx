@@ -1,0 +1,83 @@
+---
+title: "Rendering Issues in HTML Templates"
+sidebarTitle: "Rendering Issues in HTML Templates"
+---
+
+# Rendering issues in the Android Gmail App
+
+If emails opened in the Android Gmail app render the desktop version of the template rather than the mobile one, this could be because of Gmail's Auto-fit email messages settings. This is, however, not observed in the iOS version of the app.
+
+## Auto-fit Email Messages Setting
+
+By default, the Gmail Android app turns on auto-fit email messages. Gmail automatically resizes the messages when this setting is on. This causes the desktop version of the template to be rendered instead of the mobile one. When the setting is unchecked, the mobile preview renders fine.
+
+Turn off this setting to ensure that the mobile preview is used. To turn it off, do the following:
+
+1. 1. 1. Navigate to the Gmail app.
+      2. Tap the menu icon on the top left.
+      3. Tap General Settings and uncheck the Auto-fit Email Messages option.
+
+If images are pixelated even though they've been added to the template using the image URL option during Email campaign creation, Auto-fit Email Messages could be causing the issue. MoEngage does not process the images in this option. Turn off the Auto-Fit Email Messages option to ensure that the image renders fine.
+
+# Email Clipping in Gmail
+
+The Gmail client can show clipping messages for many reasons, some of which are listed below:
+
+- - 1. The size of the email template is large. We recommend limiting the size of the template to within 90KB.
+    2. Gmail may display the text “Message has been clipped" without actually clipping the message if the following characters are present in the email:
+
+       1. - Non-ASCII characters such as the copyright symbol ©, registered symbol ®, trademark symbol ™
+          - Some HTML entities, such as the ones added for whitespace (nbsp), can cause clipping issues. An HTML entity is of the format *&\<entity\_code\>, and* the ones listed below may cause email clipping:
+            - - - -   - non-breaking space (in a few cases)
+                  - &copy; - ©copyright
+                  - &reg; - ®registered trademark
+                  - &yen; - ¥ yen
+                  - &pound; - £ pound
+                  - &cent; - ¢ cent
+          - We recommend that you inspect the HTML template code and remove the above-mentioned entities from it to ensure that clipping doesn't happen. For example, if you find trailing * * at the end or beginning of the template or any * * used in between the content(or tags) to add a white space like *Hello User* in the template, remove it. Replace *Hello User* with *Hello User* and resend the email.
+    3. If you observe clipping in test emails, this might be because they have the same subject line. Gmail often combines, or "threads," emails with the same subject line into a single email in your inbox. If you send several test emails for the same campaign, this may lead to the message becoming so large that Gmail clips it. However, for testing purposes, you can change the subject line or delete the previous test emails in your inbox and then send the test email again.
+
+# Blank Preview for Emails
+
+Blank previews could be because Accelerated Mobile Page tags, such as \<amp-carousel\>, \<amp-image\>, are being used in the HTML template. AMP tags are not standard HTML tags; AMP is a Google module that works when a script for AMP is added to the HTML.
+
+Script tags are disabled(they get removed) for security reasons by MoEngage. Thus, if AMP tags were added to the email, they would not get rendered, and this will result in a blank preview. For the list of supported HTML tags, refer to the [Allowed HTML Tags for Email Templates](https://help.moengage.com/hc/en-us/articles/360059171931-Create-content-with-the-WYSIWYG-editor#h_1a0f2c94-5e63-4e40-b1de-20fa02c252b0).
+
+# HTML Table with JINJA not working
+
+HTML editors move the JINJA code away from the table to the top if you place the JINJA code between the table content.
+
+Let's say you want to render the names of the products in a table in each row. The below syntax will fail to render correctly in the HTML editor.
+
+HTML
+
+```
+
+<% for item in items %>|  |
+| --- |
+| {{item.name}} |
+<% endfor %>
+
+```
+
+The right way to render a table using the JINJA value is to include a dummy row with JINJA syntax. A dummy row is usually written by using the display property as None.
+
+HTML
+
+```|{% JINJA CODE %}
+|  |
+```
+
+Using the above code, we can now try to render the table correctly by putting the JINJA code in the dummy row.
+
+HTML
+
+```
+
+|  |
+| --- |
+| <% for item in items %> |
+| {{item.name}} |
+| <% endfor %> |
+
+```

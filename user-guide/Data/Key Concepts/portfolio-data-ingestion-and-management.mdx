@@ -1,0 +1,220 @@
+---
+title: "Portfolio: Data Ingestion and Management"
+sidebarTitle: "Portfolio: Data Ingestion and Management"
+---
+
+This article explains data ingestion, management, and viewing within a MoEngage workspace where the [Portfolio](https://help.moengage.com/hc/en-us/articles/40394603054100) feature is enabled. This feature centralizes your data and user profiles, allowing for seamless management of user attributes and events across all projects. This article covers:
+
+- [Data ingestion](#h_01K2XZS33WJ9Q0Z0FES6ZRP1G4): How to ingest data using Data APIs, SDK, and Data Warehouse while specifying the relevant project.
+- [Data management](#h_01K2Y0TC2TV6P6J9D5MVYH4DQ6): How data, events, and user attributes are managed and presented within a Portfolio-enabled workspace, including a breakdown of unique event and user attribute limits.
+- [User profile view](#h_01K30J06JSEPF7YB1931MTPY49): How user data is displayed at both the portfolio and individual project levels.
+- [Derived user attributes](#h_01K30J06JSEPF7YB1931MTPY49): How derived user attributes (for example, LTV, First Seen) are calculated and displayed at both the project and portfolio levels.
+
+<Info>
+The [Portfolio](https://help.moengage.com/hc/en-us/articles/40394603054100) feature is designed to unify user data from multiple projects into a single profile based on a unique ID field. Because of this, [Identity resolution](https://help.moengage.com/hc/en-us/articles/24050999467284-Unified-Identity-Identity-Resolution) (the process of merging profiles) based on custom attributes is not supported.
+</Info>
+
+# Data Ingestion
+
+You (or your development team) can ingest data into a Portfolio-enabled workspace using:
+
+- [Data APIs](#h_01K2XZS7GTBYAT8QRG4HWV19VC)
+- [SDK](#h_01K7P6SS7W0C4E6QN1C3DYM1KN)
+- [Data Warehouse](#h_01K4B1C2D3E4F5G6H7J8K9L0M2)
+
+## Data APIs
+
+In MoEngage, data ingestion uses a unique ID to update a user attribute or event. For portfolio-enabled workspaces, you (or your development team) can use Data APIs (such as the [Track User](https://developers.moengage.com/hc/en-us/articles/4413167462804-Track-User), [Create Event](https://developers.moengage.com/hc/en-us/articles/4413174104852-Create-Event), and [Bulk Import API](https://developers.moengage.com/hc/en-us/articles/4413174113044-Bulk-Import)s) to pass a *projectID* in the parameters. This ID identifies which project a user or event belongs to. You can find the **Project ID** at **Settings** \> **Account** \> **Portfolio** in your MoEngage dashboard.
+
+**Use case**A brand has separate apps for "Brand A" (Project 1) and "Brand B" (Project 2). When a user downloads both apps, the Portfolio feature uses Data APIs or SDKs to ingest all their data. The *projectID* attribute identifies which brand the data originates from, ensuring all events and user attributes are associated with the correct project while being unified under a single user profile.
+
+<Info>
+While ingesting data using Data APIs, any attribute passed without a projectID is considered a custom portfolio user attribute.
+</Info>
+
+The following are the sample cURL requests of Data APIs with projectID passed in the API endpoint:
+
+**Track User:**
+
+JSON
+
+```json
+curl --location 'https://api-0X.moengage.com/v1/customer/{{APP\_ID}}?app\_id={{APP\_ID}}&project\_code={{project ID}}' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic {{Authorization\_Key}}'\
+--data-raw '{
+"type": "customer",
+"customer\_id": "{{customer\_id}}",
+"attributes": {
+"name": "John Doe",
+"first\_name": "John",
+"last\_name": "Doe",
+"age": "67",
+"email": "2uV4@xyz.com",
+"gender": "male",
+"mobile": "{{mobile}}",
+"geo": "88.90 89.00",
+"birthday": "02-12-2001",
+"created\_time": "1756198118474",
+"last\_seen": "1756198118474",
+"userdata": "insert",
+"revenue": 100,
+"transaction": "100",
+"platforms": [
+{ "platform": "iOS",
+"active": "true"
+}
+]
+}
+}'
+```
+
+**Create Event:**
+
+JSON
+
+```json
+curl --location 'https://api-0X.moengage.com/v1/event/{{appId}}?app\_id={{appId}}&project\_code={{projectId} \
+--header 'Content-Type: application/json' \
+--header {"Authorization": "Basic Base64\_ENCODED\_APPKEY\_APIKEY"} \
+--data-raw '{
+"type": "event",
+"customer\_id": "123",
+"actions" : [
+{
+"action": "ProductAdded",
+"attributes": {
+"product": "Accessories",
+"color": "Black",
+"Brand": "Adidas"
+},
+"platform": "Android",
+"app\_version": "1.2.3",
+"user\_time": "1708939453396",
+"current\_time" : "1708939453396"
+}
+]
+}'
+```
+
+## SDK
+
+Supported SDKs where portfolio changes are available:
+
+- Android ([14.03.04](https://developers.moengage.com/hc/en-us/articles/4401984811796-SDK-Initialization#01FWN5BAPHVCM3WV9D1MGKAFX1))
+- iOS ([10.07.0](https://developers.moengage.com/hc/en-us/articles/4403905438228-SDK-Initialization#h_01H92X0SH06SB489KT4V8YESSN))
+
+## Data Warehouse
+
+The [Portfolio](https://help.moengage.com/hc/en-us/articles/40394603054100) feature enhances your data warehouse integration, giving you the flexibility to manage data correctly within your multi-project portfolio. This allows you to leverage your existing backend data for both brand-specific analysis and holistic customer understanding.
+
+MoEngage handles different data types as follows:
+
+- Event attributes are ingested at the project level, allowing you to attribute specific actions to the correct brand.
+- User attributes are ingested at the portfolio level, and updates are applied to the user's global profile across all your brands.
+
+### Event Attributes (Project-Level)
+
+For accurate analysis and segmentation in a portfolio, it is crucial to associate every event with a specific project. To achieve this, you must map a column from your data source to the dedicated MoEngage attribute: `moe\_project\_name`.
+
+<img alt="eventattr.png"  src="/images/moengage_ffc676.png"  />
+
+**Example Scenario:**
+
+Let's assume you manage two brands: Project A (a sports app) and Project B (a shopping app). Your data table contains a column named `brand` with values like "Project A" or "Project B" for each event.
+
+During data warehouse setup, you would map your `brand` column to the MoEngage event attribute `moe\_project\_name`. This directs MoEngage to automatically assign each event to the correct project based on the value in that column.
+
+<Warning>
+The values in your source column (for example, "Project A") must **exactly match** the Project Names configured in your MoEngage portfolio. If there is a mismatch, the event is ingested at the portfolio level and is not associated with any specific project. This data will be unusable in project-specific analysis or segmentation.
+</Warning>
+
+### Ingest User Attributes (Portfolio-Level)
+
+Conversely, any user attributes you import are always applied at the portfolio level. This updates the user's single, global profile and is not tied to a specific project. The process is the same as for non-portfolio accounts, requiring you to map standard columns like `User ID` and `Updated at`.
+
+<Info>
+You cannot use this method to import or update *project-specific* user attributes. Only global user attributes are supported via data warehouse imports.
+</Info>
+
+For a complete step-by-step guide on the import configuration, please refer to our [Data Warehouse import guides](https://help.moengage.com/hc/en-us/sections/18324455272468-Data-Warehouses-Imports).
+
+# Data Management
+
+A Portfolio-enabled workspace has the following details at **Settings** \>**Data** \> **Data Management**:
+
+- The **Overview** tab displays the total number of unique events and user attributes for the entire portfolio. While you can pass events and user attributes between projects, the portfolio-level limits remain fixed by default: 1024 unique events and 1024 unique user attributes. Ensure the total sum of unique events and user attributes across all projects does not exceed these limits. This simplifies the process of tracking total unique events and attributes across your entire business, ensuring you stay within the fixed limits.
+- The **Events** and **User attributes** tabs provide a holistic view of events and user attributes across all projects. You can use the **Select project** list to filter the list and view data for specific projects.  
+   <img alt="filterbasedonproject.gif" src="/images/moengage_29bd09.png" />
+- **For standard and custom events**: MoEngage automatically adds the *moe\_project\_name* event attribute to all ingested events, specifying the project they originate from. For instance, a *Purchase* event from *Project1* includes the attribute *moe\_project\_name* with a value of *Project1*.  
+   <img alt="standard and custom events.png"  src="/images/moengage_8a97b8.png"  />
+- **For standard user attributes**: MoEngage adds the project name as a suffix to both the **Display name** and **Key name** of the user attribute. For instance, the display and key name for the *custom\_attr\_2* user attribute from *newproject* is *custom\_attr\_2\_newproject*.  
+   <img alt="custom_attr_2.png" src="/images/moengage_48b837.png" />
+- **For custom user attributes**: MoEngage adds the project name as a suffix to the **Key name**, and the **Display name** remains the same as passed by the user without any suffixing. For instance, the key name for the *custom\_attr\_2* user attribute from *newproject* is *custom\_attr\_2\_newproject,* and the display name is *custom\_attr\_2.*
+
+# User Profile
+
+When Portfolio is enabled, the **User Info** tab in a user profile displays information at both the portfolio and project levels. For example, a user who interacts with both "Brand A" and "Brand B" will have a single profile where you can view their total *LTV Portfolio*, which is the sum of their LTVs from both projects.
+
+In a user profile, you can view the following details at the portfolio level:
+
+- First Name
+- Last Name
+- Email (Standard)
+- Mobile Number (Standard)
+- MoEngage ID
+- ID
+- Lifecycle
+- Conversion
+- Acquisition
+- Reachability  
+   <img alt="PORTFOLIO LEVEL-USER PROFILE.png" src="/images/moengage_6db38a.png" />
+
+You can view **User Properties** for a specific project by selecting the project from the drop-down menu.  
+ <img alt="USERPROPERTIES.png" src="/images/moengage_d26d30.png" />
+
+# Derived User Attributes Behaviour
+
+<Info>
+If you have custom attributes with the same name across different projects, ensure you rename them in Data Management. This helps avoid confusion and ensures accuracy in personalization and conversions.
+</Info>
+
+The following table lists the derived user attributes tracked at the project and portfolio level:
+
+| Derived User Attribute | Displayed at the Project Level? | Displayed at Portfolio Level? | Calculation Method (if applicable) |
+| --- | --- | --- | --- |
+| LTV | Yes | Yes | - LTV is calculated based on the conversion goal setup. For more information, refer to [Configure Lifetime Value (LTV)](https://help.moengage.com/hc/en-us/articles/17152954613908-Derived-User-Attributes#01H8BDG1BMSQKY136SQ1Q17EEF). - The **LTV Portfolio** displays the sum of all project-level LTVs. - Use the same event (the event attribute set across projects) for consistent project-level LTV tracking. |
+| First Seen | Yes | Yes | The **First Seen Portfolio** displays the oldest first seen across all projects within the portfolio. |
+| Last Seen | Yes | Yes | The **Last Seen Portfolio** displays the recent last seen across all projects within the portfolio. |
+| No. of conversions | Yes | Yes |  |
+| No. of Sessions | Yes | Yes | The number of sessions is tracked through the MoEngage SDK at a project level and is added up at the portfolio level. |
+| Reachability Push Android | Yes | Yes | A user is considered reachable via push notifications if they are reachable in at least one project across the portfolio. |
+| Reachability Push iOS | Yes | Yes |  |
+| Reachability Push Web | Yes | Yes |  |
+| Install status   - Uninstall time - Device reinstall - User reinstall | Yes | No |  |
+| Location attributes | Yes | No |  |
+| First name, Last name, birthday | No | Yes |  |
+| Email (Standard) | No | Yes |  |
+| Hard Bounce (Email) | No | Yes |  |
+| Spam (Email) | No | Yes |  |
+| Unsubscribe (Email) | No | Yes |  |
+| Mobile number (Standard) | No | Yes |  |
+| SMS subscription | No | Yes |  |
+| Whatsapp subscription | No | Yes |  |
+| Advertising ID (GAID, IDFV) | No | Yes |  |
+| Subscription Categories (Email) | No | Yes |  |
+| Consent for ad user data (Google Audience sync) | No | Yes |  |
+| Consent for ad personalization | No | Yes |  |
+
+# FAQs
+
+<Accordion title="What happens if the total number of unique user attributes and events across all my projects exceeds the 1024 limit?">
+
+All the unique user attributes and events that exceed this limit are auto-blocked.
+
+</Accordion>
+<Accordion title="Is it possible to merge user profiles using custom user attributes in a Portfolio-enabled workspace?">
+
+No, it is not possible.
+
+</Accordion>

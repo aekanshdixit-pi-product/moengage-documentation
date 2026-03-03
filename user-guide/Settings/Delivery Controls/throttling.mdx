@@ -1,0 +1,86 @@
+---
+title: "Throttling"
+sidebarTitle: "Throttling"
+---
+
+Throttling allows you to control the rate at which communications (such as push notifications, emails, SMS & RCS messages, WhatsApp messages, or Webhook messages) are sent to users. This is helpful when you want to spread the load on your servers over a period of time instead of spiking the traffic. You can define the number of notifications or messages that can be sent per minute (requests per minute) for the MoEngage channels.
+
+# Supported Channels and Delivery Types
+
+| Supported Channels | Supported Delivery Type |
+| --- | --- |
+| SMS | - One-time - Periodic |
+| MMS | - One-time - Periodic |
+| RCS | - One-time - Periodic |
+| Email | - One-time - Periodic |
+| Push | - One-time - Periodic |
+| WhatsApp | - One-time - Periodic |
+| Connector | - One-time - Periodic |
+
+# Configure Throttling at the Workspace Level
+
+Perform the following steps to configure throttling at the workspace (global) level:
+
+1. In the left navigation of the MoEngage dashboard, click **Settings** \> **Channels** \> **Delivery controls** \> **Throttling**.
+2. Under **Campaign Throttling Limits**, turn on the toggle for the required channel.
+3. Set the throttling limit to the desired RPM. The throttling value cannot be lower than the minimum limit specified for the channel or greater than the maximum limit specified for the channel. The minimum, maximum, and default rates are displayed below each channel's setting.
+4. Click **Save**.
+
+<img alt="Throttling.png" src="/images/moengage_a4c4db.png" />
+
+# Configure Throttling at the Campaign Level
+
+In addition to the global throttling settings, you can configure different throttling settings for individual campaigns in step 3, **Schedule and goals**, of campaign creation if the option for throttling is available. For more information, refer to [Supported Channels and Delivery Types](#h_01JMYEVR2FZYKWDPXQVQA81TFM).
+
+You can configure the throttling at the campaign level under delivery controls, as shown in the image below:
+
+Push SMS, MMS & RCS Email Whatsapp Connector
+
+<img alt="Push_DC.png"  src="/images/moengage_b00b77.png"  />
+
+<Info>
+With the default FCM API rate limits reduced to 600,000 RPM, MoEngage is changing the maximum allowed throttle speed for push notifications to 500,000 RPM to ensure a single campaign does not breach the project limit. This change will apply to new and existing campaigns. You may still see drops because multiple campaigns are triggered together. For more information, refer to [Changes in Sending Speed with Private Key Configuration](https://developers.moengage.com/hc/en-us/articles/16909296490644-FCM-Authentication#h_01HYD9J67KPM7A9NWTWMJK0M1J).
+</Info>
+
+<img alt="Screenshot 2025-09-30 at 11.03.30 AM.png"  src="/images/moengage_0de9ec.png"  />
+
+<img alt="Email_DC.png"  src="/images/moengage_7e71ab.png"  />
+
+<img alt="WhatsApp_DC.png"  src="/images/moengage_c97a9f.png"  />
+
+<img alt="WhatsApp_DC.png"  src="/images/moengage_c97a9f.png"  />
+
+MoEngage populates the default setting for throttling at the campaign level from the global settings.
+
+**Example:**
+
+If throttling for Push/SMS & RCS/Email/WhatsApp/Connector is enabled at the workspace (global level), the same throttling value will be shown by default in the **Request limit** field at the campaign level.
+
+If throttling Push/SMS & RCS/Email/WhatsApp/Connector is disabled at the workspace (global level), the **Request limit** field at the campaign level will have the channel's default throttle value. Refer to the table below for the minimum, default, and maximum throttling values for all channels:
+
+|  |  |  |  |
+| --- | --- | --- | --- |
+| Channel | Default Throttling Value (notifications, messages, or emails) per minute | Minimum Throttling Value (notifications, messages, or emails) per minute | Maximum Throttling Value (notifications, messages, or emails) per minute |
+| Push | 100K | 60k | - Non-personalized campaigns - 1M - Personalized campaigns - 250K - Recommendations campaigns - 250K |
+| SMS & RCS | 60K | 1K | - Non-personalized campaigns - 200K - Personalized campaigns - 200K - Recommendations campaigns - 200K |
+| Email | 60K | 1K | - Non-personalized campaigns - 225K - Personalized campaigns - 225K - Recommendations campaigns - 225K |
+| WhatsApp | 60K | 1K | - Non-personalized campaigns - 200K - Personalized campaigns - 200K - Recommendations campaigns - 200K |
+| Webhook (Connector) | 60K | 1K | - Non-personalized campaigns - 200K - Personalized campaigns - 200K - Recommendations campaigns - 200K |
+
+Whether workspace-level (global) throttling is enabled or disabled, you can change the throttle speed while configuring a campaign and set different options for different campaigns. If the values in the workspace-level throttling and campaign-level throttling differ, the campaign-level throttling takes precedence and is applied.
+
+# Throttling in Merlin AI Campaigns
+
+Merlin AI is the in-house AI of MoEngage that predicts the engagement proportion by creating different variations of audiences and analyzing their behavior. For more information, refer [here](https://help.moengage.com/hc/en-us/articles/4411520913556-Perform-User-Distribution-Dynamically-using-Sherpa#procedure-0-0). 
+
+Throttling does not apply in Merlin AI campaigns due to the campaigns' extended running time. To perform user distribution dynamically with Merlin AI in Push campaigns, you must run them for at least 1 hour, whereas for Email campaigns, you must run them for at least 2 to 4 hours. The run time may vary according to the channel, which can be selected from the options provided in A/B testing.
+
+<Info>
+Merlin AI is available only for Push, Email, In-app Messaging, and On-site Messaging campaigns.
+</Info>
+
+# Throttling in Best Time to Send (BTS)
+
+[BTS](https://help.moengage.com/hc/en-us/articles/4410529561108-Best-time-to-send)  uses a prescriptive time slot to send communications to increase user interaction. BTS determines this by analyzing Push, SMS & RCS, and Email campaigns individually, predicting the optimal time slot from the (0-24 hour) bucket. In BTS, throttling takes precedence over the number of communications that should be sent in a particular time slot.
+
+For example, the BTS is between 4 PM and 5 PM, with a volume of 15 million users. However, the throttling is limited to 200K RPM so that you can communicate only to 12 million customers in 1 hour (200k X 60 mins = 12 million). Because throttling takes precedence, you can communicate to the remaining 3 million users in the subsequent time slot (6 PM to 7 PM).

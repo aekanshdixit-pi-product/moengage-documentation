@@ -1,0 +1,125 @@
+---
+title: "Dynamic Multivariate Experiment"
+sidebarTitle: "Dynamic Multivariate Experiment"
+---
+
+This article builds on our [first part](http://help.moengage.com/hc/en-us/articles/115000754326), where we introduced a Bayesian framework and arrived at an intuitive “Chance to beat” metric to analyze the results of experiments. MoEngage recommends that you read the article to understand what Dynamic user distribution using Merlin AI is.
+
+# Static A/B Testing
+
+**Allocation of users is fixed at beginning of the experiment**
+
+Conventionally A/B testing has worked in a way that you create some fixed number of variations and randomly allocate some static percentage of users in them. Consider the following points in such a setup:
+
+1. Some variations will perform well and some bad in terms of conversions or click-through rates. But percentages are fixed throughout the experiment and a significant number of users might receive variations that are not performing well.
+2. It requires a manual inspection from marketers from time to time to infer which type of variations perform well and again create optimized campaigns.
+3. Further event triggered and periodic campaigns run for a long time, in some cases for months. Such manual manipulation from time to time might not be possible.
+4. A/B testing is meant for strict experiments where the focus is on statistical significance and hypothesis testing. Whereas we want continuous optimization where the focus is on maintaining a higher average conversion/click rate.
+
+# Multi-Arm Bandits
+
+Introducing here a class of artificial intelligence algorithms called **Multi-arm Bandits** whose name is derived from slot machines in casinos. Let us first understand the analogy between A/B testing and slot machines.
+
+You are in a casino and there are many different slot machines (bandits) each with a lever. You do not know the underlying frequency of payoffs of each of these machines. You have a limited number of chances and the goal is to maximize the rewards. How do we learn which machine gives the best payoffs? Similarly in an experiment/campaign, we have multiple variations of which best need to be learned. We have a limited sample size. Rewards are in terms of a better click/conversion rate.
+
+<img alt="Screen_Shot_2017-03-06_at_6.19.55_PM.png" src="/images/moengage_f9118d.png" />
+
+## Explore-Exploit
+
+Finding the best variation or best slot machine puts us under an explore-exploit dilemma.
+
+In Static A/B testing, you have simply hardcoded allocation to each variation initially. When you start this experiment exploration phase begins. After the manual intervention, a marketer might be able to infer which variation is performing better and recreate the campaign with optimized parameters. The new optimized campaign will be the exploitation phase. A/B testing is thus full exploration and then full exploitation. This discrete jump from exploration to exploitation is a drawback. What time should be spent in exploration and what time in exploitation? The dilemma remains!!
+
+Bandit class of algorithms is the answer for these problems. Instead of two distinct periods of pure exploration and pure exploitation, bandit tests are adaptive and simultaneously include exploration and exploitation. Bottom line is that all the Bandit classes of algorithms are simply trying to best balance exploration (learning) with exploitation (go for based on current best information). Our implementation of the explore-exploit strategy is based on Bayesian bandits.
+
+## Bayesian Bandit Algorithms
+
+Summarizing our first part, we introduced a Bayesian framework where CTR/CVR is thought of in terms of a probability distribution called Beta distribution which represents our belief on the basis of sample size. When we modeled each variation in our experiment using a beta distribution we arrived at the chance of beating. At a given point in time, we always know what is the probability that a particular variation is best among all other variations.
+
+Our bandit algorithm takes this as a base and explore-exploit based on this “chance of beating”. Let’s take an example with 3 variations:-  (A, B, C)
+
+When the experiment begins we have no information, we do not know the true underlying click-through rates. So all variations have an equal probability of winning:
+
+A: Chance of beating all 33%
+
+B: Chance of beating all 33%
+
+C: Chance of beating all 33%
+
+As the campaign progresses we will start observing impressions and clicks in each of the variations and we will recalculate the chance of beating all.
+
+A: Impressions 100  Clicks 15  CTR 15%  Chance of beating all 3%
+
+B: Impressions 100  Clicks 20  CTR 20%  Chance of beating all 19%
+
+C: Impressions 100  Clicks 25  CTR 25%  Chance of beating all 78%
+
+At this point, we continue the campaign with new percentages we have arrived at. C looks like a winner and gets 78% allocation. This is exploitation. But the rest 22% is going to A & B which is exploration. In this way, we keep recomputing Chance to beat and allocation keeps changing continuously.
+
+# Content Optimization Powered by Merlin AI
+
+<img alt="UserDistribution.png" src="/images/moengage_4f266a.png" />
+
+MoEngage has consistently focused on building solutions that can automate and bring optimization to the delivery of campaigns. To solve the drawbacks ([mentioned above](#h_01FK364PCY0RTJAQ2J3MYTEPFN)) of static multivariate experiment and to maximize your campaign engagement on the go, we have launched *Content Optimization* - message variation with chances of highest interaction is intelligently predicted on the fly and sent to users to maximize the engagement.
+
+When you create a multi-variate campaign, you can choose to set the distribution manually or let Merlin AI (our Machine Learning associate) do it for you. Merlin AI will dynamically optimize the variation distribution to maximize the campaign CTRs.
+
+<img alt="UserDistribution_Options.png" src="/images/moengage_8a6ead.png" />
+
+## Push Campaign
+
+Merlin AI is most effective for active push campaigns but adds great value to general push campaigns as well.
+
+<Info>
+To ensure an efficient exploration, all the push campaigns created using content optimization are sent over a duration of 60 mins or the chosen throttling period, whichever is higher. For more information on throttling refer to [Campaign throttling](https://help.moengage.com/hc/en-us/articles/15916160319764-Throttling).
+</Info>
+
+## Email Campaign
+
+<Info>
+- A/B Testing powered by Merlin AI is not available for Email campaigns in Flows.
+</Info>
+
+Merlin AI requires you to define the criteria metric to provide optimized campaign analytics. Choose one of the following metrics: 
+
+1. 1. Open rates - This option is best if your email template doesn’t have a lot of links and you are running experiments on your subject lines predominantly.
+   2. Click rates - This option is more suited for templates with a lot of links and buttons and if you feel open rate might not be the best metric for your use case like if the majority of your user base is on iOS 15.
+   3. Both open and click rates - This option is more suited for use cases than both subject line and email body experiments. Merlin AI will analyze both metrics and optimize the distribution accordingly.
+
+<Info>
+Merlin AI optimized email campaigns have only two throttling time frame options two hours and four hours. This option is only available for General and Periodic Email Campaigns. 
+
+MoEngage recommends four hours, but you can choose any one of the two options.
+</Info>
+
+## Analytics for Campaigns
+
+For the campaigns created using Dynamic A/B Testing powered by Merlin AI, marketers see the following additional metrics.
+
+**1. Projected CTR:** Calculated as average CTR of message variations assuming users were equally split (e.g. 50:50 for two variations or 33:33:33 for three variations) across variations
+
+<Warning>
+Not displayed for periodic email campaigns.
+</Warning>
+
+**2. Final CTR:** Calculated as the ratio of total clicks and total impressions across the variations. Same as campaign CTR
+
+**3. CTR Improvement:**The improvement in CTR resulted due to the usage of Merlin AI-powered Content Optimization calculated as:
+
+<img alt="CodeCogsEqn__2_.png" src="/images/moengage_cf941c.png" />
+
+**4. CG Uplift:** CG uplift is the improvement of the conversion rates of the variants in comparison to the Control Group (Global and Campaign). CG Uplift displays the variants that influenced your conversion rates.   
+CG uplift is calculated as the following:   
+CG uplift = (Cumulative CVR of all the variants combined/ Cumulative CVR of CGs combined - 1) \* 100
+
+A sample snapshot of campaign metrics for your reference. In this campaign, Variation 2 was allocated to 82% of the users vs. only 18% for Variation 1 because of the higher CTR of Variation 2 in the exploration phase. Leveraging this opportunity, Merlin AI improved your CTR from 21.21 % to 25.70 % i.e. an improvement of 21.17% or 4.5 percentage points.
+
+<img alt="Screen_Shot_2017-05-16_at_7.00.19_PM.png" src="/images/moengage_567400.png" />
+
+\*CTR is Click Through Rate
+
+## **How are we doing this?**
+
+Content optimization is using Bayesian Bandit Algorithms. Bayesian Bandits brings efficiency in delivery because we move traffic towards winning variations gradually, instead of forcing you to wait for a “final answer” at the end of an experiment. This will be faster because samples that would have gone to obviously inferior variations can be assigned to potential winners. The extra data collected on the high-performing variations can help separate the “good” arms from the “best” ones more quickly. Bandit method always leaves some chance to select the poorer performing option, you give it a chance to ‘reconsider’ the option's effectiveness. It provides a working framework for swapping out low-performing options with fresh options, in a continuous process.
+
+All MoEngage AI products, which were previously referred to as *Sherpa AI*, are now known as *Merlin AI*.

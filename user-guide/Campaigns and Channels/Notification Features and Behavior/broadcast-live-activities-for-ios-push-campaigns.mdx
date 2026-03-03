@@ -1,0 +1,230 @@
+---
+title: "Broadcast Live Activities for iOS Push Campaigns"
+sidebarTitle: "Broadcast Live Activities for iOS Push Campaigns"
+---
+
+# Overview
+
+The MoEngage Broadcast Live Activities feature provides real-time interactive updates on iPhone Lock Screen and [Dynamic Island](https://support.apple.com/en-in/guide/iphone/iph28f50d10d/ios), improving user engagement with timely information like scores or order statuses without opening the app. This feature helps marketers create dynamic campaigns, boost retention, and increase app open rates through glanceable updates.
+
+This guide explains how to use MoEngage Live Activities to create, manage, and analyze rich, real-time experiences for your marketing initiatives.
+
+<img alt="Flight_tracking__1_-removebg-preview.png"  src="/images/moengage_f50712.png"  /> .             <img alt="Games-LA.png"  src="/images/moengage_652ba0.png"  /> .              <img alt="News-sensex (1).png"  src="/images/moengage_ecf8b6.png"  />
+
+MoEngage Live Activities is supported on the following devices:
+
+- iOS
+- iPad OS
+- Watch OS
+
+<Tip>
+- Your app must support iOS 18 or later versions. Live Activities is not supported on devices running iOS versions below 18.
+- Your app must integrate with the MoEngage SDK version 10.02.1 and later to access Broadcast Live Activities.
+- To enable sending Live Activities, you must configure an APNs (Apple Push Notification Service) Auth Key (.p8 file) in your MoEngage account, as mandated by Apple.
+- Your app developers must implement the client-side logic to:
+  - Enable Broadcast Live Activity token tracking. For more info, refer [here](https://developers.moengage.com/hc/en-us/articles/38663370787732-Broadcast-Live-Activity#h_01JYE038NZ63D3MAWVBYR63JFQ).
+  - Define the Live Activity widgets' UI and their unique attributes-type within your app. This identifier is essential for MoEngage to target the correct widget with updates. For more info, refer [here](https://developers.moengage.com/hc/en-us/articles/38663370787732-Broadcast-Live-Activity#h_01JYE038NZ63D3MAWVBYR63JFQ).
+</Tip>
+
+# Use Cases
+
+MoEngage Live Activities enables a variety of innovative real-time marketing and engagement scenarios.
+
+- **Sports and live events**: You can deliver live match scores for games, provide minute-by-minute updates during concerts, or show real-time progress for marathon participants.
+- **Travel and hospitality**: Keep your users informed with live flight tracking information, instant gate change alerts, or timely boarding announcements.
+- **News and media**: Stream breaking news headlines as they happen or provide live updates from significant ongoing events.
+- **Gaming**: Enhance the gaming experience by displaying live game statistics, current tournament progress, or timers for in-game events.
+
+# How Live Activities Work
+
+Live Activities is a real-time feature that displays dynamic updates from ongoing events, such as a sports match. The system delivers event-based notifications and allows users to track match progress directly from their lock screen or notification center.
+
+### User Interaction and UI
+
+- **Opt-in**: A Live Activity can start when a user takes an action in the app (for example, tapping **Follow**). However, most broadcast live activities are started remotely through server calls.
+- **Display**: The activity appears on the Lock Screen and in the [Dynamic Island](https://support.apple.com/en-in/guide/iphone/iph28f50d10d/ios). A long press on the Dynamic Island expands the view.
+- **UI**: The interface is customizable and updates in real time with text, images, and progress indicators.
+
+### Permissions
+
+Live Activities has a separate permission from push notifications. This permission is turned on by default when users install the app.
+
+iOS regularly checks whether Live Activities remains relevant, especially when a live activity with action buttons appears for the first time. In such cases, users might see an option to turn them off.
+
+End users must perform the following steps to manage this setting:
+
+1. Open **Settings** on their device.
+2. Scroll down and select [App Name].
+3. Tap **Live Activities**.
+4. Turn the setting on or off as needed.
+
+<img alt="image.png"  src="/images/moengage_83394c.png"  />
+
+Adjusting this setting will not affect other notification preferences.
+
+### Example
+
+**Scenarios:**
+
+- **Configured Live Activity**: Real-time match score and status updates to be displayed throughout the match duration.
+- **Evaluation**: The system sends live updates based on the match progress and user interactions. If a user dismisses the Live Activity, no further updates are shown for that user.
+
+| Time | Match Status | User Interaction Scenarios | Marketer Actions | Campaign Performance Status | Live Activity user views |
+| --- | --- | --- | --- | --- | --- |
+| 7:00 PM | Match started | User A and User B start watching from the beginning | The marketer triggers the MoEngage Live Activity Start API for active users at match start. | Live Activity initiated for User A and User B | Live Activity started |
+| 7:30 PM | Goal scored | NA | The marketer triggers a goal update via the MoEngage Live Activity Update API with updated scores. | Live Activity continues for User A and User B | Goal update displayed for all users |
+| 7:45 PM | Ongoing Match | User C starts watching | The App triggers the MoEngage Live Activity Start API for User C when the session starts. | Live Activity initiated for User C | Live Activity started for User C |
+| 8:00 PM | Half-time break | User B dismisses the Live Activity | MoEngage continues Live activities for active users. | Live Activity continues for User A and User C | Half-time update displayed for User A and User C |
+| 8:45 PM | Match ends | Remaining Live Activities conclude | The marketer triggers the MoEngage Live Activity End event via the MoEngage Live Activity End API. | Live Activity ended for User A and User C | Final match score displayed |
+
+# Step-by-Step Instructions for Using MoEngage Live Activities
+
+This section details how to set up and utilize MoEngage Live Activities for your iOS broadcast use cases. Marketers should understand these steps to collaborate effectively with their development teams during implementation and plan successful real-time engagement strategies.
+
+## Step 1: Live Activity Registration and PTS Token Management (iOS App Developer Task)
+
+The application development team must initially configure Live Activities. Marketers must acquire a comprehensive understanding of these technical specifications to facilitate effective collaboration with the team.
+
+1. **Enable Live Activity Token Tracking**:  
+   App developers are required to [enable the tracking of Push-to-Start (PTS) tokens](https://developers.moengage.com/hc/en-us/articles/38663370787732-Broadcast-Live-Activity#h_01JYE038NZ63D3MAWVBYR63JFQ). These tokens are fundamental for initiating a Live Activity through an API request.
+2. **Choose Token Registration Method**:  
+   Developers have two options for managing PTS token registration and maintenance:
+   - Allow the MoEngage SDK to automatically handle PTS token registration and updates.
+   - Implement a self-handled PTS token registration and maintenance process, and then pass the generated PTS token to the MoEngage SDK.
+3. **Define Widget Attribute Types**:  
+   For each distinct Live Activity widget your app offers, for example, `football-match-scores`, `flight-status-tracker`, `flash-sale-countdown`), developers must assign a unique attributes-type, which you can use in your API requests to launch a Live Activity with the intended widget.
+
+<Info>
+- MoEngage tracks Live Activity PTS tokens and permission statuses as device attributes.
+- The MoEngage SDK automatically monitors and updates the Live Activity permission status as a device attribute. This check occurs each time the app is opened in the foreground.
+- Events such as "*Unsubscribed to Live activity*" and "*Subscribed to Live activity*" are triggered when this permission status changes (the initial permission grant does not trigger "*Subscribed to Live activity*" as it is the default state).
+- This feature is not tied to push notification permissions; it is granted by default. The iOS system regularly reviews the usage of Live Activities, and users can disable them at any time.
+</Info>
+
+## Step 2: Send Live Activities via API (Developer Task)
+
+With the prerequisite app-side configurations successfully implemented, the backend development team is now enabled to leverage the MoEngage Live Activity API to send real-time updates to users.
+
+1. **Create a Campaign**:  
+   Use the [campaign API](https://developers.moengage.com/hc/en-us/articles/38466364097044-Create-Push-Campaigns) to create a campaign and define audience, conversion goals, and so on. If the live activity is successfully created with APNS, you will get a channel ID in response. You can use this channel ID to start a live activity locally for devices that are not part of this audience
+2. **Initiate a Live Activity:**  
+   Your developers can send an API request to MoEngage to start a Live Activity for all eligible iOS devices within a designated audience segment. This request must specify the target attributes-type (widget identifier), any static content, and the initial set of dynamic content. For more information, refer [here](https://developers.moengage.com/hc/en-us/articles/38536918351380-Start-Live-Activities).
+3. **Update an Ongoing Live Activity:**  
+   To update an active Live Activity, your developers can send an API request with the event parameter set to update and the corresponding broadcast live activity ID. This request must contain the new dynamic content. The update is delivered to all devices where the Live Activity is enabled, including those that may have started it after the initial broadcast. For more information, refer [here](https://developers.moengage.com/hc/en-us/articles/38536957005076-Update-Live-Activities).
+4. **End a Live Activity:**  
+   To stop a Live Activity, your developers can send an API request with the event parameter as *end* along with the *broadcast\_live\_activity\_id*. Live Activities automatically terminates upon reaching their specified dismissal date. For more information, refer [here](https://developers.moengage.com/hc/en-us/articles/38536975180564-End-Live-Activities).
+
+## Step 3: Manage Live Activities from the App (App Developer and User Interaction)
+
+In addition to API-driven management, your app can offer users direct control over Live Activities on their devices.
+
+1. **Initiate from App:**  
+   Developers can implement in-application functionalities to empower users to start Live Activities seamlessly.  
+   The application must initiate the activity with accuracy, providing the correct Channel ID (taken from the response in step 2), content, and identifiers.  
+   When a Live Activity successfully starts from within the application, a *Live activity started on device* event is logged in the MoEngage platform.
+2. **Dismiss from App:**  
+   Users can dismiss an ongoing or stale Live Activity directly from your app. This dismissal can be configured to be immediate or scheduled for a later time.
+3. **Error Handling on Device:**   
+   If an attempt to initiate a Live Activity on the device fails, the MoEngage SDK can generate localized error descriptions to help diagnose the issue.
+
+## Step 4: Analyze Live Activity Performance in the MoEngage UI
+
+As a marketer, you can effectively track and analyze the performance of your MoEngage Live Activities campaigns in the MoEngage UI.
+
+- **Access Campaign Analytics:**  
+  You can find successfully started Broadcast Live Activities listed as campaigns within the MoEngage UI.
+- **View Campaign Statuses:**Live Activity campaigns are displayed with the following statuses:
+  - **Active**: Indicates the campaign is currently running, from the moment of its creation until its defined end time or dismissal.
+  - **Expired**: Indicates the Live Activity has concluded, either by reaching its end time, being explicitly ended via API/app, or timing out.  
+    <Info>
+You cannot manually stop or pause an active Live Activity campaign from the MoEngage UI. All management actions, such as updates or ending an activity, are performed programmatically via API or from the app itself.
+</Info>
+- **Review Campaign Details:**  
+  The campaign details view provides insights consistent with other MoEngage engagement campaigns. You can access the following information:
+  - **Campaign Info**: Basic details and configuration of the Live Activity.
+  - **Timeline**: A log of the initiation request and subsequent updates.
+  - **Scheduling**: Details of when the Live Activity was scheduled to start or end, as per the API request.
+  - **Conversion Goals**: Performance against any conversion goals you defined for the campaign.
+  - **Broadcast Live Activity ID**: The unique identifier for the Live Activity, with other permanent details from the API request.
+- **Monitor Key Performance Metrics**  
+  The analytics section of the dashboard presents vital performance statistics for your Live Activity campaigns, including:
+  - **Attempted**: The total number of requests made to start a Live Activity.
+  - **Sent**: The number of requests that were successfully accepted by APNS for delivery.
+  - **Delivered**: The count of successful Live Activity initiations.
+  - **Failed**: The number of requests that failed, either due to APNS errors or other internal issues.
+  - **Clicked**: Total and unique clicks, representing user interactions with the Live Activity that resulted in an app open.
+  - **Conversions**: Total and unique conversions, tracked similarly to standard push campaigns, attributed to users who received the Live Activity.
+- **Analyze Delivery and Errors**  
+  You can gain deeper insights into campaign performance using widgets such as:
+  - **Delivery Funnel for Start**: Visualizes the delivery flow, similar to standard push notification funnels.
+  - **Error breakdown for start**: Details the reasons for initiation failures, comparable to push error breakdowns.
+  - **Click Breakdown**: Provides a breakdown of click events from the campaign, grouped by Widget ID and Click ID.
+- **Archive Campaigns**  
+  After a Live Activity campaign is completed, you can archive it to keep your active campaign list organized.
+
+# FAQs
+
+<Accordion title="What versions of iOS are required for users to see MoEngage Live Activities?">
+
+Your end users must have iOS 18 or a later version installed on their devices to view Live Activities sent through MoEngage.
+
+</Accordion>
+<Accordion title="Can I create, start, stop, or update Live Activities directly from the MoEngage UI?">
+
+No, these actions are not available on the MoEngage UI. Initiating, updating, and ending Live Activities are managed programmatically via API calls made by your backend systems or directly from within your mobile application by the user or app logic. The MoEngage UI is primarily for viewing the analytics and performance of your Live Activity campaigns.
+
+</Accordion>
+<Accordion title="Does MoEngage offer pre-built templates for Live Activity widgets?">
+
+MoEngage does not provide out-of-the-box templates or UI support for building the Live Activity widgets themselves. The design and implementation of the widget UI must be handled by your app developers.
+
+</Accordion>
+<Accordion title="Is A/B testing supported for MoEngage Live Activities?">
+
+In the current version, A/B testing is not supported for Live Activities. This also applies to other advanced features like Locales, Global Control Group, Campaign Control Group, Frequency Capping (FC), Do Not Disturb (DND), and Merlin AI-based optimization.
+
+</Accordion>
+<Accordion title="How are PTS tokens for Live Activities managed?">
+
+Your app developers can either allow the MoEngage SDK to manage PTS token registration and maintenance automatically or handle this process themselves and then pass the token to the SDK. The PTS token is subsequently tracked by MoEngage as a device attribute.
+
+</Accordion>
+<Accordion title="What are the key events tracked for MoEngage Live Activities that I can see in analytics?">
+
+MoEngage tracks several key events for Live Activities, including: *Live activity sent* (triggered when the activity is successfully dispatched to APNS), *Live activity started on device* (triggered when your app initiates a Live Activity), and *Notification clicked iOS* (for user interactions with the Live Activity that result in an app open).
+
+</Accordion>
+<Accordion title="Why isn't there a Live Activity received event tracked when a Live Activity is initiated via a PTS token?">
+
+A *Notification received* or *Live Activity received* event cannot reliably be generated for Live Activities initiated using a PTS token. This is due to specific iOS system limitations, which include: no network access being permitted from the Live Activity extension itself, no shared container write access provided to the Live Activity extension, and no direct callbacks from the iOS system to the main app upon PTS initiation (callbacks are only made to Apple's ActivityKit framework).
+
+</Accordion>
+<Accordion title="What is a staleDate?">
+
+A staleDate is the time when the system marks your activity’s content as outdated. When reached, the UI can be changed to a stale state, like grayed-out text or a message such as “Update needed.” The activity remains visible and active, but signals that the information may no longer be current.
+
+</Accordion>
+<Accordion title="What is a dismissDate?">
+
+A dismissDate is the time you set for the Operating system to automatically remove a Live Activity from the Lock Screen and [Dynamic Island](https://support.apple.com/en-in/guide/iphone/iph28f50d10d/ios). A live activity is dismissed from the users’ screen when:
+
+- They remove the live activity by swiping it away.
+- When the dismissDate is reached, the system will dismiss it by default 4 hours after the Live Activity has ended or 12 hours after the Live Activity has started.
+
+</Accordion>
+<Accordion title="What’s the difference between staleDate and dismissDate?">
+
+A staleDate triggers a UI change to indicate outdated content, while a dismissDate removes the activity entirely. The staleDate keeps the activity visible, just with a different look, whereas the dismissDate ends and dismisses it from the screen.
+
+</Accordion>
+<Accordion title="What is the total lifespan of a Live Activity?">
+
+A Live Activity runs for a total of 12 hours—up to 8 hours active with updates and up to 4 hours post-end without updates. After that, the system removes it automatically.
+
+</Accordion>
+# Next Steps
+
+- For SDK integration guides and updates on Live Activity support, refer to the [MoEngage SDK Documentation](https://developers.moengage.com/hc/en-us/articles/38663370787732-Broadcast-Live-Activity#h_01JYE038NZ63D3MAWVBYR63JFQ).
+- For API guides, refer to the [Broadcast Live Activties API documents](https://developers.moengage.com/hc/en-us/sections/38536882991380-Broadcast-Live-Activities).
+
+All MoEngage AI products, which were previously referred to as *Sherpa AI*, are now known as *Merlin AI*.

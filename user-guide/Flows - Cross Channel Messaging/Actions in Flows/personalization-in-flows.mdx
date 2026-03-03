@@ -1,0 +1,76 @@
+---
+title: "Personalization in Flows"
+sidebarTitle: "Personalization in Flows"
+---
+
+<Note>
+This is an Early Access feature. To enable it for your account, contact your CSM or [raise a support ticket](https://help.moengage.com/hc/en-us/articles/19708702327572).
+</Note>
+
+# Overview
+
+[MoEngage Flows](https://help.moengage.com/hc/en-us/articles/26100424636436-Create-a-Flow) are a series of cross-channel campaigns (Email, Push, SMS, and so on) you can send to users based on their actions or inactions on your app or website.
+
+Personalized messages, like "Hey John, you left Nike Sneakers in your cart. Grab them before they are gone!" have a better click-through rate (CTR) than non-personalized messages or plain, formal messages. You can personalize your campaign messages using User Properties, User Events, Business Event attributes (applicable only for business event-triggered flows), Content Blocks, and Auxiliary Data.
+
+For example, you can communicate with your end user by their First Name (a user property) and re-target users who have abandoned their cart by referring to the Products in their cart.
+
+## Personalization Limitations
+
+The user event personalization is limited to:
+
+- - The primary event used in the IF entry condition.
+  - The *Has Executed event* in a *Has Done event* condition.
+  - If a selected property for personalization fails (for example, a user's first name is not available), MoEngage will use the text you defined as the fallback value.
+
+<Info>
+- Ensure that custom attributes do not have the same names as MoEngage's standard attributes. If a custom attribute and a standard attribute having the same name are used for personalization, it results in incorrect personalization.
+- Event-based personalization (using EventAttribute and MOE\_TRIGGER\_EVENT) is not currently supported for campaigns sent via Facebook Ads and Google Ads channels.
+</Info>
+
+# Personalize with Latest Event Data
+
+You can personalize your campaigns using data from a user's most recent instance of a specific event. For example, if a user adds a shirt at 10:00 AM and pants at 10:30 AM, a message personalized with {{EventAttribute['Add to Cart. Product Name']}} will display "Pant" because the 10:30 AM event is the most recent. To personalize a push notification with the **Add to Cart**, perform the following steps:
+
+1. Type the **@** symbol in any **Message title,** **Message body**, and **Message summary** box of your channel (such as a Push Notification, Email, or Connector).
+2. The dialog box for that campaign's personalization appears.
+3. In the **Select attribute** list, enter the attribute in the **Search to select** box.
+4. Under the **EventAttribute** section, select the desired attribute.
+5. Click **Done**.  
+    <img alt="2025-08-26_16-48-02 (1).gif" src="/images/moengage_09950d.png" />   
+   The personalized message appears in the preview on the right.  
+    <img src="/images/moengage_bd975f.png" />
+
+# Personalize with Trigger Event
+
+You can personalize the messages based on the exact event that caused a user to enter a flow (the original event that first caused the user to enter the flow), ensuring your campaign content remains consistent and relevant.
+
+For example, a flow is triggered by the shirt added to the cart at 10:00 AM. Even if the user adds pants at 10:30 AM, a message personalized with **{{EventAttribute['MOE\_TRIGGER\_EVENT.Add to Cart. Product Id']}}** will always resolve to the shirt's ID. The **MOE\_TRIGGER\_EVENT** is used to distinguish them from the latest event attributes. This prefix ensures you are personalizing content with the data from the event that originally triggered the flow, not the most recent occurrence of that event.
+
+To personalize a push notification with the **Add to Cart** trigger event data, perform the following steps:
+
+1. Type the **@** symbol in any **Message title,** **Message body**, and **Message summary** box of your channel (such as a Push Notification, Email, or Connector).
+2. The dialog box for that campaign's personalization appears.
+3. In the **Select attribute** list, enter the attribute in the **Search to select** box.
+4. Select the desired attribute from the **Flow entry events** section.
+5. Click **Done**.  
+    <img alt="2025-08-26_16-53-01 (1).gif" src="/images/moengage_db7271.png" />   
+   The personalized message appears in the preview on the right.  
+    <img src="/images/moengage_b67a53.png" />
+
+## Trigger Event Data vs. Latest Event Data
+
+This option lets you choose between personalizing your messages with the most recent user data or the data from the original event that started the flow. Let's consider a flow with a trigger event of *Add to Cart*, and the user has performed the *Add to Cart* event two times with the attribute values mentioned below:
+
+| Time | Attribute Values |
+| --- | --- |
+| **10:00 AM** (Triggers Flow) | Product ID: 1234, Product Name: Shirt, Product Company: Allen Solly |
+| **10:30 AM** (Subsequent Event) | Product ID: 7890, Product Name: Pant |
+
+ The following table shows the expected behavior for a campaign with the content:                                  
+
+| Content | Expected Behavior |
+| --- | --- |
+| `{{EventAttribute['MOE\_TRIGGER\_EVENT.Add to Cart. Product Id']}}` | This will resolve to 1234 because it uses the data from the flow's trigger event. |
+| `{{EventAttribute['Add to Cart. Product Id']}}` | This will resolve to 7890 because it uses the data from the user’s most recent event. |
+| `{{EventAttribute['Add to Cart. Product Company']|default('MOE\_NOT\_SEND')}}` | MoEngage does not send the campaign with this Jinja, and displays a "Personalization error" because the latest "Add to Cart" event instance (10:30 AM) does not have the 'Product Company' attribute. |

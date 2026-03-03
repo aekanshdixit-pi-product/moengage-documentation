@@ -1,0 +1,59 @@
+---
+title: "How to Avoid Common Push Notification Issues on iOS Devices Using Flutter, Swift, and MoEngage-iOS-SDK (Versions 7.x.x , 8.x.x, 9.x.x)?"
+sidebarTitle: "How to Avoid Common Push Notification Issues on iOS Devices Using Flutter, Swift, and MoEngage-iOS-SDK (Versions 7.x.x , 8.x.x, 9.x.x)?"
+---
+
+## Problem
+
+Common issues with Push notifications, including failed delivery, screen navigation, deep linking, and rich landing, are occurring on iOS devices using Flutter, Swift, and MoEngage-iOS-SDK (Versions 7.x.x, 8.x.x, 9.x.x).
+
+## Solution
+
+Perform the following steps:
+
+1. **Firebase Proxy**:
+   - If you are not using Firebase push notifications, then disable the Firebase proxy by adding the FirebaseAppDelegateProxyEnabled key in info.plist with the value Boolean = False/NO.
+   - Test the push notification. If successful, no further action is required. Otherwise, follow the steps below.
+   - If you are using Firebase push notifications, skip this step and proceed with the following steps.
+2. **Disable MoEngage Proxy**:
+   - Add MoEngageAppDelegateProxyEnabled key in info.plist with the value Boolean = false/NO <img alt="boolean.png" src="/images/moengage_2216fb.png" />
+3. **Override didRegisterForRemoteNotificationsWithDeviceToken Function**:
+   - Override the didRegisterForRemoteNotificationsWithDeviceToken function of the AppDelegate file.
+
+     Swift
+
+     ```swift
+     override func application(\_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
+     //7.xx version
+     MoEngage.sharedInstance().setPushToken(deviceToken)
+     //8.xx version
+     MOMessaging.sharedInstance.setPushToken(deviceToken)
+     //9.xx version
+     MoEngageSDKMessaging.sharedInstance.setPushToken(deviceToken)
+     }
+     ```
+4. **Override UNUserNotificatoinCenterDelegate Functions**:
+   - Override the UNUserNotificatoinCenterDelegate functions in the AppDelegate file.
+
+     Swift
+
+     ```swift
+     //Try without willPresent if it works good to go! else override it
+     override func userNotificationCenter(\_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) - Void) {
+     if #available(iOS 14.0, \*) {
+     completionHandler([.sound,.alert, .banner, .list])
+     } else {
+     completionHandler([.sound,.alert])
+     }
+     }
+     override func userNotificationCenter(\_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () - Void) {
+     super.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
+     //7.xx version
+     MoEngage.sharedInstance().userNotificationCenter(center, didReceive: response)
+     //8.xx version
+     MOMessaging.sharedInstance.userNotificationCenter(center, didReceive: response)
+     //9.xx version
+     MoEngageSDKMessaging.sharedInstance.userNotificationCenter(center, didReceive: response)
+     }
+     ```

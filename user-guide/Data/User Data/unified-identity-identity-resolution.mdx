@@ -1,0 +1,384 @@
+---
+title: "Unified Identity (Identity Resolution)"
+sidebarTitle: "Unified Identity (Identity Resolution)"
+---
+
+# Overview
+
+Unified Identity involves linking and matching an individual's attributes from different data sources to create a unified identity representation. It combines various data elements to establish connections and create a comprehensive view of the user. Resolving these users into a single user profile enables marketers to accurately segment and personalize the users based on the data collected across various online and offline resources and avoid duplication.  
+The *Identity Resolution* feature of MoEngage allows you to integrate multiple profiles of the same user using different identifier attributes (such as ID, EmailID, Mobile Number, etc.) obtained from various online and offline data sources (ingested into MoEngage via Data APIs, MoEngage SDKs, and CSV files). When multiple sources include clear identity information, such as a customer ID, email ID, or phone number, you can utilize these attributes as identifiers to build a single unified customer profile in MoEngage. This maintains a single source of truth for each user, allowing you to seamlessly track their behavior on your application and set your business strategies accordingly.
+
+<Info>
+To use identity resolution, you must choose an existing user attribute as an identifier (like a phone number or email ID) that uniquely identifies the user as an Identifier.
+</Info>
+
+# Use Cases
+
+Identity resolution plays a critical role in the following scenarios:
+
+- A user browses a public listing page on a brand's website, providing their email ID (tracked as *Email ID* attribute in MoEngage) and phone number (tracked as *Mobile Number (standard)* user attribute in MoEngage). While buying a product at the brand offline store, the same user uses their phone number to complete their purchase. The brand aims to link the browsing activity on the website to the user who purchased at the store using their phone number.
+- A brand offers multiple user registration methods such as email login, mobile OTP, and social media logins like Facebook. However, these methods generate different user profiles for the same individual. The brand aims to consolidate these multiple profiles into a single unified profile as it gathers additional information when the user engages in further activities.
+
+# Configure Multiple Identifiers
+
+The first step in using Identity resolution is to activate the right set of user attributes as identifiers. You can configure up to five identifiers at a workspace level. The standard user attribute *ID* is set as the default identifier. You can opt to configure other user attributes, such as email and mobile number, as additional identifiers. Note that at least one identifier must be active at any given time.
+
+For example, if you choose email ID and mobile number as identifiers, MoEngage checks the email ID and mobile number for all users. In cases where multiple users share the same mobile number but have distinct email IDs, the system consolidates those users into a single profile as one of the identifier values matches successfully.
+
+When comparing user profiles, if there are conflicting values, the system will prioritize and consider the values from the user profiles with the latest last-seen timestamp (by default behavior that can be changed) during the merging process. This prioritized profile is called the *retained profile*, and the de-prioritized profile is called the *merged profile*. The merged profile is deleted after the events and user attributes are transferred to the retained profile.
+
+Perform the following steps to configure multiple identifiers in the MoEngage dashboard (Only Admins can view and access Identity resolution):
+
+1. On the left navigation menu in the MoEngage dashboard, go to **Settings** \> **Data** \> **Identity resolution.**
+2. On the **Identity resolution** page, click **+Add identifier(s)**. You can add up to five identifiers for identity resolution. <img alt="multi id 2.png" src="/images/moengage_3b4315.png" />   
+   1. By default,**ID** is listed as an identifier for merging user profiles using identity resolution. The **Active** tag represents the identifier currently used for identity resolution for merging users in your current workspace.
+   2. All the identifiers added are listed on this page. Click the ellipsis icon ( <img alt="ellipsis 1i.png"  src="/images/moengage_d703ca.png"  /> ) to perform the following:
+      - **Pause identity resolution**: This option allows you to pause merging the user based on that identifier.  
+         <img alt="Screenshot 2025-02-19 at 11.13.42 AM.png"  src="/images/moengage_5e13df.png"  />
+      - **View/Edit exceptions**: This option allows you to view or edit exceptions of that identifier. In the **View/Edit exception** dialog box, select the exception from the list and click **Save**.  
+         <img alt="Screenshot 2025-02-19 at 11.09.44 AM.png"  src="/images/moengage_dad5f1.png"  />
+3. The **Merge settings** option takes you to [Step 2: Review merge rules](#01JK5JHM9R9SQ8XS6W04KQ425S).
+4. On the **Add identifier(s)** page, you can perform the following steps:
+
+## Step 1: Select Identifiers
+
+<img alt="Screenshot 2025-02-17 at 11.33.59 AM.png" src="/images/moengage_26a0bc.png" />
+
+1. Select the checkbox next to the **User attributes** you want to select as identifiers for identity resolution.
+2. You can view the **Description** for each attribute.
+3. **Exceptions:** MoEngage does not ingest user attributes with exceptional values detected in their Identifier user attributes. As identifiers are used to uniquely identify users, values that do not achieve this distinctiveness, such as **null** and **blanks**, are excluded from the system. These values are set as exceptions by default and cannot be edited or removed. You can add additional exceptions, provided they are in string format.
+4. You can view the various **Data sources** from which these identifiers are obtained. If an identifier is collected from multiple data sources, selecting that identifier for identity resolution is advantageous. This approach enhances the reliability of the identity-matching process across various channels.
+5. The **Tracked data types** denote the various data types for which the data for that attribute has been tracked in MoEngage so far.  
+   <Info>
+- User attributes of type String are supported to be activated as identifiers.
+- User attributes of any other data type selected as identifiers are converted to String for existing data and incoming data.
+- When merging, exact string values of the user attributes will be considered for matching.
+</Info>
+6. Click **Next**.
+
+## Step 2: Review Merge Rules
+
+1. **Profile retention rules:** This rule decides which user profile should be the retained profile among existing users getting merged when this feature is enabled. Perform the following steps to add profile retention rules:
+   1. In the **Rule 1** list, select a user attribute. The user profile containing data points for any selected user attribute will be considered as the retained profile. If Rule 1 is validated successfully, the retained profile is selected based on Rule 1. If Rule 1 fails to break the tie in cases where both users to be merged have data points for the selected user attribute, Rule 2 will be used. Rule 1 is an optional rule and by default is empty.
+   2. In the **Rule 2** list, select a user behavior. Based on the selected user behavior, the user profile containing that behavior is considered a retained profile. By default, *Latest* *Last Seen* is auto-populated and used to select the retained user profile. Note that Rule 2 is executed only if Rule 1 fails.  
+      For example, consider you have two customer profiles for the same user in which Profile 1 is received online, and Profile 2 is received offline.  
+      **Scenario 1: The profile with data in the selected attribute is considered a retained profile.**  
+      - Profile 1 has attributes such as ID, name, email, and mobile number. All these attributes contain data.
+      - Profile 2 has attributes such as ID, name, email, and mobile number. All attributes contain data except for email.  
+        If the attributes received online (Profile 1) are more accurate than offline (Profile 2) and you want Profile 1 to be considered a retained profile, select *email* in the **Rule 1** list*.* During merging, the system selects the profile that contains data for the *email* attribute. Here, Profile 1 has data for *email*, so it will be considered as the retained profile.**Scenario 2: When both the profiles have data in the selected attribute, Rule 1 fails, and Rule 2 is validated.**
+      - Profile 1 has attributes such as ID, name, email ID, mobile number, and first seen. All these attributes contain data.
+      - Profile 2 has attributes such as ID, name, email ID, and mobile number, and first seen. All these attributes contain data.  
+        If you select *Email in the* **Rule 1** list, Rule 1 fails as both Profile 1 and Profile 2 contain data for ID. So, **Rule 2** gets validated.If you select *Latest* *last seen* in the **Rule 2** list, the profile containing the latest last seen is considered a retained profile.  
+         <img alt="profile retention nw.png" src="/images/moengage_b75c28.png" />
+2. **Attribute rules**: This rule enables you to merge the data of your custom user attributes. You can add a maximum of five such rules. By default, MoEngage automatically populates the LTV (a derived user attribute), where the system sums the LTV values of the two user profiles undergoing a merge. The final resolved user profile then comprises the total sum of LTV values from both the retained and merged users.  
+   Perform the following steps to add your own custom user attribute rules:
+   1. Click **Add rule**.
+   2. Select **User attributes** and **Merge rules**.  
+      For example, consider you have two customer profiles for the same user in which Profile 1 is received online, and Profile 2 is received offline. Each profile has a *Loyality\_points* attribute and has data in it, and if you want the *SUM* of both *Loyality\_points* when both these profiles are merged, perform the following:
+      1. Select ***Loyality\_points*** in **User attribute** list.
+      2. Select *Sum of values* in **Merge rules** list.  
+         So, whenever user profiles are merged, the resulting unified profile includes the ***Loyality\_points*** attribute, which comprises the combined sum of the *Loyality\_points* data from both profiles.  
+         **Note**: The image below illustrates with LTV selected as the user attribute for demonstration purposes.  
+          <img alt="Screenshot 2025-02-17 at 11.52.56 AM.png" src="/images/moengage_21c82e.png" />
+3. The **Verify merge** section shows how users are merged based on the profile retention and attribute rules you configured. Select **I have verified all merge scenarios** checkbox after verifying the merge scenarios.  
+    <img alt="Screenshot 2025-02-18 at 11.58.16 AM.png"  src="/images/moengage_7922ce.png"  />
+4. Click **Next**.
+
+<Info>
+When new data points are ingested for an existing user, MoEngage automatically updates the existing user and their properties. This includes all user attributes and activated identifiers, and this update takes place irrespective of profile retention rules.
+</Info>
+
+## Step 3: Activate Identity Resolution
+
+This step provides the instructions to be considered before and after activating the identity resolution.
+
+Irreversible changes to be considered before activating Identity resolution. The changes include:
+
+- A user merged cannot be unmerged.
+- For 48 hours after activation, the following actions are not possible on the Identity resolution page:
+  - Adding new identifiers
+  - Pausing, re-activating, and adding exceptions to existing identifiers
+  - Changing Merge settings
+
+After activating identity resolution:
+
+- Existing users in the workspace merge over 48 hours
+- New incoming users merge with existing users based on profile retention rules
+- Upto 50 existing users in your workspace with the same identifier value will be merged successfully - rest will remain un-merged. This does not apply for new incoming users who will be successfully merged with existing user on the basis of configured merge rules.
+
+<img alt="Screenshot 2025-02-19 at 11.51.05 AM.png" src="/images/moengage_c5797a.png" />
+
+Select **By activating identity resolution, I understand the impact of merging the user** check box and click **Activate** to activate identity resolution.
+
+# Data Ingestion Support
+
+Following are the methods by which you can ingest data into MoEngage using multiple identifiers:
+
+- [Data APIs](#1)
+- [SDK](#2)
+- [File Imports](#h_01JMV79C131WRR89HHCD1QG1DH)
+
+## Data APIs:
+
+In MoEngage, data ingestion uses an ID to create or update a user. For workspaces in MoEngage with Identity Resolution enabled, Data APIs (Track User, Create Event, Bulk Import) can be used to create or update users using a specific identifier, such as a mobile number or email ID, as configured.
+
+You can:
+
+- Create users through Server-to-Server Data APIs even when they do not have an ID (but have other identifiers).
+- Create a user or track events of a user when identifiers other than ID (for example, email ID or phone number) are known.
+
+### Request Body
+
+The following is a sample cURL request for a Bulk Import API consisting of the following payloads:
+
+- User payload:  Attribute parameters must contain at least one of the identifiers you have configured based on which users in MoEngage will be created, updated, or merged.
+- Event payload: Identifiers set up in the workspace must be mentioned within the *user\_identifiers* parameter, as shown in the below example where *moe\_mobile* is one of the identifiers in the workspace:  
+
+  JSON
+
+  ```ruby
+  "user\_identifiers":{
+  "moe\_mobile":"{{Mobile\_Number}}"
+  }
+  ```
+
+#### **Sample cURL Request for Bulk Import API:**
+
+**The following Bulk Import API consists of payloads for users and events.**
+
+cURL
+
+```ruby
+curl --location 'https://api-xx.moengage.com/v1/transition?app\_id=O7NIHY0AT1K1FL8DR1J1' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Basic {{Authorization\_Key}}' \
+--data '{
+"type": "transition",
+"elements": [
+{
+"type": "customer",
+"attributes": {
+"moe\_mobile": "{{Mobile\_Number}}",
+"first\_name": "John"
+}
+},
+{
+"type": "event",
+"user\_identifiers": {
+"moe\_mobile": "{{Mobile\_Number}}"
+},
+"actions": [
+{
+"action": "AddToCart",
+"attributes": {
+"product": "MacBook Air",
+"Brand": "Apple"
+}
+}
+]
+}
+]
+}'
+```
+
+## SDK
+
+Supported SDKs where Identity resolution changes are available:
+
+- Android ([13.6.00](https://developers.moengage.com/hc/en-us/articles/4402050979860-Track-User-Attributes))
+- iOS ([9.23.0](https://developers.moengage.com/hc/en-us/articles/4403905883796-Tracking-user-attributes#h_01JP20YVFAAS2AT9W0WNJYXPQV))
+- WebSDK ([2.52.2](https://developers.moengage.com/hc/en-us/articles/360061114832-Web-SDK-User-Attributes-Tracking))
+- [GTM](https://developers.moengage.com/hc/en-us/articles/17390387490324-Google-Tag-Manager-GTM-Templates#h_01H95XBKTP07DB6FF973CE8362)
+- [AMP](https://developers.moengage.com/hc/en-us/articles/360061964292-Configure-and-Integrate-AMP-Event-Analytics#h_01HQ848GKJWVKBR8AVCXFXA1AM)
+- ReactNative
+- Flutter
+
+*identifyUser()* function is introduced in the new SDK versions that are compatible with Identity resolution. This function is a direct replacement of the *SetUniqueID* function and allows you to track users with multiple identifier attributes. Make sure to configure these identifiers in MoEngage before *IdentifyUser* function is implemented.
+
+The following are examples of SDK sample codes where email and id are set as identifiers in a given workspace.
+
+### Sample Codes
+
+Native Android iOS WebSDK ReactNative Flutter
+
+```html
+MoEAnalyticsHelper.identifyUser(context, "android-native-uid")
+MoEAnalyticsHelper.identifyUser(
+context,
+mapOf(
+"email" to "android@moengage.com",
+"id" to "android"
+)
+)
+```
+
+```xml
+MoEngageSDKAnalytics.sharedInstance.identifyUser(identity: "ios-native-uid")
+MoEngageSDKAnalytics.sharedInstance.identifyUser(identities: [
+"email": "ios@moengage.com",
+"id": "ios"
+])
+```
+
+```xml
+Moengage.identifyUser({
+uid: 'uid1',
+u\_em: 'email1@someEmail.com'
+})
+```
+
+```xml
+ReactMoE.identifyUser("react-native-uid");
+ReactMoE.identifyUser({
+"id": "react-native",
+"email": "react-native@moengage.com"
+})
+```
+
+```yaml
+final MoEngageFlutter \_moengagePlugin = MoEngageFlutter(WORKSPACE\_ID);
+\_moengagePlugin.identifyUser("flutter-uid");
+\_moengagePlugin.identifyUser({
+"email": "flutter@moengage.com",
+"id": "flutter"
+})
+```
+
+<Info>
+Updates are made to SDK functions to improve user identification and session management.
+
+- **Forced Logout**: The MoEngage SDK no longer automatically logs out the previous user when a new user is detected on the device. Logout should now be explicitly called for workspaces enabled with Identity resolution to avoid data corruption.
+- **SetUniqueID**: *IdentifyUser* function supports multiple identifiers, which replaces the need of using *SetUniqueID* function for user identification. Note that *SetUniqueID* is marked for removal in the future releases of SDK versions - it is important to use *identifyUser* instead especially if you are using Identity resolution in your workspace.
+- **SetAlias**: For workspaces with the Identity resolution feature enabled, MoEngage SDK stores the previous identifier values. When *IdentifyUser* function is used to track the new identifier values, MoEngage SDK detects the change in identifier value and reports accordingly.
+</Info>
+
+## File Imports
+
+You can view the multiple identifiers configured for your workspace in the following sections:
+
+### User Imports in Segment
+
+- If you have configured multiple identifiers for a given workspace, you can see them in the **Map identifiers** section in Step 2 while creating new user imports. You can only see *ID* under the **Map identifiers** section if multiple identifiers are not configured in this workspace.   
+   <img alt="Screenshot 2025-02-24 at 1.05.49 PM.png" src="/images/moengage_68f0b5.png" />   
+  <Info>
+- The uploaded CSV must have at least one column with data matching any identifiers configured in MoEngage.
+- After activating your identifiers in the workspace, please edit your existing periodic imports to map the identifiers to the right CSV column.
+</Info>
+- For Anonymous user import, when the multiple identifiers feature is enabled for a MoEngage workspace and if an identifier user attribute is selected as an anonymous ID, the users from the import may merge with the existing users having the same identifier value. For example, if you have configured an email ID as an identifier and, while mapping identifiers, you choose an email ID as the anonymous ID, there is a chance that users from the import may merge with other users having the same email ID.  
+   <img alt="Screenshot 2025-02-24 at 4.37.35 PM.png" src="/images/moengage_16823a.png" />
+
+### Data Imports in Data
+
+- While creating a new user data import, if you have configured multiple identifiers for a given workspace, you can see them in the **Map identifiers** section while creating new user imports. You can only see *ID* under the **Map identifiers** section if multiple identifiers are not configured in this workspace.
+- If you have configured multiple identifiers for a given workspace while creating a new event data import, you can see them in **Step 2: Import configuration and action** under the **Map identifiers** section while creating new event imports. If multiple identifiers are not configured in this workspace, you can only see *ID* and *Event time* under the **Map identifiers** section.  
+   <img alt="Screenshot 2025-02-24 at 2.41.57 PM.png" src="/images/moengage_d6a331.png" />   
+  <Info>
+The uploaded CSV must have at least one column with data matching any identifiers configured in MoEngage.
+</Info>
+- While creating new auxiliary data imports   
+  In **Step 2: Import configuration and action,** when you turn on the **Update user profile attributes** (optional) toggle**,** you can view the multiple identifiers for that workspace in the **Map identifiers** section. You can only see *ID* under the **Map identifiers** section if multiple identifiers are not configured in this workspace.  
+   <img alt="Screenshot 2025-02-24 at 2.39.25 PM.png" src="/images/moengage_2ea26e.png" />
+
+# Impact of Merging Users
+
+The following are the effects of user merging on various campaigns and channels:
+
+## On Data
+
+- User attribute info: When merged, all user attribute information of the retained user is retained. If user attributes in merged users do not exist in retained users, those attributes are transferred to the retained user profile.
+
+<Info>
+Important contact information may be lost. For example, if two users are merged based on the same mobile number but have different Email-ids - the retained user’s EmailID information will be retained and the merged user’s EmailId information will be lost. Please setup Profile retention rules to help select the right retained user profile.
+</Info>
+
+- Device info: When merged, all devices are merged into the retained user, and no device information is lost.
+- Events info: All events of the merged user are transferred to the retained user, hence no events are lost during a user-merge. The resolved user will have events of all the merged users.
+- Other data callouts: Users cannot be un-merged after merging. Be careful when configuring identifiers for your workspace.
+
+## On Segment
+
+- Active segments: When users are merged, the total number of users in active segments may decrease because users are merged into a single profile.
+- Custom segments: Whenever the custom segment is updated, the user count may change.
+
+## On Campaign
+
+- User merging may impact the overall reachability number. When merged, the contact details of the merged user will be lost, and hence, a campaign’s overall reachability may be reduced. This also impacts the overall campaign stats.
+- Only Data APIs (TrackUser, CreateEvent, BulkImport API) support tracking users with multiple identifiers. Other APIs in MoEngage may still require ID at the moment.
+
+### Reachability Impact
+
+|  |  |  |
+| --- | --- | --- |
+| **Channel** | **Reachability Attribute** | **Merge Outcome** |
+| Email | Hard bounce | If multiple users getting merged have the same email ID but conflicting hard bounce values, the outcome will be hard Bounce = true.  If users getting merged have different email IDs, the retained user’s email preferences will remain post-merge. |
+| Spam | If multiple users getting merged have the same email ID but with conflicting Spam statuses, the outcome will be Spam = true.  If multiple users getting merged have different email IDs, the retained user’s Spam status will be retained. |
+| Unsubscribe | If multiple users getting merged have the same email ID but with conflicting Spam statuses, the outcome will be Unsubscribe = true.  If multiple users are getting merged and have different email values, the retained user’s Unsubscribe status will be retained. |
+| Subscription Categories | Subscription categories of retained users will be retained. |
+| Push | Reachability push status code (iOS, Android, Web) | When users are merged, all devices will be added to the retained user.  Final Reachability will be derived based on all devices present with the retained user. |
+| SMS | Subscription status | Retained user’s mobile number preferences will be retained. |
+| WhatsApp | Subscription status | Retained user’s mobile number preferences will be retained. |
+
+# Enable Multi-ID in Shopify
+
+<Accordion title="Identity Resolution in Shopify">
+
+## Set Up Identifiers
+
+<Tip>
+Contact your CSM to enable Identity Resolution for your workspace.
+</Tip>
+
+You can configure a maximum of five identifiers to merge users in MoEngage. Based on your business requirements, specify the identifiers.
+
+</Accordion>
+## Handle Existing Duplicate Users
+
+MoEngage executes a one-time script to merge the existing users in the workspace based on the identifers you have activated as well as the merge settings selected in your workspace. 
+
+When Identifiers are activated, a support ticket is raised where the feature enablement is tracked. The feature is enabled from the backend to activate the identifiers and start merging existing users based on the set identifiers. A report is generated once the feature is enabled, which will indicate every user merge action that is executed. This can be provided by the support team upon request.
+
+This section describes how you can use MoEngage Identity Resolution in Shopify.
+
+<Tip>
+Ensure that Shopify is integrated with MoEngage and that the Email-id or mobile number is configured as the identifier for profile merge.
+
+<img  src="/images/moengage_15d1a4.png"  />
+</Tip>
+
+### Scenario 1: Email-id as the Identifier
+
+A user uses their email ID to register themselves on Shopify or purchase a product through your application.
+
+When the user clicks **Check Out**:
+
+- A cart token for that order is generated which regularly updates every time you make a new purchase.
+- The user is no longer treated as anonymous after they provide their email ID and other details during product purchase.
+
+In this scenario, consider three instances when a user browses your application with different email IDs as described below:
+
+#### Instance 1:
+
+Anonymous user U1 adds items to the cart, provides an email ID as *Demo@gmail.com*, and converts to a registered user. A cart token (C1) is generated.
+
+<img  src="/images/moengage_ebc687.png"  />
+
+#### Instance 2:
+
+Anonymous user U2 adds items to the cart, provides an email ID as *Demo2@gmail.com,* and converts to a registered user. A cart token (C2) is generated.
+
+#### Instance 3:
+
+Anonymous user U3 adds items to the cart, provides an email ID as *Demo@gmail.com* and merges their profile with U1. A cart token (C3) is updated.
+
+Because you have configured email ID as the identifier, MoEngage identifies that User 1 and User 3 share the same Email-id and merge their profiles.
+
+You can find all user events in the MoEngage dashboard at**Segment \> User Profile \> Activity Info**.
+
+<img  src="/images/moengage_229499.png"  />
+
+### Scenario 2: Mobile number as the Identifier
+
+A user registered with your website with their email ID and provided their mobile number during the order transaction. The next time the user visits your offline store and provides the same mobile number during product purchase.
+
+- User1 registers online using a mobile number (M1) on Shopify and does some activity on the website.
+- User2 visits an offline store and provides a mobile number (M1) during product purchase. Offline data is then uploaded to MoEngage using CSV imports. In such cases, MoEngage identifies that User 1 and User 2 share the same mobile number and merge their profiles.

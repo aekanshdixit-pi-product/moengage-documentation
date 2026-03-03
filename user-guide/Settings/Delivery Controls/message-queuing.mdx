@@ -1,0 +1,189 @@
+---
+title: "Message Queuing"
+sidebarTitle: "Message Queuing"
+---
+
+# Overview
+
+<Note>
+*Message Queuing* is an Early Access feature. To enable it for your account, please contact your MoEngage Customer Success Manager (CSM) or the Support team.
+</Note>
+
+*Message Queuing* helps ensure your campaigns reach your audience by automatically retrying to deliver the messages that are not delivered due to delivery settings in the campaign creation flow. When a message is blocked by [Frequency Capping](https://help.moengage.com/hc/en-us/articles/15919660670356) and [Minimum Delay](https://help.moengage.com/hc/en-us/articles/15917463954836), MoEngage places the message in a temporary queue instead of dropping it. As soon as the user becomes eligible, MoEngage automatically sends the message.
+
+*Message Queuing* allows marketers to maximize campaign reach and maintain timely communication without needing to manually adjust campaign schedules.
+
+<Info>
+*Message Queuing* is supported only for Push campaigns with delivery types: one-time, periodic, business event-triggered, event-triggered, and flow campaigns.
+</Info>
+
+# Use Cases
+
+*Message Queuing* enables a variety of flexible campaign delivery scenarios.
+
+- **Campaign reach optimization:** You can automatically retry messages to users who miss a campaign due to [Frequency Capping](https://help.moengage.com/hc/en-us/articles/15919660670356), ensure delivery to those affected by [Minimum Delay](https://help.moengage.com/hc/en-us/articles/15917463954836) settings, or maximize engagement without manual rescheduling.
+- **Manage time-sensitive campaigns:** For promotions where immediate delivery is essential, such as flash sales, you can disable queuing at the campaign level. Disabling queuing ensures that messages that cannot be sent instantly are dropped entirely.
+- **Prioritize journey continuity**: For multi-step flows like onboarding, you can ensure users receive every critical message in the correct sequence. Instead of skipping a step due to a temporary cap, the message is held and delivered later to keep the narrative intact.
+
+# How Queuing Works
+
+When a campaign message is triggered but cannot be delivered due to pre-set delivery rules, the *Message* *Queuing* feature holds the message for a later attempt.
+
+The following steps outline how message queuing works:
+
+1. **Trigger and Check:** A message is triggered for a user, and MoEngage checks for delivery restrictions in the following order: DND \> Frequency Capping \> Minimum Delay. In event-triggered campaigns, the order of execution is DND \> Campaign Minimum Delay \> Frequency Capping \> Global Minimum Delay.
+2. **Queue:** If a restriction is met, the message is placed in a queue for the duration configured in step 3 of campaign creation, instead of being dropped.
+3. **Retry:** MoEngage automatically attempts to resend the queued message as soon as the user becomes eligible (for example, the frequency cap resets, the minimum delay passes, or the DND window ends).
+4. **Send or Drop:**
+   - If the user becomes eligible within the defined queuing duration, MoEngage sends the message.
+   - If the queuing duration expires before the user becomes eligible, MoEngage drops the message. The reason for the drop is recorded in your campaign analytics (for example, "After FC Removal").
+
+<Info>
+- For *One-Time,* *Periodic (child), and Business event-triggered (child)* push campaigns, the campaign status remains *Sending* until all queued messages are sent or dropped.
+- When a user has multiple messages in the queue, MoEngage sends them in the order they were queued, *First-In, First-Out,* as soon as a delivery window is available.
+- If *Ignore FC* and *Ignore Min delay* are both enabled for a campaign, the queuing settings are automatically disabled for that campaign.
+- The *Campaign Minimum Delay* applies exclusively to *Event-triggered* Campaigns.
+- When you edit an event-triggered campaign and create a new version, MoEngage removes all users and resets the queue to zero (0).
+</Info>
+
+## Queuing Behavior with DND Settings
+
+Your campaign's DND settings and Queuing settings work together to control message delivery. Here is an explanation of how they interact.
+
+### When You Respect DND Hours (Ignore DND is OFF)
+
+- **With Queuing ON:** All messages that would have been dropped (for DND, FC, or Minimum Delay) are queued. MoEngage waits for the DND window to pass and for the user to be eligible based on other rules before sending. This is the best way to ensure maximum delivery while respecting user preferences.
+- **With Queuing OFF:** Only messages dropped by DND are queued to be sent the next day (if you use the "Save and Send" DND option). Messages blocked by FC or Minimum Delay are dropped immediately.
+
+### When You Ignore DND Hours (Ignore DND is ON)
+
+- **With Queuing ON:** MoEngage sends messages at any time, as DND is not a factor. *Message Queuing* can only be used for messages dropped by Frequency Capping or Minimum Delay, and they are sent as soon as those specific limits are cleared, regardless of the time of day.
+- **With Queuing OFF:** MoEngage sends all messages immediately. No messages are held for DND.
+
+# Dashboard Configuration
+
+You can configure *Message Queuing* settings directly within the campaign creation workflow, as mentioned below:
+
+## Enable Queuing for a Campaign
+
+1. In step 3: [**Schedule and goals**](https://help.moengage.com/hc/en-us/articles/206541583-Create-Push-Campaigns#01GTKG8723GHBCNNRY42PE5AZ4) of the push campaign creation flow, in the **Delivery controls** section, locate the **Enable Message Queuing**toggle.
+2. You can:
+   - **Enable queuing:** Turn on the **Enable Message Queuing** toggle to automatically queue messages that are blocked by Frequency Capping or Minimum Delay.
+   - **Set queuing duration:** Specify the duration for which a message should remain in the queue (for example, 5 hours). You can set a maximum of 48 hours.
+   - **Disable queuing:** Turn off the **Enable Message Queuing** toggle for time-sensitive campaigns where you prefer to drop messages that cannot be sent immediately.
+
+<img alt="ENABLEQUEUE.gif"  src="/images/moengage_ecc39c.png"  />
+
+## Monitor Queued Messages
+
+After your campaign is live, you can monitor the performance of your queued messages from the campaign analytics dashboard.
+
+- A temporary *Queued*  banner shows the number of messages pending delivery.
+- Delivery funnel statistics, such as *Attempted* and *Sent,* update in real-time as queued messages are delivered.
+- The *Dropped* count initially includes messages that are still queued for delivery. This metric updates in real time as messages are sent, providing a funnel based on actual success rather than probable success.
+
+<img alt="monitor queueing.png"  src="/images/moengage_5fc4a6.png"  />
+
+## Message Queuing in Flows
+
+*Message Queuing* is also supported within Flows, specifically for Push nodes. This ensures that even if a user reaches a Push node while ineligible for delivery (due to Frequency Capping or Minimum Delay), the message is held and retried rather than dropped.
+
+To enable *Message Queuing* for a Push node in a Flow:
+
+1. Open your Flow and click the **Edit** icon on the desired Push node.
+2. On the Push campaign page that opens, navigate to the **Delivery controls** section.
+3. Toggle **Enable Message Queuing** to **ON**.
+4. Specify the **Queuing Duration**. For more information, refer to [Enable Queuing for a Campaign](#h_01K6WG6EBPEBF4CAVD41PMV9Y1).
+
+<Info>
+You can enable *Message Queuing* across multiple Push nodes within a single Flow. This feature is supported for all Flow types.
+</Info>
+
+### Queuing Rules for Flows
+
+When *Message Queuing* is active within a Flow, the following rules apply:
+
+- **Non-blocking Progression:** If a user is queued at a Push node (for example, due to Frequency Capping), they are not held at that node. The user continues their journey to the next stage of the Flow immediately, while the message remains in the queue for the specified duration.
+- **Global Exit Criteria:** If a user meets the [Global Exit Criteria](https://help.moengage.com/hc/en-us/articles/26100424636436-Create-a-Flow#h_01HY96AJ7AZ39EWA7E6C6PD3B1) and exits the Flow while a Push message is still in the queue, the message will still be delivered once the user becomes eligible. The exit from the Flow does not retrospectively remove messages already residing in the delivery queue.
+
+# Example
+
+The following scenarios illustrate how *Message Queuing* works with different campaign settings.
+
+## Scenario 1: Frequency Capping and DND
+
+This scenario illustrates how *Message Queuing* handles push notifications that are blocked by Frequency Capping (FC) and Do Not Disturb (DND) hours.
+
+### Settings
+
+- **Frequency Cap:** 3 push notifications in 1 day
+- **DND Hours:** 10 PM to 7 AM
+- **Queuing Duration:** 48 hours
+
+| Time | Campaign | Restriction | Queuing Action | Delivery Status |
+| --- | --- | --- | --- | --- |
+| 10 AM - 7 PM | C1, C2, C3 (Push) | None | N/A | Delivered (FC count: 3) |
+| 8:00 PM | C4 (Push) | Frequency Cap | Queued | Pending delivery |
+| 12:01 AM | C4 (Push) | DND Hours | Remains Queued | Pending delivery (FC reset, DND active) |
+| 7:01 AM | C4 (Push) | None | Sent from the queue | Delivered |
+
+## Scenario 2: Combining FC, DND, and Minimum Delay
+
+This scenario illustrates how queuing manages multiple rules simultaneously for different channels, noting that queuing only applies to Push notifications.
+
+### Settings
+
+- **Frequency Cap:** 5 communications in 1 day
+- **Minimum Delay:** 30 minutes between communications
+- **DND Hours:** 10 PM to 7 AM
+- **Queuing Duration:** 48 hours
+
+| Time | Campaign | Restriction | Queuing Action | Delivery Status |
+| --- | --- | --- | --- | --- |
+| 10:00 AM | C1 (Push) | None | N/A | Delivered (Comms count: 1) |
+| 10:15 AM | C2 (Push) | Minimum Delay | Queued | Pending delivery |
+| 10:31 AM | C2 (Push) | None | Sent from the queue | Delivered (Comms count: 2) |
+| 10:45 AM - 11:30 AM | C3 (Email), C4 (Push) | None | N/A | Delivered (Comms count: 4) |
+| 11:45 AM | C5 (Push) | Minimum Delay | Queued | Pending delivery |
+| 12:01 PM | C5 (Push) | None | Sent from the queue | Delivered (Comms count: 5, FC limit reached) |
+| 7:00 PM | C6 (Email) | Frequency Cap | N/A (Not a Push campaign) | Dropped |
+| 10:00 PM | C7 (SMS) | Frequency Cap, DND Hours | N/A (Not a Push campaign) | Dropped |
+
+# FAQs
+
+<Accordion title="What are the message queuing limits for campaigns?">
+
+MoEngage enforces the following message queuing limits per client and workspace: Messages sent after a queue reaches its maximum limit are dropped. For one-time, periodic, and Business event-triggered, the Maximum Queued messages are 10,000,000. For Event-triggered campaigns, the Maximum Queued messages are 1,000,000.
+
+</Accordion>
+<Accordion title="What happens if I enable the Ignore FC, Ignore Min delay, or Ignore DND setting for a campaign?">
+
+If you enable *Ignore FC*, *Ignore Min delay*, or *Ignore DND* for a campaign, the queuing settings for that campaign are automatically disabled.
+
+</Accordion>
+<Accordion title="Which channels support the Message Queuing feature?">
+
+Message Queuing is supported for Push campaigns with delivery types one-time, periodic, business event-triggered, and event-triggered, and flow campaigns.
+
+</Accordion>
+<Accordion title="Where can I view the number of users currently in the queue for a campaign?">
+
+You can view the number of currently queued users on the campaign analytics dashboard. A *Queued* banner is visible as long as messages are pending delivery.
+
+</Accordion>
+<Accordion title="Does my campaign's status show as \"Completed\" if there are still messages in the queue?">
+
+No. For one-time and periodic campaigns, the campaign status remains *Sending* until all queued messages are sent or dropped after the queue duration expires.
+
+</Accordion>
+<Accordion title="Can I edit the queuing duration for an active campaign?">
+
+For periodic and triggered campaigns, you can edit the queuing duration. The change applies only to new messages being queued and does not affect messages already in the queue.
+
+</Accordion>
+<Accordion title="How does message queuing work for one-time, periodic, and event-triggered campaigns in versioning?">
+
+- When you edit an event-triggered campaign and create a new version, MoEngage removes all users and resets the queue to zero (0).
+- For one-time and periodic campaigns, the system processes and sends messages already in the queue using the original campaign version.
+
+</Accordion>

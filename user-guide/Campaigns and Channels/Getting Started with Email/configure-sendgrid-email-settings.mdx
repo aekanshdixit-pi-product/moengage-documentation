@@ -1,0 +1,117 @@
+---
+title: "Configure Sendgrid Email Settings"
+sidebarTitle: "Configure Sendgrid Email Settings"
+---
+
+This article provides step-by-step instructions to configure email settings in SendGrid.
+
+# Introduction
+
+SendGrid is a cloud-based SMTP provider that allows you to send email without maintaining email servers. SendGrid manages all technical details, from scaling the infrastructure to ISP outreach and reputation monitoring to whitelist services and real-time analytics.
+
+<Tip>
+Ensure that you have admin access to your SendGrid account.
+</Tip>
+
+# Configure SendGrid Account
+
+You can sign up for [SendGrid](https://sendgrid.com/pricing) and select your pricing plan.
+
+## Add Domains in SendGrid
+
+To send emails from your domain using SendGrid, you need to set up domain authentication. This involves generating DNS records for your domain and dedicated IPs, adding these records to your DNS servers, and then validating them in SendGrid.
+
+ For more information, refer to the following articles:
+
+- To set up a domain, refer to [How to Set Up Domain Authentication](https://www.twilio.com/docs/sendgrid/ui/account-and-settings/how-to-set-up-domain-authentication).
+- To set up link branding, refer to [How to set up link branding](https://www.twilio.com/docs/sendgrid/ui/account-and-settings/how-to-set-up-link-branding).
+- To set up reverse DNS for a dedicated IP, refer to [How to set up reverse DNS](https://www.twilio.com/docs/sendgrid/ui/account-and-settings/how-to-set-up-reverse-dns).
+- To set up SSL for click tracking domain, refer to [Setup SSL for Click Tracking](https://www.twilio.com/docs/sendgrid/ui/analytics-and-reporting/click-tracking-ssl).
+- To set up Sign in with Apple, refer to [Configuring Sign in with Apple](https://www.twilio.com/docs/sendgrid/ui/account-and-settings/configuring-sign-in-with-apple).
+
+## Create API Keys in SendGrid
+
+Create API keys with full access. For more information, refer to the [API Keys](https://www.twilio.com/docs/sendgrid/ui/account-and-settings/api-keys)
+
+<Info>
+Make sure to note the API key in a secure location. You cannot view it again after creation.
+</Info>
+
+# Configure SendGrid Settings in MoEngage UI
+
+1. Log in to your MoEngage dashboard.
+2. Navigate to **Settings** \> Under **Channels** \> **Email** \> **Sender Configuration** tab\> Click **Add Sender**  
+    <img alt="sendgrid 1.png" src="/images/moengage_302609.png" />
+3. In the following **Add Sender** screen, add the following SMTP details as shown below:  
+    <img alt="Screenshot 2024-07-12 at 11.30.47 AM.png" src="/images/moengage_473a0c.png" />   
+   <Info>
+All of the following details are case-sensitive.
+</Info>
+
+   | Field | Description |
+   | --- | --- |
+   | Sender Name | Enter a sender name. |
+   | SMTP Host Name | Enter **smtp.sendgrid.net** |
+   | SMTP Port | Enter **587**. Port 587 is recommended to avoid rate limits set by some companies. |
+   | SMTP Protocol | Select **TLS**. |
+   | SMTP Password | Enter the password. This is the [API key created above](#h_01HTWCNVZD743JXH18AN831FZV). |
+   | WebApi Key | Enter the key. This is the [API key created above](#h_01HTWCNVZD743JXH18AN831FZV). |
+4. Configure **Unsubscribe Settings** based on your requirements. For more information, refer to [Track Email Unsubscribes](https://help.moengage.com/hc/en-us/articles/360059172811-Configure-Email-Channel#h_01J1SPPGFCPX2CW998XQQR205R).
+5. Configure the **List unsubscribe email** settings based on your requirements. For more information, refer to [List Unsubscribe Email](https://help.moengage.com/hc/en-us/articles/24713268455060).
+6. Click **Save**. The added connector is listed under the **Sender configuration** tab.
+7. Navigate to the **General Settings** tab.
+8. From the **Set a default sender** drop-down, select the sender you added.
+9. From the **User Attribute that stores the user’s email address** drop-down, select **Email (Standard)**.
+10. In the "**From" email address(s)** field, add the from address. The domain (the part after @) must be a [validated one on SendGrid](#h_01HTPHYKKZQJYE5PEYRZ1WP3VZ).  
+      
+     <img alt="Screenshot 2024-07-12 at 1.01.05 PM.png" src="/images/moengage_ac35fd.png" />
+11. **Save** the settings. The “from address” mailbox added above will receive a verification email.
+12. Click the confirmation link to validate the same.
+
+<Info>
+From Address:  
+Promo - info@, emails@, fashion@, offers@, deals@  
+Triggered - updates@, news@, alerts@
+</Info>
+
+## Configure SendGrid Bounce and Complaint Settings.
+
+1. Copy the URL in the **Bounce & Complaint Tracking** from email settings.  
+    <img alt="Screenshot 2024-07-12 at 1.20.13 PM.png"  src="/images/moengage_fb5469.png"  />
+2. Use the below API to configure event webhook:  
+
+   ```ruby
+   curl --location 'https://api.sendgrid.com/v3/user/webhooks/event/settings' \
+   --header 'Content-Type: application/json' \
+   --header 'Authorization: Bearer API\_KEY\_GENERATE\_ABOVE' \
+   --data '{
+   "url": "Bounce and Complaint tracking URL from Step 1",
+   "enabled": true,
+   "group\_resubscribe": true,
+   "delivered": true,
+   "group\_unsubscribe": true,
+   "spam\_report": true,
+   "bounce": true,
+   "deferred": true,
+   "unsubscribe": true,
+   "processed": false,
+   "open": true,
+   "click": true,
+   "dropped": true,
+   "friendly\_name": "MOE App name"
+   }'
+   ```
+
+   To successfully configure the event webhook, make sure to add the following inputs to the API:
+
+   1. Enter the API key obtained from the above [Create API Keys from SendGrid](#h_01HTWCNVZD743JXH18AN831FZV) section by replacing `API\_KEY\_GENERATE\_ABOVE` in the API.
+   2. Paste the URL obtained from step 1 in the above API, by replacing `"Bounce and Complaint tracking URL from Step 1"`
+   3. Enter your dashboard name, by replacing `"MOE App name"` in the above API.
+
+## Test Email Settings
+
+For more information, refer to [Test the Email Settings](https://help.moengage.com/hc/en-us/articles/25306820413844).
+
+# Next Steps
+
+After your SendGrid sender is configured, you can proceed to create and send your email campaigns in MoEngage. For more information, refer to [Create Email Campaign](https://help.moengage.com/hc/en-us/articles/360059171891).

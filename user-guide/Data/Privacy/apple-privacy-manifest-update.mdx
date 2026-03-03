@@ -1,0 +1,64 @@
+---
+title: "Apple Privacy Manifest Update"
+sidebarTitle: "Apple Privacy Manifest Update"
+---
+
+# Overview
+
+At WWDC23, Apple introduced new privacy manifests and signatures for SDKs to help app developers better understand how third-party SDKs use data, secure software dependencies, and provide additional privacy protection for users.
+
+Starting **May 1st 2024**, if your new app or app update submission adds a third-party SDK that is commonly used in apps on the App Store, you must include the privacy manifest for the SDK.
+
+Signatures are also required when you use the SDK as a binary dependency. This functionality is a step forward for all apps, and we encourage all SDKs to adopt it to better support the apps that depend on them. For more information, refer to the [official announcement from Apple](https://developer.apple.com/news/?id=r1henawx).
+
+# How Does MoEngage Comply with this?
+
+This section describes how MoEngage complies with the new privacy manifests and signatures for SDKs.
+
+## Privacy Manifest
+
+The [Privacy Manifest](https://developer.apple.com/documentation/bundleresources/privacy_manifest_files/describing_data_use_in_privacy_manifests) is a file that describes the specific privacy practices and data collection activities of an iOS app. It provides essential information to users about how their personal data is collected, used, and shared by the app. This is a requirement by Apple for developers to ensure transparency and allow users to make informed decisions about their privacy. It includes details on the types of data collected (such as personal information, location, browsing history), how the data is used, and whether it is shared with third parties.
+
+Based on the [documentation from Apple](https://developer.apple.com/documentation/bundleresources/privacy_manifest_files/describing_data_use_in_privacy_manifests), "Third-party SDKs need to provide their own privacy manifest files that record the types of data they collect. Your app’s privacy manifest file doesn’t need to cover data collected by third-party SDKs that your app links to."
+
+MoEngage iOS SDK decrales the following data.
+
+| NSPrivacyCollected DataType | NSPrivacyCollected DataTypePurposes | Modules with NSPrivacyCollected DataTypeLinked | Modules with NSPrivacyCollected DataTypeTracking |
+| --- | --- | --- | --- |
+| UserID | Analytics, Product personalization, App functionality | MoEngage-iOS-SDK | - |
+| Device ID (IDFV) | Analytics, Product personalization, App functionality | MoEngage-iOS-SDK | - |
+| Product interaction | Analytics, Product personalization, App functionality | - | MoEngage-iOS-SDK, MoEngageRichNotification, MoEngageInApps, MoEngageCards, MoEngageInbox, MoEngageRealTimeTrigger, MoEngageGeofence |
+| Precise location | Analytics, Product personalization, App functionality | - | MoEngageGeofence |
+| Coarse location | Analytics, Product personalization, App functionality | - | MoEngageGeofence |
+
+## Code Signing
+
+When you add third-party binary SDKs to your target as XCFrameworks, the behavior of those packages becomes part of the behavior of your product. An attacker who can inject a compromised version of the SDK into your project can change your app’s behavior and cause security and privacy issues for your developers, testers, and people who use your product. To avoid those, we have code-signed all the MoEngage frameworks.
+
+## Which SDK versions support the Apple Privacy Manifest?
+
+To comply with the policy, you must upgrade your iOS app with the latest MoEngage SDK.
+
+MoEngage SDKs core version 9.16.2 and above is compliant with the guidelines from Apple and the following data is declared from the Privacy manifests. For Hybrid frameworks, below are the modules associated with SDKs core version 9.16.2
+
+- MoEngage React Native SDK: 9.0.0
+- MoEngage Flutter SDK: 7.0.0
+- MoEngage Cordova SDK: 8.6.0
+- MoEngage Capacitor SDK: 3.3.0
+- MoEngage Unity SDK: 3.2.0
+
+# By When Should I Upgrade My App?
+
+ Apple documentation mentions the following:
+
+**Starting March 13:** If you upload a new or updated app to App Store Connect that uses an API requiring approved reasons, we’ll send you an email letting you know if you’re missing reasons in your app’s privacy manifest. This is in addition to the existing notification in App Store Connect.
+
+**Starting May 1:** You’ll need to include approved reasons for the listed APIs used by your app’s code to upload a new or updated app to App Store Connect. If you’re not using an API for an allowed reason, please find an alternative. And if you add a new third-party SDK that’s on the list of commonly used third-party SDKs, these API, privacy manifest, and signature requirements will apply to that SDK. Make sure to use a version of the SDK that includes its privacy manifest and note that signatures are also required when the SDK is added as a binary dependency.
+
+Therefore, we strongly recommend updating the MoEngage iOS SDK with your next app update. Otherwise, your next app update may get rejected.
+
+However, you do not need to rush an app upgrade only to comply with the requirements.
+
+# What will happen to my current app users?
+
+This change only affects App versions published on or after May 1, 2024. Users on App versions published before this will not be affected including new installs and reinstalls.

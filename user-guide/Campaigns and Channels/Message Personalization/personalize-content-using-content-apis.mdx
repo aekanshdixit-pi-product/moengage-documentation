@@ -1,0 +1,135 @@
+---
+title: "Personalize Content Using Content APIs"
+sidebarTitle: "Personalize Content Using Content APIs"
+---
+
+# Overview
+
+Content APIs allow you to create personalized campaigns by fetching data dynamically at the time of sending the campaign based on recommendations, coupons, or other Personalization APIs. Such targeted, relevant, and timely communication has [much better engagement and conversion rates](https://www.moengage.com/blog/power-of-push-notifications/ "https://www.moengage.com/blog/power-of-push-notifications/") than generic email campaigns.
+
+<Tip>
+Before starting your journey with content APIs, you must add a content API to MoEngage. For more information, refer to [Content APIs](https://help.moengage.com/hc/en-us/articles/115003622346).
+</Tip>
+
+After adding the API to MoEngage, you can create campaigns using any existing content templates with API calls embedded in the content. These campaigns can contain placeholders for different SKUs, with the required formatting, segmentation, and triggering schedules.
+
+# Channels That Support Personalization Using Content APIs
+
+You can add Content APIs to the campaigns sent using the following channels:
+
+| Channel | Supports Personalization? |
+| --- | --- |
+| [Push (Mobile and Web Push)](https://help.moengage.com/hc/en-us/articles/206630173-Personalize-Push-Campaigns#personalization-using-content-apis-0-6) | Yes |
+| [Email](https://help.moengage.com/hc/en-us/articles/30958494853652-Personalize-Content-Using-Content-APIs) | Yes |
+| [SMS](https://help.moengage.com/hc/en-us/articles/8999394705556-Personalize-SMS-Campaigns#personalization-using-content-apis-0-4) | Yes |
+| [In-app Messaging](https://help.moengage.com/hc/en-us/articles/206184196-Create-In-App-Campaign#01GEE18VWXPYBQB9DVFCSH0N3J) | Yes |
+| [On-Site Messaging](https://help.moengage.com/hc/en-us/articles/5481993595284-Personalization-of-OSM-Content) | Yes |
+| Cards | No |
+| [WhatsApp](https://help.moengage.com/hc/en-us/articles/5197221466260-Personalization-in-WhatsApp#steps-to-personalize-0-0) | Yes |
+| [Connectors](https://help.moengage.com/hc/en-us/articles/214247906-Create-Connector-Campaign#01FXMQ1SPGW8AT7Y664ZHAQZJK) | Yes |
+| Facebook Audience | No |
+| Google Ads Audience | No |
+
+<Info>
+You can personalize Content APIs using user attributes. Personalization is also possible for event attributes when the event is linked to the same campaign.
+</Info>
+
+# Personalize Using Content APIs
+
+You need to perform the following steps to personalize content using Content APIs:
+
+1. [Add Content API to MoEngage](#h_01K0TWFNVBQ3HCH4KK6NSJTP4Q)
+2. [Use Content API to create personalized campaigns](#Create-a-personalized-email-campaign-using-the-saved-Content-API)
+
+## Add Content API to MoEngage
+
+To set up Content API for your MoEngage campaigns, perform the following steps:  
+ <img alt="Screenshot 2025-07-23 at 11.51.38 AM.png"  src="/images/moengage_52fce1.png"  />
+
+1. In MoEngage, go to **Dashboard** \> **Settings** \> **APIs**, and then click the **Content API** tab.
+2. Click **Add**.
+3. On the **Add Content API** page, enter the following details:  
+
+   | Field | Description |
+   | --- | --- |
+   | **API Name** | Type the Content API name |
+   | **API Type** | Select the type as *Single*. |
+   | **API URL** | Type the complete URL of the Content API. |
+   | **Header** | Click the plus sign and type the key value for the headers used in the Content API |
+   | **Key Value Parameters** | Click the plus sign to add key value for the parameters used in the Content API. Use “@” in the value field to choose from the list of pre-defined user attributes. The parameters cannot be personalized using Event attributes in the value field. |
+4. Click **Save**.
+
+## Create a Personalized Campaign
+
+After you add Content API to MoEngage, you can create personalized campaigns with Content APIs.
+
+In step 2, "Content," of the campaign creation, use the *ContentApi* variable to access all the configured Content API sources. You can use the Content API by directly calling the *ContentApi* variable in the code or by choosing the required content API from the Personalization editor:
+
+1. 1. Type *@* in the content editor of your campaign.
+   2. On the Personalization dialog box, click the **Data personalization** tab.
+   3. In the **Select attribute** list, click the Content API created.  
+       <img alt="Email_ContentAPI.png"  src="/images/moengage_e3d08d.png"  />
+   4. Click **Done**. The Content API gets added to the message.  
+      For example, the Content API dynamically fetches the recommended products for a given user ID in the following screenshot. You can use this feature to engage users with product recommendations and nudge them toward making a purchase. The value parameter can be a dynamic parameter (type @ to add a user attribute to be passed to the Content API) or a static parameter that can be keyed in the value section.  
+       <img alt="ContentAPI_RecoPdt_EmailPersonlizationUI.png" src="/images/moengage_e088b3.png" />   
+      When added, this appears as follows in the Template editor:  
+        
+       <img alt="ContentAPI_added_in_Email_Editor.png" src="/images/moengage_0cb9aa.png" />
+   5. Click **Preview** to see how the user will see it in their inbox.
+
+### Example 1
+
+You may have a *cart* data source with the following JSON:
+
+JSON
+
+```
+{
+"date": "March 10, 2016",
+"items": [
+{
+"name": "belt",
+"image": "http://mydomain.com/images/1001.jpg",
+"price": 11
+}, {
+"name": "shoes",
+"image": "http://mydomain.com/images/1002.jpg",
+"price": 12
+}, {
+"name": "hat",
+"image": "http://mydomain.com/images/1003.jpg",
+"price": 10
+}
+]
+}
+```
+
+In the content creation, use the following code:
+
+Code
+
+```
+{% for cart\_item in ContentApi.cart().items %}
+
+## {{ cart\_item.name }}: ${{ cart\_item.price|round(2) }}
+
+__PROTECTED_6__
+
+{% endfor %}
+```
+
+### Example 2
+
+The campaigns contain placeholders for different SKUs (in this case, hotels), along with the required formatting, segmentation, and triggering schedules.
+
+<img alt="SavedContentAPI.png"  src="/images/moengage_1445a9.png"  />
+
+At the time of sending the campaign, the system would:
+
+- Invoke the Content API to fetch hotels recommended for the user based on the search parameters like destination, check-in, and check-out dates, number of adults and children, and so on.
+- Populate the campaign with details of the recommended hotels like the name, rating, price, image, and ranking in an HTML-formatted, personalized email.
+- Do this for every user belonging to the specified segment dynamically without any manual input.
+
+<img alt="DynamicContentExample.png"  src="/images/moengage_f751ff.png"  />
+
+For more information on personalization language, refer to [Templating Language Documentation](https://help.moengage.com/hc/en-us/articles/115002757783 "https://help.moengage.com/hc/en-us/articles/115002757783").

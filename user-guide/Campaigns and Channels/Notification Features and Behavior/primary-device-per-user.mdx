@@ -1,0 +1,301 @@
+---
+title: "Primary Device Per User"
+sidebarTitle: "Primary Device Per User"
+---
+
+<Note>
+This is an Early Access feature. To enable it for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team.
+</Note>
+
+# Overview
+
+Marketers who send push notifications containing sensitive information want to ensure the intended recipient receives the notification on their latest logged-in device. This is not a concern for Email, SMS, and WhatsApp notifications because they are sent to the email ID and mobile number, which are generally unique to individual users. Also, mobile numbers and email IDs are generally not shared among users. However, push notifications sent at a device level can create issues as devices can be shared among users, potentially exposing sensitive notifications.
+
+The *Primary Device Per User* feature allows you to send push notifications only to the user's last logged-in device, thereby maintaining privacy while receiving sensitive notifications. However, targeting a single or primary device per user retains all devices associated with a user without deleting them, but campaigns are sent exclusively to the last logged-in device.
+
+# Detect the Primary Device
+
+To detect the primary device, MoEngage maintains an additional flag for all devices at the user level. This flag marks the latest logged-in device as the primary device.
+
+MoEngage detects the primary device by maintaining a *Primary* flag on the devices of the user. This flag is designated to the device with the latest explicit login action captured by the MoEngage SDK. Note that only one device can have the primary flag, while the rest cannot.  
+For user U1 associated with devices D1, D2, and D3, if D3 is the last device where the user explicitly logged in, D3 is marked as the primary device. D3 retains this primary status even if subsequent events are tracked on D2. The primary flag will only shift to D2 if the user performs a new login action on that D2 again.
+
+<Info>
+- This feature applies only to Push campaigns (also using Push API), Flows with the Push stage, and Inform alerts with the Push channel (also using Inform API).
+- MoEngage starts marking the user device as primary only after enabling this feature. Any historical events performed before enabling this feature are not used to detect the primary device.
+- After enabling the feature, it is recommended that you wait 30 days for all your monthly active users (MAU) to be detected with their primary devices based on their logins. Optionally, the MoEngage support team can help run a one-time script to mark already existing devices in the workspace as primary devices based on their latest login time.
+- Push notifications are sent only to the primary devices that have been detected because these notifications contain sensitive information. If the primary device is not detected for a user, notifications are not sent to them.
+</Info>
+
+# Send Campaigns to the Primary Device
+
+You can send campaigns to the primary device in the following ways:
+
+- [Using the MoEngage dashboard](#h_01JKSVDNSHCJAYFJ5NB69E4Z57)
+- [Using the APIs](#01JK885QJ8BD4VM1K8M600RPK7)
+
+## Using the MoEngage Dashboard
+
+The feature of targeting the primary device applies to the following campaign types within MoEngage:
+
+### Push Campaigns
+
+Perform the following to access this feature while creating the push campaigns:
+
+1. Navigate to **Step 3: Schedule and Goals**.
+2. In the **Advanced** section, select the **Primary device** check box to send this push campaign only to the primary device of the target user.  
+    <img alt="last active device push.png" src="/images/moengage_5dd14c.png" />
+
+### Flows Campaigns with the Push Stage
+
+Perform the following to access this feature while creating the Flows campaign with the push stage:
+
+1. Navigate to **Step 3: Who will enter the flow**, add the required details, and click **Next**.
+2. On the canvas, click the plus icon to **Add stage** \> in **Actions** \> **Push**.
+3. On the **Push campaign** page, add the required details and navigate to the **Advanced** section.
+4. You can select the **Primary device** check box to send this flow campaign only to primary device of the target user.  
+    <img alt="flow with push.png" src="/images/moengage_a9b02e.png" />
+
+### Alerts Configured with the Push Channel
+
+Perform the following to access this feature while creating the alert campaign with the push channel:
+
+1. Navigate to **Step 2: Content**.
+2. Type the required details for your push channel and navigate to the **Advanced Settings** section.
+3. You can select the **Primary device** checkbox to send this alert only to the primary device of the target user.  
+    <img alt="Inform alerts- push-last active device.png" src="/images/moengage_99dec9.png" />
+
+## Using APIs
+
+You can use the following APIs to send campaigns to the primary device of the user:
+
+- [Push API](https://developers.moengage.com/hc/en-us/articles/4404548252820-Push-API)
+- [Inform API](#h_01JK88C9ZR399RFKC541PNE0X3)
+
+### Using the Push API
+
+The Push API allows you to create a push campaign, and if you want this campaign to be sent to the primary device of the user, pass a parameter *targetLastActiveDevice=true.* Following is the sample cURL request for the same:
+
+cURL
+
+```JSON
+curl --location 'https://pushapi-0X.moengage.com/v2/transaction/sendpush
+--header 'accept: application/json' \
+--header 'Content-Type: application/json' \
+--header 'MOE-APPKEY: {{Workspace\_ID or APP\_ID}}' \
+--header 'Authorization: Basic {{Authorization\_Key}}' \
+--data '{
+"signature": "{{signature}}",
+"requestType": "push",
+"responseId": "{{repsonseId}}",
+"appId": "{{appId}}",
+"campaignName": "Sample Campaign",
+"targetAudience": "All Users",
+"targetPlatform": [
+"ANDROID",
+"IOS"
+],
+"payload": {
+"ANDROID": {
+"message": "Sample Message",
+"title": "Sample Title",
+"Summary": "Sample Summary",
+"richContent": [
+{
+"type": "image",
+"value": "https://www.planwallpaper.com/static/images/desktop-year-of-the-tiger-images-wallpaper.jpg"
+},
+{
+"type": "coupon",
+"value": "free"
+},
+{
+"type": "sound",
+"value": "tring"
+}
+],
+"defaultAction": {
+"type": "navigation",
+"value": "com.moengage.demoapp.SecondActivity"
+},
+"additionalActions": [
+{
+"type": "call",
+"value": "12345678",
+"name": "Call button",
+"iconURL": "abc"
+},
+{
+"type": "copy",
+"value": "12345678",
+"name": "Copy button",
+"iconURL": "abc"
+}
+],
+"fallback": {
+"message": "Sample Message",
+"title": "Sample Title",
+"richContent": [
+{
+"type": "image",
+"value": "https://picsum.photos/200/300/?random"
+},
+{
+"type": "coupon",
+"value": "free"
+},
+{
+"type": "sound",
+"value": "tring"
+}
+],
+"defaultAction": {
+"type": "richlanding",
+"value": "https://www.google.co.in/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8"
+},
+"additionalActions": [
+{
+"type": "call",
+"value": "12345678",
+"name": "Call button",
+"iconURL": "abc"
+},
+{
+"type": "copy",
+"value": "12345678",
+"name": "Copy button",
+"iconURL": "abc"
+}
+]
+}
+},
+"IOS": {
+"message": "Sample Message",
+"title": "Sample Title",
+"contentAvailable": 1,
+"richContent": [
+{
+"type": "sound",
+"value": "custSound2.wav"
+},
+{
+"type": "image",
+"value": "https://picsum.photos/200/300/?random"
+},
+{
+"type": "coupon",
+"value": "This is an automated API message:51"
+}
+],
+"additionalActions": [
+{
+"category": "abc"
+}
+],
+"defaultAction": {
+"type": "navigation",
+"value": "",
+"kvPairs": {
+"key1": "value1",
+"Key2": "value2"
+}
+},
+"fallback": {
+"message": "Sample Message",
+"title": "Sample Title",
+"richContent": [
+{
+"type": "coupon",
+"value": "iOS"
+}
+],
+"additionalActions": [
+{
+"category": "abc"
+}
+]
+}
+}
+},
+"campaignDelivery": {
+"type": "soon"
+},
+"advancedSettings": {
+"ttl": {
+"ANDROID": 12,
+"WEB": 24
+},
+"ignoreFC": "true",
+"targetLastActiveDevice": "true",
+"notificationPrioritySettings": {
+"ANDROID": "normal",
+"IOS": 5
+}
+}
+}'
+```
+
+For more information on Push API, refer to [Push API](https://developers.moengage.com/hc/en-us/articles/4404548252820-Push-API).
+
+### Using the Inform API
+
+The Inform API allows you to send push notifications specifically to a user's primary device. Note that this functionality is limited to triggering notifications for alerts that have been pre-configured within the MoEngage dashboard. You cannot use the Inform API to create or send new alerts that have not already been set up on the MoEngage dashboard.
+
+For more information on Inform API, refer to [Inform API](https://developers.moengage.com/hc/en-us/articles/10699624590868-Inform-API).
+
+#### Use Case 1: cURL Request Containing a Push-Token Parameter
+
+The following cURL request contains a push token parameter and is sent to trigger push notifications for alerts that have been previously created. Push notifications are only delivered if the cURL request contains the push token of the primary device of the user.
+
+For example, consider a scenario where a user has three devices: D1, D2, and D3, with D3 being the primary. When configuring the alerts in the MoEngage dashboard, you send the alert to the primary device. If the cURL request includes the push token parameter of the primary device (D3), the push notification is delivered to the user whose User ID is mentioned in the request. However, if the API request contains the push token for D1 or D2, the push notification is not delivered.
+
+cURL
+
+```json
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR\_APP\_KEY\_HERE' \
+--header 'Authorization: Basic Base64\_ENCODED\_APPKEY\_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+"alert\_id": "636b77e6e2cf83277195fb60",
+"alert\_reference\_name": "Demo\_ID",
+"user\_id": "USER\_ID",
+"transaction\_id": "YOUR\_TRANSACTION\_ID\_VAL\_HERE",
+"payloads": {
+"PUSH": {
+"recipient":""
+}
+}
+}'
+```
+
+#### Use Case 2: cURL Request Without a Push-Token Parameter
+
+The following cURL request does not contain a push token parameter and is sent to trigger push notifications for alerts that have been previously created. The push notifications are delivered to the primary device of the user.
+
+For example, consider a scenario where a user has three devices: D1, D2, and D3, with D3 being the primary. When configuring the alerts in the MoEngage dashboard, you send the alert to the primary device (D3). As the cURL request does not contain any push token, the push notification is delivered to the primary device of the user whose User ID is mentioned in the request.
+
+cURL
+
+```json
+curl --location --request POST 'https://inform-api-0X.moengage.com/v1/send' \
+--header 'MOE-APPKEY: YOUR\_APP\_KEY\_HERE' \
+--header 'Authorization: Basic Base64\_ENCODED\_APPKEY\_APIKEY' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+"alert\_id": "636b77e6e2cf83277195fb60",
+"alert\_reference\_name": "Demo\_ID",
+"user\_id": "USER\_ID",
+"transaction\_id": "YOUR\_TRANSACTION\_ID\_VAL\_HERE",
+"payloads": {
+"PUSH": {
+}
+}
+}'
+```
+
+<Info>
+- The primary device is calculated only for mobile devices, which means Android and iOS platforms.
+- Push notifications are delivered to all web devices if a web platform is selected while creating alerts.  
+  For example, consider a scenario where a user has three devices: D1 (web device), D2 (web device), and D3 (Android device), with D3 being the primary. When configuring alerts in the MoEngage dashboard, you choose Android and Web platforms, and also choose to send the alert to the primary device (D3, Android device). In this case, the push notification is delivered to the primary device (D3) and also to both web devices (D1 and D2).
+</Info>

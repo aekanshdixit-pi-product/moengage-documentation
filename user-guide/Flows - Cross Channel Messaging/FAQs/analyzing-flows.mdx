@@ -1,0 +1,185 @@
+---
+title: "Analyzing Flows"
+sidebarTitle: "Analyzing Flows"
+---
+
+# Metrics, Drop-Off, and Failure Reasons
+
+### What are the various metrics or stats tracked for Flows?
+
+Flow metrics are available at the top of the canvas for a published Flow. For more information about the various metrics, refer to [Flow Stats](https://help.moengage.com/hc/en-us/articles/360044827832-Analyzing-a-Flow#01H8E0WN4152X2A7KGK6KA4JYT).
+
+### What does drop-off mean?
+
+Drop-offs occur when an user trip ends abruptly within a flow. There are various reasons why this might happen, including:
+
+1. If the Frequency Capping (FC) limit has been reached and the Flow's setting is to remove the user from the flow in case the message has not been sent.
+2. If the message has not been delivered due to Do Not Disturb settings and the Flow's setting is to remove the user from the Flow in case the message has not been delivered.
+3. Resuming a paused flow or user entering a Wait For/till stage when the waiting period is already over.
+4. If the known user is already part of the same flow after a merge with another user.
+5. If some internal error occurs while the Flow is being executed.
+
+### What is the difference between drop-offs & Exits?
+
+Drop-offs occur when an user trip ends abruptly within a flow out of Marketer's control. While Exits occur when an user trip ends due to the defined conditions like [Exit Conditions](https://help.moengage.com/hc/en-us/articles/26100424636436-Create-a-Flow#h_01J3QDC93ZXZ20YBCYW8WXDSCE).
+
+### Where can I find the failure reasons for campaigns that were not sent?
+
+To identify the reasons for each channel's underperformance, navigate to the **Channel Performance** section under the **Stats** tab in your Flows. For campaign-level insights, access the **Campaign Info** page by either clicking the **i** icon that appears when hovering above a campaign stage in the canvas or clicking on the campaign name in the **Campaign Performance** section found under the **Stats** tab in your Flows.
+
+### Why are we using Trips and not unique counts?
+
+Trips provide an unambiguous way of tracking and analyzing flow metrics by uniquely identifying each instance when a user enters a flow throughout their lifetime. Although total user entries can also be monitored, tracking auxiliary metrics such as unique user entries and unique conversions is necessary to remove ambiguity in the metrics and provide accurate reporting. As a result, trips are more relevant and useful to understand the performance of a flow.
+
+## Conditional Stages
+
+### How are users evaluated in the Condition Stages within Flows?
+
+As users enter condition stages, they are evaluated based on the defined window. If a user meets the condition during this evaluation window, they are moved along the "Yes Path" immediately. The "Keep Evaluating for" window is the maximum time allowed for evaluation, and it is dynamic, so users who do not perform the event within the entire evaluation period are redirected to the "No Path" at the end.
+
+**Note**: This dynamic evaluation nature improves communication timing and provides better context.
+
+### How are users evaluated in the Condition Split stage within Flows?
+
+Users are evaluated for the conditions defined in the first branch during the entire defined evaluation window. If they meet the requirements, they move along to Branch 1. However, if they do not meet the requirements, we wait for the entire evaluation window to see if the same user satisfies the conditions in Branch 1 at any point during this duration.
+
+After the evaluation period, we consider all the other branches' paths where the user meets the conditions. This prioritization is necessary because the conditional branches have a priority hierarchy, with Branch 1 having the highest precedence and the default branch having the lowest.
+
+## Control Groups and Uplifts
+
+### How does the Control Group uplift work?
+
+Uplift is a metric that enables you to evaluate your performance concerning organic behavior by analyzing Control Group users. Conversion uplift represents the percentage ratio of the difference between Target Group Conversion and Control Group Conversion. For more information, refer to [Control Groups in Flows](https://help.moengage.com/hc/en-us/articles/360043982692-Control-Group-In-Flows#conversion-uplift-0-1).
+
+### How does conversion get attributed for both Control Group and Target Group users?
+
+The Trips of converted users refer to those who have reached the specified goal within the defined attribution window following their previous engagement with Flows' communication. Control Group (CG) users are considered engaged by default since they do not receive communication. The criteria for conversion applies to both types of users, and users who do not meet these conditions will not be attributed to Flows.  
+  
+To identify the unique users who have converted, you can query for Has Executed Flow Trip Conversion with Flow ID as the attribute in segmentation. For more information, refer to [Conversion Attribution in Flows](https://help.moengage.com/hc/en-us/articles/18533818800660). 
+
+### Why am I not seeing uplift metrics?
+
+Uplift metrics on CVR are shown only when the Control Group (CG) trips have happened for at least 24 hours.
+
+### What should I do when the uplift is negative?
+
+If Control Group (CG) users are converting more than the targeted users, the uplift metric will be negative. To improve this situation, experiment with the communication content using A/B split stages or Variations within campaigns. Additionally, prioritizing high-performing channels at the top of the flow can be effective.
+
+Moreover, using NBA in Flows to experiment with the timing of message delivery can improve the chances of converting users since NBA identifies the preferred channel and the best time to send the communication to every user.
+
+### How do I find Control Group users from the users who entered and users who converted?
+
+To find users belonging to the Control Group, segment using the "User Entered Flow" option and filter by the "Flow ID" attribute and the "With Control Group" attribute. For more information, refer to [Control Group Users for a Flow](https://help.moengage.com/hc/en-us/articles/360043982692-Control-Group-In-Flows#finding-the-users-marked-as-the-control-group-0-10).
+
+To identify converted users from the Control Group, segment using the "Flow Trip Conversion" and filter by the "Flow ID" attribute and "User Type" attribute. For more information, refer to [Tracking Converted Users for a Flow](https://help.moengage.com/hc/en-us/articles/360038353852-Conversion-Tracking-and-Attribution-in-Flows-#tracking-converted-users-0-6).
+
+# Low Stats
+
+### Why is my Total Trips metric low?
+
+For a user to enter the flow,  they must execute the trigger event while belonging to the defined Target Audience Segment and fulfilling other conditions like entry limits (if specified in the Flow). Moreover, the user should not be part of an active trip in the Flow at the time of consideration for entry.
+
+When event-based or custom Segment-based checks define the Target Audience, the segment refreshes once every three hours. As a result, newly added users will only re-enter the Flow if they meet the trigger condition again.
+
+If the Total Trips metric appears too low, consider avoiding event-based or custom segment-based checks to define your Target Audience. Incorporate these checks inside the Flow as the first step after the Entry stage to avoid losing any users.
+
+### Why is my Conversion metric low?
+
+If your Conversion Metrics appear low, it could be because the count of converted trips may be less than the count of users who performed the events you were tracking. Only users who performed the event within the attribution window after engaging with any communication sent from Flows are counted for conversion.
+
+Users who never engaged but performed the goal event and users who performed the goal event after engaging outside the attribution window will not be considered. Therefore, they won't be included in the conversion count, which may cause the metrics to dip.
+
+### Why is my Total Trips metric zero?
+
+The maximum time allowed for a flow to start receiving entries depends on the target audience's definition:
+
+- If the target audience is defined using "All users" or user property checks, the maximum time is 10 minutes.
+- If the target audience is defined using other checks, the maximum time is 60 minutes, and the segment refreshes within 60 mins. Any users not included will join after 3 hours.
+
+Therefore, if the elapsed time since publishing is within these SLAs, wait for the flow to process entries. If the deadline has passed, use the Visualize user trip feature to determine why eligible users have not entered. For more information, refer to [Visualize User Trips](https://help.moengage.com/hc/en-us/articles/15946272903700-Visualize-User-Trips-in-Flows).
+
+## Count Difference in Stats within Flows and between Segmentation and Flows
+
+### Why is my sum of Unique Conversions different from Converted Trips and Conversions?
+
+A Converted Trip is a unique user trip that engaged with a communication from a flow and executed a conversion goal event within the defined attribution window. However, this metric is unique only at the flow level. For example, if a user (A) converts twice in one trip, their converted trip will be 1, but conversions will be 2. For more information, refer to [Conversion Attribution](https://help.moengage.com/hc/en-us/articles/18533818800660).
+
+It's not possible to sum the conversions listed in campaign stages and match them at the flow level because there will be overlaps in attribution. For instance, consider a flow with two push stages, PN1 and PN2, and a *Wait Till* stage for two hours between them. The Flow's attribution window is 36 hours.
+
+John is a user who:
+
+- Enters the flow at 11:30 AM
+- Engages with PN1 at 12:00 PM
+- Does not engage with PN2
+- Converts at 8 PM.
+
+<img alt="Flows_FAQs.png" src="/images/moengage_6448a8.png" />
+
+The conversion metrics for this scenario are as follows:
+
+| Metric | Level (Flow/Campaign) | Count |
+| --- | --- | --- |
+| Converted Trips | Flow | 1 |
+| Conversions | Flow | 1 |
+| Conversions | Push Campaign PN1 | 1 |
+| Conversion Events | Push Campaign PN1 | 1 |
+| Conversions | Push Campaign PN2 | 0 (John did not engage with PN2) |
+| Conversion Events | Push Campaign PN2 | 0 (John did not engage with PN2) |
+
+Jane is a user who:
+
+- Enters the flow at 11:45 AM
+- Receives PN1 and engages with it at 12 PM
+- Receives PN1 and engages with it at 3 PM
+- Converts at 9 PM.
+
+<img alt="Flows_FAQs1.png" src="/images/moengage_fd1b5e.png" />
+
+The conversion metrics for this scenario where both John and Jane are in the flow are as follows:
+
+| Metric | Level (Flow/Campaign) | Count |
+| --- | --- | --- |
+| Converted Trips | Flow | 2 (1 each for John and Jane) |
+| Conversions | Flow | 2 (1 each for John and Jane) |
+| Conversions | Push Campaign PN1 | 2 (1 each for John and Jane, as the conversion has been done within the attribution window of both PN1 and PN2) |
+| Conversion Events | Push Campaign PN1 | 2 (1 each for John and Jane, as the conversion has been done within the attribution window of both PN1 and PN2) |
+| Conversions | Push Campaign PN2 | 1 (only Jane converted for PN2 as she engaged with it while John did not) |
+| Conversion Events | Push Campaign PN2 | 1 (only Jane converted for PN2 as she engaged with it while John did not) |
+
+The sum of Conversions in PN1 and PN2 will be greater than Converted Trips because of the overlap in attribution for Jane.
+
+### Why are my Converted trips stats not matching with the count of users going through the Yes path in the *Has Done Event* checking for my Goal event?
+
+Only users who performed the events within the attribution window after interacting with the communication sent from Flow are counted for the converted trips. Therefore, the number of converted trips would be less than the number of users who performed the events.
+
+The **Has Done** event or the other condition stages look for the criteria being fulfilled during the entire evaluation window rather than the engaged status. This difference in the evaluation criteria is the reason why the numbers may be different.
+
+### Why does my Segmentation and Funnels count differ from my Flow stats count?
+
+Flows statistics display the metrics count at the unique trip level, while segmentation displays numbers at the unique user level. Therefore, if the same users enter a flow twice, the Flows Total Trips will show 2, while querying "*User Entered Flow* in Segmentation for the same flow will show a value of 1.
+
+Also, comparisons between Funnels and Flows numbers, especially Conversions, are not recommended due to the different attribution logic in Flows. In Flows, the attribution window is extended with each Engagement shown by the user. While, in Funnels the attribution window entered is fixed and thus has a defined end time.
+
+So, we would recommend to use Flow-related events in Funnels and Segmentation to make performance comparisons. The Flow-related events include:
+
+- User Entered Flow (use this instead of the Trigger event directly as step 1 in Funnels)
+- Flow Trip Conversion (use this as one of your steps instead of using the Conversion Event directly)
+- User Exited Flow
+
+### Why are total trips in my Event Triggered Flow less than expected?
+
+Users will only enter Flows when they execute the trigger event, match the IF condition defined in the Flow, belong to the defined Target Audience Segment at the moment of execution of the trigger event, and meet other conditions such as entry limits (if defined in the Flow). Additionally, the users should not be part of active trips in the flow at the time of entry.
+
+When the Target Audience is defined using Event-based/Custom Segment-based checks, the segment refreshes once every three hours. Therefore, users who join the audience in the future will only enter the flow if they match the trigger condition.
+
+To avoid losing some users, consider defining the Target Audience without Event-based/Custom Segment-Based checks. Also, incorporate them within your Flows as the first step after the Entry stage.
+
+### User Entered Flow/User Exited Flow is being shown in the Trigger Condition dropdown but why is the campaign created on it not triggering?
+
+We currently do not support these events in Trigger Condition (IF/AND for Smart Trigger campaigns or Entry for Flows).
+
+### Why are the stats shown in Canvas view and Detailed Stats view different when filtered for a specific date?
+
+The Canvas view provides the stats for the users who entered during the filtered time period. While the Detailed stats view provides the stats for the users regardless of their entry.
+
+So Canvas view numbers are to preferred when the goal is to understand the behaviour of users who entered during a specific time period. While the Detailed stats are to be used when the goal is to understand the overall flows performance or to understand the Channel Performance or specific Campaign performance.

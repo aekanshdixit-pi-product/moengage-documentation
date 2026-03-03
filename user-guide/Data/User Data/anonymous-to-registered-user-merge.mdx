@@ -1,0 +1,73 @@
+---
+title: "Anonymous to Registered User Merge"
+sidebarTitle: "Anonymous to Registered User Merge"
+---
+
+All users are identified using a unique attribute such as email, mobile number, custom id, etc. These identifiers are generated when users provide information about themselves, such as when they log in with an email ID, mobile number, or username. In addition, users may visit your app or website using multiple devices, and until the user logs in, we will not know if this user is new or existing.
+
+MoEngage classifies users as:
+
+- **Anonymous User** - A user who hasn’t been identified yet by the website or the app. This could be a user who has been using the app/website but hasn’t logged in or a completely new user who hasn’t signed up.
+- **Registered User** - A user who has signed up or logged in to your website or app.
+
+# Terms to Know
+
+- **MoEngage ID** - MoEngage creates a unique identifier as soon as a user visits your website or app to recognize a user, which is a non-changeable value.
+- **ID** - When a user registers on your app or website (by providing a form of email, phone number, or user id), we recommend you generate a unique identifier for that profile and pass it to MoEngage as an ID. This ID lets you recognize the user across multiple devices and platforms, thus providing a 360° view. This ensures that information about the user is captured correctly even if they uninstall and reinstall the app.
+
+# MoEngage ID and ID - Relationship
+
+- **New User** - When a user opens or visits the app for the first time, neither the brand nor MoEngage has any information about them. MoEngage assigns a MoEngageID to this user and creates an anonymous profile for them. MoEngage records all actions that the user performs.
+- **Sign-up** -If the user proceeds to sign up, they become a registered user or an identified user. The app assigns a unique identifier for each user (using SDK IdentifyUser() function). This information is passed to MoEngage, and this user is now considered a registered user in the MoEngage system.
+- **Registered user who hasn’t signed in initially** - If the user has an account (has a MoEngage ID and an ID) but signs in after performing a series of events, a new MoEngage ID would have been created for them as they hadn’t signed in initially. Once they sign in,  the user profile created with a new MoEngage ID is merged with the existing MoEngage ID.
+
+# User Merge Scenarios
+
+MoEngage enables you to have a single user ID for all your users, even if they are using different devices. The only condition for merging users in MoEngage is that the user has to be signed in on the device. When a user visits your website or app, MoEngage merges the anonymous user profile with the registered user profile once they log in to the system. For more information on enabling user merging, refer to [Enable User Merging](https://help.moengage.com/hc/en-us/articles/36578160215060).
+
+**Scenario 1:** When the user visits your website or app for the first time on a device (Device 1), then they are user called an anonymous user, and a MoEngageID is set as MoEID-1 for that user.  
+If the user logs in, this user is an identified user and an ID called U-1 is set for the user. All events on this device, until the user logs out or uninstalls, are attributed to MoEID-1.
+
+<img alt="UserMerge_Scenario1.png" src="/images/moengage_4a0ad7.png" />
+
+**Scenario 2:** If the same user visits the website/app from another device (Device 2), then this user is still an anonymous user since MoEngage does not know the identity of this user, and a new MoEngageID MoEID2 is created for the user. If the user logs in, the website or app notifies MoEngage that the user ID is U-1. Now, the anonymous user is merged with the already existing registered user.
+
+<img alt="UserMerge_Scenario2.png" src="/images/moengage_12c852.png" />
+
+# Merge Impact on User Attributes
+
+<Info>
+Tracking and subsequent merging of an anonymous user to a registered user is possible only through MoEngage SDK integration. Anonymous to registered user merging is not possible through other data sources.
+</Info>
+
+## Default Merge Behavior
+
+By default, when a user merge occurs, MoEngage prioritizes the data already present in the registered user profile over the incoming anonymous user's data. This means the existing registered user's attribute value is retained, and the anonymous user's value is typically discarded.
+
+The merging of an anonymous user profile into a retained user profile initiates the following system actions and attribute modifications:
+
+- The **First Seen** attribute of the retained user is retained.
+- The values of **LTV**, **No. of Conversion**, and **No. of Sessions** attributes are summed from both the existing and retained profiles, and the result is stored in the retained profile, and the other existing attributes of retained users remain unchanged.
+- Attributes exclusive to the anonymous user are transferred to the retained user if the retained user lacks those attributes.
+- Push reachability is calculated based on the overall devices.
+- If the **Email (Standard)** attribute is copied to the retained user, the associated email suppression attributes (**Hard Bounce**, **Spam**, **Unsubscribed**) are also copied.
+
+## Override Registered Custom User Attributes with the Latest Anonymous User Data
+
+<Info>
+- To enable this feature for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team.
+- This feature applies only to the custom user attributes.
+</Info>
+
+To provide flexibility in managing user data, MoEngage allows you to override selected existing custom user attributes with the latest data captured from an anonymous user session. This feature is particularly useful in scenarios where the most recent information captured before login is more relevant for personalization and campaign targeting.
+
+**Scenario**: A registered user, who is a frequent traveller, browses for flights to Paris anonymously on a travel application. You want to override the **Last Searched Location** custom attribute.
+
+- **Without override**: If the user's registered profile initially had *New York* as their **Last Searched Location** custom attribute, this value (*New York*) persists during the user merge, despite their recent searches.
+- **With override**: When the override feature is enabled, during the user merge, the value from the anonymous profile overrides the **Last Searched Location** attribute in the registered profile. So, the **Last Searched Location** changes from *New York* to *Paris*.
+
+This ensures that the travel application can leverage the user's most recent location interest for targeted offers and personalized content, leading to more relevant and effective campaigns.
+
+# Merge Impact on Events
+
+All the events occurring after the user merge are attributed to the identified/registered user. All events performed before are also attributed to the identified/registered user.

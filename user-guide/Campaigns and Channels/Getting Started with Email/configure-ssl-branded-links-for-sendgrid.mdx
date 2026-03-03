@@ -1,0 +1,109 @@
+---
+title: "Configure SSL Branded Links for SendGrid"
+sidebarTitle: "Configure SSL Branded Links for SendGrid"
+---
+
+# Overview
+
+MoEngage uses SendGrid as the default email sender for all users. All the clickable links in the email are converted to the SendGrid domain for click tracking, but the clicks are ultimately redirected to your website. This means if your users observe the links before clicking them, they will see *sendgrid.com/some-landing-page* rather than *yourdomain.com/some-landing-page.*
+
+To ensure brand consistency and build trust, opt for Link Branding. Link Branding displays your links as yourdomain.com, enhancing brand recognition and improving email deliverability by avoiding "insecure link" warnings from browsers like Chrome and Safari. While not mandatory, setting up Link Branding with SSL is a best practice for email setup. Perform the following steps to set up Link Branding:
+
+1. [Set up and validate Link Branding by adding CNAME records](#h_01HQ0RRJJCSHYMCXEKAWZ84N73).
+2. [Set up SSL on the domain](#h_01HQ0S48XE9WZTX81Q4JESC6X7).
+3. [Verify the SSL setup](#h_01HQ0TVCCWYNH9F806JBNJEHY4).
+4. [Contact the MoEngage team to finalize Link Branding](#h_01HQ0V07BT7W9BX5JX5SHN46P0).
+
+The following sections detail each step.
+
+# Set up Link Branding with CNAMEs
+
+The MoEngage team provides documentation for adding specific DNS records, including CNAME records for Link Branding. After you add these records, your Link Branding is set up. Your DNS records should resemble the following example:
+
+<img alt="Screenshot 2024-03-18 at 9.13.54 AM.png" src="/images/moengage_55130b.png" />
+
+If you stop at this step, your link branding works on HTTP. Make sure to set up SSL to prevent browsers from marking your website as insecure for your users.
+
+The next step is to add SSL for your domain.
+
+# Set up SSL for the Domain
+
+In this step, set up SSL on your domain and also forward the requests coming to this domain to sendgrid.net. Terminate your SSL before forwarding the requests to sendgrid.net. Refer to step no.2 for more information on how to forward the request.
+
+1. Set up SSL for lurl.example.com, as you would for other domains. (Here, lurl.example.com is a placeholder for your domain link.)  
+     
+    <img alt="Screenshot 2024-03-01 at 10.34.10 AM.png" src="/images/moengage_686756.png" />
+2. Forward all the requests coming to ***lurl.example.com*** to *sendgrid.net*. You can forward the request using your own CDN, Proxy, or API Gateway
+
+- - If you want to set this up using CDNs like [CloudFlare](https://docs.sendgrid.com/ui/sending-email/content-delivery-networks/using-cloudflare-as-your-content-delivery-network-cdn), [CloudFront](https://support.sendgrid.com/hc/en-us/articles/4412701748891-How-to-configure-SSL-for-click-tracking-using-CloudFront), [KeyCDN](https://docs.sendgrid.com/ui/sending-email/content-delivery-networks/using-keycdn-as-your-content-delivery-network-cdn), or [Fastly](https://docs.sendgrid.com/ui/sending-email/content-delivery-networks/using-fastly-as-your-content-delivery-network-cdn), refer to their respective documentation for assistance.
+  - If using AzureCDN, put lurl.example.com in the **Origin host header** while configuring your CDN profile.
+  - If you are using a Proxy,  refer to the following link for additional help: \<https://docs.sendgrid.com/ui/account-and-settings/custom-ssl-configurations\>
+  - API Gateway setup differs based on the gateway. Ensure you forward the request to SendGrid.net with the HTTP host header as lurl.example.com
+
+At this point, your DNS records should resemble the following example:
+
+<img alt="Screenshot 2024-03-18 at 9.20.25 AM.png" src="/images/moengage_608818.png" />
+
+While setting up SSL, you will edit the CNAME record for ***lurl.example.com*** and point that to CDN, proxy, or API gateway.
+
+<Info>
+- Do not change the CNAME for *123456.example.com.* It must still point to *sendgrid.net*. (Note: 123456 is an example and may differ for your implementation. Refer to the documentation shared with you for Link Branding implementation.)
+- Do not revalidate the records after configuring SSL. Revalidating breaks Link Branding.
+</Info>
+
+# Verify the SSL Setup
+
+Follow these steps to confirm your SSL setup is correct:
+
+- To verify your forwarding and proxy setup, run a *dig* command in your terminal. This command confirms that the first CNAME resolves at your CDN, not *sendgrid.net*.
+  - On macOS X, the command is: `dig cname mail.domain.com`
+  - On Windows, using the Command Prompt (e.g., cmd.exe), an example command is: `nslookup -q=CNAME example.com`
+- If *sendgrid.net* appears in the answer or authority section of the query, double-check that your CNAME in your DNS points to your CDN, Proxy, or API gateway, not directly to *sendgrid.net*.
+- The MoEngage team provides a testing link. When you click this link, it should direct you to google.com. This final validation confirms that SSL is set up correctly and requests are properly forwarded to *sendgrid.net*.
+
+After successfully setting up SSL, contact the MoEngage team to discuss the next steps.
+
+# Contact the MoEngage Team
+
+After you set up SSL, the MoEngage team performs the final verification steps and enables SSL click tracking on SendGrid. If you are using your own SendGrid, contact your MoEngage Customer Success Manager (CSM) or the Support team for further assistance.
+
+# FAQs and Troubleshooting
+
+### What is link branding?
+
+For more information on Link Branding, refer [here](https://www.twilio.com/en-us/blog/insights/how-to-set-up-ssl-click-tracking). This article explains why link branding is needed, why we must set up SSL, how to forward requests to Sendgrid, and some console commands to test the integration.
+
+### Why is SSL setup needed?
+
+Modern browsers like Chrome display warnings for insecure links on web pages not enabled with HTTPS.For more information, refer [here](https://blog.google/products/chrome/milestone-chrome-security-marking-http-not-secure/).   
+Safari browsers, by default, might not render HTTP pages at all. Therefore, setting up SSL for your domain is recommended when your users click email links. Some MoEngage customers reported page loading issues on HTTP websites. As a solution, MoEngage recommends SSL setup as a best practice for email setup, though it is not a mandatory step. Evaluate the risks of pages not loading versus setting up SSL to make your final decision.
+
+### Do I have to share the SSL certificate with MoEngage?
+
+No. Terminate SSL at your proxy, CDN, or API gateway and forward the request to sendgrid.net. You do not need to share the SSL certificate with MoEngage.
+
+### How do I set up a proxy using Nginx?
+
+After you terminate SSL for lurl.example.com on your load balancer and forward the request to your VM or proxy, using Nginx, you can forward the request to SendGrid with the right host header. You can use the following sample code to set up the Nginx Configuration. Replace *lurl.example.com* with your domain link.
+
+Nginx Conf
+
+```
+server{
+server\_name lurl.example.com
+location / {
+proxy\_pass https://sendgrid.net
+proxy\_set\_header Host lurl.example.com
+}
+}
+```
+
+### 
+
+### Wrong Link Error
+
+Wrong Link Error happens when the forwarded request doesn't have the Host HTTP header as lurl.example.com
+
+If you are using CDN, some CDNs automatically put the Host Header from the original request; in that case, you need not take any action to add this header additionally. In **Azure CDN**, you must configure this by putting lurl.example.com in the **Origin host header** while configuring your CDN.
+
+If you use a proxy, you must explicitly set this Host header to lurl.example.com, as mentioned in the setup instructions.

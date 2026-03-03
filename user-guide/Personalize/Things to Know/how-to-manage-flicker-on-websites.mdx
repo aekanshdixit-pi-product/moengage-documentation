@@ -1,0 +1,110 @@
+---
+title: "How to manage flicker on websites"
+sidebarTitle: "How to manage flicker on websites"
+---
+
+# What is flicker?
+
+A webpage may Flicker when the browser takes too long to load and process changes. In such cases, the browser displays the webpage in its original or control state for a few seconds before meeting the test requirements to apply the changes. This causes the webpage to flicker noticeably while the changes take effect.
+
+For instance, before viewing any new MoEngage content on your application, you may have sometimes observed a brief disruption in the user interface elements caused by a **Flicker**.
+
+# Impact of flicker
+
+Flickers can negatively impact user trust in the following ways:
+
+- **Negative impression**: A webpage that flickers or flashes during content loading may appear unstable or poorly designed. Users may begin to doubt the site's reliability and professionalism.
+- **Slow performance perception**: Flickering may give the impression that a website is sluggish or the content is loading slowly. Users may believe there are problems with the website's content and overall performance. Users may lose trust due to the website's slow behavior and become reluctant to interact with it further.
+- **Unfinished or unreliable information**: When people attempt to read or interact with the content on your application, flickering can convey an impression that the information or functionality is untrustworthy or incomplete. Users may lose faith in the accuracy and validity of the content.
+- **User experience disruption**: Flickering can be annoying and distracting, causing anger and frustration. If users perceive frequent flickering in their browsing experience, they may lose trust in the website's capacity to provide a smooth and enjoyable user experience.
+
+In general, flickering can undermine trust by damaging the perception of professionalism, site reliability, loading speed, and content accuracy. Providing a seamless and flicker-free experience is essential for building trust and ensuring users feel confident in the website and its offerings.
+
+# Factors Leading to flicker
+
+Flicker can be caused by factors such as the installation method of scripts and tag management on the website, the loading method of the A/B testing tool (synchronous VS asynchronous), the size of the SDK, and the number of experiments being implemented.
+
+## Direct Installation vs. Tag Managers
+
+Although Tag managers simplify implementing and deploying JavaScript code, they usually add a layer of JavaScript execution to your website, which may cause some performance overhead. This can impact the page load time and user experience, especially if multiple tags and scripts are involved. To overcome this limitation, you can do the following:
+
+- **Prioritize Execution**
+
+Placing third-party code at the top of the **\<head\>** allows it to be loaded and executed before other scripts and content on the page. This ensures the code to run as early as possible, reducing potential initialization delays.
+
+<Info>
+- MoEngage recommends installing the Web Personalization SDK at the start of the **<head>** element.
+- If the code is added at the end of the webpage in the tag, the browser executes the code only at the end after the webpage content has loaded, leading to flickering.
+</Info>
+
+- **Accelerate Execution and Boost Visibility**
+
+Loading the Personalization SDK early in the page-load process can immediately start tracking all associated functionality.
+
+## Loading the A/B Testing Tool
+
+A/B testing compares two versions of a webpage or app against each other to determine and display the one that performs better. For variations to be applied to your application, the A/B testing script must be loaded and executed in one of the following ways:
+
+- **Synchronous Loading**
+
+In synchronous JavaScript loading, scripts are loaded and executed one line at a time. To move on to the next script or to render the page further, the browser pauses rendering and waits for each script to load and run.
+
+<img alt="synchronous loading.png" src="/images/moengage_7204c6.png" />
+
+- **Asynchronous Loading**
+
+In asynchronous JavaScript loading, scripts are loaded and executed in parallel while the page is still being loaded. The browser does not depend on the timing of when the module should be loaded and continues rendering and loading other resources while the older scripts are being loaded in the background.
+
+<img alt="asynchronous loading.png" src="/images/moengage_7a9858.png" />
+
+Although asynchronous script loading might speed up the overall page loading, it can also result in flickering when the A/B testing script is loaded later. The flickering occurs because the original page is rendered first, and then the variation is applied once the A/B testing script is loaded and executed. This can create a noticeable visual change for the user, which is typically not desired in A/B testing scenarios.
+
+<Info>
+MoEngage recommends synchronous loading of the Web Personalization script to prevent flickering.
+</Info>
+
+## SDK Specifications
+
+### SDK Size
+
+Another factor that significantly impacts page load time is the size of the SDK, which determines how long it will take for the browser to download it. A larger SDK size can increase the time it takes to download and execute the code, which in turn increases the time for the webpage to load the content.
+
+<Info>
+MoEngage Web personalization SDK is just a few kBs which significantly reduces the time to download and execute it.
+</Info>
+
+### Number of Experiments
+
+The time taken to render personalized content for a visitor also depends on the number of experiences that are fetched by the SDK.
+
+MoEngage delivers only active and relevant visitor experiences based on your chosen target criteria. Additionally, MoEngage prioritizes experiences specific to the webpage on which the visitor has landed while fetching the remaining experiences set up on the rest of the website in parallel which considerably speeds up the webpage personalization process.
+
+Apart from this, the experiences delivered to the visitor contain only the changes that are to be updated or added to a specific webpage element compared to the original content. This helps in reducing the payload size thereby reducing the delivery time and faster rendering of the changes.
+
+```
+```
+
+# Minimize Flicker
+
+## Anti-Flicker Snippet
+
+### How does it Work?
+
+The content on a webpage can be hidden using certain settings in the code. This is done to quickly hide and then show the content after making changes.
+
+**Points to Remember**:
+
+- If there are any problems with loading or implementing the code, users may see a blank page or screen for a few seconds or even longer. It's important to ensure that the content appears within a few milliseconds, allowing enough time for the changes to happen.
+- If the changes are not visible within a certain timeframe, usually a few seconds, it's important to display the hidden content and apply the changes later. This prevents users from thinking that the website is slow or not working properly.
+
+[MoEngage Anti-flicker snippet](https://developers.moengage.com/hc/en-us/articles/10645116433812-Web-Personalization-V2#h_01HEAB65699DYBX16E32TFAVPK "https://developers.moengage.com/hc/en-us/articles/10645116433812-Web-Personalization-V2#h_01HEAB65699DYBX16E32TFAVPK") hides the page content for a default duration of 1.5s until the personalized changes are shown to the visitor. In almost all cases, the changes are applied and the page content is made visible to the user within 0.5s. The default duration of 1.5s can also be modified by updating the value of the **MAX\_RENDER\_TIME** variable.
+
+## Switch to Server-Side personalization
+
+Switching to server-side personalizaton can be a viable approach to minimize flickering in A/B testing scenarios. Server-side personalization involves rendering different variations of a webpage on the server before delivering it to the user. This way, the user sees the desired variation from the beginning, eliminating any flicker caused by client-side changes.
+
+Here are some advantages of server-sider personalization for minimizing flicker:
+
+- **Immediate display of variation**: With server-side personalization, the server delivers the fully modified page to the user, ensuring that the desired variation is displayed from the initial load. This eliminates any flicker caused by client-side changes that may occur with other approaches.
+- **No dependency on client-side resources**: In server-side personalization, the variations are generated on the server without requiring additional client-side resources to load or execute JavaScript. This reduces the risk of delays caused by slow-loading scripts or dependencies, further minimizing the potential for flickering.
+- **Improved user experience**: By avoiding flickering, server-side personalization provides a more consistent and seamless user experience. Users see the desired variation right from the start, resulting in improved engagement and satisfaction.
