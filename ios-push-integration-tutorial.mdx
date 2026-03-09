@@ -531,5 +531,28 @@ Adhering to these best practices will ensure a robust and reliable push notifica
           }
         }
         @end
+        
         ```
-    </CodeGroup>
+  </CodeGroup>
+
+<CodeGroup>
+```swift Swift
+import UserNotifications
+import MoEngageRichNotification
+
+class NotificationService: UNNotificationServiceExtension {
+
+    var contentHandler: ((UNNotificationContent) -> Void)?
+    var bestAttemptContent: UNMutableNotificationContent?
+
+    override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
+        self.contentHandler = contentHandler
+        bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
+
+        // Step 1: Tell the MoEngage SDK about the App Group ID
+        MoEngageSDKRichNotification.setAppGroupID("group.com.yourcompany.appname")
+        
+        // Step 2: Pass the notification to the MoEngage SDK
+        MoEngageSDKRichNotification.handle(richNotificationRequest: request, withContentHandler: contentHandler)
+    }
+}
