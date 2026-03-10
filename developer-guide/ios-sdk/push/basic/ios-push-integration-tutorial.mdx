@@ -40,8 +40,8 @@ NSE enables rich push notifications (including images, video, and GIFs) and trac
 
         1. Navigate to **File** \> **Add Package**.
         2. Enter the appropriate repository URL:
-           - `https://github.com/moengage/apple-sdk.git` (for MoEngage-iOS-SDK versions 9.23.0 and above)
-           - `https://github.com/moengage/MoEngage-iOS-SDK.git` (for other versions)
+           - https://github.com/moengage/apple-sdk.git (for MoEngage-iOS-SDK versions 9.23.0 and above)
+           - https://github.com/moengage/MoEngage-iOS-SDK.git (for other versions)
         3. Select the master branch or your desired version.
         4. Click **Add Package**.
         5. Target the installed package to your NSE file.
@@ -52,7 +52,9 @@ NSE enables rich push notifications (including images, video, and GIFs) and trac
         </Warning>
         Add the following to your `Podfile`:
 
-        ```ruby
+        <CodeGroup>
+
+        ```ruby Ruby wrap
         target 'YourApp' do
               use_frameworks!
               pod 'MoEngage-iOS-SDK'
@@ -64,12 +66,18 @@ NSE enables rich push notifications (including images, video, and GIFs) and trac
         end
         ```
 
+        </CodeGroup>
+
         Then run:
 
-        ```shell
+        <CodeGroup>
+
+        ```shellscript Shell wrap
         pod repo update
         pod install
         ```
+
+        </CodeGroup>
       </Tab>
     </Tabs>
   </Step>
@@ -84,77 +92,77 @@ NSE enables rich push notifications (including images, video, and GIFs) and trac
        - **Crucially**, ensure this exact App Group ID is enabled for both the main app and the NSE targets.
     3. **Update AppDelegate**: Modify your `AppDelegate.swift` in your iOS application to set the App Group ID as shown below:
 
-       <Tabs>
-         <Tab title="Swift">
-           ```swift wrap
-           // In your main AppDelegate.swift - didFinishLaunchingWithOptions
-           let sdkConfig = MoEngageSDKConfig(appId: "YOUR_APP_ID", dataCenter: .data_center_01)
-           sdkConfig.appGroupId = "group.com.yourcompany.appname" // Your App Group ID
-           ```
-         </Tab>
-         <Tab title="Objective-C">
-          ```objective-c wrap
-           MoEngageSDKConfig *sdkConfig = [[MoEngageSDKConfig alloc] initWithAppId:@"YOUR_APP_ID" dataCenter:MoEngageDataCenterData_center_01];
-           sdkConfig.appGroupID = @"group.com.yourcompany.appname"; // Add your App Group ID here
-           [[MoEngage sharedInstance] initializeDefaultTestInstance:sdkConfig];
-           ```
-         </Tab>
-       </Tabs>
+       <CodeGroup>
+
+       ```swift Swift wrap
+       // In your main AppDelegate.swift - didFinishLaunchingWithOptions
+       let sdkConfig = MoEngageSDKConfig(appId: "YOUR_APP_ID", dataCenter: .data_center_01)
+       sdkConfig.appGroupId = "group.com.yourcompany.appname" // Your App Group ID
+       ```
+
+       
+       ```objective-c Objective C wrap
+        MoEngageSDKConfig *sdkConfig = [[MoEngageSDKConfig alloc] initWithAppId:@"YOUR_APP_ID" dataCenter:MoEngageDataCenterData_center_01];
+        sdkConfig.appGroupID = @"group.com.yourcompany.appname"; // Add your App Group ID here
+        [[MoEngage sharedInstance] initializeDefaultTestInstance:sdkConfig];
+       ```
+
+       </CodeGroup>
   </Step>
   <Step title="Configure the NSE Code">
     Replace the entire content of the generated `NotificationService.swift` file with the following:
 
-    <Tabs>
-      <Tab title="Swift">
-        ```swift wrap
-        import UserNotifications
-        import MoEngageRichNotification
-            class NotificationService: UNNotificationServiceExtension {
-        
-            var contentHandler: ((UNNotificationContent) -> Void)?
-            var bestAttemptContent: UNMutableNotificationContent?
-        
-            override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
-                self.contentHandler = contentHandler
-                bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
-        
-               //Tell the MoEngage SDK about the App Group ID
-                MoEngageSDKRichNotification.setAppGroupID("group.com.yourcompany.appname")
-                
-                // Step 2: Pass the notification to the MoEngage SDK
-                // The SDK will download rich media and track the impression before calling your completion handler
-                MoEngageSDKRichNotification.handle(richNotificationRequest: request, withContentHandler: contentHandler)
-            }
+    <CodeGroup>
+
+    ```swift Swift wrap
+    import UserNotifications
+    import MoEngageRichNotification
+        class NotificationService: UNNotificationServiceExtension {
+    
+        var contentHandler: ((UNNotificationContent) -> Void)?
+        var bestAttemptContent: UNMutableNotificationContent?
+    
+        override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
+            self.contentHandler = contentHandler
+            bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
+    
+           //Tell the MoEngage SDK about the App Group ID
+            MoEngageSDKRichNotification.setAppGroupID("group.com.yourcompany.appname")
+            
+            // Step 2: Pass the notification to the MoEngage SDK
+            // The SDK will download rich media and track the impression before calling your completion handler
+            MoEngageSDKRichNotification.handle(richNotificationRequest: request, withContentHandler: contentHandler)
         }
-        ```
-      </Tab>
-      <Tab title="Objective-C">
-        ```objective-c wrap
-        #import <UserNotifications/UserNotifications.h>
-        @import  MoEngageRichNotification;
-        
-        @interface NotificationService ()
-        @property (nonatomic, strong) void (^contentHandler)(UNNotificationContent *contentToDeliver);
-        @property (nonatomic, strong) UNMutableNotificationContent *bestAttemptContent;
-        @end
-        
-        @implementation NotificationService
-        
-        - (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler {
-          
-          @try {
-            self.contentHandler = contentHandler;
-            self.bestAttemptContent = [request.content mutableCopy];
-            [MoEngageSDKRichNotification setAppGroupID:@"group.com.yourcompany.appname"];
-            [MoEngageSDKRichNotification handleWithRichNotificationRequest: request withContentHandler:contentHandler];
-          } @catch (NSException *exception) {
-            NSLog(@"MoEngage : exception : %@",exception);
-          }
-        }
-        @end
-        ```
-      </Tab>
-    </Tabs>
+    }
+    ```
+
+    
+    ```objective-c Objective C wrap
+    #import <UserNotifications/UserNotifications.h>
+    @import  MoEngageRichNotification;
+    
+    @interface NotificationService ()
+    @property (nonatomic, strong) void (^contentHandler)(UNNotificationContent *contentToDeliver);
+    @property (nonatomic, strong) UNMutableNotificationContent *bestAttemptContent;
+    @end
+    
+    @implementation NotificationService
+    
+    - (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler {
+      
+      @try {
+        self.contentHandler = contentHandler;
+        self.bestAttemptContent = [request.content mutableCopy];
+        [MoEngageSDKRichNotification setAppGroupID:@"group.com.yourcompany.appname"];
+        [MoEngageSDKRichNotification handleWithRichNotificationRequest: request withContentHandler:contentHandler];
+      } @catch (NSException *exception) {
+        NSLog(@"MoEngage : exception : %@",exception);
+      }
+    }
+    @end
+    ```
+
+    </CodeGroup>
   </Step>
 </Steps>
 
@@ -172,82 +180,82 @@ To register for remote notifications at launch, call exactly one of the followin
 For more information, refer to [iOS Push Permission and Reachability](https://help.moengage.com/hc/en-us/articles/22865898059668-iOS-Push-Permission-and-Reachability#h_01HBT39SSW9ZXJ705WSD2DKYPP).
 
 <Tabs>
-  <Tab title="Provisional + Standard Push">
-    <Tabs>
-      <Tab title="Swift">
-        ```swift wrap
-        import UIKit
-        import MoEngageSDK
-        import UserNotifications
-        @main
-        class AppDelegate: UIResponder, UIApplicationDelegate {
-            func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        
-        // method to use provisional push            
-        MoEngageSDKMessaging.sharedInstance.registerForRemoteProvisionalNotification()
-        return true
-            }
+  <Tab title="Provisional + Standard Push Notifications">
+    <CodeGroup>
+
+    ```swift Swift wrap
+    import UIKit
+    import MoEngageSDK
+    import UserNotifications
+    @main
+    class AppDelegate: UIResponder, UIApplicationDelegate {
+        func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) - Bool {
+     
+    // method to use provisional push           
+    MoEngageSDKMessaging.sharedInstance.registerForRemoteProvisionalNotification()
+    return true
         }
-        
-        // To display standard notifications later in the user's journey, call the following method after the app starts.
-        MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification()
-        ```
-      </Tab>
-      <Tab title="Objective-C">
-        ```objective-c wrap
-        #import AppDelegate.h
-        #import UIKiUIKit.h
-        #import MoEngageSDK/MoEngageSDKMessaging.h
-        @implementation AppDelegate
-        - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-        
-        // method to use provisional push
-        [[MoEngageSDKMessaging sharedInstance] registerForRemoteProvisionalNotificationWithCategories:nil andUserNotificationCenterDelegate:nil];
-        
-        return YES;
-        }
-        @end
-        
-        // To display standard notifications later in the user's journey, call the following method after the app starts.
-        [[MoEngageSDKMessaging sharedInstance] registerForRemoteNotificationWithCategories:nil andUserNotificationCenterDelegate:nil]; 
-        ```
-      </Tab>
-    </Tabs>
+    }
+     
+    // To display standard notifications later in the user's journey, call the following method after the app starts.
+    MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification()
+    ```
+
+    
+    ```objective-c Objective C wrap
+    #import AppDelegate.h
+    #import UIKiUIKit.h
+    #import MoEngageSDK/MoEngageSDKMessaging.h
+    @implementation AppDelegate
+    - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+     
+    // method to use provisional push
+    [[MoEngageSDKMessaging sharedInstance] registerForRemoteProvisionalNotificationWithCategories:nil andUserNotificationCenterDelegate:nil];
+     
+    return YES;
+    }
+    @end
+     
+    // To display standard notifications later in the user's journey, call the following method after the app starts.
+    [[MoEngageSDKMessaging sharedInstance] registerForRemoteNotificationWithCategories:nil andUserNotificationCenterDelegate:nil];
+    ```
+
+    </CodeGroup>
   </Tab>
   <Tab title="Standard Push Only">
     To register for standard push notifications, use the following MoEngage SDK code:
 
-    <Tabs>
-      <Tab title="Swift">
-        ```swift wrap
-        import UIKit
-        import MoEngageSDK
-        import UserNotifications
-        @main
-        class AppDelegate: UIResponder, UIApplicationDelegate {
-        func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-              MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification()
-              return true
-            }
+    <CodeGroup>
+
+    ```swift Swift wrap
+    import UIKit
+    import MoEngageSDK
+    import UserNotifications
+    @main
+    class AppDelegate: UIResponder, UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+          MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification()
+          return true
         }
-        ```
-      </Tab>
-      <Tab title="Objective-C">
-        ```objective-c wrap
-        #import AppDelegate.h
-        #import UIKiUIKit.h
-        #import MoEngageSDK/MoEngageSDKMessaging.h
-        @implementation AppDelegate
-        - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-            
-           // Override point for customization after application launch.
-           [[MoEngageSDKMessaging sharedInstance] registerForRemoteNotificationWithCategories:nil andUserNotificationCenterDelegate:nil];
-           return YES;
-        }
-        @end
-        ```
-      </Tab>
-    </Tabs>
+    }
+    ```
+
+    
+    ```objective-c Objective C wrap
+    #import AppDelegate.h
+    #import UIKiUIKit.h
+    #import MoEngageSDK/MoEngageSDKMessaging.h
+    @implementation AppDelegate
+    - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+        
+       // Override point for customization after application launch.
+       [[MoEngageSDKMessaging sharedInstance] registerForRemoteNotificationWithCategories:nil andUserNotificationCenterDelegate:nil];
+       return YES;
+    }
+    @end
+    ```
+
+    </CodeGroup>
   </Tab>
 </Tabs>
 
@@ -264,120 +272,129 @@ This manual approach requires you to forward the push payload directly to our SD
 
   1. **Disable Swizzling**: Add the following entry to your `Info.plist` file:
 
+     <CodeGroup>
+
+     ```xml Info.plist wrap
+     <key>MoEngageAppDelegateProxyEnabled</key>
+     false
+     ```
+
+     </CodeGroup>
+
      ```xml
      <key>MoEngageAppDelegateProxyEnabled</key>
      false
      ```
   2. **Manual forwarding in AppDelegate**: After disabling swizzling, implement the following code within your `AppDelegate.swift` file to manually pass notification events to the MoEngage SDK:
 
-  <Tabs>
-    <Tab title="Swift">
-      ```swift wrap
-      import UIKit
-      import MoEngageSDK
-      import UserNotifications
-      class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
-          // Set up MoEngage SDK and notification delegates when the app launches.
-          func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-              // Set the UNUserNotificationCenter delegate to enable handling notification-related events.
-              UNUserNotificationCenter.current().delegate = self
-      
-              // Register for push notifications. This prompts the user for permission and gets the device token from Apple.
-              // Below code you can ignore if you don't want prompt on app launch and want to use provisional push in starting of app and further at some instance in app you can prompt for permission.
-                MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification(withCategories: nil, andUserNotificationCenterDelegate: self)
-      
-                  
-              // This is for requesting provisional authorization for notifications.
-              // Use only if MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification() is not used on app launch
-              MoEngageSDKMessaging.sharedInstance.registerForRemoteProvisionalNotification(withCategories: nil,
-              andUserNotificationCenterDelegate: self)
-              
-              return true
-          }
-      
-                  
-          // Called after a successful push token registration with Apple. Pass the token to MoEngage.
-          func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-              // Essential: Pass the device token to MoEngage to enable sending push campaigns.
-              MoEngageSDKMessaging.sharedInstance.setPushToken(deviceToken)
-          }
-      
-                  
-          // Handles user interaction with a notification (e.g., a tap).
-          func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-              // Forward the notification response to MoEngage for automatic click tracking, deep linking, and rich landing page handling.
-              MoEngageSDKMessaging.sharedInstance.userNotificationCenter(center, didReceive: response)
-      
-              completionHandler()
-          }
-      
-          // Handles notifications that are received while the app is in the foreground.
-          func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-              // Decide how the notification should be presented in the foreground (e.g., with a banner and sound).
-              if #available(iOS 14.0, *) {
-                  completionHandler([.sound, .badge, .banner, .list])
-              } else {
-                  completionHandler([.alert, .sound, .badge])
-              }
-      
-          }
-      
-        // This method is called if push token registration fails.
-          func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-            
-             // Forward the registration failure to the MoEngage SDK. This helps in tracking and diagnosing push delivery issues.
-             MoEngageSDKMessaging.sharedInstance.didFailToRegisterForPush()
-        }
-      ```
-    </Tab>
-    <Tab title="Objective-C">
-      ```objective-c wrap
-      #import <UIKit/UIKit.h>
-      #import <MoEngageSDK/MoEngageSDK.h>
-      #import <UserNotifications/UserNotifications.h>
-      
-      @interface AppDelegate : UIResponder <UIApplicationDelegate, UNUserNotificationCenterDelegate>
-      @end
-      @implementation AppDelegate
-      - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-      
-      // Other app setup code...
-      [UNUserNotificationCenter currentNotificationCenter].delegate = self;
-      [[MoEngageSDKMessaging sharedInstance] registerForRemoteNotificationWithCategories:nil andUserNotificationCenterDelegate:self];
-      return YES;
-      }
-      
-      // Forward the device token
-      - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
-      [[MoEngageSDKMessaging sharedInstance] setPushToken:deviceToken];
-      
-      // Forward to other SDKs if necessary
-      }
-      
-      // Forward notification clicks/responses
-      
-      - (void)userNotificationCenter:(UNUserNotificationCenter *)center
-      didReceiveNotificationResponse:(UNNotificationResponse *)response
-      withCompletionHandler:(void (^)(void))completionHandler {
-      [[MoEngageSDKMessaging sharedInstance] userNotificationCenter:center didReceive:response];
-      
-      // Forward to other SDKs if necessary
-      completionHandler();
-      }
-      
-      - (void)userNotificationCenter:(UNUserNotificationCenter *)center
-      willPresentNotification:(UNNotification *)notification
-      withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
-       if (@available(iOS 14.0, *)) {
-          completionHandler(UNNotificationPresentationOptionBanner | UNNotificationPresentationOptionList | UNNotificationPresentationOptionSound | UNNotificationPresentationOptionBadge);
-        } else {
-          completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionBadge | UNNotificationPresentationOptionSound);
-        }
-      }
-      @end
-      ```
-    </Tab>
-  </Tabs>
+     <CodeGroup>
+
+     ```swift Swift wrap
+     import UIKit
+     import MoEngageSDK
+     import UserNotifications
+     class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+         // Set up MoEngage SDK and notification delegates when the app launches.
+         func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+             // Set the UNUserNotificationCenter delegate to enable handling notification-related events.
+             UNUserNotificationCenter.current().delegate = self
+     
+             // Register for push notifications. This prompts the user for permission and gets the device token from Apple.
+             // Below code you can ignore if you don't want prompt on app launch and want to use provisional push in starting of app and further at some instance in app you can prompt for permission.
+               MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification(withCategories: nil, andUserNotificationCenterDelegate: self)
+     
+                 
+             // This is for requesting provisional authorization for notifications.
+             // Use only if MoEngageSDKMessaging.sharedInstance.registerForRemoteNotification() is not used on app launch
+             MoEngageSDKMessaging.sharedInstance.registerForRemoteProvisionalNotification(withCategories: nil,
+             andUserNotificationCenterDelegate: self)
+             
+             return true
+         }
+     
+                 
+         // Called after a successful push token registration with Apple. Pass the token to MoEngage.
+         func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+             // Essential: Pass the device token to MoEngage to enable sending push campaigns.
+             MoEngageSDKMessaging.sharedInstance.setPushToken(deviceToken)
+         }
+     
+                 
+         // Handles user interaction with a notification (e.g., a tap).
+         func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+             // Forward the notification response to MoEngage for automatic click tracking, deep linking, and rich landing page handling.
+             MoEngageSDKMessaging.sharedInstance.userNotificationCenter(center, didReceive: response)
+     
+             completionHandler()
+         }
+     
+         // Handles notifications that are received while the app is in the foreground.
+         func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+             // Decide how the notification should be presented in the foreground (e.g., with a banner and sound).
+             if #available(iOS 14.0, *) {
+                 completionHandler([.sound, .badge, .banner, .list])
+             } else {
+                 completionHandler([.alert, .sound, .badge])
+             }
+     
+         }
+     
+       // This method is called if push token registration fails.
+         func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+           
+            // Forward the registration failure to the MoEngage SDK. This helps in tracking and diagnosing push delivery issues.
+            MoEngageSDKMessaging.sharedInstance.didFailToRegisterForPush()
+       }
+     ```
+
+     
+     ```objective-c Objective C wrap
+     #import <UIKit/UIKit.h>
+     #import <MoEngageSDK/MoEngageSDK.h>
+     #import <UserNotifications/UserNotifications.h>
+     
+     @interface AppDelegate : UIResponder <UIApplicationDelegate, UNUserNotificationCenterDelegate>
+     @end
+     @implementation AppDelegate
+     - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+     
+     // Other app setup code...
+     [UNUserNotificationCenter currentNotificationCenter].delegate = self;
+     [[MoEngageSDKMessaging sharedInstance] registerForRemoteNotificationWithCategories:nil andUserNotificationCenterDelegate:self];
+     return YES;
+     }
+     
+     // Forward the device token
+     - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+     [[MoEngageSDKMessaging sharedInstance] setPushToken:deviceToken];
+     
+     // Forward to other SDKs if necessary
+     }
+     
+     // Forward notification clicks/responses
+     
+     - (void)userNotificationCenter:(UNUserNotificationCenter *)center
+     didReceiveNotificationResponse:(UNNotificationResponse *)response
+     withCompletionHandler:(void (^)(void))completionHandler {
+     [[MoEngageSDKMessaging sharedInstance] userNotificationCenter:center didReceive:response];
+     
+     // Forward to other SDKs if necessary
+     completionHandler();
+     }
+     
+     - (void)userNotificationCenter:(UNUserNotificationCenter *)center
+     willPresentNotification:(UNNotification *)notification
+     withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
+      if (@available(iOS 14.0, *)) {
+         completionHandler(UNNotificationPresentationOptionBanner | UNNotificationPresentationOptionList | UNNotificationPresentationOptionSound | UNNotificationPresentationOptionBadge);
+       } else {
+         completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionBadge | UNNotificationPresentationOptionSound);
+       }
+     }
+     @end
+     ```
+
+     </CodeGroup>
 </Accordion>
 
 ## Step 3: Validate Notifications
@@ -435,23 +452,23 @@ Embed buttons within a notification to allow users to perform tasks directly fro
 
 With `disableBadgeReset(true)` enabled, the SDK won't reset the badge to 0 on app launch. Instead, clicking a notification decrements the badge by 1, maintaining accurate counts when multiple notifications are present. Add the code snippet below post SDK initialization in `AppDelegate.swift` file:
 
-<Tabs>
-  <Tab title="Swift">
-    ```swift wrap
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        
-        MoEngageSDKMessaging.sharedInstance.disableBadgeReset(true)
+<CodeGroup>
+
+```swift Swift wrap
+func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     
-        return true
-    }
-    ```
-  </Tab>
-  <Tab title="Objective-C">
-    ```objective-c wrap
-    [[MoEngageSDKMessaging sharedInstance] disableBadgeReset:YES];
-    ```
-  </Tab>
-</Tabs>
+    MoEngageSDKMessaging.sharedInstance.disableBadgeReset(true)
+
+    return true
+}
+```
+
+
+```objective-c Objective C wrap
+[[MoEngageSDKMessaging sharedInstance] disableBadgeReset:YES];
+```
+
+</CodeGroup>
 
 ## Best Practices
 
