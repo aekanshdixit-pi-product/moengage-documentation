@@ -1,7 +1,6 @@
 ---
-title: 'Custom Proxy Domain - Web'
+title: "Custom Proxy Domain - Web"
 ---
-
 
 ## Introduction
 
@@ -10,7 +9,6 @@ In today’s digital landscape, a significant portion of online users employ ad 
 However, the prevalent adoption of ad blockers presents a significant obstacle for B2C brands that depend on precise user data. Ad blockers frequently employ domain blacklisting to detect and block communication with domains known for tracking. Consequently, this leads to the collection of incomplete or unreliable data.
 
 To overcome these limitations, MoEngage suggests using **Custom Proxy Domains**. This technical documentation details an integration method that routes SDK traffic through your own subdomain, bypassing blacklist filters while maximizing data fidelity.
-
 
 ## Implementation Guide
 
@@ -25,81 +23,78 @@ To overcome these limitations, MoEngage suggests using **Custom Proxy Domains**.
 The MoEngage Web SDK uses an internal interceptor and hostname replacement to dynamically rewrite outgoing requests. Instead of reaching out to standard MoEngage endpoints, the SDK prefixes your custom subdomain to all network calls, including API data, scripts, and campaign assets (images).
 
 The process involves:
-* Updating the SDK initialization script on your website.
-* Updating the Service Worker (`serviceworker.js`) file.
-* **Optional:** Implementing the Web Personalization snippet.
 
+- Updating the SDK initialization script on your website.
+- Updating the Service Worker (`serviceworker.js`) file.
+- **Optional:** Implementing the Web Personalization snippet.
 
 ## Updating the SDK Initialization
 
 When implementing the initialization code, replace the standard script with the snippet below. You must define your `moeDataCenter`, `moeAppID`, and `customProxyDomain`. This script dynamically constructs the `scriptHost` to ensure the SDK itself is loaded from your proxied CDN.
 
-<Tabs>
-  <Tab title="JavaScript">
-    ```javascript wrap
-    <script type="text/javascript">
-    var moeDataCenter = "{DC}"; // Replace "DC" with the actual Data center value (e.g., dc_1)
-    var moeAppID = "{WorkspaceID}"; // Replace with your Workspace ID
-    var sdkVersion = "2"; // Use format x (major version)
-    var customProxyDomain = "yoursubdomain.yourdomain.com"; // Your configured subdomain hostname
-    var scriptHost = "https://cdn." + customProxyDomain; 
+<CodeGroup>
 
-    !function(e,n,i,t,a,r,o,d){if(!moeDataCenter||!moeDataCenter.match(/^dc_[0-9]+$/gm))return console.error("Data center has not been passed correctly. Please follow the SDK installation instruction carefully.");var s=e[a]=e[a]||[];if(s.invoked=0,s.initialised>0||s.invoked>0)return console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1;e.moengage_object=a;var l={},g=function n(i){return function(){for(var n=arguments.length,t=Array(n),a=0;a<n;a++)t[a]=arguments[a];(e.moengage_q=e.moengage_q||[]).push({f:i,a:t})}},u=["track_event","add_user_attribute","add_first_name","add_last_name","add_email","add_mobile","add_user_name","add_gender","add_birthday","destroy_session","add_unique_user_id","update_unique_user_id","moe_events","call_web_push","track","location_type_attribute","identifyUser","getUserIdentities"],m={onsite:["getData","registerCallback","getSelfHandledOSM"]};for(var c in u)l[u[c]]=g(u[c]);for(var v in m)for(var f in m[v])null==l[v]&&(l[v]={}),l[v][m[v][f]]=g(v+"."+m[v][f]);r=n.createElement(i),o=n.getElementsByTagName("head")[0],r.async=1,r.src=t,o.appendChild(r),e.moe=e.moe||function(){return(s.invoked=s.invoked+1,s.invoked>1)?(console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1):(d=arguments.length<=0?void 0:arguments[0],l)},r.addEventListener("load",function(){if(d)return e[a]=e.moe(d),e[a].initialised=e[a].initialised+1||1,!0}),r.addEventListener("error",function(){return console.error("Moengage Web SDK loading failed."),!1})}(window,document,"script",scriptHost + "/release/"+moeDataCenter+"/versions/"+sdkVersion+"/moe_webSdk.min.latest.js","Moengage");
+```javascript JavaScript lines wrap
+<script type="text/javascript">
+var moeDataCenter = "{DC}"; // Replace "DC" with the actual Data center value (e.g., dc_1)
+var moeAppID = "{WorkspaceID}"; // Replace with your Workspace ID
+var sdkVersion = "2"; // Use format x (major version)
+var customProxyDomain = "yoursubdomain.yourdomain.com"; // Your configured subdomain hostname
+var scriptHost = "https://cdn." + customProxyDomain; 
 
-    Moengage = moe({
-      app_id: moeAppID,
-      env: 'LIVE',
-      logLevel: 0,
-      customProxyDomain: customProxyDomain
-    });
-    </script>
-    ```
-  </Tab>
-</Tabs>
+!function(e,n,i,t,a,r,o,d){if(!moeDataCenter||!moeDataCenter.match(/^dc_[0-9]+$/gm))return console.error("Data center has not been passed correctly. Please follow the SDK installation instruction carefully.");var s=e[a]=e[a]||[];if(s.invoked=0,s.initialised>0||s.invoked>0)return console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1;e.moengage_object=a;var l={},g=function n(i){return function(){for(var n=arguments.length,t=Array(n),a=0;a<n;a++)t[a]=arguments[a];(e.moengage_q=e.moengage_q||[]).push({f:i,a:t})}},u=["track_event","add_user_attribute","add_first_name","add_last_name","add_email","add_mobile","add_user_name","add_gender","add_birthday","destroy_session","add_unique_user_id","update_unique_user_id","moe_events","call_web_push","track","location_type_attribute","identifyUser","getUserIdentities"],m={onsite:["getData","registerCallback","getSelfHandledOSM"]};for(var c in u)l[u[c]]=g(u[c]);for(var v in m)for(var f in m[v])null==l[v]&&(l[v]={}),l[v][m[v][f]]=g(v+"."+m[v][f]);r=n.createElement(i),o=n.getElementsByTagName("head")[0],r.async=1,r.src=t,o.appendChild(r),e.moe=e.moe||function(){return(s.invoked=s.invoked+1,s.invoked>1)?(console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1):(d=arguments.length<=0?void 0:arguments[0],l)},r.addEventListener("load",function(){if(d)return e[a]=e.moe(d),e[a].initialised=e[a].initialised+1||1,!0}),r.addEventListener("error",function(){return console.error("Moengage Web SDK loading failed."),!1})}(window,document,"script",scriptHost + "/release/"+moeDataCenter+"/versions/"+sdkVersion+"/moe_webSdk.min.latest.js","Moengage");
 
+Moengage = moe({
+  app_id: moeAppID,
+  env: 'LIVE',
+  logLevel: 0,
+  customProxyDomain: customProxyDomain
+});
+</script>
+```
+
+</CodeGroup>
 
 ## Updating the Service Worker (SW)
 
 If you are using Push Notifications or other background features, you must also update the `serviceworker.js` (or your custom service worker file) to include the proxy domain.
 
-<Tabs>
-  <Tab title="Service Worker">
-    ```javascript wrap
-    // In your serviceworker.js file
-    // Replace yoursubdomain.yourdomain.com with your customProxyDomain
-    // Replace your_data_center with your actual data center (e.g., dc_1)
-    importScripts("[https://cdn.yoursubdomain.yourdomain.com/release/your_data_center/versions/2/serviceworker_cdn.min.latest.js](https://cdn.yoursubdomain.yourdomain.com/release/your_data_center/versions/2/serviceworker_cdn.min.latest.js)");
-    ```
-  </Tab>
-</Tabs>
+<CodeGroup>
 
+```javascript Service Worker lines wrap
+// In your serviceworker.js file
+// Replace yoursubdomain.yourdomain.com with your customProxyDomain
+// Replace your_data_center with your actual data center (e.g., dc_1)
+importScripts("[https://cdn.yoursubdomain.yourdomain.com/release/your_data_center/versions/2/serviceworker_cdn.min.latest.js](https://cdn.yoursubdomain.yourdomain.com/release/your_data_center/versions/2/serviceworker_cdn.min.latest.js)");
+```
+
+</CodeGroup>
 
 ## Web Personalization Integration
 
 If your account uses Web Personalization, you must add the following tags to the top of the `<head>` section of your HTML file. This ensures that personalization scripts and campaign assets are pre-fetched and loaded via your custom proxy domain.
 
-<Tabs>
-  <Tab title="HTML Header">
-    ```html wrap
-    <link rel="preconnect" href="[https://cdn.yoursubdomain.yourdomain.com/](https://cdn.yoursubdomain.yourdomain.com/)" crossorigin />
-    <link rel="dns-prefetch" href="[https://cdn.yoursubdomain.yourdomain.com/](https://cdn.yoursubdomain.yourdomain.com/)" />
-    <link rel="preconnect" href="[https://sdk-0x.yoursubdomain.yourdomain.com/](https://sdk-0x.yoursubdomain.yourdomain.com/)" crossorigin />
-    <link rel="dns-prefetch" href="[https://sdk-0x.yoursubdomain.yourdomain.com/](https://sdk-0x.yoursubdomain.yourdomain.com/)" />
-    <script src="[https://cdn.yoursubdomain.yourdomain.com/release/your_data_center/versions/2/moe_webSdk_webp.min.latest.js?app_id=YOUR_WORKSPACE_ID&customProxyDomain=yoursubdomain.yourdomain.com](https://cdn.yoursubdomain.yourdomain.com/release/your_data_center/versions/2/moe_webSdk_webp.min.latest.js?app_id=YOUR_WORKSPACE_ID&customProxyDomain=yoursubdomain.yourdomain.com)"></script>
-    ```
-  </Tab>
-</Tabs>
+<CodeGroup>
 
+```html HTML Header lines wrap
+<link rel="preconnect" href="[https://cdn.yoursubdomain.yourdomain.com/](https://cdn.yoursubdomain.yourdomain.com/)" crossorigin />
+<link rel="dns-prefetch" href="[https://cdn.yoursubdomain.yourdomain.com/](https://cdn.yoursubdomain.yourdomain.com/)" />
+<link rel="preconnect" href="[https://sdk-0x.yoursubdomain.yourdomain.com/](https://sdk-0x.yoursubdomain.yourdomain.com/)" crossorigin />
+<link rel="dns-prefetch" href="[https://sdk-0x.yoursubdomain.yourdomain.com/](https://sdk-0x.yoursubdomain.yourdomain.com/)" />
+<script src="[https://cdn.yoursubdomain.yourdomain.com/release/your_data_center/versions/2/moe_webSdk_webp.min.latest.js?app_id=YOUR_WORKSPACE_ID&customProxyDomain=yoursubdomain.yourdomain.com](https://cdn.yoursubdomain.yourdomain.com/release/your_data_center/versions/2/moe_webSdk_webp.min.latest.js?app_id=YOUR_WORKSPACE_ID&customProxyDomain=yoursubdomain.yourdomain.com)"></script>
+```
+
+</CodeGroup>
 
 ## Verifying the Interceptor
 
 Once integrated, the SDK's internal interceptor will automatically map requests as follows:
 
-| Original Endpoint | Proxied Endpoint |
-| :--- | :--- |
-| `sdk-0x.moengage.com` | `sdk-0x.yoursubdomain.yourdomain.com` |
-| `cdn.moengage.com` | `cdn.yoursubdomain.yourdomain.com` |
-| `image.moengage.com` | `image.yoursubdomain.yourdomain.com` |
+| Original Endpoint      | Proxied Endpoint                       |
+| :--------------------- | :------------------------------------- |
+| `sdk-0x.moengage.com`  | `sdk-0x.yoursubdomain.yourdomain.com`  |
+| `cdn.moengage.com`     | `cdn.yoursubdomain.yourdomain.com`     |
+| `image.moengage.com`   | `image.yoursubdomain.yourdomain.com`   |
 | `app-cdn.moengage.com` | `app-cdn.yoursubdomain.yourdomain.com` |
 
 <Tip>
