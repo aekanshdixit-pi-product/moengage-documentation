@@ -2,7 +2,7 @@
 title: "Push templates"
 ---
 
-Notification Content Extension allows you to customize the appearance of the notification in expanded mode.For info on how to create campaigns with templates in the dashboard refer to [this](https://help.moengage.com/hc/en-us/articles/4415622460948-Push-Templates) link.
+Notification Content Extension allows you to customize the appearance of the notification in expanded mode. For info on how to create campaigns with templates in the dashboard refer to [this](https://help.moengage.com/hc/en-us/articles/4415622460948-Push-Templates) link.
 
 <img
   src="/images/pushtemp1.gif"
@@ -97,17 +97,17 @@ To integrate via SPM, use the  GitHub url https://github.com/moengage/apple-sdk.
   CocoaPods is being deprecated. MoEngage recommends using Swift Package Manager for all new integrations. For more info on CocoaPods, refer to [CocoaPods Integration Guide](/developer-guide/ios-sdk/sdk-integration/basic/integration-through-cocoa-pods).
 </Info>
 
-For integrating through CocoaPod, include **MoEngageRichNotification** pod for your Notification Content Extension as shown below, and run the pod update / install command :
+For integrating through CocoaPod, include **MoEngageRichNotification** pod for your Notification Content Extension as shown below, and run the pod update / install command:
 
-<Tabs>
-  <Tab title="Ruby">
-    ```ruby wrap
-    target "NotificationContent" do
-    	pod 'MoEngage-iOS-SDK/RichNotification',
-    end
-    ```
-  </Tab>
-</Tabs>
+<CodeGroup>
+
+```ruby Ruby wrap
+target "NotificationContent" do
+	pod 'MoEngage-iOS-SDK/RichNotification',
+end
+```
+
+</CodeGroup>
 
 <Info>
   **Manual Integration**
@@ -118,59 +118,144 @@ For integrating through CocoaPod, include **MoEngageRichNotification** pod for y
 
 ## 7. Code Changes in Content Extension:
 
-<Tabs>
-  <Tab title="Swift">
-    ```swift wrap
-    import UIKit
-    import UserNotifications
-    import UserNotificationsUI
-    import MoEngageRichNotification
-      
-    class NotificationViewController: UIViewController, UNNotificationContentExtension {
-        override func viewDidLoad() {
-            super.viewDidLoad()
-            // Set App Group ID
-            MoEngageSDKRichNotification.setAppGroupID("Your App Group ID")
-        }
-      
-        
-        func didReceive(_ notification: UNNotification) {
-            // Method to add template to UI
-            MoEngageSDKRichNotification.addPushTemplate(toController: self, withNotification: notification)
-        }
-    }
-    ```
-  </Tab>
-  <Tab title="Objective-C">
-    ```objectivec wrap
-    #import "NotificationViewController.h"
-    #import <UserNotifications/UserNotifications.h>
-    #import <UserNotificationsUI/UserNotificationsUI.h>
-    @import MoEngageRichNotification;
-    
-    @interface NotificationViewController () <UNNotificationContentExtension>
-    
-    @end
-    
-    @implementation NotificationViewController
-    
-    - (void)viewDidLoad {
-        [super viewDidLoad];
+<CodeGroup>
+
+```swift Swift wrap
+import UIKit
+import UserNotifications
+import UserNotificationsUI
+import MoEngageRichNotification
+  
+class NotificationViewController: UIViewController, UNNotificationContentExtension {
+    override func viewDidLoad() {
+        super.viewDidLoad()
         // Set App Group ID
-        [MoEngageSDKRichNotification setAppGroupID:@"Your App Group ID"];
+        MoEngageSDKRichNotification.setAppGroupID("Your App Group ID")
     }
+  
     
-    - (void)didReceiveNotification:(UNNotification *)notification {
+    func didReceive(_ notification: UNNotification) {
         // Method to add template to UI
-        [MoEngageSDKRichNotification addPushTemplateToController:self withNotification:notification];
+        MoEngageSDKRichNotification.addPushTemplate(toController: self, withNotification: notification)
     }
-    
-    @end
-    ```
-  </Tab>
-</Tabs>
+}
+```
+
+
+```objective-c Objective C wrap
+#import "NotificationViewController.h"
+#import <UserNotifications/UserNotifications.h>
+#import <UserNotificationsUI/UserNotificationsUI.h>
+@import MoEngageRichNotification;
+
+@interface NotificationViewController () <UNNotificationContentExtension>
+
+@end
+
+@implementation NotificationViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Set App Group ID
+    [MoEngageSDKRichNotification setAppGroupID:@"Your App Group ID"];
+}
+
+- (void)didReceiveNotification:(UNNotification *)notification {
+    // Method to add template to UI
+    [MoEngageSDKRichNotification addPushTemplateToController:self withNotification:notification];
+}
+
+@end
+```
+
+</CodeGroup>
 
 As shown above, make these changes in your **_NotificationViewController_**  class:
 
 1. Set the same App Group ID in **_viewDidLoad()_** method which was enabled in Capabilities.
-2. Call [_addPushTemplate(toController:withNotification:) _](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKRichNotification.html#/c:@M@MoEngageRichNotification@objc\(cs\)MoEngageSDKRichNotification\(cm\)addPushTemplateToController:withNotification:)method to add template in **_didReceiveNotification()_** callback.
+2. Call [\_addPushTemplate(toController:withNotification:) \_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKRichNotification.html#/c:@M@MoEngageRichNotification@objc\(cs\)MoEngageSDKRichNotification\(cm\)addPushTemplateToController:withNotification:)method to add template in **_didReceiveNotification()_** callback.
+
+## 8. Notification Click callback in App:
+
+In the case of Simple Image Carousel notification, to know which slide was clicked by the user, make use of `_MOMessagingDelegate_` to get `notificationClicked(withScreenName: andKVPairs:)` callback to get key-value pairs and screen name if set for the clicked slide. Refer to the example below, here we are registering for the callback in AppDelegate:
+
+<CodeGroup>
+
+```swift Swift wrap
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate, MOMessagingDelegate{
+    
+func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+      // Set the delegate 
+      MOMessaging.sharedInstance.setMessagingDelegate(self)
+ 
+      //Rest of the implementation
+}
+ 
+// Notification Clicked Callback
+func notificationClicked(withScreenName screenName: String?, andKVPairs kvPairs: [AnyHashable : Any]?) {
+        if let screenName = screenName {
+            print("Navigate to Screen:\(screenName)")
+        }
+        
+        if let actionKVPairs = kvPairs {
+            print("Selected Action KVPair:\(actionKVPairs)")
+        }
+}
+  
+// Notification Clicked Callback with Push Payload
+func notificationClicked(withScreenName screenName: String?, kvPairs: [AnyHashable : Any]?, andPushPayload userInfo: [AnyHashable : Any]) {
+        
+        print("Push Payload: \(userInfo)")
+        
+        if let screenName = screenName {
+            print("Navigate to Screen:\(screenName)")
+        }
+        
+        if let actionKVPairs = kvPairs {
+            print("Selected Action KVPair:\(actionKVPairs)")
+        }
+}
+}
+```
+
+
+```objective-c Objective C wrap
+@interface AppDelegate () <UNUserNotificationCenterDelegate, MOMessagingDelegate>
+@end
+ 
+@implementation AppDelegate
+ 
+ 
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // Set the delegate 
+   [[MOMessaging sharedInstance] setMessagingDelegate:self forAppID:@"YOUR WORKSPACE ID"];
+ 
+    //Rest of the implementation
+}
+ 
+// Notification Clicked Callback
+-(void)notificationClickedWithScreenName:(NSString *)screenName andKVPairs:(NSDictionary *)kvPairs{
+    if (screenName) {
+        NSLog(@"Screen Name : %@",screenName);
+    }
+    if (kvPairs) {
+        NSLog(@"KV Pairs : %@",kvPairs);
+    }
+}
+ 
+// Notification Clicked Callback with Push Payload
+-(void)notificationClickedWithScreenName:(NSString *)screenName KVPairs:(NSDictionary *)kvPairs andPushPayload:(NSDictionary *)userInfo{
+    NSLog(@"Push Payload: %@",userInfo);
+    if (screenName) {
+        NSLog(@"Screen Name : %@",screenName);
+    }
+    if (kvPairs) {
+        NSLog(@"KV Pairs : %@",kvPairs);
+    }
+}
+ 
+ 
+@end
+```
+
+</CodeGroup>
