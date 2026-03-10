@@ -2,13 +2,13 @@
 title: "Session and Source Tracking"
 ---
 
-From [SDK Version 5.2.2](/developer-guide/release-notes/ios-sdk/2023-and-older) we have started supporting Session and Source Tracking, and this is enabled by default in the SDK. 
+From [SDK Version 5.2.2](/developer-guide/release-notes/ios-sdk/2023-and-older) we have started supporting Session and Source Tracking, and this is enabled by default in the SDK.
 
 <Info>
   **Note**
 
   - To view Session And Source information tracked in the dashboard, get the same enabled by contacting the MoEngage support team.
-  - To track source information accurately, make use of the UTM parameters in your deep links and push notification payloads. 
+  - To track source information accurately, make use of the UTM parameters in your deep links and push notification payloads.
 </Info>
 
 # Capture Deep-link Source
@@ -21,44 +21,44 @@ From [SDK Version 5.2.2](/developer-guide/release-notes/ios-sdk/2023-and-older) 
 
 For capturing source information via the deep-link call [_processURL(\_:)_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)processURL:) method in all the AppDelegate callbacks that you receive when a link is opened, please refer to the code block below.
 
-<Tabs>
-  <Tab title="Swift">
-    ```swift wrap
-    //MARK:- Deeplinks Processing
-    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
-        MoEngageSDKAnalytics.sharedInstance.processURL(url)
-        //rest of the implementation
-        return true
+<CodeGroup>
+
+```swift Swift wrap
+//MARK:- Deeplinks Processing
+func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+    MoEngageSDKAnalytics.sharedInstance.processURL(url)
+    //rest of the implementation
+    return true
+}
+
+func application(_ application: UIApplication,
+                 continue userActivity: NSUserActivity,
+                 restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool
+{
+    if userActivity.activityType == NSUserActivityTypeBrowsingWeb ,
+        let incomingURL = userActivity.webpageURL{
+        MoEngageSDKAnalytics.sharedInstance.processURL(incomingURL)
     }
-    
-    func application(_ application: UIApplication,
-                     continue userActivity: NSUserActivity,
-                     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool
-    {
-        if userActivity.activityType == NSUserActivityTypeBrowsingWeb ,
-            let incomingURL = userActivity.webpageURL{
-            MoEngageSDKAnalytics.sharedInstance.processURL(incomingURL)
-        }
-        //rest of the implementation
-        return true;
-    }
-    
-    //MARK:- Methods Deprecated from iOS9
-    
-    func application(_ application: UIApplication, handleOpen url: URL) -> Bool {
-        MoEngageSDKAnalytics.sharedInstance.processURL(url)
-        //rest of the implementation
-        return true
-    }
-    
-    func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
-        MoEngageSDKAnalytics.sharedInstance.processURL(url)
-        //rest of the implementation
-        return true
-    }
-    ```
-  </Tab>
-</Tabs>
+    //rest of the implementation
+    return true;
+}
+
+//MARK:- Methods Deprecated from iOS9
+
+func application(_ application: UIApplication, handleOpen url: URL) -> Bool {
+    MoEngageSDKAnalytics.sharedInstance.processURL(url)
+    //rest of the implementation
+    return true
+}
+
+func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
+    MoEngageSDKAnalytics.sharedInstance.processURL(url)
+    //rest of the implementation
+    return true
+}
+```
+
+</CodeGroup>
 
 # Non-Interactive Event
 
@@ -72,34 +72,34 @@ These events:
 
 For example, events that are tracked when the app is in the background to refresh the app content, are not initiated by users and hence can be marked as non-interactive. To mark an event as non-interactive use [_setNonInteractive()_](https://moengage.github.io/ios-api-reference/Classes/MoEngageProperties.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageProperties\(im\)setNonInteractive) method of [_MoEngageProperties_](https://moengage.github.io/ios-api-reference/Classes/MoEngageProperties.html) while tracking the event as shown below:
 
-<Tabs>
-  <Tab title="Swift">
-    ```swift wrap
-    //Set Attributes 
-    let dict = ["NewsCategory":"Politics"]
-    let properties = MoEngageProperties(withAttributes: dict)
-    properties.addDateAttribute(Date(), withName:"refreshTime")
-    
-    //Set the Event as Non-Interactive
-    properties.setNonInteractive()
-    
-    //Track event
-    MoEngageSDKAnalytics.sharedInstance.trackEvent("App Content Refreshed", withProperties: properties)
-    ```
-  </Tab>
-  <Tab title="Objective-C">
-    ```objectivec wrap
-    //Set Attributes
-    NSMutableDictionary *eventDict = [NSMutableDictionary dictionary];
-    eventDict[@"NewsCategory"] = @"Politics";
-    MoEngageProperties* properties = [[MoEngageProperties alloc] initWithAttributes:eventDict];
-    [properties addDateAttribute:[NSDate date] withName:@"refreshTime"];
-    
-    //Set the Event as Non-Interactive
-    [properties setNonInteractive];
-    
-    //Track event
-    [[MoEngageSDKAnalytics sharedInstance] trackEvent:@"App Content Refreshed" withProperties:properties];
-    ```
-  </Tab>
-</Tabs>
+<CodeGroup>
+
+```swift Swift wrap
+//Set Attributes 
+let dict = ["NewsCategory":"Politics"]
+let properties = MoEngageProperties(withAttributes: dict)
+properties.addDateAttribute(Date(), withName:"refreshTime")
+
+//Set the Event as Non-Interactive
+properties.setNonInteractive()
+
+//Track event
+MoEngageSDKAnalytics.sharedInstance.trackEvent("App Content Refreshed", withProperties: properties)
+```
+
+
+```objective-c Objective C wrap
+//Set Attributes
+NSMutableDictionary *eventDict = [NSMutableDictionary dictionary];
+eventDict[@"NewsCategory"] = @"Politics";
+MoEngageProperties* properties = [[MoEngageProperties alloc] initWithAttributes:eventDict];
+[properties addDateAttribute:[NSDate date] withName:@"refreshTime"];
+
+//Set the Event as Non-Interactive
+[properties setNonInteractive];
+
+//Track event
+[[MoEngageSDKAnalytics sharedInstance] trackEvent:@"App Content Refreshed" withProperties:properties];
+```
+
+</CodeGroup>
