@@ -1,5 +1,5 @@
 ---
-title: 'Content Security Policy (CSP) Nonce Support'
+title: "Content Security Policy (CSP) Nonce Support"
 ---
 
 ## Overview
@@ -8,27 +8,27 @@ title: 'Content Security Policy (CSP) Nonce Support'
 
 To ensure seamless integration without compromising site security, the MoEngage Web SDK supports cryptographic nonces. When a nonce is provided during initialization, the SDK performs the following:
 
-1.  **Attribute Injection**: Automatically attaches the nonce to all dynamically created `<script>` tags.
-2.  **Handler Refactoring**: Refactors inline event handlers of assets created by the SDK (for example, `onclick`) into CSP-compliant internal scripts.
+1. **Attribute Injection**: Automatically attaches the nonce to all dynamically created `<script>` tags.
+2. **Handler Refactoring**: Refactors inline event handlers of assets created by the SDK (for example, `onclick`) into CSP-compliant internal scripts.
 
 ## CSP Header Configuration
 
-<Note title="Prerequisites">
-Before configuring the nonce, ensure MoEngage domains are whitelisted in your CSP header (for example, script-src, connect-src, and img-src). For more information, refer to [Web SDK Integration](https://developers.moengage.com/hc/en-us/articles/360060713252-Web-SDK-Integration#h_01KD2BMMKRQPB8W4GBQCHDVPRX).
+<Note>
+  Before configuring the nonce, ensure MoEngage domains are whitelisted in your CSP header (for example, script-src, connect-src, and img-src). For more information, refer to [Web SDK Integration](https://developers.moengage.com/hc/en-us/articles/360060713252-Web-SDK-Integration#h_01KD2BMMKRQPB8W4GBQCHDVPRX).
 </Note>
 
 To implement this feature, the server-side CSP header must be configured to trust the specific nonce generated for the session.
 
-<Tabs>
-  <Tab title="CSP Header">
-    ```javascript wrap
-    Content-Security-Policy: script-src 'self' 'nonce-[GENERATED_NONCE_VALUE]' [https://cdn.moengage.com/](https://cdn.moengage.com/) [https://app-cdn.moengage.com/](https://app-cdn.moengage.com/);
-    ```
-  </Tab>
-</Tabs>
+<CodeGroup>
 
-<Warning title="Warning">
-For effective security, the nonce must be a cryptographically strong, unique value generated for every page load. Hardcoded nonces should never be used in a production environment.
+```javascript CSP Header lines wrap
+Content-Security-Policy: script-src 'self' 'nonce-[GENERATED_NONCE_VALUE]' [https://cdn.moengage.com/](https://cdn.moengage.com/) [https://app-cdn.moengage.com/](https://app-cdn.moengage.com/);
+```
+
+</CodeGroup>
+
+<Warning>
+  For effective security, the nonce must be a cryptographically strong, unique value generated for every page load. Hardcoded nonces should never be used in a production environment.
 </Warning>
 
 ## Initialization and Configuration
@@ -39,53 +39,53 @@ To enable CSP support, the generated nonce must be passed to both the Web SDK in
 
 Pass the nonce during the initialization phase so the SDK can apply it to subsequent DOM operations and component rendering.
 
-<Tabs>
-  <Tab title="JavaScript">
-    ```javascript wrap
-    <script type="text/javascript" nonce="GENERATED_NONCE_VALUE">
-        var moeDataCenter = "{DC}"; // Replace "DC" with the actual Data center value from the above table
-        var moeAppID = "{WorkspaceID}"; // Replace "WorkspaceID" available in the settings page of MoEngage Dashboard.
-        var sdkVersion = "2"; // Replace this value with the version of Web SDK that you intend to use. It is recommended to use the format x (major)
-        !function(e,n,i,t,a,r,o,d){if(!moeDataCenter||!moeDataCenter.match(/^dc_[0-9]+$/gm))return console.error("Data center has not been passed correctly. Please follow the SDK installation instruction carefully.");var s=e[a]=e[a]||[];if(s.invoked=0,s.initialised>0||s.invoked>0)return console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1;e.moengage_object=a;var l={},g=function n(i){return function(){for(var n=arguments.length,t=Array(n),a=0;a<n;a++)t[a]=arguments[a];(e.moengage_q=e.moengage_q||[]).push({f:i,a:t})}},u=["track_event","add_user_attribute","add_first_name","add_last_name","add_email","add_mobile","add_user_name","add_gender","add_birthday","destroy_session","add_unique_user_id","update_unique_user_id","moe_events","call_web_push","track","location_type_attribute","identifyUser","getUserIdentities"],m={onsite:["getData","registerCallback","getSelfHandledOSM"]};for(var c in u)l[u[c]]=g(u[c]);for(var v in m)for(var f in m[v])null==l[v]&&(l[v]={}),l[v][m[v][f]]=g(v+"."+m[v][f]);r=n.createElement(i),o=n.getElementsByTagName("head")[0],r.async=1,r.src=t,o.appendChild(r),e.moe=e.moe||function(){return(s.invoked=s.invoked+1,s.invoked>1)?(console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1):(d=arguments.length<=0?void 0:arguments[0],l)},r.addEventListener("load",function(){if(d)return e[a]=e.moe(d),e[a].initialised=e[a].initialised+1||1,!0}),r.addEventListener("error",function(){return console.error("Moengage Web SDK loading failed."),!1})}(window,document,"script","[https://cdn.moengage.com/release/](https://cdn.moengage.com/release/)"+moeDataCenter+"/versions/"+sdkVersion+"/moe_webSdk.min.latest.js","Moengage");
-        
-        Moengage = moe({
-          app_id: moeAppID,
-          env: 'LIVE',
-          logLevel: 0,
-          contentSecurityNonce: 'GENERATED_NONCE_VALUE',
-        });
-    </script>
-    ```
-  </Tab>
-</Tabs>
+<CodeGroup>
+
+```javascript JavaScript wrap
+<script type="text/javascript" nonce="GENERATED_NONCE_VALUE">
+    var moeDataCenter = "{DC}"; // Replace "DC" with the actual Data center value from the above table
+    var moeAppID = "{WorkspaceID}"; // Replace "WorkspaceID" available in the settings page of MoEngage Dashboard.
+    var sdkVersion = "2"; // Replace this value with the version of Web SDK that you intend to use. It is recommended to use the format x (major)
+    !function(e,n,i,t,a,r,o,d){if(!moeDataCenter||!moeDataCenter.match(/^dc_[0-9]+$/gm))return console.error("Data center has not been passed correctly. Please follow the SDK installation instruction carefully.");var s=e[a]=e[a]||[];if(s.invoked=0,s.initialised>0||s.invoked>0)return console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1;e.moengage_object=a;var l={},g=function n(i){return function(){for(var n=arguments.length,t=Array(n),a=0;a<n;a++)t[a]=arguments[a];(e.moengage_q=e.moengage_q||[]).push({f:i,a:t})}},u=["track_event","add_user_attribute","add_first_name","add_last_name","add_email","add_mobile","add_user_name","add_gender","add_birthday","destroy_session","add_unique_user_id","update_unique_user_id","moe_events","call_web_push","track","location_type_attribute","identifyUser","getUserIdentities"],m={onsite:["getData","registerCallback","getSelfHandledOSM"]};for(var c in u)l[u[c]]=g(u[c]);for(var v in m)for(var f in m[v])null==l[v]&&(l[v]={}),l[v][m[v][f]]=g(v+"."+m[v][f]);r=n.createElement(i),o=n.getElementsByTagName("head")[0],r.async=1,r.src=t,o.appendChild(r),e.moe=e.moe||function(){return(s.invoked=s.invoked+1,s.invoked>1)?(console.error("MoEngage Web SDK initialised multiple times. Please integrate the Web SDK only once!"),!1):(d=arguments.length<=0?void 0:arguments[0],l)},r.addEventListener("load",function(){if(d)return e[a]=e.moe(d),e[a].initialised=e[a].initialised+1||1,!0}),r.addEventListener("error",function(){return console.error("Moengage Web SDK loading failed."),!1})}(window,document,"script","[https://cdn.moengage.com/release/](https://cdn.moengage.com/release/)"+moeDataCenter+"/versions/"+sdkVersion+"/moe_webSdk.min.latest.js","Moengage");
+    
+    Moengage = moe({
+      app_id: moeAppID,
+      env: 'LIVE',
+      logLevel: 0,
+      contentSecurityNonce: 'GENERATED_NONCE_VALUE',
+    });
+</script>
+```
+
+</CodeGroup>
 
 ### 2. Web Personalization (WebP)
 
 If utilizing Web Personalization, the nonce must be appended to the WebP script URL to prevent the browser from blocking personalized content deployed to the DOM.
 
-<Info title="Information">
-Update the script below with your specific Data Center value and app_id. For more information, refer to [Web Personalization](https://developers.moengage.com/hc/en-us/articles/10645116433812-Web-Personalization-V2).
+<Info>
+  Update the script below with your specific Data Center value and app_id. For more information, refer to [Web Personalization](https://developers.moengage.com/hc/en-us/articles/10645116433812-Web-Personalization-V2).
 </Info>
 
-<Tabs>
-  <Tab title="WebP Script">
-    ```html wrap
+<CodeGroup>
+  
+    ```html WebP Script wrap
     <link rel="preconnect" href="[https://cdn.moengage.com/](https://cdn.moengage.com/)" crossorigin />
     <link rel="dns-prefetch" href="[https://cdn.moengage.com/](https://cdn.moengage.com/)" />
     <link rel="preconnect" href="[https://sdk-01.moengage.com/](https://sdk-01.moengage.com/)" crossorigin />
     <link rel="dns-prefetch" href="[https://sdk-01.moengage.com/](https://sdk-01.moengage.com/)" />
     <script src="[https://cdn.moengage.com/release/dc_1/versions/2/moe_webSdk_webp.min.latest.js?app_id=XXXXXXXXXXXXXXXX&contentSecurityNonce=GENERATED_NONCE_VALUE](https://cdn.moengage.com/release/dc_1/versions/2/moe_webSdk_webp.min.latest.js?app_id=XXXXXXXXXXXXXXXX&contentSecurityNonce=GENERATED_NONCE_VALUE)"></script>
     ```
-  </Tab>
-</Tabs>
+ 
+</CodeGroup>
 
 ## Framework and Platform Compatibility
 
 This feature is available in the following Framework:
 
-* NPM
-* GTM
-* Flutter Web
+- NPM
+- GTM
+- Flutter Web
 
 ## Verification
 
