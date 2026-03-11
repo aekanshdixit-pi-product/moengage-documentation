@@ -1,0 +1,258 @@
+---
+title: AI agent access
+subtitle: How AI agents and LLMs can use MoEngage documentation
+description: Access MoEngage documentation in formats suited for AI agents, LLMs, and automation. Use the MCP server, per-page markdown, and optional llms.txt-style endpoints for lower token usage than full web pages.
+icon: robot
+layout: guide
+---
+
+Use the options below to give AI coding assistants and language models access to MoEngage documentation with less overhead than loading full HTML pages.
+
+## Quick start
+
+* **AI coding assistants (Claude Code, Cursor, Windsurf):** Use the [MoEngage Docs MCP server](https://www.moengage.com/docs/mcp) for the best experience. It lets your assistant search and fetch documentation from within the IDE.
+* **Chat interfaces (ChatGPT, Claude.ai):** Add `.md` to any docs page URL and share it in your conversation to get plain markdown instead of the full site.
+* **Project rules and custom instructions:** Add a section-level `llms.txt` URL to your AI tool’s rules so it has an index of relevant MoEngage pages.
+* **Agent capabilities:** Use the [skill.md](https://www.moengage.com/docs/skill.md) URL or `npx skills add https://www.moengage.com/docs` so agents know what they can do with MoEngage and what inputs or constraints apply.
+* **API-focused development:** Attach the [OpenAPI spec](#openapi-specification) to your AI tool’s context so it knows the full API surface when writing integration code.
+
+## MCP server
+
+The [MoEngage MCP server](/mcp) gives AI agents and coding assistants direct access to MoEngage documentation and references through the Model Context Protocol. Use it to bring MoEngage knowledge into tools like Claude, Cursor, and other MCP-compatible clients.
+
+The MoEngage MCP (Model Context Protocol) server connects your AI agents to MoEngage’s docs and developer resources. Configure the MoEngage MCP server in your IDE or AI chat to get in-context help for your MoEngage integration.
+
+<Note>
+  For more on the Model Context Protocol, see the [MCP documentation](https://modelcontextprotocol.io/introduction).
+</Note>
+
+If your AI agent supports MCP, you can add the MoEngage MCP server so it has access to MoEngage’s APIs and SDKs. The MoEngage MCP server lets you:
+
+* Get quick answers about MoEngage APIs, features, and implementation
+* Search documentation without leaving your editor
+* Find code samples and recommended patterns for typical use cases
+* Debug issues using docs and SDK references
+* Write code that integrates your app with MoEngage
+
+## Installation
+
+To set up the MoEngage MCP server, pick your IDE or AI chat provider and follow the steps below.
+
+<AccordionGroup>
+  <Accordion title="Cursor">
+    1. Open **Cursor** and open the `.cursor` directory in your project root. Create it if it doesn’t exist. This is where Cursor’s project configuration lives.
+
+    2. Open the `mcp.json` file in `.cursor`. Create it if it doesn’t exist. This file holds MCP server configuration for the project.
+
+    3. Add the following to `mcp.json`:
+
+       ```json mcp.json
+       {
+         "mcpServers": {
+           "MoEngage Docs": {
+             "url": "https://www.moengage.com/docs/mcp"
+           }
+         }
+       }
+       ```
+
+    4. Save the file.
+
+    5. Restart Cursor.
+  </Accordion>
+
+  <Accordion title="Windsurf">
+    <Note>
+      Windsurf uses `npm` to run the MoEngage MCP server. You need **Node.js** installed. See [Node.js downloads](https://nodejs.org/en/download/) for details.
+    </Note>
+
+    1. Open **Windsurf**.
+
+    2. Open the *Cascade assistant* sidebar.
+
+    3. Click the **hammer (MCP)** icon to open MCP settings.
+
+    4. Click **Configure > View raw config**.
+
+    5. Open `~/.codeium/windsurf/mcp_config.json`. This file is Windsurf’s global MCP configuration.
+
+    6. Add the following to `mcp_config.json`:
+
+       ```json
+       {
+         "mcpServers": {
+           "MoEngage Docs": {
+             "command": "npx",
+             "args": ["-y", "mcp-remote", "https://www.moengage.com/docs/mcp"]
+           }
+         }
+       }
+       ```
+
+    7. Save the file.
+
+    8. In the Cascade sidebar, click **Refresh** next to "available MCP servers".
+  </Accordion>
+
+  <Accordion title="Claude Desktop (Local)">
+    <Note>
+      Claude Desktop uses `npm` to run the MoEngage MCP server. You need **Node.js** installed. See [Node.js downloads](https://nodejs.org/en/download/) for details.
+    </Note>
+
+    1. Open **Claude Desktop**.
+
+    2. Go to **File > Settings** (Windows) or **Settings** (macOS).
+
+    3. Open the **Developer** tab.
+
+    4. Click **Edit Config**.
+
+    5. Open `claude_desktop_config.json`. This file controls MCP servers for Claude Desktop.
+
+    6. Add the following to `claude_desktop_config.json`:
+
+       ```json claude_desktop_config.json
+       {
+         "mcpServers": {
+           "moengage-docs": {
+             "command": "npx",
+             "args": ["-y", "mcp-remote", "https://www.moengage.com/docs/mcp"]
+           }
+         }
+       }
+       ```
+
+    7. Save the file.
+
+    8. Restart Claude Desktop.
+  </Accordion>
+
+  <Accordion title="Claude Desktop (Remote)">
+    <Note>
+      Remote MCP in Claude Desktop is currently in beta.
+    </Note>
+
+    ### Enterprise and team plans
+
+    1. Open **Claude Desktop**.
+
+    2. Go to **Admin settings > Connectors**.
+
+    3. Scroll to the bottom of the section.
+
+    4. Click **Add custom connector**.
+
+    5. Fill in:
+
+       * **Name**: MoEngage MCP
+       * **Remote MCP server URL**: `https://www.moengage.com/docs/mcp`
+
+    6. Click **Add**.
+
+    ### Pro and max plans
+
+    1. Open **Claude Desktop**.
+
+    2. Go to **Settings > Connectors**.
+
+    3. Scroll to the bottom of the section.
+
+    4. Click **Add custom connector**.
+
+    5. Fill in:
+
+       * **Name**: MoEngage MCP
+       * **Remote MCP server URL**: `https://www.moengage.com/docs/mcp`
+
+    6. Click **Add**.
+  </Accordion>
+</AccordionGroup>
+
+## Usage
+
+The MoEngage MCP exposes the following tool:
+
+* **`search_mo_engage`** — Searches MoEngage’s documentation and knowledge base. Use it to find guides, API details, code examples, and implementation notes. Results include titles and links to the relevant docs.
+
+## Per-page markdown
+
+Append `.md` to any docs page URL to get a markdown version of that page. You get content only, without HTML, nav, or scripts, which uses fewer tokens than the full page.
+
+For example, for the [API Reference introduction](/api-reference/introduction) in markdown, use:
+
+```txt
+https://www.moengage.com/docs/api-reference/introduction.md
+```
+
+## Site-wide endpoints
+
+If your docs deployment supports the [llms.txt standard](https://llmstxt.org/), you can use these endpoints for markdown-formatted content.
+
+| Endpoint | Description | Size |
+| -------- | ----------- | ---- |
+| [`/llms.txt`](https://www.moengage.com/docs/llms.txt) | Page index with short descriptions for the whole site | Varies |
+| [`/llms-full.txt`](https://www.moengage.com/docs/llms-full.txt) | Full content of all pages. Prefer section-level endpoints when possible | Large |
+
+## Section-level endpoints
+
+For narrower scope, use section-level endpoints. The `llms.txt` variant is a page index with descriptions; `llms-full.txt` is full page content.
+
+### Developer guide
+
+SDK setup, integration guides, and platform-specific documentation.
+
+| Endpoint | Description | Size |
+| -------- | ----------- | ---- |
+| [`/developer-guide/llms.txt`](https://www.moengage.com/docs/developer-guide/llms.txt) | Page index for the developer guide | Varies |
+| [`/developer-guide/llms-full.txt`](https://www.moengage.com/docs/developer-guide/llms-full.txt) | Full content of the developer guide | Varies |
+
+### API reference
+
+API references, request/response shapes, and developer-facing API docs.
+
+| Endpoint | Description | Size |
+| -------- | ----------- | ---- |
+| [`/api-reference/llms.txt`](https://www.moengage.com/docs/api-reference/llms.txt) | Page index for the API reference | Varies |
+| [`/api-reference/llms-full.txt`](https://www.moengage.com/docs/api-reference/llms-full.txt) | Full API reference content. May include or link to the OpenAPI spec | Varies |
+
+## skill.md
+
+A `skill.md` file at the root of the MoEngage docs site describes what AI agents can do with MoEngage in a structured, machine-readable format. It makes capabilities, required inputs, and constraints explicit so agents can use your product more reliably.
+
+**URL:** [https://www.moengage.com/docs/skill.md](https://www.moengage.com/docs/skill.md)
+
+The file follows the [skill.md specification](https://agentskills.io/specification) and is kept in sync with the documentation so agents stay aligned with current MoEngage features and APIs.
+
+<Tip>
+  `llms.txt` and `skill.md` both help agents use MoEngage documentation, but they do different things.
+
+  * **`llms.txt`** is a directory: it lists documentation pages with descriptions so agents know where to look.
+  * **`skill.md`** is a capability summary: it describes what agents can accomplish with your product, what inputs they need, and what constraints apply.
+</Tip>
+
+### Using skill.md with agents
+
+Agents can load MoEngage’s capabilities into their context with the [skills CLI](https://www.npmjs.com/package/skills):
+
+```bash
+npx skills add https://www.moengage.com/docs
+```
+
+This adds MoEngage’s skill description to the agent so it can take actions on behalf of users (e.g. answering integration questions or suggesting API usage).
+
+<Tip>
+  Use the `skill.md` URL or the command above in your own AI setup so you get better, more accurate assistance when working with MoEngage.
+</Tip>
+
+### What’s in skill.md
+
+The MoEngage `skill.md` file is generated from the documentation and typically includes:
+
+* **Metadata** — Product name, description, and version.
+* **Capabilities** — What agents can do with MoEngage (e.g. campaigns, segments, SDK integration).
+* **Skills** — Concrete actions grouped by area (APIs, SDKs, data, etc.).
+* **Workflows** — Step-by-step procedures for common tasks.
+* **Integration** — Supported tools and services.
+* **Context** — High-level overview of MoEngage’s architecture and concepts.
+
+For the exact schema and fields, see the [agentskills.io specification](https://agentskills.io/specification).
