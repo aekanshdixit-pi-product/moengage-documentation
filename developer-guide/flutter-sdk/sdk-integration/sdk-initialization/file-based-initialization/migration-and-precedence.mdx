@@ -1,0 +1,37 @@
+---
+title: "Migration and Precedence"
+---
+
+
+### Android Migration Steps
+
+To migrate from manual code-based initialization to the XML file-based approach, follow the below steps:
+
+1. **Add Configuration File:** Place the `moengage_config` file in the (`src/main/assets/moengage.xml`) path.
+2. **Update Application Class:** Remove the existing initialization code (the manual `MoEngage.Builder` logic) from your Application class and replace it with the default instance initialization to enable reading from the XML file.
+
+| Code Language | Existing Code                                                                                                                                                                                          | Replace with                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Kotlin        | <code>val moEngage: MoEngage.Builder = MoEngage.Builder(this,"YOUR_Workspace_ID", DataCenter.DATA_CENTER_X) <br /> MoEInitializer.initialiseDefaultInstance(context = this, builder = moEngage)</code> | <code>MoEInitializer.initializeDefaultInstance(application) </code>   |
+| Java          | <code>MoEngage.Builder moEngage = new MoEngage.Builder(this, "YOUR_Workspace_ID", YOUR_DATA_CENTER); MoEInitializer.initialiseDefaultInstance(this, moEngage); </code>                                 | <code>MoEInitializer.INSTANCE.initializeDefaultInstance(this);</code> |
+
+### iOS Migration Steps
+
+To migrate from code-based initialization to the `Info.plist` based approach, follow these steps:
+
+1. **Update Info.plist**: Add the required MoEngage configuration keys (for example, WorkspaceId, DataCenter, etc.) directly to your `Info.plist` file.
+2. **Update AppDelegate**: Remove the existing initialization code (the manual MoEngageSDKConfig logic) from your `AppDelegate` class and replace it with the default instance initialization to enable reading from the `Info.plist` file.
+
+| Code Language | Existing Code                                                                                                          | Replace with                                                                                                |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Swift         | <code>MoEngageInitializer.sharedInstance.initializeDefaultInstance(sdkConfig, launchOptions: launchOptions)   </code>  | <code>import moengage_flutter_ios MoEngageInitializer.sharedInstance.initializeDefaultInstance()   </code>  |
+| Objective-C   | <code>[[MoEngageInitializer sharedInstance] initializeDefaultInstance:sdkConfig launchOptions:launchOptions];  </code> | <code>@import moengage_flutter_ios; [MoEngageInitializer.sharedInstance initializeDefaultInstance]; </code> |
+
+### Precedence Rules
+
+The source of configuration is determined by the initialization function called in your native code:
+
+- **Android**:
+  - **File-Based Init:** Calling `MoEInitializer.initializeDefaultInstance(context)` instructs the SDK to look for and read the `moengage.xml` file.
+  - **Code-Based Init:** Calling `MoEInitializer.initialize(context, moEngage.Builder)` will initialize the SDK using the configuration object passed in the parameters, ignoring the XML file even if it exists.
+- **iOS:** Auto-initialization (via `Info.plist`) occurs first. However, if you subsequently call the manual `initialize` method with a configuration object in your code, it will update the current instance configuration.
