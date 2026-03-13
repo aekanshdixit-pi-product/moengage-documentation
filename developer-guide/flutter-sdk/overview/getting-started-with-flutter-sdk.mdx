@@ -1,0 +1,233 @@
+---
+title: "Getting Started with Flutter SDK"
+---
+
+# Overview
+
+MoEngage’s Flutter SDK helps you integrate MoEngage into iOS and Android applications built with Flutter. It allows you to work with push notifications, in-app messages, cards, user attributes, events, and much more.
+
+To see the sample code, take a look at the [GitHub repository](/developer-guide/flutter-sdk/sample-app/flutter-sample-app). This article describes the steps to implement MoEngage features on Flutter.
+
+<Info>
+  You can now get notified whenever MoEngage releases a new version of the Flutter SDK. For more information, refer to [Subscribe to MoEngage SDK Releases](/developer-guide/release-notes/subscribe-to-moengage-sdk-releases/subscribe-to-mo-engage-sdk-releases).
+</Info>
+
+# SDK Installation and Initialization
+
+**Step 1: Installation**
+
+To add MoEngage's Flutter SDK to your application, refer to [Installation Methods](/developer-guide/flutter-sdk/sdk-integration/sdk-installation/framework-dependency).
+
+**Step 2: Complete Native Setup**\
+The platform-specific native setup guidelines to complete the installation are described in the following articles:
+
+- [Android Setup](/developer-guide/flutter-sdk/sdk-integration/sdk-installation/android)
+- [iOS Setup](/developer-guide/flutter-sdk/sdk-integration/sdk-installation/ios)
+- [Web Setup](/developer-guide/flutter-sdk/sdk-integration/sdk-installation/framework-dependency)
+
+**Step 3: Framework Initialization**\
+Initialize an instance of the MoEngage plugin by calling the [Framework Initialization](/developer-guide/flutter-sdk/sdk-integration/sdk-initialization/framework-initialization) method.
+
+**Step 4: Platform Initialization**\
+The platform-specific steps to initialize the SDK and set up the data center are described in the following articles:
+
+- [Android](/developer-guide/flutter-sdk/sdk-integration/sdk-initialization/android-sdk-initialization)
+- [iOS](/developer-guide/flutter-sdk/sdk-integration/sdk-initialization/ios-sdk-initialization)
+- [Web](/developer-guide/flutter-sdk/sdk-integration/sdk-initialization/web-sdk-initialization)
+
+# Data Tracking
+
+Data tracking allows apps to monitor and analyze user behavior to optimize engagement strategies. It involves tracking various user actions such as login, logout, and event tracking in a way that avoids data corruption. Use the following methods to implement data tracking.
+
+- **Install/Update Differentiation -** To track fresh installs and updates separately, refer to the methods in this [article](/developer-guide/flutter-sdk/data-tracking/install-update-differentiation).
+- **Tracking Login, Logout, and Setting Unique ID** - To avoid data corruption, it is crucial to follow the steps outlined in the following articles when handling user login and logout.
+  - [Tracking Login and set user ID](/developer-guide/flutter-sdk/data-tracking/setting-unique-id-for-sdk-versions-below-920)
+  - [Tracking Logout](/developer-guide/flutter-sdk/data-tracking/setting-unique-id-for-sdk-versions-below-920)
+  - [Updating User Attribute Unique ID](/developer-guide/flutter-sdk/data-tracking/setting-unique-id-for-sdk-versions-below-920)\
+    \
+    It is essential to have a unique ID for each of your app's users, which can be passed onto MoEngage SDK using setUniqueId(). This unique ID helps to correctly identify a user across multiple installs and platforms to provide a unified view.
+
+    Once a user logs out of the app, it's critical to call logout() to initiate the creation of a new user. This step is necessary to ensure that any subsequent activities performed by the new user are not wrongly attributed to the previously logged-in user, which could distort user data.
+- **Tracking user attributes** - To set custom attributes available in the user profile, refer to the methods in [this article](/developer-guide/flutter-sdk/data-tracking/tracking-user-attributes).
+- **Tracking Events** - Tracking events is how you record user actions, along with any properties that describe the action. To track custom events, refer to the methods in [this article](/developer-guide/flutter-sdk/data-tracking/tracking-events).
+- **Enable Advertising Identifier Tracking (Android only)** - MoEngage SDK uses a Device ID (persistent device identifier) to uniquely identify the user to deliver personalized content and associates this to AAID if allowed by the app. This allows accurate identification of reachable devices for sending push notifications and tracking re-installs for users over time. To enable tracking of the AAID after obtaining the user’s consent, refer to the methods in [this article](/developer-guide/android-sdk/data-tracking/enable-advertising-identifier-tracking).
+
+# Push Notifications
+
+Push campaigns target users through notifications for your app or website. Depending on the desired capability, follow the integration steps listed below to integrate push notifications.
+
+## Basic Setup - Android
+
+Follow the basic setup outlined in this section to enable push notifications on an Android device using MoEngage.
+
+- **FCM Setup on MoEngage Dashboard -** FCM Authentication is the method to enable sending push notifications to your app installed on Android devices. Use the methods mentioned in [this article](/developer-guide/android-sdk/push/basic/fcm-authentication) to authenticate MoEngage to access Firebase services.
+- **Adding metadata for push notification -** Set the small icon and large icon drawable and other options to handle push notifications using the methods available in [this article](/developer-guide/android-sdk/push/basic/push-configuration).
+- **Android Notification Runtime Permissions** - When the application is running on Android 13 to show notifications to the user, applications would need to request the user for notification permission. Refer to the methods available in [this article](/developer-guide/flutter-sdk/push/basic/android-notification-runtime-permissions) to handle permission requests.
+- **Push Registration and Receiving** - To use Push Notification in your Flutter application, you need to configure Firebase. Depending on your requirements, refer to one of the below methods to enable Push Registration and Receiving.
+
+<Tabs>
+  <Tab title="Let MoEngage handle Push(Recommended)">
+    **Add messaging service**\
+    You must add the messaging service to the Manifest file for MoEngage SDK to show the notifications. Refer to this document [here](/developer-guide/android-sdk/push/basic/push-token-registration-and-display).
+
+    **Callback on token registration(optional)**\
+    To get an optional callback whenever a new token is registered or the token is refreshed, refer to the method [here](/developer-guide/android-sdk/push/basic/push-token-registration-and-display).
+
+    **Notification Clicked Callback**
+
+    To receive a callback whenever a push is clicked and for custom handling redirection, use the method in [this article](/developer-guide/android-sdk/push/advanced/callbacks-and-customisation).
+  </Tab>
+  <Tab title="You handle Push via Android Native">
+    **How to opt out of MoEngage Registration?**\
+    The MoEngage SDK attempts to register for a push token; since your application is handling push, you need to opt out of SDK's token registration using the method in [this article](/developer-guide/android-sdk/push/basic/push-token-registration-and-display).
+
+    **Pass the Push Token To MoEngage SDK** - After receiving the push token from FCM, use the method in [this article](/developer-guide/android-sdk/push/basic/push-token-registration-and-display) to pass the Push Token to the MoEngage SDK to set it in the MoEngage platform.
+
+    **Passing the Push payload to the MoEngage SDK** - After receiving the push payload on the app, use the method in [this article](/developer-guide/android-sdk/push/basic/push-token-registration-and-display) to send out push notifications to the device.
+  </Tab>
+  <Tab title="You handle Push via Flutter (Not Recommended)">
+    <Warning>
+      We recommend you use the Android native APIs to pass the push payload to the MoEngage SDK instead of the Flutter/Dart APIs. Flutter Engine might not get initialized if the application is in the killed state, which will lead to poor push reachability or delivery.
+    </Warning>
+    - [Pass the Push Token To MoEngage SDK](/developer-guide/flutter-sdk/push/basic/android-push-configuration#passing-push-token)
+    - [Pass the Push payload to the MoEngage SDK](/developer-guide/flutter-sdk/push/basic/android-push-configuration#basic-setup)
+    - [Callbacks and customizations](/developer-guide/flutter-sdk/push/basic/android-push-configuration#customizing-push-notification)
+
+    **Notification Clicked Callback -** MoEngage's Flutter plugin optionally provides a callback on push clicks with the method in [this article](/developer-guide/flutter-sdk/push/basic/push-callback).
+  </Tab>
+</Tabs>
+
+## Basic Setup - iOS
+
+Follow the basic setup outlined in this section to enable push notifications on an iOS device using MoEngage.
+
+- **APNS Setup on MoEngage dashboard**\
+  APNS Authentication is the method to enable sending push notifications to your app installed on Android devices. You can use any of these options to set up APNS on the MoEngage dashboard.
+  - [APNS Authentication Key (recommended)](/developer-guide/ios-sdk/push/basic/apns-authentication-key)
+  - [APNS Certificate/PEM file](/developer-guide/ios-sdk/push/basic/apns-certificate-pem-file-legacy)
+- **App target implementation** - Make changes to your app target to enable notifications by following the steps mentioned in [this article](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial).
+- **Provide the App Group ID to SDK**- Pass the App Group ID to MoEngage SDK using the method in [this article](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial).
+- **Push Registration and Receiving**
+
+<Tabs>
+  <Tab title="With Swizzling">
+    In MoEngage SDK, we have now swizzled the AppDelegate Class to get all the callbacks related to Push Notifications, and we have also applied the method swizzling for UserNotificationCenter delegate methods. This is to ease the integration of the SDK.
+
+    **Registering for Push notification**\
+    Follow the steps in [this article](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial) to initiate registration.
+
+    **Callback methods on receiving Push Notification**\
+    The callback the app would receive on receiving the push notifications is mentioned in [this article](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial). With Swizzling enabled, no additional configuration is required.
+  </Tab>
+  <Tab title="Without Swizzling">
+    In case you do not prefer to use swizzling, you can disable the same by adding the flag MoEngageAppDelegateProxyEnabled in the app’s Info.plist file and setting it to Boolean value NO, and follow the steps below.
+
+    **Registering for Push notification -** Follow the steps in [this article](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial) to initiate registration and the steps in [this section](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial) to call the respective MoEngage SDK methods for registration callbacks.
+
+    **Callback methods on receiving Push Notification -** With Swizzling disabled, include calls to MoEngage SDK methods on receiving notification callbacks, as described in [this article](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial).
+  </Tab>
+</Tabs>
+
+- **Disable Badge Reset**\
+  By default, the SDK sets the notification badge count to 0 on every app launch, and this also clears the notifications in the device notification center. If you would like to keep the notifications even after the App Launch, then disable badge reset by calling the method in [this section](/developer-guide/ios-sdk/push/advanced/custom-notification-handling).
+- **Custom Sound for Notification**\
+  To optionally set a custom tone for notifications of your app, you can follow the method in [this section](/developer-guide/ios-sdk/push/advanced/custom-notification-handling).
+- **Notification Service Extension Target Implementation**\
+  The notification service extension allows MoEngage SDK to customize the content of a notification before the system delivers it to the user. This gives you the capability to add media in notifications, support inbox, update badge count on notifications delivered, and track notification impressions. Follow the steps in [this article](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial) to set up the notification service extension.
+- **Notification Actions**\
+  Actionable notifications let you add custom action buttons to the standard iOS push notifications. Follow the steps mentioned in [this article](/developer-guide/ios-sdk/push/basic/actionable-notifications) to add custom actions to your notifications and track the actions performed on notifications
+
+This completes your basic setup for push notifications in Flutter.
+
+## Push Templates
+
+Push templates enable you to craft beautiful notifications within minutes without any coding. For information on how to create campaigns with templates in the dashboard, refer to [this article](/developer-guide/ios-sdk/push/optional/push-templates).
+
+To enable push templates, please follow the platform-specific documentation
+
+- [Android](/developer-guide/android-sdk/push/optional/push-templates)
+- [iOS](/developer-guide/ios-sdk/push/optional/push-templates)
+
+## Push Amp+
+
+A significant percentage of notifications, around 25-30%, is not delivered due to issues with original equipment manufacturer (OEM) devices. To combat this problem and improve retention rates, MoEngage developed Push Amplification+ to reach customers who may not have received notifications. MoEngage has also partnered with OEMs to address these issues and ensure that notifications are reliably delivered. To minimize any additional burden on your application, we have developed individual software development kits (SDKs) for each OEM. You can choose and integrate the relevant SDK based on your application's specific needs and device share. Refer to the documentation for each OEM-specific service and integrate the appropriate ones into your application for optimal push notification delivery.
+
+### Supported Integrations
+
+- [HMS Push Kit](/developer-guide/android-sdk/push/optional/push-amp-plus/configuring-hms-push-kit)
+
+## Push Amplification
+
+Push Amplification works as a fallback mechanism when Firebase Cloud Messaging (FCM) fails to deliver Push Notifications. Follow the method here to set up [Push Amplification](/developer-guide/android-sdk/push/optional/push-amplification).
+
+## Notification Center
+
+The Notification Center shows your push notification history, allowing you to provide an option for the end-user to scroll back and see what they have missed. MoEngage provides out-of-box inbox support with a fully customizable default UI and also provides an option to build your own Notification Center. For more information, refer to [Notification Center](/developer-guide/flutter-sdk/push/optional/notification-triggered).
+
+## Location Triggered Notifications
+
+Location-triggered notifications allow you to send messages to your audience that are triggered on the user’s entry, exit, and dwell in defined Geo Fences. Follow the method in [this article](/developer-guide/flutter-sdk/push/optional/location-triggered) to set up location triggers.
+
+## Device triggered notifications
+
+Device-triggered notifications allow you to send messages to your audience that are triggered locally based on any activity on a device. Offline delivery of messages is supported as well.
+
+To enable device-triggered notifications, use the following platform-specific articles:
+
+- [Android](/developer-guide/android-sdk/push/optional/device-triggered)
+- [iOS](/developer-guide/ios-sdk/push/optional/real-time-triggers)
+
+## Advanced Use Cases in Android
+
+For advanced use cases, the following options are available:
+
+- **Non-MoEngage Payload** - To get an optional callback in case a push payload is received for any other server apart from the MoEngage Platform, refer to the method [here](/developer-guide/android-sdk/push/basic/push-token-registration-and-display).
+- **Callbacks and customizations** - The MoEngage SDK allows the client application to optionally customize the notification display and extend/customize the behavior of the notification. Refer to the methods mentioned [here](/developer-guide/android-sdk/push/advanced/callbacks-and-customisation) to access the features, such as:
+  - Control whether a notification is shown to the user or not
+  - Notification Received Callback
+  - Notification Clicked Callback
+  - Notification Cleared Callback
+  - Custom Action on Action Button Click
+  - **Push Display Handled by Application(Android)** - When the application needs to handle the push display on the client side, you can track notification impressions and cases using the methods described in [this article](/developer-guide/android-sdk/push/advanced/push-display-handled-by-application).
+
+# In-App
+
+MoEngage In-App Campaigns target users by showing a message while the user is using your app. They are effective in providing contextual information and help to cross-sell/up-sell on desired screens of your app or/and on desired actions performed by the user in your app.
+
+Basic Setup - To install In-app notifications in Flutter, use the following platform-specific methods:
+
+- [Android](/developer-guide/flutter-sdk/in-app-messages/inapp-nativ)
+- iOS (installation is not required for iOS)
+
+## Displaying In-App Messages
+
+You can either show In-app messages using MoEngage’s out-of-the-box UI, or you can use Self-handled In-apps to build the UI of the application using the payload from MoEngage.
+
+**Show In-app**\
+Call the method [here](/developer-guide/flutter-sdk/in-app-messages/inapp-nativ) to show an inApp campaign on a screen. In-app pop-ups will only show up where showInApp() method is called.
+
+**Handling Orientation Change**\
+In-apps are supported in both portrait and landscape modes. There are two ways to do it:
+
+- [Add the API call in the Android native part of your app](/developer-guide/flutter-sdk/in-app-messages/inapp-nativ)
+- [Call MoEngage plugin's onOrientationChanged()](/developer-guide/flutter-sdk/in-app-messages/inapp-nativ)
+
+**Self-handled In-apps**\
+Self-handled In Apps are messages that are delivered by the SDK to the application, and the application builds the UI using the delivered payload by the SDK. To get the self-handled in-app, refer to [this article](/developer-guide/flutter-sdk/in-app-messages/inapp-nativ).
+
+- [Getting self-handled campaigns](/developer-guide/flutter-sdk/in-app-messages/inapp-nativ)
+- [Tracking Statistics for Self-Handled In-Apps](/developer-guide/android-sdk/in-app-messages/in-app-nativ#tracking-statistics-for-self-handled-in-apps)
+
+## InApp Callbacks
+
+Optionally, we provide callbacks for in-app shown, in-app clicked, in-app dismissed, and self-handled in-app available events. You can register for the callbacks using the methods in [this article.](/developer-guide/flutter-sdk/in-app-messages/inapp-nativ#inapp-callbacks)
+
+# Cards
+
+MoEngage Cards campaigns help you interact with your users with persistent and non-intrusive messages in your customer's journey. Self-handled cards are message payloads that are delivered by the SDK to the application, and the application builds the UI using the delivered payload.
+
+Refer to [this article](/developer-guide/flutter-sdk/cards/self-handled-cards) to implement self-handled cards on Flutter.
+
+<Info>
+  Cards are currently not supported for web platform.
+</Info>

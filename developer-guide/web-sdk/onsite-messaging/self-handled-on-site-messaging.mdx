@@ -1,0 +1,233 @@
+---
+title: "Self Handled On-Site Messaging"
+---
+
+## Overview
+
+Self-Handled On-site Messaging (OSM) is a powerful feature that gives developers the flexibility to receive campaign data directly as a JSON payload. Instead of having the MoEngage SDK render a predefined template, this approach allows your application to build and display a custom UI that seamlessly integrates with your website's native design and user experience.\
+This method is ideal for creating highly customized, dynamic, and deeply integrated on-site messages.
+
+<Check>
+  You must use the MoEngage Web SDK version _2.55.0_ or later.
+</Check>
+
+## Receive Campaign Data
+
+To receive campaign data, you must register a callback function. The MoEngage SDK executes this function when the trigger conditions for a Self-Handled OSM campaign are met.
+
+### _Moengage.onsite.getSelfHandledOSM(callbackFunction)_
+
+This method registers a listener for Self-Handled OSM campaigns. MoEngage recommends calling this method on page load to ensure the listener is active and ready to receive data.
+
+Example Implementation:
+
+<CodeGroup>
+
+```javascript JavaScript lines wrap
+Moengage.onsite.getSelfHandledOSM(function(fullCampaignData) {
+  // This callback function is the entry point for handling campaign data.
+  console.log("Received Self-Handled OSM Data:", fullCampaignData);
+  
+  // Proceed with custom UI rendering and event tracking.
+});
+```
+
+</CodeGroup>
+
+## Understand the Campaign Data Payload
+
+When a campaign triggers your registered callback, the function receives a `fullCampaignData` object containing all the necessary information about the campaign.
+
+Example `fullCampaignData` Payload:
+
+<CodeGroup>
+
+```javascript JavaScript lines wrap
+[{
+  "campaignId": "000000000000000000000001",
+  "campaignName": "Holiday Sale Banner",
+  "expiryTime": "2025-12-31T23:59:59.000Z",
+  "updatedTime": "2025-10-06T10:30:00.000Z",
+  "status": "ACTIVE",
+  "jsonPayload": "{\"title\":\"Holiday Sale!\",\"message\":\"Get up to 50% off all items.\"}",
+  "dismissInterval": 86400,
+  "context": {
+    "campaign_name": "Holiday Sale Banner",
+    "cid": "000000000000000000000001_v2",
+    "moe_locale_id": "eng-us",
+    "moe_locale_name": "English (US)",
+    "moe_variation_id": "variation_b_12345"
+  },
+  "urlFilters": null
+}]
+```
+
+</CodeGroup>
+
+### Payload Fields
+
+| Field           | Type   | Description                                                                                                                                                                                                                                                    |
+| --------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| campaignId      | String | The unique identifier for the campaign.                                                                                                                                                                                                                        |
+| campaignName    | String | The name of the campaign as defined in the MoEngage dashboard.                                                                                                                                                                                                 |
+| expiryTime      | String | The expiry time of the campaign.                                                                                                                                                                                                                               |
+| updatedTime     | String | The time when the campaign was updated.                                                                                                                                                                                                                        |
+| status          | String | The campaign's current status. It will always be ACTIVE.                                                                                                                                                                                                       |
+| jsonPayload     | String | A stringified JSON object containing the custom data for your UI. Parse this string to access its contents.                                                                                                                                                    |
+| dismissInterval | Number | Specifies the time in seconds before the campaign can be automatically dismissed. The default value is 86400 (24 hours).                                                                                                                                       |
+| context         | Object | An object containing metadata required for accurate campaign tracking. You must include this object when calling the tracking methods.                                                                                                                         |
+| urlFilters      | Object | Defines URL-based targeting rules for the campaign. Developers must implement logic to check whether the current page URL matches the defined targeting rules and display the campaign only when a match is found. If null, no URL-specific targeting applies. |
+
+Example `urlFilters` Object
+
+The `urlFilters` object defines the logic that determines on which pages a campaign can appear. The example below shows a configuration that displays the campaign when the URL contains either "loc" or "hos".
+
+<CodeGroup>
+
+```javascript JavaScript lines wrap
+"urlFilters": {
+    "included_filters": {
+        "filters": [
+            {
+                "executed": true,
+                "execution": {
+                    "count": 1,
+                    "type": "atleast"
+                },
+                "action_name": "MOE_PAGE_URL_EVENT",
+                "attributes": {
+                    "filter_operator": "or",
+                    "filters": [
+                        {
+                            "name": "URL",
+                            "data_type": "string",
+                            "operator": "containsInTheFollowing",
+                            "value": [
+                                "loc"
+                            ],
+                            "value1": "",
+                            "negate": false,
+                            "case_sensitive": false,
+                            "array_filter_type": "any_of"
+                        },
+                        {
+                            "name": "URL",
+                            "data_type": "string",
+                            "operator": "containsInTheFollowing",
+                            "value": [
+                                "hos"
+                            ],
+                            "value1": "",
+                            "negate": false,
+                            "case_sensitive": false,
+                            "array_filter_type": "any_of"
+                        }
+                    ]
+                },
+                "filter_type": "actions"
+            }
+        ],
+        "filter_operator": "or"
+    }
+}
+```
+
+</CodeGroup>
+
+## Campaign Delivery Logic and Best Practices
+
+When an event is triggered, MoEngage evaluates all eligible campaigns and selects a single campaign to deliver.
+
+### Campaign Selection Algorithm:
+
+- **Filtering**: MoEngage filters campaigns based on user eligibility and targeting criteria.
+
+
+- **Exclusion**: MoEngage removes ineligible campaigns based on rules like frequency capping, delays, and expiration status.
+- **Prioritization**: MoEngage sorts the remaining campaigns by priority (P0 is the highest).
+- **Tie-Breaking**: If multiple campaigns share the highest priority, MoEngage selects the one with the most recent "last updated" timestamp.
+
+Your `getSelfHandledOSM` callback receives only the single winning campaign.
+
+### Best Practices for Campaign Organization:
+
+To ensure you show the correct campaign in the right context, organize your campaigns with clear priorities.
+
+- **Homepage Context**: Campaign A (P0), Campaign B (P1)
+- **Product Page Context**: Campaign C (P0), Campaign D (P1)
+- **Checkout Context**: Campaign E (P0)
+
+## Track Campaign Statistics
+
+Because your application controls the UI, you are responsible for notifying the SDK of user interactions. This step is essential for accurate analytics.
+
+| Method                                     | Description                                                             |
+| ------------------------------------------ | ----------------------------------------------------------------------- |
+| Moengage.onsite.selfHandledShown(data)     | Call this method after the message is rendered and visible to the user. |
+| Moengage.onsite.selfHandledClicked(data)   | Call this method when the user clicks on the message.                   |
+| Moengage.onsite.selfHandledDismissed(data) | Call this method when the user dismisses the message.                   |
+
+### Construct the Tracking Data Object
+
+The _data_ object passed to the tracking methods is not the entire `fullCampaignData` object. You must construct a new, specific object for tracking.
+
+Required `trackingData` Format:
+
+<CodeGroup>
+
+```javascript JavaScript lines wrap
+const trackingData = {
+  campaignId: fullCampaignData.campaignId,
+  campaignName: fullCampaignData.campaignName,
+  context: fullCampaignData.context // Pass the context object exactly as received.
+};
+```
+
+</CodeGroup>
+
+## Code Implementation Example
+
+This example demonstrates the core logic for receiving data and preparing it for the tracking methods.
+
+<CodeGroup>
+
+```javascript JavaScript lines wrap
+// Register the callback function to listen for campaigns.
+Moengage.onsite.getSelfHandledOSM(function(fullCampaignData) {
+  
+  console.log("Full campaign data received:", fullCampaignData);
+  var firstCampaignData = fullCampaignData[0];
+  // Construct the specific object required for tracking events.
+  const trackingData = {
+    campaignId: firstCampaignData.campaignId,
+    campaignName: firstCampaignData.campaignName,
+    context: firstCampaignData.context
+  };
+  
+  // --- Example Tracking Calls ---
+  
+  // Call this once your custom UI is rendered and visible.
+  Moengage.onsite.selfHandledShown(trackingData);
+
+  // In your button's click handler, call this.
+  // myButton.addEventListener('click', () => {
+  //   Moengage.onsite.selfHandledClicked(trackingData);
+  // });
+  
+  // In your dismiss element's click handler, call this.
+  // myDismissButton.addEventListener('click', () => {
+  //   Moengage.onsite.selfHandledDismissed(trackingData);
+  // });
+});
+```
+
+</CodeGroup>
+
+## Troubleshooting
+
+If your `Moengage.onsite.getSelfHandledOSM` callback function is not being triggered, we recommend checking the following common issues:
+
+- **SDK Initialization**: Ensure you call `getSelfHandledOSM()` only after the MoEngage SDK is successfully initialized. Calling this method too early in the page load sequence can prevent the callback from registering correctly.
+- **Correct Method**: Verify you are using the `Moengage.onsite.getSelfHandledOSM()`method. Ensure you are not accidentally calling a method from a different module.
+- **SDK Version Compatibility**: Check that your Web SDK version meets the minimum requirement specified in the Prerequisites.
+- **Browser Console Errors**: Open the developer console in your browser and check for any JavaScript errors originating from the MoEngage SDK that could disrupt its operation.

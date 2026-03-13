@@ -1,0 +1,110 @@
+---
+title: "Safari Web Push for iOS and iPadOS"
+---
+
+Apple has released iOS and iPadOS [16.4+](https://developer.apple.com/documentation/safari-release-notes/safari-16_4-release-notes), which includes mobile web push notifications from web apps added to a user's home screen. This means that website owners can now send push notifications to their iOS users directly from their websites.
+
+## Requirements
+
+Web Push Notifications only work on Progressive Web Apps that are installable. Your website should meet the below-mentioned criteria to be able to send web push notifications.
+
+- The web app must be served alongside a web application manifest file.
+- The web app is installed on users' home screens.
+- Users have to initiate an action before being prompted for push permission.
+
+<Info>
+  If your website already is a Progressive Web App (PWA), no changes are required to make your site compatible with iOS web push notifications. For websites that are not PWA, follow the guide below.
+</Info>
+
+## Integration steps
+
+Ensure that you follow our standard [web push integration guide](/developer-guide/web-sdk/web-push/configure-and-integrate-web-push). The following steps are required to support web push notifications on Safari for iOS and iPadOS.
+
+## Setting up your website for iOS/iPadOS Web Push Notifications
+
+Steps to set up your website:
+
+1. Create a manifest file
+2. Link the manifest file
+3. Add a service worker
+4. Add the app to the home screen
+5. Show the native push prompt
+
+### Step 1. Create a manifest file
+
+A Web app manifest file is a plain JSON format text file necessary for the web app to be downloaded and contains information on how it should look once it is installed. A basic manifest file should contain the name of the app, color, description, icons, etc.
+
+Create a new `manifest.json` file in your website’s root directory, with the following mandatory fields.
+
+<CodeGroup>
+
+```JSON JSON lines wrap
+{
+  "name": "Moengage PWA",
+  "short_name": "MoengagePWA",
+  "display": "standalone",  "theme_color": "#00237b",  "background_color": "#00237b",
+  "icons": [{
+    "src": "/icon-512x512.png",
+    "sizes": "512x512",    "type": "image/png"
+  }]
+}
+```
+
+</CodeGroup>
+
+The full list of supported fields can be found [here](https://developer.mozilla.org/en-US/docs/Web/Manifest).
+
+### Step 2: Link the manifest file
+
+Add the following `<link>` tag to your website’s `<head>` element. This will point to the location your manifest file is hosted.
+
+<CodeGroup>
+
+```json Manifest.JSON
+<link rel="manifest" href="/manifest.json" />
+```
+
+</CodeGroup>
+
+### Step 3: Add a service worker
+
+To enable web push notifications for iOS and iPadOS, import the MoEngage service worker and place it in the root file. This step is the same as that of the normal web push notifications integration. For more information, refer to the [Service worker integration document.](/developer-guide/web-sdk/web-push/configure-and-integrate-web-push)
+
+### Step 4: Add to Home Screen
+
+This is the major difference between Safari and other browsers when it comes to web push notifications. Unlike major browsers like Chrome and Firefox, you are not allowed to request push permission on Safari iOS/iPadOS unless your website has been added to the user’s home screen.
+
+The [Add to Homescreen](https://support.apple.com/guide/iphone/bookmark-favorite-webpages-iph42ab2f3a7/ios#iph4f9a47bbc) feature lets users bookmark your website, adding your icon to their valuable home screen real estate.
+
+![Addtohomescreen](/images/Addtohomescreen.png)
+
+### Step 5: Show the opt-in
+
+Web apps that have been added to the Home Screen require direct user interaction to request permission to send notifications. You can use one of the following opt-in mechanisms to request permission: one-step, two-step, and self-handled.
+
+This can be configured using the MoEngage dashboard. For more information, refer to [opt-in management](https://help.moengage.com/hc/en-us/articles/210224063-Configure-Web-Push-Settings#configure-web-push-opt-in-0-4).
+
+| |
+| --- |
+
+![Optin Image](/images/Optin_image.png)
+
+| | |
+| --- | --- |
+
+![Optin Image2](/images/Optin_image2.png)
+
+<Info>
+  - It is recommended to use the 2-step Opt-in method.
+  - For one-step opt-ins, user interaction is required before the prompt is displayed. In some cases, the prompt may be triggered when a link to a new page is clicked by the user and would be displayed for a very short period before the page load.
+  - For self-handled opt-in, ensure the user has interacted with the page before displaying the opt-in prompt.
+</Info>
+
+### Testing it
+
+We recommend that you
+
+- Implement the manifest file
+- Add the website to home screen
+- Accept the push permission
+- Send yourself a [push notification](https://help.moengage.com/hc/en-us/articles/210223973-Create-Web-Push-Campaign) and validate whether it is working as expected.

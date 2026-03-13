@@ -1,0 +1,418 @@
+---
+title: "JavaScript Bridge for HTML In-Apps"
+---
+
+HTML in-app messages for Android support a bridge interface for web apps to interact with the MoEngage SDK.
+
+The bridge contains a set of APIs that can be accessed using a global variable `moengage`.
+
+The below table lists all the JS Bridge methods and in the subsequent sections, each API is explained in detail.
+
+| Method Name                                                       | Description                                                                                                                                                                                                                                                                                                   |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| moengage.dismissMessage()                                         | Attach this method on your template for closing the in-app message                                                                                                                                                                                                                                            |
+| moengage.navigateToScreen("screen-name", "optional-data-json")    | Use this method to navigate the user to a specific screen on click of a template element. Params:   "screen-name" : name of the screen for redirection   "optional-data-json" : additional key value pairs                                                                                                    |
+| moengage.openDeepLink("deeplink-url", "optional-data-json")       | Use this method when you want to open a deeplink from your html in-app template   "deeplink-url" : deeplink url   "optional-data-json" : additional key value pairs                                                                                                                                           |
+| moengage.openRichLanding("richlanding-url", "optional-data-json") | Use this method when you want to open a URL inside the app's webview   "richlanding-url" : url that you want to open   "optional-data-json" : additional key value pairs                                                                                                                                      |
+| moengage.openWebURL("web-url", "optional-data-json").             | Use this method when you want to open a URL on the app's default browser   "web-url" : url that you want to open   "optional-data-json" : additional key value pairs                                                                                                                                          |
+| moengage.copyText("text-to-copy", "message")                      | Use this method to copy a coupon code or offer code from your html in-app template to clipboard   "text-to-copy": This text will be copied to clipboard   "optional-message": This message will be shown after copy                                                                                           |
+| moengage.call("mobile-number")                                    | Use this method to initiate a call from your html in-app template   "mobile-number": This number will appear in the dialer                                                                                                                                                                                    |
+| moengage.sms("mobile-number", "message")                          | Use this method to initiate an sms from your html in-app template   "mobile-number": SMS will be sent to this   "message": This message will be sent as the SMS                                                                                                                                               |
+| moengage.share("share-text")                                      | Use this method to initiate the share action via any of the available apps on the device.                                                                                                                                                                                                                     |
+| moengage.customAction("data-json")                                | Use this method to initiate a custom action defined by your app.   "data-json": key value pairs                                                                                                                                                                                                               |
+| moengage.showPushOptIn()                                          | This only for iOS and based on current notification status, either the notification permission pop is shown or will be taken to settings screen where notification status can be updated.                                                                                                                     |
+| moengage.navigateToSettings()                                     | Use this method to navigate to the settings screen of the device                                                                                                                                                                                                                                              |
+| moengage.trackEvent(eventName, generalAttrJson)                   | Use this method to track an event from html in-app template   "eventName" : Name of the tracked event   "generalAttrJson" : Event attributes that will be tracked along with the event                                                                                                                        |
+| moengage.trackClick("widgetId")                                   | Use this method to track clicks stats for campaign performance measurement.   "widgetId": This is an optional argument and if passed will help populate the click distribution table. Effective when you have multiple CTAs in a single template                                                              |
+| moengage.trackDismiss(widgetId)                                   | Use this method to track dismiss stats for campaign performance measurement and identifying users who dismiss the in-app message   "widgetId": This is an optional argument and if passed will help populate the click distribution table. Effective when you have multiple dismiss CTAs in a single template |
+| moengage.setEmailId("value")                                      | Use this method to capture the email_id of your users. This will be saved in user profile automatically and can be used to send email campaigns.   You can use this with your lead generation / signup forms.   "value" : This is the email_id of the user                                                    |
+| moengage.setMobileNumber("value")                                 | Use this method to capture the mobile number of your users. This will be saved in user profile automatically and can be used to send SMS campaigns.   You can use this method with your lead generation / signup forms.   "value" : This is the mobile number of the user                                     |
+| moengage.setUserName("value")                                     | Use this method to capture the Name of your users. This will be saved in user profile automatically.   You can use this method with your lead generation / signup forms.   "value" : This is the username of the user                                                                                         |
+| moengage.setFirstName("value")                                    | Use this method to capture the First Name of your users. This will be saved in user profile automatically.   You can use this method with your lead generation / signup forms.   "value" : This is the first name of the user                                                                                 |
+| moengage.setLastName("value")                                     | Use this method to capture the Last Name of your users. This will be saved in user profile automatically.   You can use this method with your lead generation / signup forms.   "value" : This is the last name of the user                                                                                   |
+| moengage.setUniqueId()                                            | Use this method to set the Client ID of your users.                                                                                                                                                                                                                                                           |
+| moengage.setAlias()                                               | Use this method to update the existing Client ID of your users.                                                                                                                                                                                                                                               |
+| moengage.setGender()                                              | Use this method to set the Gender of your users.                                                                                                                                                                                                                                                              |
+| moengage.setBirthDate()                                           | Use this method to set the Birthdate of your users.                                                                                                                                                                                                                                                           |
+| moengage.setUserLocation(lat, lng)                                | Use this method to set the Location (lat,lng) of your users.                                                                                                                                                                                                                                                  |
+| moengage.setUserAttribute(name,value)                             | Use this method to set custom attributes of your users when data type of the attribute is string, numeric or boolean.   name : Name of the user attribute to be tracked   value : Value of the tracked user attribute.                                                                                        |
+| moengage.setUserAttributeDate(name,value)                         | Use this method to set custom attributes of your users when data type of the attribute is date   name : Name of the user attribute to be tracked   value : Value of the tracked user attribute in ISO 8601 format                                                                                             |
+| moengage.setUserAttributeLocation(name,lat,lng)                   | Use this method to set custom attributes of your users when data type of the attribute is location   name : Name of the user attribute to be tracked   lat,lng : Location of the user                                                                                                                         |
+| moengage.trackRating()                                            | Use this method to capture the rating of your users from a rating template.                                                                                                                                                                                                                                   |
+
+The subsequent sections provide more details on how to use each API. The provided JS Methods are classified into two categories - JS Methods for Actions and JS Methods for Data Tracking
+
+# Actions
+
+The following sections will provide more details on the JS Methods for actions.
+
+<Info>
+  **JS Methods for Actions**
+
+  Integrate the JS Methods for Actions with your HTML Template to execute on-click actions like message close, navigation actions like re-direction to screens or webpages, or any other actions as supported with in-app campaigns.
+</Info>
+
+# Dismiss In-App Message
+
+To dismiss in-app messages use `moengage.dismissMessage()` API.
+
+<CodeGroup>
+
+```javascript JavaScript
+moengage.dismissMessage();
+```
+
+</CodeGroup>
+
+<Info>
+  Do not use other API when the `moengage.dismissMessage()`API is in use.
+</Info>
+
+# Navigation Actions
+
+## Navigate to Screen
+
+You can open a screen using `moengage.navigateToScreen(<screen-name>, <optional-data-json>)`.
+
+<CodeGroup>
+
+```javascript JavaScript
+var screenName = "com.moengage.sampleapp.ui.activity.MainActivity";
+// Optionally add data json object
+var attributes = {
+  "nav_screen_attr1": "val1",
+  "nav_screen_attr2": 100,
+  "nav_screen_attr3": 123.11,
+  "nav_screen_attr4": true
+};
+    
+moengage.navigateToScreen(value, attributes);
+```
+
+</CodeGroup>
+
+## Open Deeplink URL
+
+To open a deeplink URL use `moengage.openDeepLink(<deeplink-url>, <optional-data-json>)`.
+
+<CodeGroup>
+
+```javascript JavaScript
+var value = "moengage://testdeeplink/testActivity";
+// Optionally add data json object
+var attributes = {
+  "nav_screen_attr1": "val1",
+  "nav_screen_attr2": 100,
+  "nav_screen_attr3": 123.11,
+  "nav_screen_attr4": true
+};
+moengage.openDeepLink(value, attributes);
+```
+
+</CodeGroup>
+
+## Open Richlanding Screen
+
+To open a Richlanding screen use `moengage.openRichLanding(<richlanding-url>, <data-json>)`.
+
+<CodeGroup>
+
+```javascript JavaScript
+var value = "https://www.google.com";
+// Optionally add data json object
+var attributes = {
+  "nav_screen_attr1": "val1",
+  "nav_screen_attr2": 100,
+  "nav_screen_attr3": 123.11,
+  "nav_screen_attr4": true
+};
+moengage.openRichLanding(value, attributes);
+```
+
+</CodeGroup>
+
+## Open Web URL
+
+To open a URL in a web browser use `moengage.openWebURL(<web-url>, <optional-data-json>)`.
+
+<CodeGroup>
+
+```javascript JavaScript
+var value = "https://www.google.com";
+// Optionally add data json object
+var attributes = {
+  "nav_screen_attr1": "val1",
+  "nav_screen_attr2": 100,
+  "nav_screen_attr3": 123.11,
+  "nav_screen_attr4": true
+};
+    
+moengage.openWebURL(value, attributes);
+```
+
+</CodeGroup>
+
+# Copy Text to Clipboard
+
+To copy text to clipboard use `moengage.copyText(<text-to-copy>, <message>)` API.
+
+<CodeGroup>
+
+```javascript JavaScript
+moengage.copyText("COUPON100", "Rs.100 OFF!");
+```
+
+</CodeGroup>
+
+# Call
+
+To perform call action use `moengage.call(<mobile-number>` API.
+
+<CodeGroup>
+
+```javascript JavaScript
+moengage.call("1234567890");
+```
+
+</CodeGroup>
+
+# SMS
+
+To send an SMS use `moengage.sms(<mobile-number>, <message>)` API.
+
+<CodeGroup>
+
+```javascript JavaScript
+moengage.sms("1234567890", "Hi There!");
+```
+
+</CodeGroup>
+
+# Share
+
+To share a string content use `moengage.share(<share-text>)` API.
+
+<CodeGroup>
+
+```javascript JavaScript
+moengage.share("Content to share");
+```
+
+</CodeGroup>
+
+# Custom Action
+
+To perform custom action set the data using `moengage.customAction(<data-json>)` API.
+
+<CodeGroup>
+
+```javascript JavaScript
+var attributes = {
+  "attr1": "val1",
+  "attr2": 100,
+  "attr3": 123.11,
+  "attr4": {
+    "int": 30
+  }
+};
+moengage.customAction(attributes);
+```
+
+</CodeGroup>
+
+# Data Tracking
+
+The following sections will provide more details on the JS Methods for data tracking.
+
+<Info>
+  **JS Methods for Data Tracking**
+
+  You would need to integrate the JS Methods for Data Tracking in your template for the following use-cases:
+
+  - Tracking stats (clicks, close)
+  - Tracking events (for surveys, rating, lead gen)
+  - Tracking user attributes (for lead gen, signup etc.)
+</Info>
+
+## Track Event
+
+To track an event use `moengage.trackEvent(eventName, generalAttrJson, locationAttrJson, dateAttrJson, isNonInteractive, shouldAttachCampaignMeta)` API.
+
+The trackEvent() takes in up to six parameters.
+
+- eventName : String
+- generalAttrJson : JSON Object for general attributes. Accepted data types are string, float, boolean, int, JSON objects.
+
+<CodeGroup>
+
+```javascript JavaScript
+{
+  " <attribute_name >": " <attribute_value >",
+  " <attribute_name >": " <attribute_value >",
+  ...  
+}
+```
+
+</CodeGroup>
+
+- locationAttrJson : JSON Object for location attributes. Accepts attribute name and latitude and longitude
+
+<CodeGroup>
+
+```javascript JavaScript
+{
+  " <attribute_name >": {
+    "latitude":  <latitude >,
+    "longitude":  <longitude >
+  },
+  " <attribute_name >": {
+    "latitude":  <latitude >,
+    "longitude":  <longitude >
+  },
+  ...
+}
+```
+
+</CodeGroup>
+
+- dateAttrJson : JSON Object for date-time attributes. Accepts only ISO-8601 format dates
+
+<CodeGroup>
+
+```javascript JavaScript
+{
+  " <attribute_name >": "yyyy-MM-dd'T'HH:mm:ss.fff'Z'",
+  " <attribute_name >": "yyyy-MM-dd'T'HH:mm:ss.fff'Z'",
+  ...
+}
+```
+
+</CodeGroup>
+
+- isNonInteractive: true if you want the event to be non-interactive, else false.
+- shouldAttachMetaData: true if you want to attach campaign metadata to the event, else false.
+
+<Info>
+  Apart from the `eventName` parameter, other parameters are non-mandatory you can pass `{}`.\
+  It is important to maintain the order in which parameters are passed, i.e. if you want to pass only the location attributes general attribute should be passed `{}`.
+
+  For general cases, you would just be passing the event-name and event-attributes JSON and in this case you can skip the other params. A method for this case would be like - **`moengage.trackEvent("Response_Submitted", {"response1":"johndoe@gmail.com","response2":"approved"})`**
+</Info>
+
+## Track Click Event
+
+To track widget click events use `moengage.trackClick(widgetId)` API. The `<widgetId>` can be int or string, otherwise, the click event will not be tracked.
+
+<CodeGroup>
+
+```javascript JavaScript
+//track click event
+moengage.trackClick("image_1");
+moengage.trackClick(10);
+```
+
+</CodeGroup>
+
+## Track Dismiss
+
+To track in-app dismissal events, use `moengage.trackDismiss(widgetId)` API. The `<widgetId>` can be int or string. If not passed, the dismiss event will be tracked without widgetID. If not passed, the event will get tracked without `<widgetId>`
+
+<CodeGroup>
+
+```javascript JavaScript
+moengage.trackDismiss("dismiss_btn_1");
+moengage.trackDismiss(1);
+```
+
+</CodeGroup>
+
+## Track Dismiss(Deprecated - Use Above API with widget ID instead)
+
+To track the in-app dismissal use `moengage.trackDismiss()` API.
+
+<CodeGroup>
+
+```javascript JavaScript
+moengage.trackDismiss();
+```
+
+</CodeGroup>
+
+## Track Default User Attributes
+
+The following JavaScript methods are available for tracking default user attributes.
+
+| API name                     | API Description                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| moengage.setAlias()          | Update user's unique id which was previously set by \`moengage.setUniqueId() |
+| moengage.setUniqueId()       | Set user UniqueId                                                            |
+| moengage.setUserName()       | Set user name                                                                |
+| moengage.setFirstName()      | Set user first name                                                          |
+| moengage.setLastName()       | Set user last name                                                           |
+| moengage.setEmailId()        | Set user email-id                                                            |
+| moengage.setMobileNumber()   | Set user mobile number                                                       |
+| moengage.setGender()         | Set user gender ("male"/"female"/"other")                                    |
+| moengage.setBirthDate()      | Set user birthday   NOTE: the value must be ISO-8601 format dates.           |
+| moengage.setUserLocation(, ) | Set user location                                                            |
+| moengage.trackRating()       | Track user input action rating                                               |
+
+Example:
+
+<CodeGroup>
+
+```javascript JavaScript
+// Set alias            
+moengage.setAlias("user-alias");
+// Set UniqueId
+moengage.setUniqueId("unique-id");
+// Set user name        
+moengage.setUserName("John Doe");
+// Set user first name
+moengage.setFirstName("Jane");
+//Set user last name                     
+moengage.setLastName("Doe");
+// Set Email id                    
+moengage.setEmailId("abc@abc.com");
+// Set mobile number
+moengage.setMobileNumber("1234567890");
+// Set User gender
+moengage.setGender("female");
+// Set user birthday    
+moengage.setBirthDate("2017-08-02T06:05:30.000Z");
+//Set user location       
+moengage.setUserLocation(3.0539652, 77.672683);     
+// Set rating value       
+moengage.trackRating(4.5);
+```
+
+</CodeGroup>
+
+## Track Custom user attributes
+
+The following JavaScript methods are available for tracking custom user attributes.
+
+| API name                                | API description           |
+| --------------------------------------- | ------------------------- |
+| moengage.setUserAttribute(, )           | Set custom user attribute |
+| moengage.setUserAttributeDate(, )       | Set custom user date      |
+| moengage.setUserAttributeLocation(, , ) | Set custom user location  |
+
+Example:
+
+<CodeGroup>
+
+```javascript JavaScript
+// Set custom user attribute
+moengage.setUserAttribute("int", 100);
+moengage.setUserAttribute("float", 10.5);
+moengage.setUserAttribute("String", "test");
+moengage.setUserAttribute("Boolean", true);
+
+//Set custom date attribute
+moengage.setUserAttributeDate("Date1", "2017-08-02T06:05:30.000Z");
+
+//Set custom user location
+moengage.setUserAttributeLocation("Location 1", 3.0539652, 77.672683);
+```
+
+</CodeGroup>

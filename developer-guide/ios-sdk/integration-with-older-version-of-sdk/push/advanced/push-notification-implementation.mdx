@@ -1,0 +1,525 @@
+---
+title: "Push Notification Implementation"
+description: ""
+---
+
+<Check>
+Make sure you have created the APNS certificate and uploaded it to MoEngage dashboard as mentioned in the [APNS Certificate/ PEM file](https://developers.moengage.com/hc/en-us/articles/4403944011028) before testing the push notification.
+</Check>
+
+# App Target Implementation
+
+# Settings Changes
+
+## Capabilities Tab Changes
+
+First, select your **App Target** and select **Capabilities** do the changes as shown in the image below:
+
+![0ab5e70-Screenshot_2019-06-05_at_15.02.38.png](19220001055764)
+
+<Info>
+**App Group ID Recommendation**
+
+We recommend having a separate App Group ID set for MoEngage with the format `group.{app bundle id}.moengage`. And make sure the same app group id is enabled for all the targets where MoEngage is being used.
+</Info>
+
+1. Turn **ON** App Groups in for your app target and enable one of the App group ids, in case if you don't have an App Group ID then create one. The name of your app group should be `group.{your_bundle_id}.MoEngage`.
+2. Turn **ON** Background mode and set/enable **Remote Notification**.
+3. Turn **ON** the **Push Notifications**capability for your app.
+
+<Info>
+On enabling **Remote Notification** background mode, we will be able to track uninstalls even for devices where push notification is disabled by the user.
+</Info>
+
+## Adding UserNotifications framework
+
+In the App's Target add **UserNotifications** framework in **Linked Frameworks and Libraries** and set it **Optional**.
+
+![0f30c27-Screenshot_2019-01-10_at_14.36.57.png](19220015026580)
+
+# Code Changes in App Target
+
+## Provide the App Group ID to SDK
+
+Provide the App Group ID selected in **Capabilities** in MOSDKConfig instance while initializing the SDK as shown below:
+
+<CodeGroup>
+```swift Swift
+let sdkConfig = MOSDKConfig(withAppID: "MoEngage Workspace ID")
+sdkConfig.appGroupID = "App Group ID"
+```
+
+```objectivec Objective-C
+MOSDKConfig* sdkConfig = [[MOSDKConfig alloc] initWithAppID:"MoEngage Workspace ID"];
+sdkConfig.appGroupID = @"App Group ID";
+```
+
+</CodeGroup>
+
+## AppDelegate swizzling in SDK
+
+<Warning>
+**Segment-MoEngage Integration**
+
+Please note that **AppDelegate Swizzling** doesn't work reliably with [Segment Integration](https://developers.moengage.com/hc/en-us/articles/4405093164692)because of delay in initializing the SDK by Segment, therefore make sure to call the MoEngage SDK methods for all Push related callbacks.
+</Warning>
+
+AppDelegate Swizzling is used for intercepting the methods of the AppDelegate class in iOS apps. It allows third-party libraries or SDKs to integrate into the app and handle certain system interactions, such as push notifications and deep linking, without requiring manual setup by developers.
+
+**Default behavior**
+
+By default, the MoEngage SDK swizzles the **AppDelegate** Class to get all the callbacks related to Push Notifications, and also we have applied method swizzling for **UserNotificationCenter** delegate methods. This is to ease the integration of the SDK, and this is introduced from the [SDK version 5.0.0](https://developers.moengage.com/hc/en-us/articles/4404198236564-Change-Log#v5-0-0-0-26).
+
+**Disabling AppDelegate Swizzling in the MoEngage SDK**
+
+You should disable AppDelegate Swizzling if you do not want MoEngage SDK to implicitly handle the callbacks. To disable swizzling, add the flag MoEngageAppDelegateProxyEnabled in the app’s Info.plist file and set it to bool value NO.
+
+In the following sections, we have provided the SDK methods to be called when you get callbacks related to push notifications. Most of them will not be needed in case swizzling is enabled; the same will be mentioned in the description.
+
+## Registering for Push notification
+
+Make sure that class, where UserNotificationCenter delegate methods are implemented, should agree to `UNUserNotificationCenterDelegate` , also set the `UNUserNotificationCenterDelegate` after the app launch in `application:DidFinishLaunchingWithOptions:` as shown below: `(In this case AppDelegate is set to be UserNotificationCenter delegate)` :
+
+![2350517-Screenshot_2019-10-09_at_19.30.54.png](19220015027476)
+
+Call SDK's `registerForRemoteNotificationWithCategories:` to initiate registration of remote notifications as shown below :
+
+<CodeGroup>
+```swift Swift
+MoEngage.sharedInstance().registerForRemoteNotification(withCategories: nil, withUserNotificationCenterDelegate: self)
+```
+
+```objectivec Objective-C
+[[MoEngage sharedInstance] registerForRemoteNotificationWithCategories:nil withUserNotificationCenterDelegate:self];
+```
+
+</CodeGroup>
+
+Now after registering for push, the below-given callback methods will be called. **In case you have disabled swizzling,** call the respective MoEngage SDK methods for the callbacks as shown below :
+
+<CodeGroup>
+```swift Swift
+//Remote notification Registration callback methods
+func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+  //Call only if MoEngageAppDelegateProxyEnabled is NO
+  MoEngage.sharedInstance().setPushToken(deviceToken)
+}
+
+func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+  //Call only if MoEngageAppDelegateProxyEnabled is NO
+  MoEngage.sharedInstance().didFailToRegisterForPush()
+}
+```
+
+```objectivec Objective-C
+//Remote notification Registration callback methods
+- (void)application:(UIApplication*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)deviceToken {
+  //Call only if MoEngageAppDelegateProxyEnabled is NO
+  [[MoEngage sharedInstance] setPushToken:deviceToken]
+}
+
+-(void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
+  //Call only if MoEngageAppDelegateProxyEnabled is NO
+  [[MoEngage sharedInstance]didFailToRegisterForPush];
+}
+
+//This method is for getting the types of notifications that app may use 
+-(void)application:(UIApplication *)application didRegisterUserNotificationSettings:(UIUserNotificationSettings *)notificationSettings{
+  //Call only if MoEngageAppDelegateProxyEnabled is NO
+  [[MoEngage sharedInstance]didRegisterForUserNotificationSettings:notificationSettings];
+}
+```
+
+</CodeGroup>
+
+<Info>
+**Notification Actions**
+
+You can send the set of categories(**UNNotificationCategory** for supporting Notification actions. Get more info regarding notification actions [here](https://developers.moengage.com/hc/en-us/articles/4403961980308).
+</Info>
+
+## Callback methods on receiving Push Notification:
+
+Below are the callbacks the app would receive on receiving the push notifications. **In case you have disabled swizzling,** include calls to MoEngage SDK methods on receiving notification callbacks as shown below:
+
+<CodeGroup>
+```swift Swift
+// MARK:- UserNotifications Framework callback method
+@available(iOS 10.0, *)
+func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+withCompletionHandler completionHandler: @escaping () -> Void) {
+    
+    //Call only if MoEngageAppDelegateProxyEnabled is NO
+    MoEngage.sharedInstance().userNotificationCenter(center, didReceive: response)
+    
+    //Custom Handling of notification if Any
+    let pushDictionary = response.notification.request.content.userInfo
+    print(pushDictionary)
+    
+    completionHandler();
+}
+
+@available(iOS 10.0, *)
+func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    
+    //This is to only to display Alert and enable notification sound
+    completionHandler([.sound,.alert])
+    
+}
+
+// MARK:- Remote notification received callback method for iOS versions below iOS10
+func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any]) {
+    
+    //Call only if MoEngageAppDelegateProxyEnabled is NO
+    MoEngage.sharedInstance().didReceieveNotificationinApplication(application, withInfo: userInfo)
+  
+}
+```
+
+```objectivec Objective-C
+// UserNotifications Framework Callback for iOS10 and above
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+didReceiveNotificationResponse:(UNNotificationResponse *)response
+         withCompletionHandler:(void (^)())completionHandler{
+    
+           //Call only if MoEngageAppDelegateProxyEnabled is NO       
+           [[MoEngage sharedInstance] userNotificationCenter:center didReceiveNotificationResponse:response];
+           
+           //Custom Handling of notification if Any  
+           completionHandler();
+}
+
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+       willPresentNotification:(UNNotification *)notification
+         withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler{
+           
+           //This is to only to display Alert and enable notification sound
+           completionHandler((UNNotificationPresentationOptionSound
+                       | UNNotificationPresentationOptionAlert ));
+}
+
+//Remote notification received callback method for iOS versions below iOS10
+- (void) application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+            
+  //Call only if MoEngageAppDelegateProxyEnabled is NO
+  [[MoEngage sharedInstance]didReceieveNotificationinApplication:application withInfo:userInfo];
+  
+}
+```
+
+</CodeGroup>
+
+Method ***userNotificationCenter:willPresentNotification:withCompletionHandler:*** is called when the app receives notification in foreground. Here, in the completion handler you can mention how you want to let the user know that the app has received a notification.
+
+Method ***userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler*** is called when the app receives a response from the user. Response can be **Default Click** on the Notification or **Dismissing** the notification or any of the other **custom actions** implemented using UNUserNotificationCategory. Here, call ***userNotificationCenter:didReceiveNotificationResponse:*** of MoEngage class.
+
+<Info>
+* ***userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler*** is the only method called when the user clicks on notification, if implemented. Therefore, include your custom handlers here instead of application:didReceiveRemoteNotification: for iOS10.
+* While implementing deep links, make sure that you have added the apps URL Scheme to **LSApplicationQueriesSchemes** array in Info.plist to whitelist your app. Without this, the deep links won't work post iOS9.
+</Info>
+
+# Disable Badge Reset
+
+By default, the SDK sets the notification badge count to **0** on every app launch and this also clears the notifications in the device notification center. In case if you would like to keep the notifications even after the App Launch then disable badge reset by calling the below method
+
+<CodeGroup>
+```swift Swift
+MoEngage.sharedInstance().setDisableBadgeReset(true)
+```
+
+```objectivec Objective-C
+[[MoEngage sharedInstance] setDisableBadgeReset:true];
+```
+
+</CodeGroup>
+
+# Custom Sound for Notification
+
+You can have a custom tone for notifications of your app. iOS platform supports .aiff , .caf and .wav files for custom Notification tone. For this make sure the sound file of tone is included in your app bundle. Once this is done make sure to provide the sound filename for Notification Sound(In Rich Content Section) while creating the campaign in the dashboard as shown below, and it should work:
+
+![CustomSound.png](19220001062932)
+
+# Silent Push Handling
+
+We make use of silent pushes for uninstall tracking(If opted for in the [dashboard settings](https://help.moengage.com/hc/en-us/articles/360043026012-Uninstall-Tracking)). Our system sends silent pushes to the entire user base of the app for the same. The push payload which is sent from MoEngage for silent pushes would look like below:
+
+<CodeGroup>
+```json JSON
+{
+    "aps" : {
+        "content-available" : 1
+    },
+    "moengage" : {
+        "silentPush" : 1
+    }
+}
+```
+
+</CodeGroup>
+
+Make sure to check for `silentPush` key inside `moengage` and handle the app launches and notification received callbacks in case of these silent pushes.
+
+<Info>
+**Test Silent Push**
+
+For testing the flow with silent pushes refer to this [link](https://help.moengage.com/hc/en-us/articles/211249403-Test-Silent-Push-Notification-for-Android-iOS).
+</Info>
+
+# Notification Service Extension Target Implementation
+
+# Why add a Notification Service Extension to your project?
+
+Notifications have got a complete revamp after the release of iOS10 with the introduction of new `UserNotifications` and `UserNotificationsUI` framework. And with this we got Notification Service App Extensions, which can be used for following:
+
+1. **Add media support in Notifications:** Post iOS10 Apple has given us the ability to add images, gifs, audio, and video files to the notifications and this can be done using the Notification Service Extension.
+2. **For supporting Inbox Feature:** Notification Service Extension is also used to save the received notifications which can later be shown in the App Inbox.
+3. **For Updating the Notification Badge count:** MoEngage makes use of the extension to update the notification badge count and doesn't send badge in the notification payload.
+4. **For Tracking Notification Impression:** We can track if a Notification is received by the device using the Notification Service Extension.
+
+# Follow the below steps to set up Notification Service Extension:
+
+## 1. Create a Notification Service Extension Target:
+
+![f89973a-Screenshot_2019-01-10_at_16.25.11.png](19220015030676)
+
+Set the name of the extension target and the programing language which you want to use:![46006f3-Screenshot_2019-01-10_at_16.30.18.png](19220015035540)
+
+After the target is created, Activate the scheme for Extension when prompted for the same. After this, your extension will be added to the project you will see a class with the extension name provided by you while creating and .plist file associated with it.
+
+## 2. Enable Push Notification Capabilities
+
+Then make sure that the Push Notifications Capability is enabled for the Notification Service Extension created:
+
+![b578a57-Screenshot_2019-01-10_at_16.27.09.png](19220001080980)
+
+## 3. Add UserNotifications framework to extension target:
+
+Add `UserNotifications` framework to `Linked Frameworks and Libraries` of notification service extension target as shown below:
+
+![d31ec1d-Screenshot_2019-01-10_at_17.20.43.png](19220015052308)
+
+## 4. Integrate MoEngageRichNotification framework to Extension:
+
+### Integrate using CocoaPod
+
+For integrating through CocoaPod, include **MoEngageRichNotification** pod for your Notification Service Extension as shown below, and run pod update / install command :
+
+<CodeGroup>
+``` Ruby
+target "NotificationServices" do
+	pod 'MoEngageRichNotification','~>6.2.0'
+end
+```
+
+</CodeGroup>
+
+### Integrate using Swift Package Manager
+
+MoEngageRichNotification is supported through SPM from SDK version 6.2.0. To integrate use the following github url link and set the branch as master or version as 6.2.0 and above <https://github.com/moengage/MoEngage-iOS-RichNotification.git>
+
+<Info>
+**Manual Integration**
+
+* To integrate the `MoEngageRichNotification` SDK manually to your project follow this [doc](https://developers.moengage.com/hc/en-us/articles/4404183451412).
+* Add `MoEngageRichNotification` to embedded binaries in the App target, and is linked in your Notification Service Extension target.
+</Info>
+
+<Info>
+MORichNotification has been renamed to MoEngageRichNotification from version 6.0.0.Do update the podfile and import statement accordingly.
+</Info>
+
+## 5. Set the App Group ID for Extension:
+
+Turn ON App Groups in for your notification service extension target and enable the same App group id which was selected for the App Target(In the above steps).
+
+![0ba5256-Screenshot_2019-06-05_at_18.38.34.png](19220001083668)
+
+## 6. Code Changes in Notification Service Extension:
+
+<CodeGroup>
+```swift Swift
+import UserNotifications
+// 1st Step
+import MoEngageRichNotification
+
+class NotificationService: UNNotificationServiceExtension {
+
+    var contentHandler: ((UNNotificationContent) -> Void)?
+    var bestAttemptContent: UNMutableNotificationContent?
+
+    override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
+    
+    	// 2nd Step	
+      MORichNotification.setAppGroupID(<Your AppGroupID>)
+    
+      self.contentHandler = contentHandler
+      bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
+      
+      // 3rd Step
+      MORichNotification.handle(richNotificationRequest: request, withContentHandler: contentHandler)
+        
+    }
+    
+    override func serviceExtensionTimeWillExpire() {
+        // Called just before the extension will be terminated by the system.
+        // Use this as an opportunity to deliver your "best attempt" at modified content, otherwise the original push payload will be used.
+        if let contentHandler = contentHandler, let bestAttemptContent =  bestAttemptContent {
+            contentHandler(bestAttemptContent)
+        }
+    }
+
+}
+```
+
+```objectivec Objective-C
+#import "NotificationService.h"
+// 1st Step
+#import <MoEngageRichNotification/MoEngageRichNotification.h>
+
+@interface NotificationService ()
+
+@property (nonatomic, strong) void (^contentHandler)(UNNotificationContent *contentToDeliver);
+@property (nonatomic, strong) UNMutableNotificationContent *bestAttemptContent;
+
+@end
+
+@implementation NotificationService
+
+- (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler {
+    @try {
+      
+        // 2nd Step
+      	[MORichNotification setAppGroupID:<Your AppGroupID>];
+      
+        self.contentHandler = contentHandler;
+        self.bestAttemptContent = [request.content mutableCopy];
+				
+      	// 3rd Step
+       [MORichNotification handleWithRichNotificationRequest:request withContentHandler:contentHandler];
+    } @catch (NSException *exception) {
+        NSLog(@"MoEngage : exception : %@",exception);
+    }
+}
+
+/// Save the image to disk
+
+- (void)serviceExtensionTimeWillExpire {
+    // Called just before the extension will be terminated by the system.
+    // Use this as an opportunity to deliver your "best attempt" at modified content, otherwise the original push payload will be used.
+    self.contentHandler(self.bestAttemptContent);
+}
+
+@end
+```
+
+</CodeGroup>
+
+Refer to the code above and do the following changes:
+
+1. Import `MoEngageRichNotification` framework.
+2. Set the App Group ID selected in the settings earlier using `setAppGroupID:` method.
+3. Call `handleRichNotificationRequest: withContentHandler:` method.
+
+<Warning>
+**CriticalRich Notification Media Limitations:**
+
+* Refer to the following [link](https://developer.apple.com/reference/usernotifications/unnotificationattachment) to know about the size and format limitation for attachments(media) supported in Rich Notifications.
+* Http URL's aren't supported in iOS10 unless explicitly specified in the plist. You will have include App Transport Security Settings Dictionary in your Notification Service Extension's Info.plist and inside this set Allow Arbitrary Loads to YES.
+</Warning>
+
+<Info>
+**Image Guidelines**
+
+* File Size: The maximum file size for image attachments can be 10MB.
+* Dimensions: The maximum possible dimensions are 1038 x 1038 pixels. It can be anything smaller than 1038 pixels.
+* Landscape vs Portrait: iOS supports both the orientations but we recommend using images that have a landscape orientation this is because depending on the dimensions, portrait images may look too tall.
+</Info>
+
+# Test/Live Builds
+
+* If you are testing the app on **Test Flight or on a live app store build**, make sure you upload the adhoc or production pem to our dashboard. And also in this case you have to send push notifications from **Live environment** of your account.
+* For dev build, you can upload development or production certificate in dashboard, but make sure that you create your campaign in **Test environment**, as you cannot send push notifications to dev build from Live environment.
+
+# Notification Payload
+
+An example of the push payload sent to the app:
+
+<CodeGroup>
+```json iOS Push Payload
+{
+  "aps": {
+    "alert": {
+      "title": "Notification Title",
+      "subtitle": "Notification Subtitle",
+      "body": "Notification Body"
+    },
+    "badge": 1,
+    "sound": "default",
+    "category": "INVITE_CATEGORY",
+    "content-available": 1,
+    "mutable-content": 1
+  },
+  "app_extra": {
+    "moe_deeplink": "moeapp://screen/settings",
+    "screenName": "Screen Name",
+    "screenData": {
+      "key1": "val1",
+      "key2": "val2"
+    }
+  },
+  "moengage": {
+    "silentPush": 1,
+    "cid": "55f2ba15a4ab4104a287bf88",
+    "app_id": "DAO6UGZ73D9RTK8B5W96TPYN_DEBUG",
+    "moe_campaign_id": "55f2ba15a4ab4104a287bf88",
+    "moe_campaign_name": "Campaign Name",
+    "inbox_expiry": "1571905058",
+    "webUrl": "https://google.com",
+    "couponCode": "APP200",
+    "media-attachment": "https://image.moengage.com/testImg.png",
+    "media-type": "image"
+  }
+}
+```
+
+</CodeGroup>
+
+Description of different keys in the payload:
+
+* **aps**: This key is used by the iOS to display the notification, and the following are the keys present within it:
+* **alert** : Message Content.
+	+ **title** : Gives Notification title.
+	+ **subtitle** : Gives Notification subtitle.
+	+ **body** : Gives the message body of the notification
+* **badge**: Gives the badge number to be displayed on top of the App Icon. MoEngage platform supports only two possible values i.e, 0/1. If the value is 1 then the SDK will increment the badge number on the app icon and if it's 0 then the badge number will be reset and there will be no badge displayed on the app icon.
+* **sound**: This key gives the filename of the audio file to be played on receiving the notification. If no filename is provided while creating the campaign, to play the os default sound this key is set to the value "default".
+* **category**: This key is used by OS for deciding the set of action buttons to be displayed for the notification. Also, the same category is used by OS to decide which Notification Content Extension target to display if present.
+* **content-available**: If the value of this key is set to 1, then if the app is present in the background it will get a callback(`application:didReceiveRemoteNotification:fetchCompletionHandle`) to refresh the app content in background. Use this key only if you have to process the push notification in background. By default, this key will be unset.
+* **mutable-content**: This key is by default set to 1 for all the campaigns, this is to make sure that the Notification Service Extension target gets the callback on receiving the notification to be processed by MORichNotification. If set to 0 the extension target won't get the callback.
+* **app\_extra**: This key will contain the keys which are to be used by App Developers, i.e, Custom key value pairs and screenName for navigation.
+* **moe\_deeplink**: This key contains the deeplinking URL if provided during the campaign creation. The SDK will process this key and will attempt to open the deeplink URL if it's valid.
+* **screenName**: This key gives screen name where the user has to be navigated on clicking the notification. This navigation is not done by the SDK. The possible values for this parameter are something which app developers will have to define in their project. If provided while creating the campaign, it will be present in the notification payload. And implementing the part to parse and get `screenName` parameter's value and to navigate to the mentioned screen has to be implemented by the app developers.
+* **screenData**: This contains the custom key-value pairs entered while creating the campaign, which can be made use by the app developers for any of their use-cases.
+* **moengage** : This will contain keys which are to be used by SDK, app developers should not be making any change to this part of the payload and also avoid using this part of the payload, as we may update the structure of this part of payload as per our need. (with the exception being cid, media-attachment, media-type, app\_id which we will not change)
+* **silentPush**: This key is present and set to `1` for silent pushes sent from MoEngage.
+* **cid**: Unique ID for the campaign.
+* **app\_id**: The Workspace ID of the account where the campaign was created.
+* **moe\_campain\_id** and **moe\_campaign\_name** : Used by analytics module to track attributes for Notification related events.
+* **inbox\_expiry**: This key gives the timestamp at which the notification will be deleted from the app inbox.
+* **webUrl**: This key contains the Rich-landing URL if provided during the campaign creation. The SDK will process this key and will open the URL(if valid) in an instance of SFSafariViewController. Use Rich-landing action if you wish to open a web page inside the app on click of the push notification. For e.g. `webUrl` - [https://www.google.com](https://www.google.com/).
+* **couponCode**: This key contains the coupon code if provided during the campaign creation. On clicking the notification, if this key is present in the push payload the SDK will display an alert with the coupon code and will give an option to user to copy the coupon to the os clipboard.For e.g. `couponCode` - APP200.
+* **media-attachment:** The media-attachment key in the payload gives you the URL of the media which you can download.
+* **media-type**: Type of media present in the URL given in media-attachment i.e, image/audio/video.
+
+<Warning>
+**Define Valid URL Schemes for DeepLinks (LSApplicationQueriesSchemes)**
+
+**LSApplicationQueriesSchemes**(Array - iOS) Specifies the URL schemes you want the app to be able to use with the `canOpenURL:` method of the UIApplication class(which is being used in our SDK). For each URL scheme you want your app to use with the deeplinks, add it as a string in this array in Info.plist. For more info follow this [link](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW14).
+</Warning>
+
+<Warning>
+**HTTP URLs**
+
+Http URL's aren't supported in iOS9 unless explicitly specified in the plist. You will have include **App Transport Security Settings** Dictionary in your Info.plist and inside this set **Allow Arbitrary Loads** to **YES**.
+</Warning>

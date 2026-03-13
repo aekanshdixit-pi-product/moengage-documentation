@@ -1,0 +1,242 @@
+---
+title: "Self Handled Cards"
+---
+
+Self-handled cards give you the flexibility of creating Card Campaigns on the MoEngage Platform and displaying the cards anywhere inside the application. SDK provides APIs to fetch the campaign's data using which you can create your own view for cards.
+
+# SDK Installation
+
+## Installing using BOM
+
+Integration using BOM  is the recommended way of integration; refer to the [Install Using BOM](/developer-guide/android-sdk/sdk-integration/basic-integration/Install-Using-BOM) document. Once you have configured the BOM add the dependency in the _app/build.gradle_ file as shown below
+
+<CodeGroup>
+
+```kotlin build.gradle.kts
+dependencies {
+    ...
+    implementation("com.moengage:cards-core")
+}
+```
+
+</CodeGroup>
+
+Once the BOM is configured, include the specific MoEngage modules required for the application. \
+Note: Version numbers are not required for these dependencies; the BOM automatically manages them.
+
+# Implementing Self Handled Cards
+
+Use the below APIs to fetch the card's data and build your own UI. The SDK provides both blocking and async APIs for fetching the data. In this document, we have just added the blocking APIs, refer to the API reference for [_MoECardHelper_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/index.html) for the async APIs.
+
+## Notify on Section Load/Unload
+
+You can show the cards on a separate screen or a section of the screen. When the cards screen/section is loaded call [_onCardSectionLoaded()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/on-card-section-loaded.html) and call [_onCardSectionUnloaded()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/on-card-section-unloaded.html) when the screen/section is no longer visible or going to background.
+
+<CodeGroup>
+
+```Kotlin Kotlin
+// call on section or screen load
+MoECardHelper.onCardSectionLoaded(context,listener);
+// call when the section is no longer visible or going to background.
+MoECardHelper.onCardSectionUnloaded(context);
+```
+
+
+```Java Java
+// call on section or screen load
+MoECardHelper.INSTANCE.onCardSectionLoaded(context,listener);
+// call when the section is no longer visible or going to background.
+MoECardHelper.INSTANCE.onCardSectionUnloaded(context);
+```
+
+</CodeGroup>
+
+## Fetch Categories
+
+To fetch all the categories for which cards are configured, use the [_getCardCategories()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/get-card-categories.html) API.
+
+<CodeGroup>
+
+```Kotlin Kotlin
+MoECardHelper.getCardCategories(context)
+```
+
+
+```Java Java
+MoECardHelper.INSTANCE.getCardCategories(context);
+```
+
+</CodeGroup>
+
+Additionally, you can optionally have an **All** category which would be like a superset of other categories. Use the [_isAllCategoryEnabled()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/is-all-category-enabled.html) API.
+
+<CodeGroup>
+
+```Kotlin Kotlin
+MoECardHelper.isAllCategoryEnabled(context)
+```
+
+
+```Java Java
+MoECardHelper.INSTANCE.isAllCategoryEnabled(context);
+```
+
+</CodeGroup>
+
+## Fetch Cards for Categories
+
+To fetch cards eligible for display for a specific category, use the [_getCardsForCategory()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/get-cards-for-category.html) API
+
+<CodeGroup>
+
+```Kotlin Kotlin
+MoECardHelper.getCardsForCategory(context, "[YOUR_CATEGORY]")
+```
+
+
+```Java Java
+MoECardHelper.INSTANCE.getCardsForCategory(context, "[YOUR_CATEGORY]");
+```
+
+</CodeGroup>
+
+To fetch all the cards eligible for display irrespective of the category, pass the category **CARD_CATEGORY_ALL** as shown below
+
+<CodeGroup>
+
+```Kotlin Kotlin
+MoECardHelper.getCardsForCategory(context, CARDS_CATEGORY_ALL)
+```
+
+
+```Java Java
+MoECardHelper.INSTANCE.getCardsForCategory(context, MoECardsCoreConstants.CARDS_CATEGORY_ALL);
+```
+
+</CodeGroup>
+
+Refer to the documentation of the [_Card_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core.model/-card/index.html) model to know more about the fields and data present.
+
+Instead of using separate APIs to fetch the Cards and categories, you can use the [_getCardsInfo()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/get-cards-info.html) API to fetch all the information in one go
+
+<CodeGroup>
+
+```Kotlin Kotlin
+MoECardHelper.getCardsInfo(context)
+```
+
+
+```Java Java
+MoECardHelper.INSTANCE.getCardsInfo(context);
+```
+
+</CodeGroup>
+
+## Widget and Widget Id Mapping
+
+### Basic Card/Illustration Card
+
+| Widget Id | Widget Type                | Widget Information                |
+| --------- | -------------------------- | --------------------------------- |
+| 0         | Image (WidgetType.IMAGE)   | Image widget in the card.         |
+| 1         | Text (WidgetType.TEXT)     | Header text for the card.         |
+| 2         | Text (WidgetType.TEXT)     | Message text for the card.        |
+| 3         | Button (WidgetType.Button) | Call to action(CTA) for the card. |
+
+## Track Statistics for Cards
+
+Since the UI/display of the cards is controlled by the application to track statistics on delivery, display, and click, we need the application to notify the SDK.
+
+### Delivered
+
+To track delivery to the card section of the application, call the [_cardDelivered()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/card-delivered.html) API when the cards section of the application is loaded.
+
+<CodeGroup>
+
+```Kotlin Kotlin
+MoECardHelper.cardDelivered(context)
+```
+
+
+```Java Java
+MoECardHelper.INSTANCE.cardDelivered(context);
+```
+
+</CodeGroup>
+
+### Impression
+
+Call the [_cardShown()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/card-shown.html) API when a specific card is visible on the screen.
+
+<CodeGroup>
+
+```Kotlin Kotlin
+MoECardHelper.cardShown(context, card)
+```
+
+
+```Java Java
+MoECardHelper.INSTANCE.cardShown(context, card);
+```
+
+</CodeGroup>
+
+### Click
+
+Call the [_cardClicked()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/card-clicked.html) API whenever a user clicks on a card, along with the card object widget identifier for the UI element clicked should also be passed. 
+
+<CodeGroup>
+
+```Kotlin Kotlin
+MoECardHelper.cardClicked(context, card, widgetId)
+```
+
+
+```Java Java
+MoECardHelper.INSTANCE.cardClicked(context, card, widgetId);
+```
+
+</CodeGroup>
+
+## Delete Card
+
+Call the [_deleteCard()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/delete-card.html) API to delete a card
+
+<CodeGroup>
+
+```Kotlin Kotlin
+MoECardHelper.deleteCard(context, card)
+```
+
+
+```Java Java
+MoECardHelper.INSTANCE.deleteCard(context, card);
+```
+
+</CodeGroup>
+
+To delete a list of cards, use [_deleteCards()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/delete-cards.html) API.
+
+## Refresh Cards from the Server
+
+Use the [_fetchCards()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/fetch-cards.html) API to refresh cards from the MoEngage server if required.
+
+<CodeGroup>
+
+```Kotlin Kotlin
+MoECardHelper.fetchCards(Context, CardAvailableListener)
+```
+
+
+```Java Java
+MoECardHelper.INSTANCE.fetchCards(Context, CardAvailableListener);
+```
+
+</CodeGroup>
+
+<Info>
+  - The SDK automatically refreshes/fetches cards from the MoEngage server whenever the application comes to the foreground.
+  - This API has a FUP if breached the existing cards i.e. the ones in the local storage of the device will be passed on in the callback.
+</Info>
+
+Please take a look at the [documentation](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/index.html) for a complete guide on available helper APIs.

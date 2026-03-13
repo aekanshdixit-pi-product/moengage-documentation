@@ -1,0 +1,77 @@
+---
+title: "Setting Unique Id for SDK versions below 9.23.0"
+---
+
+# User Login / Logout
+
+It is important that you handle user login and logout as mentioned below. There is a definite possibility that your data gets corrupted if this is not done properly.
+
+- Make sure to get hold of a `unique id` for your app users and pass that information to our SDK using the [_setUniqueID(\_:)_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)setUniqueID:) [Link]method. We use this `unique id` to identify a user and also to merge user profiles across installs and platforms.
+- And also, once the user logs out of your app, it is necessary to call [_resetUser()_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)resetUser) [Link]of SDK so that we create a new anonymous user and track the events following this to the new user's profile.
+
+Kindly ensure you call the following methods on user login/logout.
+
+## Login
+
+<CodeGroup>
+
+```swift Swift wrap
+MoEngageSDKAnalytics.sharedInstance.setUniqueID(UNIQUE_ID) // UNIQUE_ID is used to uniquely identify a user.
+```
+
+
+```objective-c Objective C wrap
+[[MoEngageSDKAnalytics sharedInstance] setUniqueID:UNIQUE_ID]; // UNIQUE_ID is used to uniquely identify a user.
+```
+
+</CodeGroup>
+
+<Note>
+  The following values are not allowed in the UniqueID field: "unknown", "guest", "null", "0", "1", "true", "false", "user_attribute_unique_id", "(empty)", "na", "n/a", "", "dummy_seller_code", "user_id", "id", "customer_id", "uid", "userid", "none", "-2", "-1", "2"
+</Note>
+
+<Warning>
+  **UNIQUE ID chaos**
+
+  - When you go live with MoEngage iOS SDK for the first time, please ensure that you are setting the **Unique ID** of the already logged-in user along with other user attributes.
+  - Kindly make sure that you are not using a single unique id for all the users, this can happen if you hard code the value, instead of fetching it from your servers.
+  - If you pass 2 different unique id information without calling [_resetUser()_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)resetUser) method in between, the SDK will internally force logout the existing user.
+</Warning>
+
+## Logout
+
+<CodeGroup>
+
+```swift Swift wrap
+MoEngageSDKAnalytics.sharedInstance.resetUser()
+```
+
+
+```objective-c Objective C wrap
+[[MoEngageSDKAnalytics sharedInstance] resetUser];
+```
+
+</CodeGroup>
+
+# Updating User Attribute Unique ID
+
+<Warning>
+  **Important**
+
+  Please make sure that you use [_setAlias(\_:)_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)setAlias:)[Link] for updating the User Attribute Unique ID and not [_setUniqueID(\_:)_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)setUniqueID:) [Link]as calling [_setUniqueID(\_:)_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)setUniqueID:) [Link]with a new value will reset the current user and lead to the creation of unintended users in our system.
+</Warning>
+
+In a scenario where you have to update the existing user's Unique ID value make use of [_setAlias(\_:)_](https://moengage.github.io/ios-api-reference/Classes/MoEngageSDKAnalytics.html#/c:@M@MoEngageAnalytics@objc\(cs\)MoEngageSDKAnalytics\(im\)setAlias:) [Link]method as shown below with the updated Unique ID value:
+
+<CodeGroup>
+
+```swift Swift wrap
+MoEngageSDKAnalytics.sharedInstance.setAlias(UPDATED_UNIQUE_ID)
+```
+
+
+```objective-c Objective C wrap
+[[MoEngageSDKAnalytics sharedInstance] setAlias:UPDATED_UNIQUE_ID];
+```
+
+</CodeGroup>

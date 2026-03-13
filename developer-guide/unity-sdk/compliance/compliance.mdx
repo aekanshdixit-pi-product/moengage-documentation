@@ -1,0 +1,107 @@
+---
+title: "Compliance"
+---
+
+# Opt-Out Of Data Tracking
+
+To opt-out of data tracking by the SDK use the **optOutDataTracking( )** method as shown below. Once you have opted out of data tracking you need to explicitly opt-in to start tracking any event OR attributes for the user.
+
+<CodeGroup>
+
+```c# c#
+// shouldOptOut: Bool indicating opt-out status, set true if you want to opt-out
+MoEngageClient.optOutDataTracking(shouldOptOut);
+```
+
+</CodeGroup>
+
+# Enable/Disable SDK
+
+If you don't want the MoEngage SDK to track any user information or send any data to the MoEngage System use the **DisableSdk()** method as shown below:
+
+<CodeGroup>
+
+```c# c#
+MoEngageClient.DisableSdk();
+```
+
+</CodeGroup>
+
+Once this API is called all the SDK APIs will be non-operational. SDK will be disabled until **EnableSdk()** is called.\
+Once you have the user's consent use the below API to enable the SDK.
+
+<CodeGroup>
+
+```c# c#
+MoEngageClient.EnableSdk();
+```
+
+</CodeGroup>
+
+The above methods are available from the Unity Plugin version 1.2.0.
+
+# Native SDK Initialisation
+
+Based on the compliance policy you can optionally choose to initialize the SDK in a disabled state. To do so you can pass in a boolean value stating the SDK state as disabled while initializing the SDK.
+
+## ANDROID:
+
+<CodeGroup>
+
+```Kotlin Kotlin
+import com.moengage.unity.wrapper.MoEInitializer
+import com.moengage.core.MoEngageimport com.moengage.core.DataCenterimport com.moengage.core.model.SdkState
+
+// this is the instance of the application class and "YOUR_Workspace_ID" is the Workspace ID from the dashboard.
+val moEngage = MoEngage.Builder(this, "YOUR_WORKSPACE_ID",[YOUR_DATA_CENTER])
+  
+MoEInitializer.initialize(getApplicationContext(), moEngage, sdkState)
+```
+
+
+```Java Java
+import com.moengage.unity.wrapper.MoEInitializer;
+import com.moengage.core.MoEngage;import com.moengage.core.DataCenter;import com.moengage.core.model.SdkState;
+
+// this is the instance of the application class and "YOUR_Workspace_ID" is the Workspace ID from the dashboard.
+MoEngage.Builder moEngage =
+        new MoEngage.Builder(this, "YOUR_WORKSPACE_ID",[YOUR_DATA_CENTER]);
+
+MoEInitializer.initialiseDefaultInstance(applicationContext, moEngage, sdkState)
+```
+
+</CodeGroup>
+
+## iOS:
+
+In the case of iOS, SDK is initialized in the `MoEUnityAppController` class. Here update the initialization method to include the disabled SDK parameter as shown below:
+
+<CodeGroup>
+
+```Objective-C Objective-C
+@implementation MoEUnityAppController
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        UnityRegisterAppDelegateListener(self);
+    }
+    return self;
+}
+
+# pragma mark - UIApplicationDelegate methods
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    [super application:application didFinishLaunchingWithOptions:launchOptions];
+
+    // SDK Initialization, with SDK State(isSdkEnabled) as MoEngageSDKStateDisabled for disabling the SDK
+    [[MoEUnityInitializer sharedInstance] initializeSDKWithLaunchOptions:launchOptions withSDKState:MoEngageSDKStateDisabled];
+  
+    return YES;
+}
+
+@end
+```
+
+</CodeGroup>

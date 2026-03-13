@@ -1,0 +1,86 @@
+---
+title: "Android Push Configuration"
+---
+
+# Basic setup
+
+Follow the basic setup outlined in this section to enable push notifications on an Android device using MoEngage.
+
+- **FCM Setup on MoEngage Dashboard -** FCM Authentication is the method to enable sending push notifications to your app installed on Android devices. Use the methods mentioned in [this article](/developer-guide/android-sdk/push/basic/fcm-authentication) to authenticate MoEngage to access Firebase services.
+- **Adding metadata for push notification -** Set the small icon and large icon drawable and other options to handle push notifications using the methods available in [this article](/developer-guide/android-sdk/push/basic/push-configuration).
+- **Android Notification Runtime Permissions** - When the application is running on Android 13 to show notifications to the user, applications would need to request the user for notification permission. Refer to the methods available in [this article](/developer-guide/flutter-sdk/push/basic/android-notification-runtime-permissions) to handle permission requests.
+- **Push Registration and Receiving** - To use Push Notification in your Flutter application, you need to configure Firebase. Depending on your requirements, refer to one of the below methods to enable Push Registration and Receiving.
+
+<Tabs>
+  <Tab title="Let MoEngage handle Push(Recommended)">
+    **Add messaging service**
+
+    Starting from version [10.4.0](https://github.com/moengage/Flutter-SDK/releases/tag/moengage_flutter-v10.4.0), the SDK automatically adds the Firebase service declaration to `AndroidManifest.xml`. The file  `MoEFireBaseMessagingService` is declared with low priority (android:priority="-1") in `AndroidManifest.xml`. file to prevent conflicts.
+
+    | Integration Scenario    | System Behavior                                                                               | Action Required                                                                                                                                                                                                                                                                                                         |
+    | ----------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | MoEngage Only           | The SDK automatically handles push payloads and token updates using the built-in service.     | Update & Build: Ensure you are on the latest SDK version and run `flutter clean` before building. No manifest changes are needed.                                                                                                                                                                                       |
+    | Multiple Push Providers | The Android system prioritizes your messaging service over the `MoEFireBaseMessagingService`. | Pass Data Manually: In your custom `FirebaseMessagingService`, intercept the payload and token. [Pass them to the MoEngage SDK](/developer-guide/android-sdk/push/basic/push-token-registration-and-display) APIs if the data originates from the MoEngage platform. |
+
+    <Info>
+      For versions below 10.4.0, You must add the `MoEFireBaseMessagingService`  to the `AndroidManifest.xml` file for MoEngage SDK to show the notifications. Refer [here](/developer-guide/android-sdk/push/basic/push-token-registration-and-display).
+    </Info>
+    **Callback on token registration(optional)**\
+    To get an optional callback whenever a new token is registered or the token is refreshed, refer to the method [here](/developer-guide/android-sdk/push/basic/push-token-registration-and-display#token-callback-access-to-push-token-optional).
+
+    **Notification Clicked Callback**\
+    To receive a callback whenever a push is clicked and for custom handling redirection, use the method in [this article](/developer-guide/android-sdk/push/advanced/callbacks-and-customisation#notification-clicked-callback).
+  </Tab>
+  <Tab title="You handle Push via Android Native">
+    **How to opt out of MoEngage Registration?**\
+    The MoEngage SDK attempts to register for a push token; since your application handles push, you need to opt out of SDK's token registration using the method in [this article](/developer-guide/android-sdk/push/basic/push-token-registration-and-display#how-to-opt-out-of-moengage-push-token-registration).
+
+    **Pass the Push Token To MoEngage SDK** - After receiving the push token from FCM, use the method in [this article](/developer-guide/android-sdk/push/basic/push-token-registration-and-display#how-to-opt-out-of-moengage-push-token-registration) to pass the Push Token to the MoEngage SDK to set it in the MoEngage platform.
+
+    **Passing the Push payload to the MoEngage SDK** - After receiving the push payload on the app, use the method in [this article](/developer-guide/android-sdk/push/basic/push-token-registration-and-display#passing-the-push-payload-to-the-moengage-sdk) to send out push notifications to the device.
+  </Tab>
+  <Tab title="You handle Push via Flutter (Not Recommended)">
+    <Warning>
+      We recommend you use the Android native APIs to pass the push payload to the MoEngage SDK instead of the Flutter/Dart APIs. Flutter Engine might not get initialized if the application is in the killed state, which will lead to poor push reachability or delivery.
+    </Warning>
+    - [Pass the Push Token To MoEngage SDK](/developer-guide/flutter-sdk/push/basic/android-push-configuration#passing-push-token)
+    - [Pass the Push payload to the MoEngage SDK](/developer-guide/flutter-sdk/push/basic/android-push-configuration#basic-setup)
+    - [Callbacks and customizations](/developer-guide/flutter-sdk/push/basic/android-push-configuration#customizing-push-notification)
+
+    **Notification Clicked Callback -** MoEngage's Flutter plugin optionally provides a callback on push clicks with the method in [this article](/developer-guide/flutter-sdk/push/basic/push-callback).
+  </Tab>
+</Tabs>
+
+# Flutter APIs for Push
+
+You can skip this section completely if you let MoEngage handle push token registration and display or use Android Native methods to pass tokens and payload to MoEngage SDKs. 
+
+Read on if you want to use Flutter APIs of MoEngage SDK to pass tokens and payload to MoEngage SDKs.
+
+<Warning>
+  We recommend you use the Android native APIs to pass the push payload to the MoEngage SDK instead of the Flutter/Dart APIs. Flutter Engine might not get initialized if the application is in the killed state, which will lead to poor push reachability or delivery.
+</Warning>
+
+## Passing Push Token
+
+<CodeGroup>
+
+```auto Dart
+import 'package:moengage_flutter/moengage_flutter.dart';
+final MoEngageFlutter _moengagePlugin = MoEngageFlutter(YOUR_APP_ID);
+_moengagePlugin.initialise();
+_moengagePlugin.passFCMPushToken();
+```
+
+</CodeGroup>
+
+## Customizing Push notification
+
+If required the application can customize the behavior of notifications by using Native Android code (Java/Kotlin). To learn more about the customization refer to the [Advanced Push Configuration](/developer-guide/android-sdk/push/advanced/callbacks-and-customisation) documentation.Instead of extending **_PushMessageListener_** as mentioned in the above document extend **_PluginPushCallback._**
+
+Refer to the below documentation for Push Amp+, Push Templates, and Geofence.
+
+- [Push Amplification](/developer-guide/android-sdk/push/optional/push-amplification)
+- [Push Amp Plus](/developer-guide/android-sdk/push/optional/push-amp-plus/push-amp-plus-integration)
+- [Push Templates](/developer-guide/android-sdk/push/optional/push-templates)
+- [GeoFence Push](/developer-guide/android-sdk/push/optional/location-triggered)

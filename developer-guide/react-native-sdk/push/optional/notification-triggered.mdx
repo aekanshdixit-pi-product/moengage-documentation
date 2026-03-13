@@ -1,0 +1,295 @@
+---
+title: "Notification Center"
+---
+
+# Installation
+
+Install MoEngage's Inbox Plugin to your application, using the npm package manager. And then link your native dependencies.
+
+<CodeGroup>
+
+```shell Shell
+$ npm install react-native-moengage-inbox
+      
+# required only if you are using versions that do not support auto linking
+# This command is removed in version 0.69 of react-native
+$ react-native link react-native-moengage-inbox
+```
+
+</CodeGroup>
+
+Note: This plugin is dependent on `react-native-moengage` plugin. Make sure you have installed the `react-native-moengage` plugin as well. Refer to the [link](/developer-guide/react-native-sdk/sdk-integration/react-native/sdk-installation/framework-dependency) for the same.
+
+## Android Installation
+
+### Configuration Required For Older React Version (Optional)
+
+<Info>
+  This step is required only if react-native auto-linking is not working.
+</Info>
+
+In **_android/settings.gradle(.kts)_** add the following:
+
+<CodeGroup>
+
+```shell Groovy
+include ':react-native-moengage-inbox'
+project(':react-native-moengage-inbox').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-moengage-inbox/android')
+```
+
+</CodeGroup>
+
+In **_android/app/build.gradle(.kts)_** add the following
+
+<CodeGroup>
+
+```shell Groovy
+dependencies {
+    ...
+    implementation project(':react-native-moengage-inbox')
+}
+```
+
+</CodeGroup>
+
+Add the MoEngage React Package in the Application class's `getPackages()`
+
+Path - **_android/app/src/main/java/package-name/MainApplication.java_**
+
+Note: Your Application class name might vary, go to your application class.
+
+<CodeGroup>
+
+```java Java
+public class MainApplication extends Application implements ReactApplication {
+  private final ReactNativeHost mReactNativeHost = new ReactNativeHost(this) {
+    @Override
+    protected boolean getUseDeveloperSupport() {
+      return BuildConfig.DEBUG;
+    }
+    @Override
+    protected List getPackages() {
+          List packages = new PackageList(this).getPackages();
+          packages.add(new MoengageInboxPackage());
+          return packages;
+        }
+    }
+  };
+  @Override public void onCreate() {
+    super.onCreate();
+  }
+  @Override
+  public ReactNativeHost getReactNativeHost() {
+      return mReactNativeHost;
+  }
+}
+```
+
+</CodeGroup>
+
+In case you are facing issues with the import add the below import statement in your java file.
+
+<CodeGroup>
+
+```java Java
+import com.moengage.react.inbox.MoengageInboxPackage;
+```
+
+</CodeGroup>
+
+## iOS Installation
+
+To run the application in the new react architecture, follow these steps:
+
+1. Navigate to the iOS folder.
+2. Run the command **_RCT_NEW_ARCH_ENABLED=1 bundle exec pod install_** to install the necessary dependencies.
+
+To run the application in the old react architecture, follow these steps:
+
+1. Navigate to the iOS folder.
+2. Run the command **_pod install_** to install the necessary dependencies.
+
+<Warning>
+  Make sure to configure [AppGroup ID in App Target](/developer-guide/ios-sdk/sdk-integration/basic/sdk-initialization) and Set up [Notification Service Extension](/developer-guide/ios-sdk/push/basic/ios-push-integration-tutorial#step-1-implement-notification-service-extension-nse) in your iOS Project, for the SDK to save the received notifications.
+</Warning>
+
+# Inbox Initialization
+
+To initialise Inbox, pass Workspace ID as parameter to  `initialize(Workspace ID)` method of `MoEReactInbox` as shown below
+
+<CodeGroup>
+
+```typescript TypeScript
+import MoEReactInbox from "react-native-moengage-inbox";
+MoEReactInbox.initialize(YOUR Workspace ID);
+```
+
+</CodeGroup>
+
+# Fetch Messages
+
+To fetch all the inbox messages use `fetchAllMessages()` method as shown below, where you would get an instance of `MoEInboxData`
+
+<CodeGroup>
+
+```typescript TypeScript
+import MoEReactInbox from "react-native-moengage-inbox";
+var inboxData= await MoEReactInbox.fetchAllMessages()
+```
+
+</CodeGroup>
+
+## InboxData Payload
+
+MoEInboxData will be received in the below format:
+
+<CodeGroup>
+
+```typescript TypeScript
+class MoEInboxData  {
+  /// Native platform from which the callback was triggered.(ios/android)
+  platform: String;
+
+  /// List of [MoEInboxMessage]
+  messages:Array = [];
+}
+
+class MoEInboxMessage {
+  /// internal identifier used by the SDK for storage.(Only Android)
+  id: number;
+
+  /// Unique identifier for a message.
+  campaignId: string;
+
+  /// Text content of the message. Instance of MoETextContent
+  text: MoETextContent;
+
+  /// true if the message has been clicked by the user else false
+  isClicked: boolean;
+
+  /// Media content associated with the message.
+  media: MoEMedia;
+
+  /// List of actions to be executed on click. Instances of [MoEAction]
+  action: Array = [];
+
+  /// Tag associated with the message.
+  tag: string;
+
+  /// The time in which the message was received on the device.
+  ///
+  /// Format - ISO-8601 yyyy-MM-dd'T'HH:mm:ss'Z'
+  receivedTime: string;
+
+  /// The time at which the message expiry.
+  ///
+  /// Format - ISO-8601 yyyy-MM-dd'T'HH:mm:ss'Z'
+  expiry: string;
+
+  /// Complete message payload. This will vary for platforms
+  payload: Map<String, Object>;
+
+  /// A key representing the group to which the inbox message belongs. 
+  /// @since 6.0.0
+  groupKey: string | null;
+
+  /// Notification Replacement Id.
+  /// @since 6.0.0
+  notificationId: string | null;
+
+  /// The timestamp indicating when the message was sent. 
+  /// Format - ISO-8601 yyyy-MM-dd'T'HH:mm:ss'Z' 
+  /// @since 6.0.0
+  sentTime: string | null;
+}
+
+class MoEAction {
+  /// actionType- navigation
+  actionType: MoEActionType;
+   
+  /// navigationType- deepLink, richLanding, screenName
+  navigationType: string;
+  
+  /// Value associated with navigation action eg: url / screen name
+  value: string;
+  
+  /// Custom Key-Value Pairs associated with action
+  kvPair?: Map<String, Object>;
+}
+
+class MoEMedia {
+  /// Content type of the Media. (image/video/audio)
+  mediaType: MoEMediaType;
+
+  /// Url for the media content. Generally a http(s) url.
+  url: string;
+
+  /// Accessibility information associated with media content.
+  /// @since 6.0.0
+  accessibilityData: MoEAccessibilityData | null;
+}
+
+class MoETextContent  {
+  /// Tiitle content of the message
+  title: string;
+
+  /// Subtitle content of the message
+  subtitle?: string;
+
+  /// Message content of the message
+  message: string;
+
+  /// Summary content of the message
+  summary?: string;
+}
+
+/// @since 12.0.0 of react-native-moengage package
+class MoEAccessibilityData {
+  /// The accessibility text
+  text: string | null;
+
+  /// The accessibility hint
+  hint: string | null;   
+}
+```
+
+</CodeGroup>
+
+# Get Unclicked Message Count
+
+To obtain the unclicked messages count from the Inbox use `getUnClickedCount()` method as shown below:
+
+<CodeGroup>
+
+```typescript TypeScript
+import MoEReactInbox from "react-native-moengage-inbox";
+var count = await MoEReactInbox.getUnClickedCount()
+```
+
+</CodeGroup>
+
+# Track Message Clicks
+
+To track clicks on the messages inside your Inbox use `trackMessageClicked()` method as shown below:
+
+<CodeGroup>
+
+```typescript TypeScript
+import MoEReactInbox from "react-native-moengage-inbox";
+MoEReactInbox.trackMessageClicked(message)  //Pass the instance of MoEInboxMessage here
+```
+
+</CodeGroup>
+
+# Delete Message
+
+To delete a particular message from the list of messages use `deleteMessage()` method as shown below:
+
+<CodeGroup>
+
+```typescript TypeScript
+import MoEReactInbox from "react-native-moengage-inbox";
+MoEReactInbox.deleteMessage(message)  //Pass the instance of MoEInboxMessage here
+```
+
+</CodeGroup>
