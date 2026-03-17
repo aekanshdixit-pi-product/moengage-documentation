@@ -6,7 +6,7 @@ title: "Amazon Connect"
 
 This integration uses[ AWS Lambda](https://aws.amazon.com/lambda/) to capture customer data during contact flows and automatically create or update user profiles in MoEngage using the[ Data API](https://developers.moengage.com/hc/en-us/articles/4413167462804-Track-User).
 
-## Amazon Connect <> MoEngage
+## Amazon Connect × MoEngage
 
 The integration of MoEngage and Amazon Connect empowers businesses to automate their customer engagement process through seamless data synchronization.
 
@@ -106,118 +106,115 @@ To configure lambda permissions and copy ARN, perform the following steps:
 
   * You can begin with the provided sample code, which utilizes the Data API for customer creation. Modify this code to suit your specific requirements or develop your own from scratch. On the **Code** tab, overwrite the existing default code with the sample
 
-Python
-        
-        import json
-        import requests  # Requires a Lambda Layer (e.g., AWSSDKPandas-Python311)
-        import base64
-        import traceback
-        from datetime import datetime
-        # ===============================================
-        # CONFIGURE YOUR MOENGAGE CREDENTIALS HERE
-        # ===============================================
-        # Find these in your MoEngage Dashboard: Settings -> Account -> APIs
-        WORKSPACE_ID = "YOUR_WORKSPACE_ID"  # e.g., "OAPQQ2AMD01MJZQ2TYZX1YPG"
-        DATA_API_KEY = "YOUR_DATA_API_KEY"  # From Settings → APIs → Data tile
-        API_DC = "01"                      # Your data center (01, 02, 03, etc.)
-        # -----------------------------------------------
-        
-        def lambda_handler(event, context):
-            """
-            Amazon Connect to MoEngage Data Sync Handler
-            This function processes contact data from Connect and sends it
-            to the MoEngage Customer API to create/update a user.
-            """
-            try:
-                # Log incoming event for debugging
-                print(f"[INFO] Incoming Event: &#123;json.dumps(event, indent=2)&#125;")
-                
-                # --- 1. Extract Data from Amazon Connect ---
-                details = event.get('Details', &#123;&#125;)
-                contact_data = details.get('ContactData', &#123;&#125;)
-                
-                # User-defined attributes come from the 'Set Contact Attributes' block
-                contact_attrs = contact_data.get('Attributes', &#123;&#125;)
-                
-                # --- 2. Map Connect Data to Variables ---
-                
-                # Get user-defined attributes
-                customer_id = contact_attrs.get('customer_id', '')
-                email = contact_attrs.get('email', '')
-                first_name = contact_attrs.get('first_name', '')
-                
-                # Get system-defined attributes
-                phone = contact_data.get('CustomerEndpoint', &#123;&#125;).get('Address', '')
-                contact_id = contact_data.get('ContactId', '')
-                
-                # Use a fallback identifier if customer_id is not set
-                final_customer_id = customer_id or phone or email or contact_id
-                if not final_customer_id:
-                    print("[ERROR] No customer_id, phone, or email found. Cannot sync user.")
-                    return &#123;'success': False, 'error': 'Missing Identifier'&#125;
-        
-                # --- 3. Prepare API Credentials ---
-                auth_string = f"&#123;WORKSPACE_ID&#125;:&#123;DATA_API_KEY&#125;"
-                BASIC_AUTH = base64.b64encode(auth_string.encode()).decode('utf-8')
-                
-                BASE_URL = f"https://api-&#123;API_DC&#125;.moengage.com/v1"
-                headers = &#123;
-                    'Authorization': f'Basic &#123;BASIC_AUTH&#125;',
-                    'Content-Type': 'application/json'
-                &#125;     
-                # --- 4. Build MoEngage User Payload ---
-                # This example sends data to the Customer API.
-                user_payload = &#123;
-                    "type": "customer",
-                    "customer_id": final_customer_id,
-                    "attributes": &#123;
-                        "first_name": first_name,
-                        "email": email,
-                        "mobile": phone,
-                        "amazon_connect_contact_id": contact_id,
-                        "source": "amazon_connect"
-                    &#125;
-                &#125; 
-                # Remove any attributes that have empty values
-                user_payload["attributes"] = &#123;k: v for k, v in user_payload["attributes"].items() if v&#125;
-                
-                # --- 5. Send User Data to MoEngage ---
-                user_url = f"&#123;BASE_URL&#125;/customer/&#123;WORKSPACE_ID&#125;"
-                print(f"[INFO] Sending to MoEngage User API: &#123;user_url&#125;")
-                print(f"[INFO] User Payload: &#123;json.dumps(user_payload, indent=2)&#125;")
-                
-                response = requests.post(
-                    user_url, 
-                    json=user_payload, 
-                    headers=headers, 
-                    timeout=8 # Max 8-second timeout for Connect
-                )
-                
-                print(f"[INFO] MoEngage API Response: &#123;response.status_code&#125;")
-                print(f"[INFO] Response Body: &#123;response.text&#125;")
-        
-                # Check for HTTP errors (e.g., 401, 404, 500)
-                response.raise_for_status() 
-                
-                # --- 6. Return Success to Amazon Connect ---
-                return &#123;
-                    'statusCode': response.status_code,
-                    'success': True,
-                    'customer_id': final_customer_id
-                &#125;
-                    
-            except requests.exceptions.RequestException as http_err:
-                print(f"[ERROR] HTTP Error: &#123;str(http_err)&#125;")
-                print(traceback.format_exc())
-                return &#123;'success': False, 'error': f"HTTP Error: &#123;str(http_err)&#125;"&#125;
-                
-            except Exception as e:
-                print(f"[ERROR] Unexpected Error: &#123;str(e)&#125;")
-                print(traceback.format_exc())
-                return &#123;'success': False, 'error': f"General Error: &#123;str(e)&#125;"&#125;
+```python
+import json
+import requests  # Requires a Lambda Layer (e.g., AWSSDKPandas-Python311)
+import base64
+import traceback
+from datetime import datetime
+# ===============================================
+# CONFIGURE YOUR MOENGAGE CREDENTIALS HERE
+# ===============================================
+# Find these in your MoEngage Dashboard: Settings -> Account -> APIs
+WORKSPACE_ID = "YOUR_WORKSPACE_ID"  # e.g., "OAPQQ2AMD01MJZQ2TYZX1YPG"
+DATA_API_KEY = "YOUR_DATA_API_KEY"  # From Settings → APIs → Data tile
+API_DC = "01"                      # Your data center (01, 02, 03, etc.)
+# -----------------------------------------------
 
+def lambda_handler(event, context):
+    """
+    Amazon Connect to MoEngage Data Sync Handler
+    This function processes contact data from Connect and sends it
+    to the MoEngage Customer API to create/update a user.
+    """
+    try:
+        # Log incoming event for debugging
+        print(f"[INFO] Incoming Event: &#123;json.dumps(event, indent=2)&#125;")
+        
+        # --- 1. Extract Data from Amazon Connect ---
+        details = event.get('Details', &#123;&#125;)
+        contact_data = details.get('ContactData', &#123;&#125;)
+        
+        # User-defined attributes come from the 'Set Contact Attributes' block
+        contact_attrs = contact_data.get('Attributes', &#123;&#125;)
+        
+        # --- 2. Map Connect Data to Variables ---
+        
+        # Get user-defined attributes
+        customer_id = contact_attrs.get('customer_id', '')
+        email = contact_attrs.get('email', '')
+        first_name = contact_attrs.get('first_name', '')
+        
+        # Get system-defined attributes
+        phone = contact_data.get('CustomerEndpoint', &#123;&#125;).get('Address', '')
+        contact_id = contact_data.get('ContactId', '')
+        
+        # Use a fallback identifier if customer_id is not set
+        final_customer_id = customer_id or phone or email or contact_id
+        if not final_customer_id:
+            print("[ERROR] No customer_id, phone, or email found. Cannot sync user.")
+            return &#123;'success': False, 'error': 'Missing Identifier'&#125;
 
+        # --- 3. Prepare API Credentials ---
+        auth_string = f"&#123;WORKSPACE_ID&#125;:&#123;DATA_API_KEY&#125;"
+        BASIC_AUTH = base64.b64encode(auth_string.encode()).decode('utf-8')
+        
+        BASE_URL = f"https://api-&#123;API_DC&#125;.moengage.com/v1"
+        headers = &#123;
+            'Authorization': f'Basic &#123;BASIC_AUTH&#125;',
+            'Content-Type': 'application/json'
+        &#125;     
+        # --- 4. Build MoEngage User Payload ---
+        # This example sends data to the Customer API.
+        user_payload = &#123;
+            "type": "customer",
+            "customer_id": final_customer_id,
+            "attributes": &#123;
+                "first_name": first_name,
+                "email": email,
+                "mobile": phone,
+                "amazon_connect_contact_id": contact_id,
+                "source": "amazon_connect"
+            &#125;
+        &#125; 
+        # Remove any attributes that have empty values
+        user_payload["attributes"] = &#123;k: v for k, v in user_payload["attributes"].items() if v&#125;
+        
+        # --- 5. Send User Data to MoEngage ---
+        user_url = f"&#123;BASE_URL&#125;/customer/&#123;WORKSPACE_ID&#125;"
+        print(f"[INFO] Sending to MoEngage User API: &#123;user_url&#125;")
+        print(f"[INFO] User Payload: &#123;json.dumps(user_payload, indent=2)&#125;")
+        
+        response = requests.post(
+            user_url, 
+            json=user_payload, 
+            headers=headers, 
+            timeout=8 # Max 8-second timeout for Connect
+        )
+        
+        print(f"[INFO] MoEngage API Response: &#123;response.status_code&#125;")
+        print(f"[INFO] Response Body: &#123;response.text&#125;")
 
+        # Check for HTTP errors (e.g., 401, 404, 500)
+        response.raise_for_status() 
+        
+        # --- 6. Return Success to Amazon Connect ---
+        return &#123;
+            'statusCode': response.status_code,
+            'success': True,
+            'customer_id': final_customer_id
+        &#125;
+            
+    except requests.exceptions.RequestException as http_err:
+        print(f"[ERROR] HTTP Error: &#123;str(http_err)&#125;")
+        print(traceback.format_exc())
+        return &#123;'success': False, 'error': f"HTTP Error: &#123;str(http_err)&#125;"&#125;
+        
+    except Exception as e:
+        print(f"[ERROR] Unexpected Error: &#123;str(e)&#125;")
+        print(traceback.format_exc())
+        return &#123;'success': False, 'error': f"General Error: &#123;str(e)&#125;"&#125;
+```
 
 ## Step 2: Amazon Connect Configuration
 
