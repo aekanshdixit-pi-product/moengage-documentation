@@ -1,0 +1,422 @@
+---
+title: "Adobe Experience Manager"
+---
+
+# Introduction
+
+[Adobe Experience Manager (AEM)](https://business.adobe.com/products/experience-manager/adobe-experience-manager.html) is an enterprise content management platform that enables organizations to create, manage, and deliver personalized digital experiences across multiple channels. 
+
+# AEM <> MoEngage
+
+The integration connects AEM to MoEngage via a custom workflow process, allowing real-time content synchronization from AEM to MoEngage Content Blocks. The integration enables marketing teams to manage content centrally in AEM while leveraging it in MoEngage campaigns for personalized customer engagement.
+
+## Use Cases
+
+Integrating Adobe Experience Manager with MoEngage helps you with the following use cases:
+
+  * **Campaign Content Management** : Marketing teams create promotional content in AEM. When published, it automatically syncs to MoEngage Content Blocks, making it immediately available for email campaigns, push notifications, and in-app messages.
+  * **Personalized Experience Delivery** : Create localized Experience Fragments in AEM with personalization tokens. These automatically sync with MoEngage, utilizing converted tokens to enable personalized campaigns based on user attributes.
+  * **Dynamic Content Updates** : Update product descriptions, offers, or messaging in AEM. Changes automatically propagate to all active MoEngage campaigns using those Content Blocks, ensuring consistency across channels.
+  * **Multi-Channel Content Reuse** : Author content once in AEM and use it across multiple MoEngage campaigns (email, push, in-app) without duplication or manual copying.
+
+
+
+# Integration
+
+## Approach
+
+Implement a custom integration within AEM and use [custom workflows](https://experienceleague.adobe.com/en/docs/experience-manager-65/content/implementing/developing/extending-aem/extending-workflows/workflows-models#creating-a-new-workflow) to an API call to MoEngage Content Block APIs whenever relevant content is created, updated, or published. This ensures MoEngage has access to the latest AEM content. 
+
+## Flow diagram   
+![](/images/partner_45033003131156.png)
+
+We will to develop a custom AEM Workflow Process Step that connects to the MoEngage APIs. 
+
+### Supported Content Types
+
+The following table outlines the content types that can be synced from AEM to MoEngage:
+
+Content Type
+
+| Description | MoEngage Sync Type <br/>- |-
+
+| --| |
+
+---  
+Experience Fragments
+
+| Reusable content components with HTML, text, and media | Content Block (HTML) <br/>- Content Fragments | 
+
+| Structured content with predefined models and elements | |
+
+ Content Block (HTML/Text)  
+DAM Assets (.html, .txt)
+
+| Text or HTML files stored in Digital Asset Manager | Content Block (HTML/Text) <br/>- ### Supported Actions <br/>- Actions in AEM | 
+
+| Results in MoEngage <br/>- |--- <br/>- Publish  |
+
+| Creates/Updates Content Blocks (status: ACTIVE) <br/>- library_add_check |  **Prerequisites** Before you begin, ensure you have the following requirements: <br/>- Active Adobe Experience Manager instance (AEM 6.5 or AEM as a Cloud Service). <br/>- AEM Author and Publish environments configured. <br/>- Maven project setup with appropriate permissions to deploy OSGi bundles. <br/>- MoEngage workspace with API access enabled. <br/>- MoEngage **Workspace ID**(API Key) and **Data API Secret**. <br/>- Java development environment with AEM SDK. <br/>- Understanding of AEM Workflows and OSGi services. <br/>- |--- <br/>- ## Step 1: Get your MoEngage API Credentials <br/>- To find your credentials, perform the following steps: <br/>- 1. On the left navigation menu in the MoEngage UI, click **Settings** > **Account** > **APIs**. <br/>- 2. On the APIs page, copy the following credentials: <br/>- 1. **Workspace ID** (**earlier app id):** You can use this as API Key (MOE-APPKEY header) <br/>- 2. **Campaign API Secret** : You can use this as Basic Authentication <br/>- ![](/images/partner_44996805286548.png) <br/>- 3. Find your data center code from your dashboard's URL. For more information, refer [Data Centers in MoEngage](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25). <br/>- ## Step 2: Update Maven Project Dependencies <br/>- To update Maven project dependencies, perform the following steps: <br/>- 1. Add the `org.json` library to your AEM project's `core/pom.xml` file to ensure proper JSON payload construction. <br/>- 2. Locate the `&lt;dependencies&gt;` section in `core/pom.xml`. <br/>- 3. Add the following dependency: <br/>- &lt;dependency&gt; <br/>- &lt;groupId&gt;org.json&lt;/groupId&gt; <br/>- &lt;artifactId&gt;json&lt;/artifactId&gt; <br/>- &lt;version&gt;20231013&lt;/version&gt; <br/>- &lt;scope&gt;compile&lt;/scope&gt; <br/>- &lt;/dependency&gt; <br/>- Why org.json?** <br/>- _The_` _org.json_` _library automatically escapes special characters (quotes, newlines) in HTML content, preventing JSON payload errors. Manual string concatenation can break the MoEngage API call if content contains these characters._ <br/>- ## Step 3: Setting up the Custom Workflow <br/>- You need to create an OSGi service that handles content sync to MoEngage. The service implements the `WorkflowProcess` interface and registers as a workflow step. You can refer to the sample shared below or create one of your own. <br/>- ### Sample production ready implementation <br/>- This implementation covers the full lifecycle management: <br/>- Handles Experience Fragments with variations. <br/>- Supports Content Fragments and DAM Assets. <br/>- Debug mode with webhook support for testing. <br/>- Improved HTML cleaning and link externalization. <br/>- You can just copy this code and add it to a file path- `core/src/main/java/com/[your-company]/integration/workflow/MoEngageContentSyncStep.java` <br/>- Sample Production-Ready Java Implementation <br/>- package com.moengage.integration.workflow; <br/>- import com.adobe.granite.workflow.WorkflowException; <br/>- import com.adobe.granite.workflow.WorkflowSession; <br/>- import com.adobe.granite.workflow.exec.WorkItem; <br/>- import com.adobe.granite.workflow.exec.WorkflowProcess; <br/>- import com.adobe.granite.workflow.metadata.MetaDataMap; <br/>- import org.osgi.service.component.annotations.Component; <br/>- import org.osgi.service.component.annotations.Reference; <br/>- import org.slf4j.Logger; <br/>- import org.slf4j.LoggerFactory; <br/>- import org.apache.sling.api.resource.ResourceResolver; <br/>- import org.apache.sling.api.resource.Resource; <br/>- import org.apache.sling.engine.SlingRequestProcessor; <br/>- import com.day.cq.contentsync.handler.util.RequestResponseFactory; <br/>- import com.day.cq.dam.api.Asset; <br/>- import com.day.cq.dam.api.Rendition; <br/>- import com.day.cq.wcm.api.Page; <br/>- import com.adobe.cq.dam.cfm.ContentFragment; <br/>- import com.adobe.cq.dam.cfm.ContentElement; <br/>- import javax.servlet.http.HttpServletRequest; <br/>- import javax.servlet.http.HttpServletResponse; <br/>- import java.io.*; <br/>- import java.net.HttpURLConnection; <br/>- import java.net.URL; <br/>- import java.nio.charset.StandardCharsets; <br/>- import java.util.*; <br/>- import java.util.stream.Collectors; <br/>- import java.util.regex.Matcher; <br/>- import java.util.regex.Pattern; <br/>- import org.json.JSONObject; <br/>- import org.json.JSONArray; <br/>- @Component( <br/>- service = WorkflowProcess.class, <br/>- property = &#123; "process.label=MoEngage Content Sync" &#125; <br/>- ) <br/>- public class MoEngageContentSyncStep implements WorkflowProcess &#123; <br/>- private static final Logger log = LoggerFactory.getLogger(MoEngageContentSyncStep.class); <br/>- private static final String API_BASE_TEMPLATE = "https://api-%s.moengage.com/v1/external/campaigns/content-blocks"; <br/>- private static final int BUFFER_DELAY_MS = 500; <br/>- @Reference private RequestResponseFactory requestResponseFactory; <br/>- @Reference private SlingRequestProcessor requestProcessor; <br/>- @Override <br/>- public void execute(WorkItem workItem, WorkflowSession workflowSession, MetaDataMap args) <br/>- throws WorkflowException &#123; <br/>- ResourceResolver resourceResolver = null; <br/>- try &#123; <br/>- String processArgs = args.get("PROCESS_ARGS", "string"); <br/>- Map&lt;String, String&gt; config = parseProcessArgs(processArgs); <br/>- String apiKey = config.get("moengage.api.key"); <br/>- String apiSecret = config.get("moengage.api.secret"); <br/>- String dataCenter = config.get("moengage.datacenter"); <br/>- String publishUrl = config.get("aem.publish.url"); <br/>- String targetStatus = config.get("moengage.status"); <br/>- boolean debugMode = Boolean.parseBoolean(config.get("moengage.debug")); <br/>- String debugUrl = config.get("moengage.debug.url"); <br/>- if (apiKey == null || |
+
+ apiKey.trim().isEmpty()) &#123;
+                    log.warn("MoEngage API key not configured, skipping");
+                    return;
+                &#125;
+                if (apiSecret == null) apiSecret = "";
+                if (dataCenter == null 
+
+|
+
+| dataCenter.trim().isEmpty()) &#123; <br/>- log.warn("MoEngage datacenter not configured, skipping"); <br/>- return; <br/>- &#125; <br/>- if (targetStatus == null) targetStatus = "ACTIVE"; <br/>- targetStatus = targetStatus.toUpperCase(); <br/>- if (publishUrl != null && publishUrl.endsWith("/")) &#123; <br/>- publishUrl = publishUrl.substring(0, publishUrl.length() - 1); <br/>- &#125; <br/>- String basicAuthHeader = "Basic " + Base64.getEncoder() <br/>- .encodeToString((apiKey.trim() + ":" + apiSecret.trim()) <br/>- .getBytes(StandardCharsets.UTF_8)); <br/>- String baseUrl = String.format(API_BASE_TEMPLATE, dataCenter.trim()); <br/>- String searchUrl = baseUrl + "/search"; <br/>- resourceResolver = workflowSession.adaptTo(ResourceResolver.class); <br/>- if (resourceResolver == null) &#123; <br/>- log.error("Could not obtain ResourceResolver"); <br/>- return; <br/>- &#125; <br/>- String payloadPath = getCleanPath(workItem.getWorkflowData() <br/>- .getPayload().toString()); <br/>- Resource payloadResource = resourceResolver.getResource(payloadPath); <br/>- if (payloadResource == null) &#123; <br/>- log.warn("Resource not found: &#123;&#125;", payloadPath); <br/>- return; <br/>- &#125; <br/>- String initiator = workItem.getWorkflow().getInitiator(); <br/>- if (payloadPath.contains("/experience-fragments/")) &#123; <br/>- processExperienceFragments(payloadResource, resourceResolver, publishUrl, <br/>- baseUrl, searchUrl, apiKey.trim(), basicAuthHeader, targetStatus, <br/>- initiator, debugMode, debugUrl); <br/>- &#125; else if (payloadPath.contains("/content/dam/")) &#123; <br/>- processDAMContent(payloadResource, resourceResolver, publishUrl, <br/>- baseUrl, searchUrl, apiKey.trim(), basicAuthHeader, targetStatus, <br/>- initiator, debugMode, debugUrl); <br/>- &#125; else &#123; <br/>- log.info("Unsupported content type at path: &#123;&#125;", payloadPath); <br/>- &#125; <br/>- &#125; catch (Exception e) &#123; <br/>- log.error("MoEngage Sync Failed", e); <br/>- &#125; <br/>- &#125; <br/>- private void processExperienceFragments(Resource resource, ResourceResolver resolver, <br/>- String publishUrl, String baseUrl, String searchUrl, String apiKey, <br/>- String basicAuthHeader, String targetStatus, String initiator, <br/>- boolean debugMode, String debugUrl) throws Exception &#123; <br/>- List&lt;XFItem&gt; items = collectExperienceFragments(resource, resolver); <br/>- if (items.isEmpty()) &#123; <br/>- log.info("No experience fragments found"); <br/>- return; <br/>- &#125; <br/>- for (int i = 0; i &lt; items.size(); i++) &#123; <br/>- XFItem item = items.get(i); <br/>- try &#123; <br/>- processExperienceFragment(item, resolver, publishUrl, baseUrl, <br/>- searchUrl, apiKey, basicAuthHeader, targetStatus, initiator, <br/>- debugMode, debugUrl); <br/>- if (i < items.size() - 1) &#123; <br/>- Thread.sleep(BUFFER_DELAY_MS); <br/>- &#125; <br/>- &#125; catch (Exception e) &#123; <br/>- log.error("Failed to process XF: &#123;&#125;", item.path, e); <br/>- &#125; <br/>- &#125; <br/>- &#125; <br/>- private List<XFItem&gt; collectExperienceFragments(Resource resource, <br/>- ResourceResolver resolver) &#123; <br/>- List&lt;XFItem&gt; items = new ArrayList<>(); <br/>- if (resource == null) return items; <br/>- Page page = resource.adaptTo(Page.class); <br/>- if (page != null) &#123; <br/>- Iterator&lt;Page&gt; children = page.listChildren(); <br/>- boolean hasChildren = children.hasNext(); <br/>- if (hasChildren) &#123; <br/>- children = page.listChildren(); <br/>- while (children.hasNext()) &#123; <br/>- Page variation = children.next(); <br/>- items.add(new XFItem(variation.getPath(), page, variation)); <br/>- &#125; <br/>- &#125; else &#123; <br/>- Page parent = page.getParent(); <br/>- if (parent != null && parent.listChildren().hasNext()) &#123; <br/>- items.add(new XFItem(page.getPath(), parent, page)); <br/>- &#125; <br/>- &#125; <br/>- &#125; else &#123; <br/>- Iterator&lt;Resource&gt; children = resource.listChildren(); <br/>- while (children.hasNext()) &#123; <br/>- items.addAll(collectExperienceFragments(children.next(), resolver)); <br/>- &#125; <br/>- &#125; <br/>- return items; <br/>- &#125; <br/>- private void processExperienceFragment(XFItem item, ResourceResolver resolver, <br/>- String publishUrl, String baseUrl, String searchUrl, String apiKey, <br/>- String basicAuthHeader, String targetStatus, String initiator, <br/>- boolean debugMode, String debugUrl) throws IOException &#123; <br/>- String itemName = generatePathBasedName(item.path); <br/>- String rawContent = renderPageHtml(item.variation.getPath(), resolver); <br/>- rawContent = cleanContent(rawContent); <br/>- if (publishUrl != null && !publishUrl.isEmpty()) &#123; <br/>- rawContent = externalizeLinks(rawContent, publishUrl); <br/>- &#125; <br/>- if (rawContent.isEmpty()) &#123; <br/>- log.info("Empty content for XF: &#123;&#125;, skipping", item.path); <br/>- return; <br/>- &#125; <br/>- itemName = sanitizeName(itemName); <br/>- log.info("Processing XF: &#123;&#125; -> &#123;&#125;", item.path, itemName); <br/>- String existingId = searchContentBlockId(searchUrl, apiKey, basicAuthHeader, <br/>- itemName, debugMode, debugUrl); <br/>- JSONObject payload = new JSONObject(); <br/>- if (existingId != null) &#123; <br/>- payload.put("id", existingId); <br/>- payload.put("raw_content", rawContent); <br/>- payload.put("updated_by", initiator); <br/>- payload.put("status", targetStatus); <br/>- payload.put("description", "Sync from AEM: " + item.path); <br/>- sendRequest(baseUrl, "PUT", apiKey, basicAuthHeader, <br/>- payload.toString(), debugMode, debugUrl); <br/>- log.info("Updated content block: &#123;&#125;", itemName); <br/>- &#125; else &#123; <br/>- payload.put("name", itemName); <br/>- payload.put("label", itemName); <br/>- payload.put("content_type", "HTML"); <br/>- payload.put("raw_content", rawContent); <br/>- payload.put("status", targetStatus); <br/>- payload.put("created_by", initiator); <br/>- payload.put("images_used", new JSONArray()); <br/>- payload.put("content_block_used", new JSONArray()); <br/>- payload.put("tag_ids", new JSONArray()); <br/>- sendRequest(baseUrl, "POST", apiKey, basicAuthHeader, <br/>- payload.toString(), debugMode, debugUrl); <br/>- log.info("Created content block: &#123;&#125;", itemName); <br/>- &#125; <br/>- &#125; <br/>- private void processDAMContent(Resource resource, ResourceResolver resolver, <br/>- String publishUrl, String baseUrl, String searchUrl, String apiKey, <br/>- String basicAuthHeader, String targetStatus, String initiator, <br/>- boolean debugMode, String debugUrl) throws IOException &#123; <br/>- String itemName = generatePathBasedName(resource.getPath()); <br/>- String rawContent = ""; <br/>- String contentType = "HTML"; <br/>- ContentFragment cf = resource.adaptTo(ContentFragment.class); <br/>- if (cf != null) &#123; <br/>- itemName = cf.getName(); <br/>- rawContent = extractContentFromFragment(cf); <br/>- &#125; else &#123; <br/>- Asset asset = resource.adaptTo(Asset.class); <br/>- if (asset != null) &#123; <br/>- itemName = asset.getName(); <br/>- String mime = asset.getMimeType(); <br/>- contentType = (mime != null && mime.contains("text/plain")) <br/>- ? "Plain Text" : "HTML"; <br/>- Rendition original = asset.getOriginal(); <br/>- if (original != null) &#123; <br/>- try (InputStream is = original.getStream()) &#123; <br/>- rawContent = new BufferedReader( <br/>- new InputStreamReader(is, StandardCharsets.UTF_8)) <br/>- .lines() <br/>- .collect(Collectors.joining("\n")); <br/>- &#125; <br/>- &#125; <br/>- &#125; <br/>- &#125; <br/>- if (rawContent.isEmpty()) &#123; <br/>- log.info("Empty content, skipping: &#123;&#125;", resource.getPath()); <br/>- return; <br/>- &#125; <br/>- itemName = sanitizeName(itemName); <br/>- log.info("Processing DAM content: &#123;&#125; -> &#123;&#125;", resource.getPath(), itemName); <br/>- String existingId = searchContentBlockId(searchUrl, apiKey, basicAuthHeader, <br/>- itemName, debugMode, debugUrl); <br/>- JSONObject payload = new JSONObject(); <br/>- if (existingId != null) &#123; <br/>- payload.put("id", existingId); <br/>- payload.put("raw_content", rawContent); <br/>- payload.put("updated_by", initiator); <br/>- payload.put("status", targetStatus); <br/>- sendRequest(baseUrl, "PUT", apiKey, basicAuthHeader, <br/>- payload.toString(), debugMode, debugUrl); <br/>- log.info("Updated content block: &#123;&#125;", itemName); <br/>- &#125; else &#123; <br/>- payload.put("name", itemName); <br/>- payload.put("label", itemName); <br/>- payload.put("content_type", contentType); <br/>- payload.put("raw_content", rawContent); <br/>- payload.put("status", targetStatus); <br/>- payload.put("created_by", initiator); <br/>- payload.put("images_used", new JSONArray()); <br/>- payload.put("content_block_used", new JSONArray()); <br/>- payload.put("tag_ids", new JSONArray()); <br/>- sendRequest(baseUrl, "POST", apiKey, basicAuthHeader, <br/>- payload.toString(), debugMode, debugUrl); <br/>- log.info("Created content block: &#123;&#125;", itemName); <br/>- &#125; <br/>- &#125; <br/>- private String extractContentFromFragment(ContentFragment cf) &#123; <br/>- if (cf.hasElement("htmlContent")) &#123; <br/>- return cf.getElement("htmlContent").getContent(); <br/>- &#125; <br/>- if (cf.hasElement("master")) &#123; <br/>- return cf.getElement("master").getContent(); <br/>- &#125; <br/>- if (cf.hasElement("body")) &#123; <br/>- return cf.getElement("body").getContent(); <br/>- &#125; <br/>- StringBuilder sb = new StringBuilder(); <br/>- Iterator&lt;ContentElement&gt; elements = cf.getElements(); <br/>- while (elements.hasNext()) &#123; <br/>- ContentElement el = elements.next(); <br/>- if (!isMetadataField(el.getName())) &#123; <br/>- sb.append(el.getContent()).append("\n"); <br/>- &#125; <br/>- &#125; <br/>- return sb.toString().trim(); <br/>- &#125; <br/>- private boolean isMetadataField(String name) &#123; <br/>- return name.matches("(?i).*(metadata|title|s
+
+| egment| |
+
+offerCode).*");
+        &#125;
+    
+    
+        private String generatePathBasedName(String path) &#123;
+            if (path == null 
+
+|
+
+| path.isEmpty()) return "content_block"; <br/>- String temp = path <br/>- .replace("/content/experience-fragments/", "") <br/>- .replace("/content/dam/", "") <br/>- .replace("/content/", ""); <br/>- if (temp.contains("/jcr:content")) &#123; <br/>- temp = temp.substring(0, temp.indexOf("/jcr:content")); <br/>- &#125; <br/>- return temp.replaceAll("/", "_") <br/>- .replaceAll("-", "_") <br/>- .replaceAll("[^a-zA-Z0-9_]", "") <br/>- .replaceAll("_+", "_") <br/>- .replaceAll("^_|_$", "") <br/>- .toLowerCase(); <br/>- &#125; <br/>- private String sanitizeName(String name) &#123; <br/>- if (name == null || |
+
+ name.isEmpty()) return "content_block";
+            return name.replaceAll("[^a-zA-Z0-9_]", "_")
+                       .replaceAll("_+", "_")
+|                        .replaceAll("^_|_$", "")
+                       .toLowerCase();
+        &#125;
+    
+    private String cleanContent(String html) &#123;
+            if (html == null 
+
+|
+
+| html.isEmpty()) &#123; <br/>- return ""; <br/>- &#125; <br/>- StringBuilder result = new StringBuilder(); <br/>- // 1. Capture CSS Links (ClientLibs) <br/>- Pattern linkPattern = Pattern.compile("<link[^>]*rel=[\"']stylesheet[\"'][^>]*>", Pattern.CASE_INSENSITIVE); <br/>- Matcher linkMatcher = linkPattern.matcher(html); <br/>- while (linkMatcher.find()) &#123; <br/>- result.append(linkMatcher.group()).append("\n"); <br/>- &#125; <br/>- // 2. Capture Inline Styles <br/>- Pattern stylePattern = Pattern.compile("&lt;style[^&gt;]*>.*?&lt;/style&gt;", Pattern.DOTALL | Pattern.CASE_INSENSITIVE); <br/>- Matcher styleMatcher = stylePattern.matcher(html); <br/>- while (styleMatcher.find()) &#123; <br/>- result.append(styleMatcher.group()).append("\n"); <br/>- &#125; <br/>- // 3. Extract Body Content <br/>- String bodyContent = html; <br/>- Pattern bodyPattern = Pattern.compile("<body[^>]*>(.*?)</body>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE); <br/>- Matcher bodyMatcher = bodyPattern.matcher(html); <br/>- if (bodyMatcher.find()) &#123; <br/>- bodyContent = bodyMatcher.group(1); <br/>- &#125; else &#123; <br/>- // Fallback: Manually strip tags. <br/>- // Note: We safely remove &lt;head&gt; here because we already captured the links in Step 1. <br/>- bodyContent = html <br/>- .replaceAll("(?is)&lt;!DOCTYPE[^&gt;]*>", "") <br/>- .replaceAll("(?is)&lt;html[^&gt;]*>", "") <br/>- .replaceAll("(?is)&lt;/html&gt;", "") <br/>- .replaceAll("(?is)&lt;head[^&gt;]*>.*?&lt;/head&gt;", "") <br/>- .replaceAll("(?is)<body[^>]*>", "") <br/>- .replaceAll("(?is)</body>", ""); <br/>- &#125; <br/>- bodyContent = cleanAEMArtifacts(bodyContent); <br/>- result.append(bodyContent); <br/>- return result.toString().trim(); <br/>- &#125; <br/>- private String cleanAEMArtifacts(String content) &#123; <br/>- if (content == null) return ""; <br/>- return content <br/>- .replaceAll("(?is)&lt;script[^&gt;]*src=\"/etc\\.clientlibs/[^\"]*\"[^>]*>&lt;/script&gt;", "") <br/>- .replaceAll("\\s*data-cmp-data-layer=\"[^\"]*\"", "") <br/>- .replaceAll("\\s*data-cmp-clickable", "") <br/>- .replaceAll("(?is)&lt;div[^&gt;]*>\\s*&lt;/div&gt;", "") <br/>- .replaceAll("\\n\\s*\\n\\s*\\n", "\n\n") <br/>- .trim(); <br/>- &#125; <br/>- private String renderPageHtml(String path, ResourceResolver resolver) &#123; <br/>- try &#123; <br/>- if (requestProcessor != null && requestResponseFactory != null) &#123; <br/>- HttpServletRequest req = requestResponseFactory <br/>- .createRequest("GET", path + ".html"); <br/>- ByteArrayOutputStream out = new ByteArrayOutputStream(); <br/>- HttpServletResponse resp = requestResponseFactory.createResponse(out); <br/>- requestProcessor.processRequest(req, resp, resolver); <br/>- return out.toString(StandardCharsets.UTF_8.name()); <br/>- &#125; <br/>- &#125; catch (Exception e) &#123; <br/>- log.error("Failed to render: &#123;&#125;", path, e); <br/>- &#125; <br/>- return ""; <br/>- &#125; <br/>- private String externalizeLinks(String content, String domain) &#123; <br/>- if (content == null || |
+
+ domain == null) return content;
+            return content
+|                 .replaceAll("(src|href)=\"(/content/[^\"]+)\"", "$1=\"" + domain + "$2\"")
+|                 .replaceAll("(src|href)=\"(/etc\\.clientlibs/[^\"]+)\"",
+                    "$1=\"" + domain + "$2\"");
+        &#125;
+    
+        private String searchContentBlockId(String url, String apiKey, String auth,
+                String name, boolean dbg, String dbgUrl) &#123;
+            try &#123;
+                JSONObject body = new JSONObject();
+                JSONObject filter = new JSONObject();
+                filter.put("search_text", name);
+                body.put("filters", filter);
+                
+                APIResponse resp = sendRequest(url, "POST", apiKey, auth,
+                    body.toString(), dbg, dbgUrl);
+                
+                if (resp.statusCode >= 200 && resp.statusCode &lt; 300) &#123;
+                    JSONObject json = new JSONObject(resp.body);
+                    if (json.optInt("count") &gt; 0) &#123;
+                        JSONArray data = json.getJSONArray("data");
+                        for (int i = 0; i &lt; data.length(); i++) &#123;
+                            JSONObject item = data.getJSONObject(i);
+                            if (item.getString("name").equals(name)) &#123;
+                                return item.getString("id");
+                            &#125;
+                        &#125;
+                    &#125;
+                &#125;
+            &#125; catch (Exception e) &#123;
+                log.debug("Search failed: &#123;&#125;", name, e);
+            &#125;
+            return null;
+        &#125;
+    
+        private APIResponse sendRequest(String endpoint, String method, String apiKey,
+                String auth, String jsonPayload, boolean dbg, String dbgUrl)
+                throws IOException &#123;
+            
+            if (dbg && dbgUrl != null && !dbgUrl.isEmpty()) &#123;
+                try &#123;
+                    sendDebug(jsonPayload, method, dbgUrl);
+                &#125; catch (Exception e) &#123;
+                    log.debug("Debug send failed", e);
+                &#125;
+            &#125;
+            
+            URL url = new URL(endpoint.trim());
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod(method);
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("MOE-APPKEY", apiKey);
+            conn.setRequestProperty("Authorization", auth);
+            conn.setConnectTimeout(30000);
+            conn.setReadTimeout(30000);
+            conn.setDoOutput(true);
+            
+            try (OutputStream os = conn.getOutputStream()) &#123;
+                os.write(jsonPayload.getBytes(StandardCharsets.UTF_8));
+            &#125;
+            
+            int code = conn.getResponseCode();
+            String body = readResponse(conn);
+            
+            return new APIResponse(code, body);
+        &#125;
+    
+        private void sendDebug(String payload, String method, String debugUrl) &#123;
+            try &#123;
+                URL url = new URL(debugUrl + "?method=" + method);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+                conn.setDoOutput(true);
+                
+                try (OutputStream os = conn.getOutputStream()) &#123;
+                    os.write(payload.getBytes(StandardCharsets.UTF_8));
+                &#125;
+                conn.getResponseCode();
+            &#125; catch (Exception e) &#123;
+                // Non-critical
+            &#125;
+        &#125;
+    
+        private String readResponse(HttpURLConnection conn) &#123;
+            try &#123;
+                InputStream is = conn.getResponseCode() &gt;= 400 ?
+                    conn.getErrorStream() : conn.getInputStream();
+                if (is == null) return "";
+                
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(is, StandardCharsets.UTF_8))) &#123;
+                    return reader.lines().collect(Collectors.joining("\n"));
+                &#125;
+            &#125; catch (Exception e) &#123;
+                return "";
+            &#125;
+        &#125;
+    
+        private String getCleanPath(String path) &#123;
+            if (path == null) return "";
+            if (path.endsWith("/jcr:content")) &#123;
+                return path.substring(0, path.indexOf("/jcr:content"));
+            &#125;
+            if (path.endsWith("/jcr:content/metadata")) &#123;
+                return path.substring(0, path.indexOf("/jcr:content/metadata"));
+            &#125;
+            return path;
+        &#125;
+    
+        private Map&lt;String, String&gt; parseProcessArgs(String args) &#123;
+            Map&lt;String, String&gt; map = new HashMap<>();
+            if (args != null && !args.isEmpty()) &#123;
+                for (String pair : args.split(",")) &#123;
+                    String[] parts = pair.split("=", 2);
+                    if (parts.length == 2) &#123;
+                        map.put(parts[0].trim(), parts[1].trim());
+                    &#125;
+                &#125;
+            &#125;
+            return map;
+        &#125;
+    
+        private static class XFItem &#123;
+            final String path;
+            final Page xfRoot;
+            final Page variation;
+            
+            XFItem(String path, Page xfRoot, Page variation) &#123;
+                this.path = path;
+                this.xfRoot = xfRoot;
+                this.variation = variation;
+            &#125;
+        &#125;
+    
+        private static class APIResponse &#123;
+            final int statusCode;
+            final String body;
+            
+            APIResponse(int statusCode, String body) &#123;
+                this.statusCode = statusCode;
+                this.body = body;
+            &#125;
+        &#125;
+    &#125;
+
+| info |  **Troubleshooting** If deployment errors occur, check the `error.log` file in `crx-quickstart/logs/` for detailed error messages.
+
+| --- | --- |  
+  
+## Step 4: Build and Deploy the OSGi Bundle
+
+After you add the code, to build and deploy your AEM project, perform the following steps:
+
+  1. Navigate to your project root directory.
+  2. Run the Maven build command:
+         
+         mvn clean install -PautoInstallPackage
+
+  3. Verify the bundle is active in the OSGi Console at `http://&lt;aem-author&gt;:4502/system/console/bundles`.
+  4. Search for your bundle name and confirm status is **Active**.
+
+
+
+## Step 5: Create The Workflow Models
+
+Create the following workflow models to handle publish operation:
+
+### Workflow 1: Publish Workflow (ACTIVE Status)
+
+To publish workflow (ACTIVE status), perform the following steps:
+
+![](/images/partner_44122980932756.png)
+
+  1. Navigate to **Tools** > **Workflow** > **Models** in AEM Author.
+  2. Click **Create** > **Create Model**.
+  3. Enter workflow details:
+     1. **Title:** MoEngage Content Sync
+     2. **Name:** moengage-content-sync
+  4. Open the workflow for editing, delete the default step.
+  5. Drag the **Process Step** from the sidebar to the workflow canvas.
+  6. Double-click the Process Step to configure it.
+  7. In the **Process** dropdown, select **MoEngage Content Sync**.
+  8. In the **Arguments** field, enter:
+
+Plain/text
+         
+         moengage.api.key=YOUR_WORKSPACE_ID,moengage.api.secret=YOUR_API_SECRET,moengage.datacenter=YOUR_DATACENTRE_VALUE,aem.publish.url=https://your-publish-domain.com,moengage.status=ACTIVE
+
+  9. Click **OK** to save.
+  10. Click **Sync** to save the workflow model.  
+
+
+
+
+### Configuration Parameters
+
+Parameter
+
+| Description | Required <br/>- |-
+
+| --| |
+
+---  
+moengage.api.key
+
+| Your MoEngage Workspace ID | Yes <br/>- moengage.api.secret | 
+
+| Your MoEngage Data API Secret (for Basic Auth) | |
+
+ Yes  
+moengage.datacenter
+
+| MoEngage data center number (e.g., 02, 03, 04) | Yes <br/>- aem.publish.url | 
+
+| Base URL of your AEM Publish instance | |
+
+ Yes  
+moengage.status
+
+| Target status: ACTIVE | Yes <br/>- moengage.debug | 
+
+| Enable debug mode (true/false) | |
+
+ No  
+moengage.debug.url
+
+| Webhook URL for debugging (e.g., webhook.site) | No <br/>- ![](/images/partner_44122961627540.png) <br/>- ## Step 6: Configure Workflow Launchers <br/>- Navigate to **Tools → Workflow → Launchers** and create 6 launchers to handle publish, unpublish, and delete operations: <br/>- ### Experience Fragments Launchers <br/>- Launcher Name | 
+
+| Event Type | Nodetype |
+
+| Path | Condition | |
+
+ Workflow  
+---
+
+| :--- | :--- |
+
+ moengage-content-sync  
+  
+### DAM Assets Launchers
+
+Launcher Name
+
+| Event Type | Nodetype | 
+
+| Path | Condition |
+
+| Workflow <br/>- |---|-
+
+| --|---|-
+
+| --| |
+
+---  
+moengage-dam-publish
+
+| Modified | dam:AssetContent | 
+
+| /content/dam/[your-site] | cq:lastReplicationAction==Activate |
+
+ moengage-content-sync  
+  
+| warning |  **Important** For all launchers:
+
+  * Set **Run Modes:** author
+  * Set **Enabled:** true
+  * Replace `[your-site]` with your actual site path
+
+| --- | --- |  
+  
+![](/images/partner_44122961627796.png)
+
+## Step 7: Test the Integration
+
+##### Enable Debug Mode (Recommended)
+
+For initial testing, add debug parameters to workflow arguments:
+    
+    
+    moengage.debug=true,moengage.debug.url=https://webhook.site/your-unique-id
+
+Get a free webhook URL from [webhook.site](https://webhook.site) to inspect payloads in real-time.
+
+  1. Navigate to the **Experience Fragment** or **Content Fragment** in AEM Author.
+  2. Select the page information icon.
+  3. Click **Start Workflow**.
+  4. Select **MoEngage Content Sync Workflow**.
+  5. Click **Start**.
+
+![](/images/partner_44122961627668.png)
+
+## Personalization Token Mapping
+
+The workflow automatically converts AEM personalization tokens to MoEngage format:
+
+| AEM Token (Adobe Target Format) | MoEngage Token
+
+| --- | --- |  
+| &#123;&#123;profile.person.name.firstName&#125;&#125; | &#123;&#123;UserAttribute['First Name']&#125;&#125;  
+| &#123;&#123;profile.person.name.lastName&#125;&#125; | &#123;&#123;UserAttribute['Last Name']&#125;&#125;  
+| &#123;&#123;profile.person.name.fullName&#125;&#125; | &#123;&#123;UserAttribute['Name']&#125;&#125;  
+| &#123;&#123;identityMap.email.0.id&#125;&#125; | &#123;&#123;UserAttribute['Email (Standard)']&#125;&#125;  
+| &#123;&#123;#if condition&#125;&#125; | &#123;% if condition %&#125;  
+| &#123;&#123;else&#125;&#125; | &#123;% else %&#125;  
+| &#123;&#123;/if&#125;&#125; | &#123;% endif %&#125;  
+  
+## Additional Resources
+
+  * [MoEngage Content Block API Documentation](https://developers.moengage.com/hc/en-us/articles/9611518840724-Content-block-APIs)
+  * [Adobe AEM: OSGi Services Development](https://experienceleague.adobe.com/en/docs/experience-manager-learn/cloud-service/developing/osgi-services/basics)
+  * [Adobe AEM: Extending Workflows](https://experienceleague.adobe.com/en/docs/experience-manager-65/content/implementing/developing/extending-aem/extending-workflows/workflows-customizing-extending)
+  * [Adobe AEM: ContentFragment API](https://developer.adobe.com/experience-manager/reference-materials/6-5/javadoc/com/adobe/cq/dam/cfm/ContentFragment.html)
+
+
+
+## Support and Customization
+
+| support_agent |  **Support** For assistance with deployment, custom content extraction logic, troubleshooting, or advanced configurations, contact **MoEngage Integration Support** or your Customer Success Manager.
+
+| --- | --- |

@@ -1,0 +1,76 @@
+---
+title: "AccuWeather"
+---
+
+# Introduction
+
+[AccuWeather](https://www.accuweather.com/) is a media company that provides weather forecasting services worldwide. AccuWeather Enterprise Solutions include the most accurate, site-specific, customized severe weather warnings, short- and long-range forecasts, and applied weather information.
+
+# MoEngage <> AccuWeather 
+
+MoEngage <> AccuWeather integrations allow you to enrich and personalize your marketing campaigns, as well as automate translations. You can directly fetch the user location and weather updates on the fly and send personalized campaigns to your users.  
+  
+For example- A typical use-case for an E-commerce industry: There is a high likelihood of rain in the user's location. And you want to send a message to user nudging him to buy an umbrella.
+
+![Screenshot_2022-06-23_at_11.33.02_PM.png](/images/partner_7265033963028.png)
+
+# Integration
+
+| library_add_check |  **Prerequisites**
+
+  * Please make sure you have an AccuWeather account.
+  * Ensure you have access to your AccuWeather API keys. Contact your AccuWeather account manager for compatible API keys. Read more on [AccuWeather API here](https://apidev.accuweather.com/developers/).
+
+| --- | --- |  
+  
+## Available APIs
+
+The following are the AccuWeather APIs that can be used within your MoEngage campaigns:
+
+| API | DESCRIPTION
+
+| --- | --- |  
+| [Locations](https://apidev.accuweather.com/developers/locationsAPIguide) | Get a location key for your desired location. Use the location key to retrieve weather data from the Forecast or Current Conditions API.  
+| [Forecast](https://apidev.accuweather.com/developers/forecastsAPIguide) | Get forecast information for a specific location.  
+| [Current Conditions](https://apidev.accuweather.com/developers/currentConditionsAPIGuide) | Get Current Conditions data for a specific location.  
+| [Indices](https://apidev.accuweather.com/developers/indicesApiGuide) | Get daily index values for a specific location. Index availability varies by location.  
+| [Weather Alarms](https://apidev.accuweather.com/developers/weatheralarmsAPIguide) | Get Weather Alarms for a specific location. AccuWeather Weather Alarms are determined using the daily forecasts for a location. An alarm exists for a location if the forecast weather meets or exceeds [specific thresholds](https://apidev.accuweather.com/developers/weatheralarms).  
+| [Alerts](https://apidev.accuweather.com/developers/alertsApiGuide) | Get severe weather alerts from official Government Meteorological Agencies and leading global weather alert providers.  
+| [Imagery](https://apidev.accuweather.com/developers/imageryAPIguide) | Get radar and satellite images.  
+| [Tropical](https://apidev.accuweather.com/developers/tropicalAPIGuide) | Get the current position, past positions, and forecasts for tropical cyclones worldwide.  
+| [Translations](https://apidev.accuweather.com/developers/translationsApiGuide) | Get a list of available languages. Get translations for specific groups of phrases.  
+  
+## Steps 
+
+The following example shows three different types of messages based on the current weather conditions at a user’s zip code. We will be using AccuWeather's _location_ and _current conditions_ APIs.
+
+Here, we will make 2 API calls - The first one to get the user's location and the second one to get the current weather conditions at that location. 
+
+  1. Go to step 2 on campaign creation.
+  2. Hit AccuWeather's _Location_ API and store the location details in a new variable called _location_info._ The “Key” is a useful variable as it is used in the next request. Read about the API response [here](https://apidev.accuweather.com/developers/locationsAPIguide#Cities).
+
+
+    
+    
+    &#123;% set location_info = "https://api.accuweather.com/locations/v1/postalcodes/" + &#123;&#123;UserAttribute['zipcode']&#125;&#125; + "/search?q=" + &#123;&#123;UserAttribute['zipcode']&#125;&#125; + "&apikey=" + &lt;your AccuWeather app key here&gt; %&#125;
+
+_Note- You can alternatively leverage the user’s city if you do not have a zipcode user attribute._
+
+3\. Hit AccuWeather's _Current Condition_ API using location info and store the details in a new variable called _local_weather. Read about the API response[here](https://apidev.accuweather.com/developers/currentConditionsAPIGuide#TopCities) _
+    
+    
+    &#123;% set local_weather = "https://api.accuweather.com/currentconditions/v1/" + location_info[0].key + "?apikey=" + &lt;your AccuWeather app key here&gt; %&#125;
+
+4\. Now, you can define the content of your campaign based on the local weather. For example: 
+
+If local weather is _Sunny = > Get a sunscreen _
+
+If local weather is _Rain = > Get an umbrella _
+
+![Screenshot_2022-06-24_at_12.07.59_AM.png](/images/partner_7266235330964.png)
+
+5\. You can print the output in the template or use the [Personalized Previews](https://help.moengage.com/hc/en-us/articles/30958544839828-Personalized-Preview) to preview.   
+![Screenshot_2022-06-24_at_12.12.48_AM.png](/images/partner_7266407892500.png)
+
+  
+If the API call responds with `&#123;&#123;local_weather[0].WeatherText&#125;&#125;` returning `Rain`, the user would then receive the push message - "Its raining. Get an umbrella".

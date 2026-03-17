@@ -1,0 +1,162 @@
+---
+title: "Sync data from MoEngage to Salesforce"
+---
+
+# Integration 
+
+| library_add_check |  **Prerequisites**
+
+  * Follow the steps [mentioned here](https://partners.moengage.com/hc/en-us/articles/30688853335444-Setup-MoEngage-App-on-Salesforce) to setup the MoEngage Streams Connected app on Salesforce. 
+  * This is a part of the Streams add-on. Please reach out to your dedicated MoEngage CSM (customer success manager) to get it enabled for your account.
+
+| --- | --- |  
+  
+# Scope 
+
+| Context | Support status
+
+| --- | --- |  
+| Sync MoEngage Campaign interaction events to Salesforce as Activities.  | Supported ![:check_mark:](https://moengagetrial.atlassian.net/gateway/api/emoji/85e7534e-7a93-40f4-a71e-5204ece7ec46/atlassian-check_mark/path)  
+| Sync MoEngage Campaign interaction events to Salesforce as a Standard or Customer Salesforce objects.  | Supported ![:check_mark:](https://moengagetrial.atlassian.net/gateway/api/emoji/85e7534e-7a93-40f4-a71e-5204ece7ec46/atlassian-check_mark/path)  
+| Support for all standard salesforce fields- String, DateTime, Numeric, Formula fields.  | Supported ![:check_mark:](https://moengagetrial.atlassian.net/gateway/api/emoji/85e7534e-7a93-40f4-a71e-5204ece7ec46/atlassian-check_mark/path)  
+  
+# 
+
+# Steps 
+
+## 1\. Setup streams on MoEngage 
+
+  1. Navigate to MoEngage App Marketplace >> Salesforce CRM 
+  2. Click Integrate. ![Screenshot 2024-10-15 at 5.45.29 PM.png](/images/partner_31258016008340.png)
+  3. Add details of your Salesforce account (Secret ID, Secret Key)
+  4. Add the user attributes and events that you want to send to Salesforce 
+  5. Click Connect 
+
+
+
+| info |  **No Integrate Tab on the App Marketplace?** If you don't see the Integrate option on your dashboard, it means Streams is not enabled for your workspace. Please reach out to MoEngage support team or your dedicated Customer Success Manager to get it enabled along with the following details:  
+  
+
+
+  * Salesforce domain 
+  * Salesforce Secret ID 
+  * Salesforce Secret Key 
+  * User attributes to be synced 
+  * Events to be sent to Salesforce
+
+| --- | --- |  
+  
+## 2\. Setup sync on MoEngage app in Salesforce 
+
+The sync consists of following steps: 
+
+  1. **Connections-** Connections is the authorisation to your MoEngage workspace. You can connect multiple MoEngage workspace to a single Salesforce instance. 
+  2. **Syncs -** Sync is job that runs in real time to send the specific data between the two systems. It includes your sync type (MoEngage to Salesforce or Salesforce to MoEngage), entities to be synced and data mapping. 
+
+
+
+Other minor sections include Error logs and Exceptions - this is particularly important to debug incase the data sync is not working. 
+
+Click on “App launcher”, enter “MoEngage”, and then select “MoEngage App”.   
+![Screenshot 2024-09-25 at 3.08.31 PM.png](/images/partner_31258032459284.png)
+
+### Step 1: Setup a connection 
+
+  1. Click Connections >> Add New Connection![Screenshot 2024-09-25 at 3.29.41 PM.png](/images/partner_31258016016532.png)
+  2. Enter your MoEngage workspace details   
+![Screenshot 2024-09-25 at 3.34.12 PM.png](/images/partner_31258016018196.png)
+
+| Field name | Value
+
+| --- | --- |  
+| Connection Name | You can give any name to your connection - eg. "MoEngage Prod" or MoEngage Workspace   
+| Workspace ID | The Workspace ID of your MoEngage account is available in Settings -> App Settings -> APIs >> Workspace ID   
+| Data Key  | The Data ID of your MoEngage account is available in Settings -> App Settings -> APIs >> Data key   
+| MoEngage Data center  | This is your MoEngage data center. [Read more](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage)  
+  
+3\. Click Save.
+
+### Step 2: Setup a sync
+
+For this document, we will focus on this example - Sync MoEngage Campaign Interaction Events to Salesforce as Activities. You can follow the similar process for Salesforce object. 
+
+### Sync MoEngage Campaign Interaction Events to Salesforce as Activities 
+
+  1. Click Map Fields.  
+![Screenshot 2024-09-25 at 3.42.08 PM.png](/images/partner_31258016019860.png)
+  2. Click Add new sync   
+![Screenshot 2024-09-25 at 3.43.02 PM.png](/images/partner_31258032476436.png)
+  3. Enter basic sync details   
+![Screenshot 2024-10-15 at 5.42.14 PM.png](/images/partner_31258032478484.png)
+  4. Click Next 
+  5. Configure data mapping between the two systems 
+       1. Define the identifier between the two systems. For MoEngage, identifier name is Customer ID. But it can be mapped to any field from the Activity object. 
+       2. Setup mappings for other fields.  
+Enter the MoEngage attribute (these are passed in MoEngage streams data) and select a Salesforce Field that the MoEngage attribute needs to be mapped to.   
+![](/images/partner_31258016027156.png)  
+Note that- there are some mandatory fields associated to an Activity in Salesforce. However, these do not appear on the mapping page under the mapping section. You need to manually add these here. Refer to the [FAQ section](https://partners.moengage.com/hc/en-us/articles/30755267397524/preview/eyJhbGciOiJIUzI1NiJ9.eyJpZCI6MzA3NTUyNjczOTc1MjQsImV4cCI6MTczMjAwMjcwOH0.eR0To27E90LN0EE941Dgev2EpVfg9x210bz424bKV68#h_01JD1HV2MKGD8HB82HP80KEQ1J) for more details 
+       3. Click Save 
+
+#### 
+
+
+
+
+### Mapping user attributes to Salesforce fields
+
+While enabling streams on the MoEngage App-Marketplace, it allows you to select the user attributes that needs to synced to Salesforce. These attributes can be accessed within the mapping using
+    
+    
+    user_attributes.&#123;user_attribute_name&#125;
+
+This can then be mapped to any field in Salesforce. 
+
+![Screenshot 2024-11-19 at 12.21.39 PM.png](/images/partner_32262625306772.png)
+
+## Step 3: View activities on Salesforce 
+
+You can go to a contact and see all the activities sent via MoEngage 
+
+![Screenshot 2024-10-15 at 5.52.55 PM.png](/images/partner_31258032483220.png)
+
+#### 
+
+# FAQs
+
+### Q. Some of the standard salesforce fields are not getting updates? 
+
+**Ans.** Some of the salesforce fields are not writable, such as MailingAddress, BillingAddress, or Location-type fields. Instead, you can map to the individual components of these fields, such as Mailing country, city, Billing country, street, latitude, and longitude. 
+
+### Q. Why some of the mandatory fields (on standard salesforce objects like Activities/Events, Tasks, and Account) are not visible during mapping? 
+
+**Ans.** In certain situations, mandatory fields for standard objects may not be displayed in the visible "Mandatory" section. If the fields do not appear, please ensure that the respective field are marked in the "Others" section of the mapping page. **  
+  
+**
+
+**Salesforce Standard Entity**
+
+| Case, when the following fields are not available |  Necessary fields to be marked in the Others section <br/>- |-
+
+| --| |
+
+---  
+Activity/Event
+
+| Start and end date <br/>- AssignedTo (or NameID) <br/>- Subject <br/>- ActivityDate <br/>- Duration <br/>- Activity Date Duration  | <br/>- AssignedTo (or NameID) <br/>- Subject <br/>- Start Date <br/>- End Date <br/>- Duration | 
+
+| <br/>- AssignedTo (or NameID) <br/>- Subject <br/>- ActivityDate <br/>- AllDayEvent (to mark the event as an all-day event) <br/>- Task | Subject | |
+
+ 
+
+  * Subject
+
+  
+| AssignedTo | 
+
+  * AssignedTo
+
+| Account |  Account Name  (only applicable if Person Accounts is enabled for your salesforce instance)  | 
+
+  * Account Name
+
+

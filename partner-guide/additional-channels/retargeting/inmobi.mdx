@@ -1,0 +1,65 @@
+---
+title: "InMobi"
+---
+
+# Introduction
+
+[InMobi](https://www.inmobi.com/) develops an advertisement-serving algorithm that helps optimize the ranking of the advertisements served on mobile phones. It operates a mobile ad network with an extensive range of ad formats, analytics, and monetization tools for app businesses
+
+# MoEngage <> InMobi
+
+This integration allows you to sync segment between MoEngage and InMobi Audiences, helping you fuel Campaign performance with laser-focused retargeting. We will use MoEngage [Connecter Campaigns](https://help.moengage.com/hc/en-us/articles/214247906-Create-Connector-Campaign) to build this integration.
+
+# Integration<Info>
+**Prerequisites**
+Ensure you have an InMobi account.
+</Info>## Step 1: Get your Segment ID or create a new segment
+
+To create a new segment, use the following API:
+    
+    
+    http://advertiser.inmobiapis.com/tpce/v1/segment?segmentName=&lt;SEGMENT_NAME&gt;&propertyId=&lt;PROPERTY_ID_OR_ADVERTISER_ID&gt;&membershipTtl=&lt;MEMBERSHIP_TTL_IN_DAYS&gt;
+
+  *     *       * `&lt;SEGMENT_NAME&gt;` \- Name of the segment
+      * `&lt;PROPERTY_ID_OR_ADVERTISER_ID&gt;` \- propertyId/advertiserId
+      * `&lt;MEMBERSHIP_TTL_IN_DAYS&gt;` \- TTL for User IDs being tagged to this segment
+
+
+
+InMobi will then send a Segment ID in response to a successful segment creation:
+
+HTTP
+    
+    
+    &#123;
+        "status": "OK",
+        "message": "success",
+        "code": 200,
+        "segmentId": "f239dfb4-xxxx-xxxx-xxxx-dfdxxxx4ddb6"
+    &#125;
+
+If you already have a segment created, you can also use that segment's ID.
+
+## Step 2: Create a connector campaign on MoEngage
+
+To create a connector campaign on MoEngage, 
+
+  1.      1.         1. Navigate to Create Campaign >> Connectors >> Custom and choose delivery type most suitable to your needs  
+![Screenshot_2022-02-21_at_10.48.46_PM.png](https://partners.moengage.com/hc/article_attachments/4678168106516/Screenshot_2022-02-21_at_10.48.46_PM.png)
+        2. On step 2 of the campaign, 
+           1. Select method as `GET`
+           2. Add Webhook URL as: 
+                  
+                  http://advertiser.inmobiapis.com/tpce/v1/usersegment?propertyId=&lt;PROPERTY_ID&gt;&gpId=&lt;ANDROID_DEVICE_ID&gt;&ida=&lt;IOS_DEVICE_ID&gt;&segmentIds=&lt;YOUR_SEGMENT_ID&gt;&action=add
+
+           3. In Parameters, add 
+              1. `propertyId`: your propertyId/advertiserId 
+              2. `gpId`: Android Device ID, or  
+`ida`: iOS Device ID
+              3. `segmentIds`: your segment ID.
+  
+![Step1.png](/images/partner_10275541563924.png)
+        3. At this point, your campaign should be ready to test and send. You can also test your connector configuration using the Test functionality available on Step 2 of Create Connector Campaign.![Screen_Shot_2022-02-22_at_11.12.42_AM.png](https://partners.moengage.com/hc/article_attachments/4678362626196/Screen_Shot_2022-02-22_at_11.12.42_AM.png)
+        4. If you see the test user in your InMobi Audience segment, your set-up is good to go. You can go ahead and publish the campaign.
+
+

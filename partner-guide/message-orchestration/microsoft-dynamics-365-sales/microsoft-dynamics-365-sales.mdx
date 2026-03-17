@@ -1,0 +1,200 @@
+---
+title: "Microsoft Dynamics 365 Sales"
+---
+
+[Microsoft Dynamics 365 Sales](https://www.microsoft.com/en-us/dynamics-365/products/sales) is an enterprise CRM solution that manages customer relationships through contacts, leads, opportunities, and activities. This integration utilizes _Power Automate_ to automatically push real-time sales data from Microsoft Dynamics 365 (D365) Sales to the MoEngage platform.
+
+This automatic data synchronization helps marketing and support teams to trigger highly contextual and personalized engagement campaigns based on sales activities and the customer lifecycle.
+
+## MoEngage <> Microsoft Dynamics 365
+
+The integration of D365 Sales and MoEngage enables enhanced alignment between marketing and sales. With this integration, you can:
+
+  * Synchronize Contacts, Leads, and Opportunities from D365 Sales to MoEngage.
+  * Import sales activities like Calls, Meetings, and Tasks as behavioral events.
+  * Capture custom attributes and relationships for comprehensive customer profiling.
+  * Trigger contextual campaigns based on sales interactions and opportunity lifecycle events.
+
+
+
+## Use Cases
+
+Integrating Microsoft Dynamics 365 with MoEngage helps you solve the following use case:
+
+  * **Lead-to-engagement** : When a new Lead is created in D365, the complete lead data is automatically pushed to MoEngage, allowing you to instantly trigger a personalized welcome campaign and enroll the lead in relevant nurturing sequences based on their source or score.
+  * **Contact synchronization** : When Opportunity stages change (for example, from Qualify to Propose ), push updates to MoEngage to send targeted content, deal status notifications, or win/loss analysis.
+  * **Sales activity events** : When Calls, Meetings, or Tasks are logged, capture these as behavioral events in MoEngage for engagement attribution.
+  * **CSAT (Customer Satisfaction Score) and re-engagement** : When Opportunities are closed or deals are won, trigger satisfaction surveys or customer onboarding campaigns.
+
+
+
+### Sync Modules
+
+The following table outlines the data synchronization type for each D365 Sales module:
+
+| Module | MoEngage Sync Type
+
+| --- | --- |  
+Contacts
+
+| Users <br /> Leads | |
+
+|
+
+| Users <br /> Opportunities  \| Events <br /> Tasks | |
+
+| Events <br /> Calls \| Events <br /> Meetings \| 
+
+| Events <br /> Custom Entities \| Events (Custom) |
+
+| <br/>- # Integration <br/>- library_add_check |  **Prerequisites** Admin access to your Power Automate and D365 Sales environment. <br/>- |-
+
+| -- <br/>- ## Step 1: Get Your MoEngage Endpoint <br/>- To get a dedicated endpoint for your integration, please contact the MoEngage Support team. In your request, you must specify the common identifier used to link user profiles between MoEngage and the partner platform. <br/>- ## Step 2: Create a Power Automate Flow <br/>- To create a Power Automate flow, perform the following steps: <br/>- 1. Open [Power Automate](https://www.microsoft.com/en-us/power-platform/products/power-automate). <br/>- 2. Click **Create** > **Automated Cloud Flow**. <br/>- 3. Provide the flow name. For example,`D365 - Sync Contact to MoEngage`. <br/>- 4. Select the trigger _When a row is added, modified, or deleted_ (Dataverse). <br/>- 5. Configure the following trigger details: <br/>- 1. **Table** : Click the entity you want to sync (for example, Contact, Lead, Opportunity). <br/>- 2. **Scope** : Click **Organization**. <br/>- 3. **Trigger on** : Click **Added** or **Modified**. <br/>- ![](/images/partner_42988363210388.png) <br/>- ## Step 3: Configure HTTP Webhook Action <br/>- To configure the HTTP Webhook action, perform the following steps: <br/>- 1. Click **New Step** > **HTTP**. <br/>- 2. Provide the following details: <br/>- HTTP Webhook Section | Description <br/>- |-
+
+| -- <br/>- Method** | **POST** <br/>- URL** |
+
+| Enter the dedicated Webhook URL provided by MoEngage in the following format: <br/>- https://api-0X.moengage.com/v1/partner/d365-sales/&#123;events/users&#125;/?configName=&#123;config_name&#125;. <br/>- Custom Headers** |  |
+
+| Header(s) | |
+
+ Value
+
+| --- | --- |  
+| Content-Type | application/json  
+| Authorization |  To authenticate your request, use the following format for the Authorization header: Basic [Base64(Workspace_ID:API_Key)]" Generate a Basic Authentication Token using an online [Basic Auth Header Generator tool](https://www.debugbear.com/basic-auth-header-generator). You must enter your **Workspace ID** as username and **Data API Key** as password. To find your credentials, perform the following steps:
+     1. On the MoEngage UI, navigate to **Settings** > **Account** > **APIs**.
+     2. Copy the ID under **Workspace ID** (**earlier app id**).
+     3. Copy the **Data** under **API keys**.
+Your Basic Authentication Token is a combination of **Workspace ID** and **Data**. For example, paste the following value as your Basic `Authentication Token: Basic &#123;base64_encoded_credentials&#125;` **Note** : Ensure the token is copied completely without extra spaces.  
+| Body |  For the **Body** content, use one of the sample payloads provided in the examples.  
+
+
+
+## ![](/images/partner_42988331640724.png)
+
+## Step 4: Add Request Body Payload
+
+To add the request body payload, perform the following steps:
+
+  1. Copy the appropriate payload template below and paste it into the **Body** field of the HTTP action.
+  2. Replace placeholder values (for example, `@&#123;'triggerBody()?['firstname']&#125;`) with the corresponding Dynamic content fields from the D365 trigger.
+
+
+
+**Contacts & Leads (User Sync)**
+
+JSON
+    
+    
+    &#123;
+      "customer_id": "@&#123;triggerBody()?['contactid']&#125;",
+      "u_fn": "@&#123;triggerBody()?['firstname']&#125;",
+      "u_ln": "@&#123;triggerBody()?['lastname']&#125;",
+      "u_em": "@&#123;triggerBody()?['emailaddress1']&#125;",
+      "u_mb": "@&#123;triggerBody()?['mobilephone']&#125;",
+      "updated_at": "@&#123;triggerBody()?['modifiedon']&#125;",
+      "user_attributes": &#123;
+        "job_title": "@&#123;triggerBody()?['jobtitle']&#125;",
+        "company_name": "@&#123;triggerBody()?['companyname']&#125;",
+        "account_id": "@&#123;triggerBody()?['_accountid_value']&#125;",
+        "business_phone": "@&#123;triggerBody()?['telephone1']&#125;",
+        "status": "@&#123;triggerBody()?['statecode']&#125;"
+      &#125;
+    &#125;
+    
+
+| info |  **Information** Add additional custom fields to `user_attributes`.
+
+| --- | --- |  
+  
+**Opportunities (Event)**
+
+JSON
+    
+    
+    &#123;
+      "customer_id": "@&#123;triggerBody()?['opportunityid']&#125;",
+      "u_fn": "@&#123;triggerBody()?['name']&#125;",
+      "u_ln": "",
+      "u_em": "",
+      "u_mb": "",
+      "updated_at": "@&#123;triggerBody()?['modifiedon']&#125;",
+      "event_attributes": &#123;
+        "event_name": "opportunity_updated",
+        "opportunity_id": "@&#123;triggerBody()?['opportunityid']&#125;",
+        "opportunity_name": "@&#123;triggerBody()?['name']&#125;",
+        "deal_value": "@&#123;triggerBody()?['estimatedvalue']&#125;",
+        "stage": "@&#123;triggerBody()?['stageid']&#125;",
+        "probability": "@&#123;triggerBody()?['closeprobability']&#125;",
+        "close_date": "@&#123;triggerBody()?['estimatedclosedate']&#125;",
+        "owner_id": "@&#123;triggerBody()?['_ownerid_value']&#125;"
+      &#125;
+    &#125;
+    
+
+**Tasks, Calls & Meetings (Activity Events)**
+
+JSON
+    
+    
+    &#123;
+      "customer_id": "@&#123;triggerBody()?['regardingobjectid']&#125;",
+      "u_fn": "@&#123;triggerBody()?['subject']&#125;",
+      "u_ln": "",
+      "u_em": "",
+      "u_mb": "@&#123;triggerBody()?['phonenumber']&#125;",
+      "updated_at": "@&#123;triggerBody()?['modifiedon']&#125;",
+      "event_attributes": &#123;
+        "event_name": "task_created",
+        "activity_id": "@&#123;triggerBody()?['taskid']&#125;",
+        "subject": "@&#123;triggerBody()?['subject']&#125;",
+        "priority": "@&#123;triggerBody()?['prioritycode']&#125;",
+        "due_date": "@&#123;triggerBody()?['duedate']&#125;",
+        "status": "@&#123;triggerBody()?['statecode']&#125;",
+        "owner_id": "@&#123;triggerBody()?['_ownerid_value']&#125;"
+      &#125;
+    &#125;
+    
+
+| info |  **Information**
+
+  * For each activity type, set the `event_name` to `&#123;&#123;activity name&#125;&#125;`, or a custom value.
+  * Add additional custom event fields to`event_attributes`.
+
+| --- | --- |  
+  
+## Required Fields
+
+| Field (Key) | Required
+
+| --- | --- |  
+| customer_id | Yes  
+| u_fn | Yes  
+| u_ln | Yes  
+| u_em | Yes  
+| u_mb | Yes  
+| updated_at | Yes  
+| user_attributes | No  
+| event_name | Yes (events)  
+| event_attributes | Yes (events)  
+  
+## Data Mapping Guidelines
+
+  * ****Unique Identifier (Customer ID):**** Use a consistent, immutable identifier to link user profiles between D365 and MoEngage. Map this value to the `customer_id` field in your MoEngage payload. This is critical for data merging and preventing duplicate user profiles: 
+    * Email address (if unique)
+    * D365 record GUID (for example, contactid, leadid)
+    * External ID (if configured in D365)
+  * **Event Name (event_name)** : Always include a descriptive `event_name` to identify and categorize actions in MoEngage. This ensures all events are tracked accurately for analysis and segmentation.
+
+
+
+## Step 5: Test the Integration
+
+To test the integration, perform the following steps:
+
+  1. In Power Automate, click **Test** and then manually trigger a cloud flow.
+  2. Create or update a test record in D365 Sales (for example, create a new Contact ).
+  3. Monitor the flow execution in Power Automate for a successful HTTP 200/201 response.
+  4. Verify in MoEngage UI to confirm the test data has synced correctly within 1–5 minutes.![](/images/partner_42993491240724.png)
+
+

@@ -1,0 +1,278 @@
+---
+title: "Setup MoEngage App on Salesforce"
+---
+
+# Introduction  
+  
+| info |  **Information** This is part of the "Salesforce CRM integration paid add-on. Contact your dedicated MoEngage CSM (customer success manager) to enable it for your account.
+
+| --- | --- |  
+  
+| Integration steps  | Use-case
+
+| --- | --- |  
+| Install MoEngage App  | Needed for both Salesforce to MoEngage and vice versa integrations.   
+| Create a connected App  | Only for MoEngage to Salesforce integration. **Not** **needed** for Salesforce to MoEngage data flow.   
+  
+# Install MoEngage App 
+
+  1. **Access Salesforce AppExchange:** Open your web browser and go to the Salesforce AppExchange website.
+  2. **Log In:** If you haven't already logged in, click the _Log In_ button and enter your Salesforce credentials.
+  3. **Search for MoEngage:** In the search bar, type _MoEngage_ and press Enter. Click on the MoEngage app to open its details page.
+  4. **Initiate the Installation:** Click the _Get It Now_ button on the MoEngage app page.
+  5. **Select Salesforce Organization:** Choose the appropriate Salesforce org (e.g., Production). •
+  6. Click _Install in Production_ to proceed.
+  7. Confirm Installation Details:  
+\- Review the installation details provided.  
+\- Agree to the terms and conditions by checking the appropriate box.
+  8. **Complete the Installation:** Click on _Confirm and Install_ to begin the installation process.
+  9. **Install in your Organization:** Select whether you want to install MoEngage for Admins only, All Users, or Specific Profiles. Depending on your option, you will have to grant your Users relevant MoEngage App Permissions. Click "Install":
+     1. Approve third-party access: After clicking “Install,” approve remote site settings by “selecting the checkboxes” for the four API endpoints corresponding to MoEngage data centers.
+     2. After clicking “Install,” approve remote site settings by “selecting the checkboxes” for the four API endpoints corresponding to MoEngage data centers.
+
+
+
+If you do not see MoEngage in the listed apps, please contact your dedicated customer success manager. They will share the app build separately. 
+
+## Permission Sets required for the MoEngage App
+
+The MoEngage App comes with the following Permission Sets:
+
+| Permission Set | Permissions
+
+| --- | --- |  
+| MoEngage Admin Permission |  Give this permission to Users who will create and manage the syncs. No additional permissions are required for admin Users. This permission provides access to:
+
+  * Manage MoEngage Connections within Salesforce
+  * Manage syncs and mappings
+  * Access the Sync Queue and Use Manual Retry
+  * Manage the Delete Processed Sync Scheduler
+
+  
+| MoEngage User Permission |  Give this permission to users who will interact with the synced objects (for example, leads, contacts, etc.) by creating or updating them. This permission provides access to:
+
+  * Package custom objects and fields
+  * Custom settings and metadata
+  * Apex class access
+
+  
+  
+Depending on the type of installation:
+
+### Installing for Admin Users Only
+
+  * Assign the MoEngage User Permission permission set to all non-admin users who will create or update mapped object records.
+  * Admin users do not require additional permission sets for basic use.
+
+
+
+### Installing for All Users
+
+  * Custom Profile Users: No need to assign any permission set.
+  * Standard Profile Users: Assign the MoEngage User Permission set to users who will create or update mapped object records.
+  * Admin Users: No permissions are needed for general access. However, assign the ‘MoEngage Admin User’ permission set to specific admins who require access to configuration settings.
+
+
+
+arrow_drop_down **Managing User Permissions with Custom Views**
+
+It is recommended that you create a View to manage your permissions easily. From your Salesforce dashboard,
+
+  1. Click on the “Gear icon” in the top right corner and select “Setup”.
+  2. In the Quick Find box, type “Users” and select “Users”.
+  3. (Optional) Click on “Create New View” only if a relevant list view already exists in your org; you may use that instead.
+  4. Once you click “Create New View” a new page will open.
+  5. Enter a “Label” for the new list view.
+  6. (Optional) Adjust the “Filter Criteria” to target specific users.
+  7. Select the “Available Fields” you want to display in the list view.
+  8. Select your preferred “Validity” option and click on “Save” to create the list view.
+  9. Once you click “Save”, a new list view will be created. This “List View” can now efficiently apply permission sets to multiple users at once.
+
+
+
+Next, to assign MoEngage App Permissions:
+
+  1. Click on the “Gear icon” in the top right corner and select “Setup”.
+  2. In the Quick Find box, type “Permission Sets” and select “Permission Sets”.
+  3. Click on “MoEngage Admin Permission” or "MoEngage User Permission".
+  4. Click on “Manage Assignments”.
+  5. Click on “Add Assignments”.
+  6. Choose the “List View” you created earlier to display relevant users.
+  7. Select the “Checkbox” at the start of each row for users to whom you want to assign the permission set. Click on “Next”.
+  8. Review your selected user and make any necessary changes if needed. Once confirmed, click “Assign” to complete the permission set assignment process.
+
+
+
+## Important Notes
+
+After installation, the package automatically:
+
+  1. Creates (or verifies) the required configuration custom-setting records.
+  2. Schedules the **Delete Processed Syncs** job.
+
+
+
+| info |  **Note** If created during install, the job is owned by the package installer. Reschedule under an Admin user (who has MoEngage Admin Permission set assigned) via Setup → Scheduled Jobs → Delete Processed Syncs → Manage → Reschedule Job.
+
+| --- | --- |  
+  
+If a job with the same name already exists, the system will not duplicate it.
+
+## Creating Sandboxes with MoEngage App Enabled
+
+By following these steps, you can control whether the sync remains active or inactive in the  
+Sandbox environment, depending on your requirements:
+
+### Full and partial copy sandboxes
+
+  * When a full/partial copy sandbox is created from the production environment with an active MoEngage sync, the MoEngage package is automatically installed, and the sync is enabled by default.
+  * To prevent syncing in the sandbox environment, deactivate all connections associated with the MoEngage package.
+  * If a sandbox template is used and MoEngage package objects are deselected for sync  
+during the creation process:
+    * The package connections will not be copied to the sandbox.
+    * In this case, there is no need to perform the deactivation step.
+
+
+
+### Developer & Developer Pro sandboxes
+
+  * In developer and developer pro sandboxes, no data of standard or custom objects is copied over; hence, no sync data is copied to the sandbox.
+  * Only the custom settings data (connections and authentication) information is copied, so you will see connections in the developer and developer pro sandboxes, but no mapping records will be present.
+  * These types of sandboxes will not require any deactivation step. However, it is still recommended that you deactivate the connections before creating them.
+
+
+
+## Configuring Custom Settings
+
+When the app is installed, a public configuration custom setting is created with the following default values. These can be adjusted at any time by administrators.
+
+To access the custom settings:
+
+  1. Go to “Setup” and in the “Quick Find” search bar, type “Custom Settings”.
+  2. Click on “Custom Settings” from the results.
+  3. Click on “Configuration”. You will see a list/detail view with six rows representing the settings:
+
+
+
+![](/images/partner_41649939572628.png)
+
+Setting Name
+
+| Default | Purpose <br/>- |-
+
+| --| |
+
+---  
+Flex Queue Limit
+
+| 50 |  New sync batches are submitted only when the org’s Flex Queue has fewer than this number of jobs. **Valid values:** <br/>- Number between < 100. <br/>- Positive whole numbers <br/>- No negatives, no decimals <br/>- Historic Sync Scheduler Time (minutes) | 
+
+| 5 | |
+
+  If the Flex Queue is full, Historical Sync jobs are rescheduled after this delay. **Valid values:**
+
+  * Positive whole numbers
+  * No negatives, no decimals
+
+  
+Record Deletion Batch Size
+
+| 2000 |  Defines the batch size used by the cleanup job. **Valid values:** <br/>- Positive whole numbers <br/>- No negatives, no decimals <br/>- Record Deletion Interval (days) | 
+
+| 7 | |
+
+  Determines how long to keep Successful Sync Queue records (and related Exceptions) before cleanup. **Valid values:**
+
+  * Positive whole numbers
+  * No negatives, no decimals
+
+  
+Sync Queue Batch Size
+
+| 20 |  Sets the default batch size for Real-Time processing. **Valid values:** <br/>- Positive whole numbers <br/>- No negatives, no decimals <br/>- Sync Queue Scheduler Time (minutes) | 
+
+| 5 | |
+
+  If the Flex Queue is full, Real-Time processing jobs are rescheduled after this delay. **Valid values:**
+
+  * Positive whole numbers
+  * No negatives, no decimals
+
+  
+  
+These values are created automatically by post-install scripts. Admins can review and adjust them at any time to align with org-specific requirements.
+
+# Create a Connected App 
+
+Skip these steps if you only wish to send data from Salesforce to MoEngage. These steps are mandatory only for your bi-directional integration i.e.sending events data from MoEngage, back to Salesforce.
+
+## Step 1: Fetch Domain URL
+
+  1. Click on the “Gear icon” in the top right corner and select “Setup”. ![Screenshot 2024-09-25 at 2.27.26 PM.png](/images/partner_30688827310612.png)
+  2. In the Quick Find box, type "My Domain" and select “My Domain”.  
+![Screenshot 2024-09-25 at 2.28.47 PM.png](/images/partner_30688853320724.png)
+  3. Save the domain URL. This is important while setting up data flow from MoEngage to Salesforce   
+![Screenshot 2024-09-25 at 2.32.03 PM.png](/images/partner_30688853321620.png)
+
+
+
+## Step 2: Create a new connected App 
+
+  1. Click on the “Gear icon” in the top right corner and select “Setup”. ![Screenshot 2024-09-25 at 2.27.26 PM.png](/images/partner_30688827310612.png)
+  2. In the Quick Find box, type "App Manager" and select “App Manager”.  
+![Screenshot 2024-09-25 at 2.39.12 PM.png](/images/partner_30688853322388.png)
+  3. Click on “New Connected App”.  
+![Screenshot 2024-09-25 at 2.39.59 PM.png](/images/partner_30688827316628.png)
+  4. Enter a name and all the other details for your “Connected App”.  
+![Screenshot 2024-09-25 at 2.40.57 PM.png](/images/partner_30688853322900.png)
+  5. Scroll down to the “API (Enable OAuth Settings)” section, and check the box labeled “Enable OAuth Settings”.
+  6. In the “Callback URL” field, enter the api-0X.moengage.com
+  7. Move the “Manage user data via APIs(api)” scope from the “Available OAuth Scopes” to “Selected OAuth Scopes”.  
+![Screenshot 2024-09-25 at 2.41.38 PM.png](/images/partner_30688853323540.png)
+  8. Check these two boxes- Require PKCE, and Enable Client Credentials flow 
+  9. Click “Save” at the bottom of the page.
+
+
+
+After saving, you'll see a confirmation page, and the app may take around 10 minutes to process after that to manage your app, return to the App Manager.
+
+## Step 3: Fetch Consumer Key and Consumer Secret
+
+Once the app is created, you’ll have access to the “Consumer Key” and “Consumer Secret” in the “API (Enable OAuth Settings)” section. This is essential to setup data flow from MoEngage to Salesforce. 
+
+  1. Return to the “App Manager".
+  2. Click on the “Dropdown Arrow” next to your app and then click “View”.  
+![Screenshot 2024-09-25 at 2.46.21 PM.png](/images/partner_30688853324948.png)
+  3. Scroll down to the “API (Enable OAuth Settings)” section and click on “Manage Consumer Details”.   
+![Screenshot 2024-09-25 at 2.47.33 PM.png](/images/partner_30688827319188.png)
+  4. Click on “Copy” button below the “Consumer Key” field and the “Consumer Secret” field to copy them.  
+![Screenshot 2024-09-25 at 2.47.47 PM.png](/images/partner_30688827319572.png)
+
+
+
+## Step 4: Add the MoEngage Sync Configuration Permission Set
+
+  1. Click the **Gear** icon in the top right corner and select **Setup.** ![Screenshot 2024-09-25 at 2.27.26 PM.png](/images/partner_30688827310612.png)
+  2. In the **Quick Find** box, type **Users** and select **Users**.  
+![Screenshot 2024-09-25 at 2.50.23 PM.png](/images/partner_30688853329684.png)
+  3. Select the username of the user you want to assign permissions to.  
+![Screenshot 2024-09-25 at 2.52.01 PM.png](/images/partner_30688853330196.png)
+  4. Click **Permission Set Assignments**.  
+![Screenshot 2024-09-25 at 2.52.18 PM.png](/images/partner_30688853330964.png)
+  5. The page will automatically scroll down to "Permission Set Assignments", and then click **Edit Assignments**.  
+![Screenshot 2024-09-25 at 2.52.23 PM.png](/images/partner_30688853331220.png)
+  6. Select “MoEngage Sync Configuration Permission” on the Available Permission Sets, then click on “Add”. Once you add the permission set it can be seen in the Enabled Permission Sets.  
+![Screenshot 2024-09-25 at 2.55.08 PM.png](/images/partner_30688853331988.png)
+  7. Click **Save**.  
+**Note** : If the correct permission set is not assigned, you will receive an error message as shown in the following image:![Screenshot 2024-09-25 at 2.56.20 PM.png](/images/partner_30688827324180.png)
+  8. Now, perform the following integration to configure the data sync.
+
+
+  *     * **Sync data from Salesforce to MoEngage:**  
+Follow the steps mentioned in the [guide here](https://partners.moengage.com/hc/en-us/articles/30689094379924) to sync any Salesforce object to MoEngage as users or events. Newly created or updated records will be synced in real time. 
+    * **Send MoEngage campaign interaction data to Salesforce:**  
+[Setup an outbound integration](https://partners.moengage.com/hc/en-us/articles/30755267397524-Sync-data-from-MoEngage-to-Salesforce) with Salesforce that lets you forward MoEngage Events to Salesforce as an Activity or any other Salesforce standard or custom object. With this, any campaign interaction data captured by MoEngage can be sent in real time via MoEngage Streams. 
+
+
+
+## 

@@ -1,0 +1,132 @@
+---
+title: "Microsoft Azure Blob"
+---
+
+# Introduction
+
+[Microsoft Azure Blob Storage](https://azure.microsoft.com/en-us/products/storage/blobs/) is a massively scalable object storage for unstructured data offered by Microsoft as part of the Azure product suite.
+
+# MoEngage <> Microsoft Azure Blob
+
+MoEngage and Microsoft Azure Blob integration makes use of MoEngage's S3 Data Exports to transfer data to your Azure Blob Storage for further processing and analytics.
+
+# Integration 
+
+| library_add_check |  **Prerequisites**
+
+  * Ensure you have a Microsoft Azure Blob account. 
+  * Ensure that [S3 Data Exports](https://help.moengage.com/hc/en-us/articles/8098260902548-AWS-Data-Exports) is enabled for your account.
+
+| --- | --- |  
+  
+You can set up a script to transfer data from S3 bucket to your Microsoft Azure Blob Storage to automatically schedule data ingestion. 
+
+## Step 1: Create a storage account on Azure 
+
+On Microsoft Azure account:
+
+  1.      1.         1. Navigate to Storage Accounts in the sidebar
+        2. Click _\+ Add_ to create a new storage account.
+        3. Next, provide a storage account name. Other default settings will not need to be updated.
+        4. Select _Review + Create._
+
+
+
+Even if you already have a storage account, we recommend creating a new one specifically for your MoEngage data. 
+
+![](/images/partner_35545663171476.png)
+
+## Step 2: Get the connection string
+
+Once the storage account is deployed, navigate to the _Access Keys_ menu from the storage account and take note of the connection string.
+
+Azure provides two access keys to maintain connections using one key while regenerating the other. You only need the connection string from one of them. 
+
+![](/images/partner_35545663172756.png)
+
+## Step 3: Create a blob service container
+
+  1. Navigate to _Blob Service_ section >> _Blobs_ menu.
+  2. Create a Blob Service Container within that storage account you created earlier.
+
+
+
+Provide a name for your Blob Service Container. Other default settings will not need to be updated.
+
+![](/images/partner_35545663173140.png)
+
+## Step 4: Setup AWS Data Exports on MoEngage 
+
+Ensure you have already set up the Data Exports to S3 by following [the steps mentioned here](https://help.moengage.com/hc/en-us/articles/8098260902548-AWS-Data-Exports#01G8Z37Z092RGMEZYQYXQQKXBW). Once the data starts to flow into S3, you should move to the next step. This is important as we need to predefine the schema of our imports.
+
+**Sample file format  
+** s3://client-moengage-data/event-exports/export_day=2021-07-01/export_hour=06/
+
+| info |  **Note** If you do not have an S3 account, MoEngage can configure it on our S3 bucket and configure the transfer service. For further assistance, contact the MoEngage Support team.
+
+| --- | --- |  
+  
+## Step 5: Script to transfer data from S3 to Azure blob
+
+You can fetch the data from MoEngage S3 using the AWS CLI commands and ingest the data into your Azure Blob Storage (OR) use Azure commands directly to access the S3 bucket and fetch the data.
+
+Below is the sample script that uses a middleware to process the data & ingest it into their Azure Blob Storage. The script  
+
+
+  1. Copies the data from S3 to an intermediate location (VM) & then to Azure Blob Storage.
+  2. Deletes the data on the intermediate location after 1 day.
+  3. Runs every 1 hour. You can modify it as per your requirements.
+
+
+
+| info |  **Note** This is a reference script; you can modify or use other methods compatible with your infrastructure.
+
+| --- | --- |  
+  
+BASH
+    
+    
+    # Check az-copy
+    if ! [ -x "$(command -v $&#123;AZ_COPY_COMMAND_PATH&#125;/azcopy)" ]; then
+            echo 'Error: azcopy is not installed.' >&2
+            exit 1
+    fi
+    
+    # Get one hour ago date
+    ONE_HOUR_AGO=$(date -d '1 hour ago' $&#123;MOENGAGE_PARTITION_FORMAT&#125;)
+    
+    # Get Directory
+    YEAR_DIRECTORY='year='$(date -d '8 hour ago' $&#123;YEAR_PARTITION&#125;)
+    MONTH_DIRECTORY='month='$(date -d '8 hour ago' $&#123;MONTH_PARTITION&#125;)
+    DAY_DIRECTORY='day='$(date -d '8 hour ago' $&#123;DAY_PARTITION&#125;)
+    #HOUR_DIRECTORY='hour='$(date -d '8 hour ago' $&#123;HOUR_PARTITION&#125;)
+    
+    PARTITION_DIRECTORY='/'$&#123;YEAR_DIRECTORY&#125;'/'$&#123;MONTH_DIRECTORY&#125;'/'$&#123;DAY_DIRECTORY&#125;'/'
+    
+    S3_MOENGAGE_FINAL_PATH=$&#123;S3_MOENGAGE_BASE_PATH&#125;$&#123;PARTITION_DIRECTORY&#125;
+    EVENTS_FINAL_DIRECTORY=$&#123;EVENTS_BASE_DIRECTORY&#125;$&#123;PARTITION_DIRECTORY&#125;
+    
+    echo "Start of Sync from S3 bucket"
+    # Sync of data from amazon s3 bucket to our local VM
+    echo "command run aws s3 sync $&#123;S3_MOENGAGE_FINAL_PATH&#125; $&#123;EVENTS_FINAL_DIRECTORY&#125;"
+|     /usr/local/bin/aws s3 sync $&#123;S3_MOENGAGE_FINAL_PATH&#125; $&#123;EVENTS_FINAL_DIRECTORY&#125; --profile $&#123;S3_MOENGAGE_AWS_PROFILE&#125; | tee $&#123;LOG_PATH_AWS&#125;/$&#123;ONE_HOUR_AGO&#125;.log
+    echo "Sync from S3 bucket completed"
+    
+    echo "Start of Sync to Azure Blob"
+    # Sync of data from local VM to azure blob
+|     $&#123;AZ_COPY_COMMAND_PATH&#125;/azcopy sync "$&#123;EVENTS_BASE_DIRECTORY&#125;/" "$&#123;AZURE_BLOB_BASE_PATH&#125;/$&#123;AZURE_CONTAINER_NAME&#125;/$&#123;AZURE_DIRECTORY_PATH&#125;/?$&#123;AZURE_SAS_TOKEN&#125;" --recursive | tee $&#123;LOG_PATH_AZURE&#125;/$&#123;ONE_HOUR_AGO&#125;.log
+    echo "Sync to azure blob completed"
+    
+    PREVIOUS_DAY=$(date -d '8 hour ago' $&#123;DAY_PARTITION&#125;)
+    PRESENT_DAY=$(date -d '6 hour ago' $&#123;DAY_PARTITION&#125;)
+    
+    EVENTS_PREVIOUD_DAY_DIRECTORY=$&#123;EVENTS_BASE_DIRECTORY&#125;'/year='$(date -d '24 hour ago' $&#123;YEAR_PARTITION&#125;)'/month='$(date -d '24 hour ago' $&#123;MONTH_PARTITION&#125;)'/day='$(date -d '24 hour ago' $&#123;DAY_PARTITION&#125;)'/'
+    
+    if [ "$&#123;PREVIOUS_DAY&#125;" = "$&#123;PRESENT_DAY&#125;" ];
+    then
+           rm -R $&#123;EVENTS_PREVIOUD_DAY_DIRECTORY&#125;
+    else
+            echo "this is false"
+    fi
+    
+          

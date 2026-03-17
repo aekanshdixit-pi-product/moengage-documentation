@@ -1,0 +1,215 @@
+---
+title: "Send MoEngage Events to Adobe"
+---
+
+## Introduction  
+  
+The integration enables streaming MoEngage campaign events and user actions to Adobe Experience Platform HTTP APIs via MoEngage Streams, creating unified customer profiles in Adobe Experience Platform (AEP). 
+
+## Key Features/Functionality
+
+With this integration, you can:
+
+  * Send MoEngage campaign events (email opens, push notifications, SMS delivery) in real-time.
+  * Send user action events (app events, custom events, behavioral data) from MoEngage to AEP.
+  * Build unified customer profiles combining MoEngage engagement data with CRM, web analytics, and offline data.
+
+
+
+## Architecture and Adobe Audience Manager Integration
+
+| hub |  **Why Stream to AEP instead of Adobe Analytics?** This integration utilizes **AEP** as the central ingestion point. Unlike legacy methods that push data directly to Adobe Analytics, streaming to AEP utilizes the flexible **XDM (Experience Data Model)** standard. **How to use this data in Adobe Audience Manager (AAM):**   
+Once MoEngage data is ingested into AEP, it enriches the Real-Time Customer Profile. You can then use the **Audience Manager Destination** to share these segments directly with AAM. This allows you to combine MoEngage offline/event data and your existing Adobe Analytics web data inside AAM for advanced audience stitching. For implementation details, refer to the official Adobe documentation: [**Official Guide: Experience Platform Segment Sharing with Audience Manager →** ](https://experienceleague.adobe.com/en/docs/audience-manager/user-guide/implementation-integration-guides/integration-experience-platform/aam-aep-audience-sharing)
+
+| --- | --- |  
+  
+## Use Cases
+
+  * **Unified Customer View** : Combine MoEngage campaign engagement (email opens, push clicks) with web behavior from Adobe Analytics and offline purchases from CRM to create complete customer profiles.
+  * **Advanced Segmentation** : Build segments like "Users who opened promotional email in last 7 days but haven't purchased" using both MoEngage engagement data and e-commerce transaction data.
+  * **Cross-Channel Journey Orchestration** : Trigger Adobe Journey Optimizer campaigns based on MoEngage campaign non-engagement (e.g., didn't open email → send SMS via different channel).
+  * **Campaign Performance Analytics** : Query historical MoEngage campaign events in Data Lake to analyze performance trends, A/B test results, and cohort behavior over time.
+  * **Identity Graph Enrichment** : Stitch MoEngage user IDs with Adobe ECID, CRM IDs, and email addresses to resolve identities across all customer touchpoints.
+
+
+
+| library_add_check |  **Prerequisites**
+
+  * Adobe Experience Platform with admin permissions to manage Schemas, Datasets, Sources.
+  * Understanding of your existing AEP identity namespaces and identifiers.
+
+| --- | --- |  
+  
+| info |  **Integration Approach**
+
+  * This integration requires you to configure your AEP environment and share specific details with MoEngage to enable Streams. MoEngage will then configure the streams to send events in the format that matches your AEP schema. 
+  * The MoEngage Streams is a paid add-on.
+
+| --- | --- |  
+  
+## Step 1: Identify Your Identity Namespaces
+
+Before you configure the integration, identify the identity namespaces to use for stitching MoEngage data with your existing customer profiles in AEP.
+
+### Step1.1: Review Existing Identity Namespaces
+
+To review existing identity namespaces, perform the following steps:
+
+  1. Log in to Adobe Experience Platform.
+  2. Navigate to **Identities** → **Browse**.
+  3. Review your existing identity namespaces.
+  4. Identify the namespace(s) to use as primary and secondary identities.
+
+
+
+### Identity Namespace Requirements
+
+Identity Type
+
+| Requirement | Examples | 
+
+| Notes <br/>- |---|-
+
+| --| |
+
+---  
+**Primary Identity**
+
+| Required | CRM ID, Loyalty ID, Email | 
+
+| Must exist in your AEP namespace. Share the **identity symbol** (e.g., `lumaCrmId` ) with MoEngage. <br/>- Secondary Identities** | Optional but recommended |
+
+| Email, Phone, Adobe ECID | |
+
+ Use standard Adobe namespaces (`Email`, `Phone`, `ECID`) when possible.  
+**MoEngage User ID**
+
+| Recommended | MoEngage User ID | 
+
+| If you want to track MoEngage's internal user ID, create a custom namespace with the symbol `moengageUserId`. <br/>- ### Step 1.2: Create a MoEngage User ID Namespace (Optional but Recommended) <br/>- If you want to include the internal MoEngage user ID as an identity in AEP, perform the following steps: <br/>- 1. Click **Create identity namespace**. <br/>- 2. Configure the following settings: <br/>- Display name** : MoEngage User ID <br/>- Identity symbol** : moengageUserId <br/>- Type** : Cross-device ID <br/>- 3. Click **Create**. <br/>- ![](/images/partner_44426624431508.png) <br/>- info |  **Information** You must share the following identity namespace details with MoEngage when requesting Streams setup: <br/>- Primary Identity Symbol: for example, lumaCrmId, loyaltyId <br/>- Secondary Identity Symbols: for example, Email, Phone <br/>- MoEngage User ID Symbol (if created): moengageUserId <br/>- MoEngage configures Streams to map your MoEngage user attributes to these identity namespaces in the identityMap. <br/>- |-
+
+| -- <br/>- ## Step 2: Create an XDM Schema <br/>- The XDM schema defines the structure of MoEngage event data in AEP. You can use the recommended schema structure or customize it based on your requirements. <br/>- #### Use the Recommended Schema Structure (Out-of-the-Box) <br/>- MoEngage provides a sample schema structure that works out-of-the-box with MoEngage Streams. If you replicate this structure, the integration will work with minimal configuration. <br/>- #### Sample Schema Structure <br/>- Create an XDM ExperienceEvent schema with the following field structure: <br/>- Field Path | Type <br/>- |-
+
+| -- <br/>- `_id` | String <br/>- `timestamp` |
+
+| DateTime <br/>- `eventType` | String <br/>- `eventMergeId` |
+
+| String <br/>- `producedBy` | String <br/>- `identityMap` |
+
+| Map <br/>- `_&#123;tenant&#125;.source` | String <br/>- `_&#123;tenant&#125;.eventName` |
+
+| String <br/>- `_&#123;tenant&#125;.eventCode` | String <br/>- `_&#123;tenant&#125;.appName` |
+
+| String <br/>- `_&#123;tenant&#125;.campaignId` | String <br/>- `_&#123;tenant&#125;.campaignName` |
+
+| String <br/>- `_&#123;tenant&#125;.campaignType` | String <br/>- `_&#123;tenant&#125;.campaignChannel` |
+
+| String <br/>- `_&#123;tenant&#125;.eventAttributesJson` | Map <br/>- `_&#123;tenant&#125;.userAttributesJson` |
+
+| Map <br/>- `_&#123;tenant&#125;.deviceAttributesJson` | Map <br/>- Note** : `_&#123;tenant&#125;` represents your organization's tenant namespace (for example, `_yourorgname`). <br/>- ### Step 2.2: Create the Schema in AEP <br/>- To create the schema in AEP, perform the following steps: <br/>- 1. Navigate to **Schemas** → **Browse**. <br/>- 2. Click **Create schema** →**XDM ExperienceEvent**. <br/>- 3. In the **Name** box, type **MoEngage Events**. <br/>- 4. Ensure the following standard field groups are present: <br/>- XDM ExperienceEvent <br/>- IdentityMap <br/>- 5. Create a custom field group named **MoEngage Event Details**. <br/>- 6. Add the fields listed in the table above under your tenant namespace. <br/>- 7. To enable the schema for profiles, turn the **Profile** toggle on. <br/>- 8. Click **Save**. <br/>- ![](/images/partner_44426602197012.png) <br/>- ### Step 2.3: Customize the Schema Structure <br/>- If you want to customize the schema fields (different field names, additional fields, different structure), perform the following steps: <br/>- 1. Create your custom XDM ExperienceEvent schema with your desired field structure. <br/>- 2. Ensure that you include the following required fields. <br/>- `_id` (required for deduplication) <br/>- `timestamp` (required) <br/>- `identityMap` (required for identity resolution) <br/>- `eventType` (recommended) <br/>- 3. Add custom fields for MoEngage data under your tenant namespace. <br/>- 4. To enable the schema for profiles, turn the**Profile** toggle on. <br/>- warning |
+
+| **Important: Custom Schema Requirements** If you customize the schema structure, you will need to create your own field mapping configuration to match your custom field names. Follow the manual mapping steps in Step 5, Option B to test locally before requesting MoEngage support to generate the mapping CSV file. <br/>- |--- <br/>- ### Step 2.4: Download Schema JSON <br/>- After you create and save the schema, download the schema JSON for reference: <br/>- 1. Open your schema in the Schema Editor. <br/>- 2. Click the **More** (three dots) menu in the upper-right corner. <br/>- 3. Select **Copy schema structure** or **Download JSON**. <br/>- 4. Save this file. You might need it when you coordinate with MoEngage support. <br/>- ### Step 2.5: Note Your Schema Details <br/>- After creating the schema, note down the following details: <br/>- Schema ID** : You can find it in the schema details (for example, `https://ns.adobe.com/&#123;TENANT&#125;/schemas/&#123;SCHEMA_ID&#125;`) <br/>- Tenant ID** : Your organization's tenant namespace (for example, `_yourorgname`). <br/>- ## Step 3: Create a Dataset <br/>- Datasets store data that conforms to your XDM schema. To create a dataset, perform the following steps: <br/>- 1. Navigate to **Datasets** → **Browse**. <br/>- 2. Click **Create dataset from schema**. <br/>- 3. Select the `MoEngage Events` schema that you created. <br/>- 4. Configure the dataset with the following information: <br/>- Name** : `MoEngage Event Data` <br/>- Description** : Campaign events and user actions from the MoEngage Streams API. <br/>- 5. Click **Finish**. <br/>- 6. Open the new dataset and turn the **Profile** toggle on**** to enable it for the Real-Time Customer Profile. <br/>- ![](/images/partner_44426602197140.png) <br/>- Save the Dataset ID** : This is required for the HTTP API configuration (locate in the dataset details, for example, `690da33230e4cd0adff86e57`). <br/>- ## Step 4: Configure the HTTP API Streaming Source <br/>- The HTTP API source provides a streaming endpoint to send data to AEP. <br/>- ### Step 4.1: Choose an Authentication Method <br/>- Before you create the HTTP API source connection, choose one of the following authentication methods: <br/>- 1. No Authentication <br/>- 2. OAuth 2.0 Authentication <br/>- ### Step 4.1: Create the HTTP API Source Connection <br/>- To create the HTTP API source connection, perform the following steps: <br/>- 1. Navigate to**Sources** → **Catalog**. <br/>- 2. In the **Streaming** category, find **HTTP API.** <br/>- 3. Click **Add data**. <br/>- 4. Configure the account details: <br/>- Account name** : MoEngage Streams Connection. <br/>- Description** : HTTP API endpoint for streaming MoEngage events. <br/>- Authentication** : Choose the method you had selected earlier. <br/>- 5. Click **Connect** to source. <br/>- ![](/images/partner_44426624432404.png) <br/>- ### Step 4.2: Set Up OAuth 2.0 Credentials (If Selected) <br/>- If you selected Authenticated in the previous step, you must set up OAuth 2.0 credentials through Adobe Developer Console and perform the following steps: <br/>- ### Step 4.3: Create the Service Account Integration <br/>- To create the service account integration, perform the following steps: <br/>- 1. Navigate to [Adobe Developer Console.](https://developer.adobe.com/console) <br/>- 2. Select your organization or create a new project. <br/>- 3. Click **Add to Project** → **API**. <br/>- 4. Select **Adobe Experience Platform** from the API list. <br/>- 5. Choose **OAuth Server-to-Server** credential type. <br/>- 6. Configure the required product profiles and permissions. <br/>- 7. Click **Save configured API**. <br/>- #### Copy OAuth Credentials <br/>- After creating the integration, copy the following credentials from the Adobe Developer Console: <br/>- Credential |
+
+| Where to Find <br/>- |--- <br/>- Client ID** |
+
+| Developer Console → Your Project → Credentials → OAuth Server-to-Server <br/>- Client Secret** | Developer Console → Your Project → Credentials → OAuth Server-to-Server <br/>- Organization ID (IMS Org ID)** |
+
+| Developer Console → Your Project → Overview <br/>- Technical Account ID** | Developer Console → Your Project → Credentials → OAuth Server-to-Server <br/>- Scopes** |
+
+| Developer Console → Your Project → Credentials → OAuth Server-to-Server <br/>- ### Step 4.4: Configure Dataflow <br/>- To configure the dataflow, perform the following steps: <br/>- 1. In the dataflow configuration enter the following details: <br/>- Dataflow name: `MoEngage Event Stream`. <br/>- Description: Streams MoEngage campaign and user events to AEP. <br/>- Note** : Do NOT select **XDM compatible**. <br/>- 2. **Select dataset** : `MoEngage Event Data` <br/>- 3. Click **Next** to proceed to mapping. <br/>- ![](/images/partner_44426624432532.png) <br/>- info |  **Limitations of XDM compatible mode** We do not select "XDM compatible" because MoEngage sends data in its own format, and we'll use the mapping interface to transform it to your XDM schema structure. This gives you more flexibility and control over field mappings. <br/>- |-
+
+| -- <br/>- ## Step 5: Configure Field Mapping <br/>- After you create the HTTP API source, AEP displays a mapping interface where you can map MoEngage fields to your XDM schema. Before proceeding with field mapping, you have to either share your schema structure with MoEngage or generate a test payload yourself. <br/>- ### Step 5.1: Prepare a Schema Sample <br/>- Generate a sample payload based on your schema structure to validate the mapping configuration: <br/>- 1. Using the schema JSON you downloaded in Step 2, generate a sample event payload that includes: <br/>- All required XDM fields (`_id`, `timestamp`, `identityMap`) <br/>- Your custom tenant fields for MoEngage data <br/>- Identity mappings for your configured namespaces <br/>- 2. **Share with MoEngage** : Send this sample payload along with your schema JSON to MoEngage support. They will generate the appropriate mapping CSV file for your schema structure. <br/>- ![](/images/partner_44427199418772.png) <br/>- info |  **MoEngage Mapping CSV Generation** MoEngage support will create a custom mapping CSV file tailored to your schema structure and identity namespace configuration. This ensures accurate field mappings between MoEngage event data and your AEP schema. <br/>- |-
+
+| -- <br/>- (Recommended) MoEngage-Provided Mapping CSV Manual Mapping for Local Testing <br/>- ### Step 5.2: Use the MoEngage-Provided Mapping CSV File (Recommended) <br/>- For production deployments, request the mapping CSV file from MoEngage support: <br/>- 1. In the mapping interface, you will see error messages for fields that don't auto-map. <br/>- 2. Remove any error-causing fields by clicking the trash icon. <br/>- 3. Contact MoEngage support and provide the following: <br/>- Your schema JSON file (from Step 2) <br/>- A sample event payload with your required fields <br/>- Identity namespace symbols (primary and secondary) <br/>- Your tenant namespace (for example, `_yourorgname`) <br/>- 4. MoEngage will generate a custom `moengage-aep-mapping.csv` file tailored to your schema. <br/>- 5. Once received, verify the CSV contains correct mappings: <br/>- Tenant namespace should match yours (for example, `_yourorgname`). <br/>- Identity namespace symbols should match your configuration (e.g., `lumaCrmId`, `Email`, `Phone`). <br/>- Field paths should match your schema structure. <br/>- 6. Click **Import** in the AEP mapping interface and upload the CSV file. <br/>- 7. Review the imported mappings to ensure all fields are correctly mapped. <br/>- 8. Click **Next** to proceed. <br/>- warning |  **Verify Before Importing** Always review the mapping CSV file before importing to ensure: <br/>- Tenant namespace matches your AEP organization (replace any example values like `_exchangesandboxbravo`). <br/>- Identity symbols are correct for your environment. <br/>- Formulas for timestamp conversion and data transformation are present. <br/>- |-
+
+| -- <br/>- ### Step 5:3 Manual Mapping for Local Testing <br/>- If you want to test the integration locally before involving MoEngage support, you can manually create the following field mappings: <br/>- 1. In the mapping interface, map MoEngage source fields to your XDM destination fields. <br/>- 2. Key mappings to configure: <br/>- id** → `_id` <br/>- event_uuid** → `eventMergeId` <br/>- Use formula** : `dformat((time * 1000), "yyyy-MM-dd'T'HH:mm:ssX")` → `timestamp` <br/>- event_code** → `eventType` (with decode formula for XDM event types) <br/>- identities.&#123;yourPrimaryId&#125;** → `identityMap.&#123;yourNamespace&#125;[0].id` with `primary: true` <br/>- Map additional fields from `event_attributes`, `user_attributes`, and `device_attributes` to your tenant fields <br/>- 3. Test the mapping with Postman (Step 6) to validate data ingestion. <br/>- 4. Export your working mapping as CSV for documentation. <br/>- 5. After validation, send the following to MoEngage support for production Streams configuration: <br/>- Tested mapping CSV <br/>- Sample test payload that worked successfully <br/>- Schema JSON <br/>- 6. Click **Next** to proceed. <br/>- warning |  **Important Mapping Notes** <br/>- Timestamp conversion** : MoEngage sends Unix timestamps (seconds). Use the formula `dformat((time * 1000), "yyyy-MM-dd'T'HH:mm:ssX")` to convert to ISO 8601 format. <br/>- Primary identity** : Ensure only ONE identity has `primary: true`. All others should be `primary: false`. <br/>- Event type mapping** : Use the decode function to map MoEngage event codes to standard XDM event types (e.g., `MOE_EMAIL_SENT` → `directMarketing.emailSent`). <br/>- |-
+
+| -- <br/>- ### Complete Dataflow Setup <br/>- After configuring the dataflow, you'll receive a streaming endpoint URL that looks like: <br/>- Endpoint URL <br/>- https://dcs.adobedc.net/collection/&#123;UNIQUE_COLLECTION_ID&#125; <br/>- Copy and save this URL** \- you must share it with MoEngage for Streams configuration. <br/>- warning |  **Important Mapping Notes** <br/>- Timestamp conversion** : MoEngage sends Unix timestamps (seconds). Use the formula `dformat((time * 1000), "yyyy-MM-dd'T'HH:mm:ssX")` to convert to ISO 8601 format. <br/>- Primary identity** : Ensure only ONE identity has `primary: true`. All others should be `primary: false`. <br/>- Event type mapping** : Use the decode function to map MoEngage event codes to standard XDM event types (e.g., `MOE_EMAIL_SENT` → `directMarketing.emailSent`). <br/>- |-
+
+| -- <br/>- ## Step 6: Test with Postman <br/>- Before enabling MoEngage Streams, test the streaming endpoint with sample data to ensure proper schema validation and data ingestion. <br/>- ### Step 6.1: Prepare the Test Payload <br/>- Create a test payload in the MoEngage Streams format: <br/>- Test Payload JSON <br/>- &#123; <br/>- "app_name": "Your App Name", <br/>- "source": "MOENGAGE", <br/>- "moe_request_id": "test_request_001", <br/>- "id": "test_event_001", <br/>- "time": 1731421200, <br/>- "event_uuid": "unique_event_id_001", <br/>- "event_source": "MOENGAGE", <br/>- "event_name": "Email Sent", <br/>- "event_code": "MOE_EMAIL_SENT", <br/>- "event_type": "CAMPAIGN_EVENT", <br/>- "identities": &#123; <br/>- "externalId": "customer_123", <br/>- "moengageUserId": "moe_user_456", <br/>- "email": "test@example.com", <br/>- "phone": "+1234567890" <br/>- &#125;, <br/>- "event_attributes": &#123; <br/>- "campaign_id": "camp_001", <br/>- "campaign_name": "Welcome Campaign", <br/>- "campaign_type": "Event Trigger", <br/>- "campaign_channel": "Email" <br/>- &#125;, <br/>- "user_attributes": &#123; <br/>- "subscription_tier": "premium", <br/>- "preferred_language": "en" <br/>- &#125;, <br/>- "device_attributes": &#123; <br/>- "platform": "iOS", <br/>- "os_version": "16.2" <br/>- &#125; <br/>- &#125; <br/>- ### Step 6.2: Send a Test Request in Postman <br/>- To send a test request in postman, perform the following steps: <br/>- 1. Open Postman and create a new POST request. <br/>- 2. In the**URL** box, enter: `&#123;YOUR_STREAMING_ENDPOINT&#125;?syncValidation=true`. <br/>- 3. Add the following header `Content-Type: application/json`. <br/>- 4. Paste the test payload in the Body (RAW JSON). <br/>- 5. Update the identities section with your actual identity values. <br/>- 6. Click **Send**. <br/>- #### Expected Response <br/>- Successful ingestion returns: <br/>- Success Response JSON <br/>- &#123; <br/>- "inletId": "&#123;INLET_ID&#125;", <br/>- "xactionId": "&#123;TRANSACTION_ID&#125;", <br/>- "receivedTimeMs": 1731421250000, <br/>- "synchronousValidation": &#123; <br/>- "status": "pass" <br/>- &#125; <br/>- &#125; <br/>- ### Step 6.3: Verify Data in AEP <br/>- 1. Navigate to **Datasets** → **MoEngage Event Data**. <br/>- 2. Click **Preview dataset**. <br/>- 3. Verify that the test event appears with the correct field values. <br/>- 4. Check **Profiles** → **Browse** to verify profile creation or update. <br/>- check_circle |  **Save Your Test Payload** Keep your verified test payload - you'll need to share it with MoEngage when requesting Streams setup. This payload demonstrates the exact format and identity mappings that work with your AEP configuration. <br/>- |-
+
+| -- <br/>- ## Step 7: Share Details with MoEngage for Streams Setup <br/>- After you have successfully tested the integration, provide the following details to MoEngage to enable Streams for your workspace. <br/>- ### Information to Share with MoEngage <br/>- Item | Description | |
+
+ Where to Find It  
+---
+
+| :--- | :--- |
+
+ Sources → HTTP API → Dataflow details  
+**Schema JSON**
+
+| Downloaded schema structure from Step 2 | Schema Editor → Copy schema structure <br/>- Primary Identity Namespace Symbol** | 
+
+| Your primary identity symbol (e.g., `lumaCrmId`, `loyaltyId`) | |
+
+ Identities → Browse → Identity symbol column  
+**Secondary Identity Namespace Symbols**
+
+| Email, Phone, or other secondary identities | Identities → Browse <br/>- MoEngage User ID Namespace** | 
+
+| `moengageUserId` (if created) | |
+
+ Identities → Browse  
+**User Attribute Mapping for Primary ID**
+
+| MoEngage user attribute that contains your primary identity value | Your MoEngage user profile configuration <br/>- Verified Test Payload** | 
+
+| Sample payload that passed Postman testing | |
+
+ Your Postman test from Step 6  
+**Authentication Method**
+
+| No Auth or OAuth 2.0 | Step 4 configuration <br/>- OAuth 2.0 Credentials** (if using OAuth authentication) | 
+
+| Complete OAuth credentials from Adobe Developer Console | |
+
+ Adobe Developer Console → Your Project → Credentials  
+**Tenant Namespace**
+
+| Your organization's tenant ID (e.g., `_yourorgname`) | Schema editor → Custom field paths <br/>- ### OAuth 2.0 Credentials Details (If Using OAuth) <br/>- If you configured OAuth 2.0 authentication in Step 4, provide the following credentials to MoEngage: <br/>- OAuth Credential | 
+
+| Value to Share | |
+
+ Example Format  
+---
+
+| :--- | :--- |
+
+ `abc123def456ghi789jkl012`  
+**Client Secret**
+
+| Your OAuth Client Secret from Adobe Developer Console | `p8e-XYZ...ABC123` <br/>- Organization ID (IMS Org ID)** | 
+
+| Your Adobe organization ID | |
+
+ `1234567890ABCDEF@AdobeOrg`  
+**Technical Account ID**
+
+| Service account identifier | `ABC123@techacct.adobe.com` <br/>- Scopes** | 
+
+| Granted API permissions (comma-separated) | |
+
+ `openid, AdobeID, read_organizations`
+
+| **Token Endpoint** | Adobe IMS token endpoint URL | `https://ims-na1.adobelogin.com/ims/token/v3`  
+  
+### Submit Integration Request
+
+Contact your MoEngage Customer Success Manager and share all the details mentioned above. MoEngage performs the following:
+
+  1. Review your configuration and test payload.
+  2. Generate or validate the mapping CSV file for your schema (if not provided).
+  3. Configure Streams to send data in the correct format.
+  4. Set up identity mappings based on your namespace configuration.
+  5. Enable Streams for your workspace.
+  6. Notify you once the integration is live.
+
+
+
+| info |  **MoEngage Streams Documentation** For more information on MoEngage Streams configuration and available event types, refer to [MoEngage Streams Documentation.](https://developers.moengage.com/hc/en-us/articles/4952761690644-MoEngage-Streams)
+
+| --- | --- |  
+  
+| support_agent |  **Need Help?** For assistance with this integration, contact your MoEngage Customer Success Manager. For Adobe Experience Platform support, visit the [Adobe Experience League Community](https://experienceleague.adobe.com/community/experience-cloud/).
+
+| --- | --- |

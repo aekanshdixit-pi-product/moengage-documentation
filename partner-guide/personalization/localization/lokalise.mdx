@@ -1,0 +1,139 @@
+---
+title: "Lokalise"
+---
+
+# Introduction
+
+[Lokalise](https://lokalise.com/) is a translation management service for agile teams.
+
+# MoEngage <> Lokalise
+
+MoEngage and Lokalise integration makes use of MoEngage's Content APIs to fetch real-time translations for all your content through Lokalise allowing you to deliver high-quality, localised content in your campaigns. This automates translation and frees up your teams to focus on delivering brilliant customer experiences.
+
+# Integration<Info>
+**Prerequisites**
+* Ensure you have access to your Lokalise account with a lokalisation translation project
+</Info>### Create a new Lokalise project
+
+If you dont have an existing lokalise project, you need to create a new one. To create a new translation project,
+
+  1. Log in to Lokalise
+  2. Select **New Project**.
+  3. Enter project details- 
+     * Name your project
+     *      * Choose a **Base Language** (the language you will translate from),
+     * Add one or more **Target Languages**
+     * Choose **Software Localization** project type. 
+  4. When you are ready, click **Proceed**.
+
+
+
+The integration makes use of [Lokalise <> AWS S3 integration](https://docs.lokalise.com/en/articles/1570589-amazon-s3) to fetch localised campaign content.
+
+In Lokalise, you will create a translation key for each of the Content API variables you define in MoEngage. When the translations are ready, you can generate one JSON file per language and publish it on the URLs that will serve your Content API.
+
+## Step 0: Create a new Lokalise project
+
+You can skip this if you already have a lokalise project. If you dont have one, you will need to create a new one. To create a new translation project,
+
+  1. Log in to Lokalise
+  2. Select **New Project**.
+  3. Enter project details- 
+     * Name your project
+     * Choose a **Base Language** (the language you will translate from),
+     * Add one or more **Target Languages**
+     * Choose **Software Localization** project type. 
+  4. When you are ready, click **Proceed**.  
+![Screenshot 2024-10-15 at 9.42.20 PM.png](/images/partner_31266962647188.png)
+
+
+
+## Step 1: Define user attribute for user language
+
+You need to have a user attribute that defines the language for that user. If it is not captured already, you need to create a new user attribute. You need to send it to MoEngage as a user_language - custom tracked user attribute/property.
+
+You can save this data to MoEngage either using:
+
+  * [User Data API](https://developers.moengage.com/hc/en-us/articles/4413167462804-Track-User) OR
+  * Upload them using [User Imports](https://help.moengage.com/hc/en-us/articles/115001740946-Import-User-Data) inside MoEngage.
+
+
+
+#### Important 
+
+Language code must match across both MoEngage and Lokalise.
+
+## Step 2: Prepare translations on Lokalise 
+
+You’ll need to manually create the translation keys with the same name you’re using in MoEngage Content API variables.
+
+For example, let’s create a simple translation key, description:
+
+  1. Open your Lokalise project, click Add Key
+  2. Enter “description” in the Key field.
+  3. Type “Demo description” in the Base Language Value field.
+  4. Add “Web” in the Platforms dropdown.
+  5. When you are ready, click Save.
+
+
+
+![Screenshot 2024-10-15 at 9.44.42 PM.png](/images/partner_31266916693524.png)
+
+Your translation key should appear in the project editor. 
+
+![Screenshot 2024-10-15 at 10.23.16 PM.png](/images/partner_31266916707476.png)
+
+#### Warning! Known issues 
+
+  * Your keys must be assigned to the Web platform.
+  * Avoid using keys that contain periods (.) or the _on string. For instance, use this_is_the_key instead of this.is.the.key, and use join_us_instagram instead of join_us_on_instagram. 
+
+
+
+## Step 3: Connect MoEngage on Lokalise 
+
+Open your Lokalise project, and click Apps. Search and install the MoEngage app.
+
+![Screenshot 2024-10-22 at 5.21.11 PM.png](/images/partner_31453642895636.png)
+
+The resulting translation file URLs have two pieces:``  
+
+
+  1. The first part of the URL path is common to all languages.
+  2. The JSON file name at the end of the URL is based on the language code. 
+
+
+
+The translation file URL is the URL that you will need when configuring a MoEngage Content API. You can update the content on the JSON file by clicking Refresh. Note that the URL will stay the same, and you won’t need to change your Content API setup on MoEngage.
+
+### Test URL
+
+To test this URL, copy it and replace &#123;&#123;$&#123;language&#125;&#125;&#125; with a language code (for example, en) and open this URL in your browser. You will see a JSON file with your keys and translations. 
+
+## Step 4: Setup Content API on MoEngage
+
+  1. Navigate to **Settings** -> **Advanced Settings** -> **Content API**
+  2. Click **\+ Add content API** at the top right corner of the Content API screen.  
+![Screenshot 2024-10-22 at 5.23.37 PM.png](/images/partner_31453674918036.png)
+
+  3. Add your Lokalise S3 URL   
+Copy paste the URL from the previous step. Change the _&#123;&#123;$&#123;language&#125;&#125;&#125;_ to the user attribute containing language of the user. Something like _&#123;&#123;UserAttribute['language']&#125;&#125;._ The final URL will look like this. 
+         
+         https://exports.live.lokalise.cloud/moengage/56922681670e946661c118.58194959/ee13d3b5e92a0b11101efbfd11dddd8206560fe3/&#123;&#123;$&#123;language&#125;&#125;&#125;.json
+
+  4. Click Save.   
+_Note - You can also test your APIs by clicking on the Test button. You can test your API response and validate  
+_
+
+
+
+
+## Step 5 - Use content APIs in MoEngage campaigns
+
+You can now use these content APIs in your campaigns. [Read here](https://help.moengage.com/hc/en-us/articles/115003622346-Content-APIs) to know more about Content APIs.
+
+  1. On step 2 on your campaign creation, enter @.
+  2. In the pop up, you can select the Content API configured in Step 2.
+  3. You can use [MoEngage Templating Language](https://help.moengage.com/hc/en-us/articles/115002757783-MoEngage-Templating-Language-JINJA-#content-api-0-3) to parse through the API response and use the content in your campaigns.
+
+

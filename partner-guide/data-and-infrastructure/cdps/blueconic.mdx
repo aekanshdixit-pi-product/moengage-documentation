@@ -1,0 +1,159 @@
+---
+title: "Blueconic"
+---
+
+# Introduction
+
+[BlueConic](https://www.blueconic.com/) powers your data-driven business processes to accelerate growth. It is a CDP that makes it easy for a marketeer to personalize the online journey of users.
+
+# MoEngage <> BlueConic
+
+BlueConic provides a unified view of the customer. Paired with the capabilities to activate that data inside Moengage, it can be used to drive your business growth together. With the MoEngage and BlueConic integration, you can:
+
+  * Forward users and events from BlueConic to MoEngage
+  * Create or update users in Blueconic from MoEngage
+
+
+
+# Integration
+
+| library_add_check |  **Prerequisites**
+
+  * Ensure you have permission to create a webhook connection on Blueconic.
+  * Ensure you have access to the MoEngage Dashboard.
+
+| --- | --- |  
+  
+## Step 1: Configure MoEngage connection on Blueconic
+
+![](/images/partner_21203484384404.png)
+
+  1. On your Blueconic app dashboard, go to the Connections tab.
+  2. Click on "Add Connection" >> _Webhook connection_.
+  3. Give your connection a name, "MoEngage".
+
+
+
+## Step 2: Configure webhook for inbound users and events to MoEngage
+
+To configure inbound events to MoEngage, you need to set up "Requests sent by BlueConic".
+
+  1. Select the BlueConic segments for which this request will be triggered.
+  2. Next, you need to select the triggers for this webhook. This can either be: 
+     1. A profile property value changes - select which property change will trigger this webhook.
+     2. A Timeline event occurs - select which event will trigger this webhook.
+  3. Once your trigger is selected, you need to select your authorization method. For MoEngage, you need to choose "Add credentials via webhook request (step 4)".
+  4. Finally, you need to configure the webhook request according to MoEngage's [User](https://developers.moengage.com/hc/en-us/articles/4413167462804-User-) or [Event](https://developers.moengage.com/hc/en-us/articles/4413174104852-Event-) API payload structures:
+
+| **Field** | **Description**
+
+| --- | --- |  
+| Request URL |  User API URL: `https://api-0X.moengage.com/v1/customer/&lt;Workspace_ID&gt;` Event API URL: `https://api-0X.moengage.com/v1/event/&lt;Workspace_ID&gt;`
+
+  * Replace `X` with the number of your data center. [Read more](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage)
+  * Replace `&lt;Workspace_ID&gt;` with the Workspace ID of your MoEngage account. You can find this by navigating to _**Settings - > General Settings -> Workspace ID (earlier App ID)**_
+
+  
+| Method | POST  
+| Request Headers | 
+
+  1. `Authorization`: `Basic &lt;Basic_Token&gt;`
+  2. `Content-Type`: `application/json`
+  3. `MOE-APPKEY`: `Workspace ID`
+
+
+  * Replace `&lt;Basic_Token&gt;` with your basic auth token. Use an online tool to create your basic auth with "Data API ID" as a username and your "Data API Key" as a password. 
+  * App Key of your MoEngage account. You can find this by navigating to _**Settings - > General Settings -> Workspace ID (earlier App ID)**_
+
+  
+| Request Body |  The Request Body will depend on the type of call you're making to MoEngage. Below is an example of the User API: JSON
+    
+    
+    &#123;
+    "type": "customer",
+    "customer_id": "&#123;&#123;email&#125;&#125;",
+    "attributes": &#123;
+        "name":"&#123;&#123;fullname&#125;&#125;",
+        "moe_ip_country": "&#123;&#123;geo_country_name&#125;&#125;"
+        &#125;
+    &#125;  
+  
+  5. Once you're done with the configurations as per your requirement, you can choose to "Test the webhook". You can set sample values and click on the "Send test request" button to send a request to MoEngage.
+
+
+
+## Step 3: Configure webhook for outbound users from MoEngage
+
+With MoEngage Connector Campaigns, you can forward user properties to Blueconic when an event is captured inside MoEngage.
+
+### Step A: Set up a MoEngage Connector Campaign to Blueconic
+
+To create a connector campaign on MoEngage, 
+
+  1. Navigate to Create Campaign >> Connectors >> Custom and choose the delivery type most suitable to your needs. For this example, we will select "Event Triggered" and select the event as "Purchased".  
+![](/images/partner_21204099571732.png)
+  2. On step 2 of the campaign:
+
+
+
+### Call the BlueConic API
+
+To send your user attributes to BlueConic, use the `POST` method and configure the payload.
+
+  * Select the method as POST
+  * URL: On your BlueConic dashboard, you will find the request URL when you're setting up the incoming request.
+  * URL Parameters: 
+    * `property`: `email` \- Get the "matching" URL parameters from your Blueconic dashboard.
+    * `email`: `&#123;&#123;UserAttribute['Email (Standard)']&#125;&#125;` \- Get the "matching" URL parameters from your Blueconic dashboard.
+    * `apiKey`: `&lt;your_api_key&gt;` \- Get your API Key from your Blueconic dashboard.
+    * `createProfile`: `true` \- Here you can allow the creation of profile by choosing either True or False.
+    * `legislation`: `GDPR` \- You can select to use or not use a legislation. Use 'none' for no legislation.
+  * Headers 
+    * `X-BlueConic-APIKey`: `&lt;api_key&gt;` \- Get this from your Blueconic Dashboard.
+    * `Content-Type`: `application/json`
+  * Body:  
+Type @ to personalize your payload.  
+
+
+JSON
+        
+        &#123;
+            "fullname": "&#123;&#123;UserAttribute['Name']&#125;&#125;,
+            "country": "&#123;&#123;UserAttribute['Locale Country']&#125;&#125;"
+        &#125;
+
+
+
+
+![](/images/partner_21204252892436.png)
+
+  * Refer to the [Blueconic API documentation](https://support.blueconic.com/hc/en-us/articles/115004431305-Webhook-Connection#requests-sent-to-blueconic-goals-0-3) for more information.
+
+
+
+### Preview your request 
+
+At this point, your campaign should be ready to test and send. You can also test your connector configuration using the Test functionality available in Step 2 of Create Connector Campaign.![Screen_Shot_2022-02-22_at_11.12.42_AM.png](/images/partner_21204129766676.png)
+
+You can go ahead and Publish the campaign.
+
+### Step B: Set up the incoming webhooks in BlueConic
+
+  1. Go to the MoEngage connection you set up inside BlueConic, and select "Receive incoming requests".
+  2. Select the BlueConic identifier to match from the requests. In our connector example above, we have chosen "Email".
+  3. Next, select the Authentication method as "API key". You can refer to the request headers and set them up during the configuration of MoEngage Connector Campaigns.
+  4. BlueConic will also show you your Request URL that you need to enter while setting up the connector campaign on MoEngage, along with the URL parameters you need to pass.
+  5. Finally, you need to configure the incoming webhook request. Based on the attributes you set up in the payload of your Connector Campaign, you can set up the mapping:
+
+
+
+![](/images/partner_21204395298324.png)
+
+## Step 4: Enable the connection on BlueConic
+
+  1. On your BlueConic dashboard, check the goals you want to enable.
+  2. You also need to enable the connection by setting it to "On":
+
+
+
+![](/images/partner_21204420576404.png)

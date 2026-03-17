@@ -1,0 +1,275 @@
+---
+title: "Stream Events to Microsoft D365 Sales"
+---
+
+## Introduction
+
+[Microsoft Dynamics 365 Sales](https://www.microsoft.com/en-us/dynamics-365/products/sales) is an enterprise CRM solution that manages customer relationships through contacts, leads, opportunities, and activities. This integration enables **inbound data flow** from MoEngage to Microsoft Dynamics 365 Sales via Microsoft Power Automate. 
+
+## Key Features/Functionality
+
+With this integration, you can:
+
+  * Receive real-time campaign engagement events from MoEngage (email opens, clicks, form submissions, webinar attendance, etc.)
+  * Automatically update Lead, Contact, or Opportunity records in D365 Sales with the latest engagement data
+  * Maintain synchronized engagement history between MoEngage and D365 Sales
+  * Trigger D365 Sales workflows or business process flows based on MoEngage campaign interactions
+  * Track sales activity events and marketing attribution for closed-loop reporting
+
+
+
+## Use Cases
+
+  * **Lead Scoring Based on Email Engagement** : When a lead opens a marketing email in MoEngage, automatically increment their lead score in D365 Sales and update the "Last Engagement Date" field to help sales reps prioritize follow-ups.
+  * **Opportunity Stage Progression** : When a prospect attends a webinar or downloads a pricing guide tracked in MoEngage, automatically move their D365 Sales Opportunity to the "Qualified" or "Proposal" stage and assign a follow-up task to the account owner.
+  * **Campaign Response Tracking** : Capture all form submissions from MoEngage landing pages and create Marketing Response or Activity records in D365 Sales linked to the relevant Lead or Contact for comprehensive engagement history.
+  * **Multi-Channel Engagement History** : Build a complete timeline of customer interactions by syncing email, SMS, push notification, and in-app message events from MoEngage to D365 Sales activity records, giving sales teams full visibility into marketing touchpoints.
+  * **Sales & Marketing Alignment**: When a Contact engages with multiple campaign touches, automatically create a follow-up Call or Task for the assigned sales representative, ensuring timely outreach based on demonstrated interest.
+
+
+
+# Step-by-Step Integration Guide
+
+| library_add_check |  **Prerequisites**
+
+  * Admin access to Microsoft Power Platform and D365 Sales environment
+  * D365 Sales security role with write permissions on Lead, Contact, and Opportunity entities
+  * **MoEngage Data Requirement** : MoEngage must send one of the following D365 entity IDs in the `user_attributes` field for proper record matching:
+    * `d365_lead_id` (Lead GUID) - for updating Lead records
+    * `d365_contact_id` (Contact GUID) - for updating Contact records
+    * `d365_opportunity_id` (Opportunity GUID) - for updating Opportunity records
+These identifiers must be synced to MoEngage during the outbound integration (D365 Sales → MoEngage) so that MoEngage can include them when sending events back to D365 Sales. When configuring MoEngage Streams, specify which user properties to export under **"User properties to export"** \- select either "All" or list the specific identifier fields you need (e.g., `d365_lead_id`, `d365_contact_id`).
+
+| --- | --- |  
+  
+| info |  **Accepted Entity Identifiers** Microsoft Dataverse accepts the following primary identifiers for updating records:
+
+  * **Primary Key (GUID)** : The unique identifier for each entity (leadid, contactid, opportunityid, etc.)
+  * **Alternate Keys** : Custom alternate keys if configured in your D365 environment (e.g., email address as an alternate key for Contacts)
+
+For this integration, we recommend using the **Primary Key (GUID)** as it is guaranteed to be unique and immutable across all D365 environments.
+
+| --- | --- |  
+  
+## Step 1: Create the HTTP Request Trigger in Power Automate
+
+  1. Open [Power Automate](https://flow.microsoft.com/)
+  2. Click **Create** > **Automated Cloud Flow**
+  3. Name your flow: `MoEngage - Receive Events to D365`
+  4. Select trigger: **When a HTTP request is received**
+  5. Click **Create**
+
+
+
+![](/images/partner_43270355308564.png)
+
+### Configure the HTTP Request Trigger
+
+In the trigger configuration, define the **Request Body JSON Schema**. This tells Power Automate what structure to expect from MoEngage Streams.
+
+![](/images/partner_43270361460244.png)
+
+Copy and paste this schema into the **Request Body JSON Schema** field:
+
+JSON Schema
+    
+    
+    &#123;  
+     "type": "object",  
+     "properties": &#123;  
+       "app_name": &#123;"type": "string"&#125;,  
+       "source": &#123;"type": "string"&#125;,  
+       "moe_request_id": &#123;"type": "string"&#125;,  
+       "events": &#123;  
+         "type": "array",  
+         "items": &#123;  
+           "type": "object",  
+           "properties": &#123;  
+             "event_name": &#123;"type": "string"&#125;,  
+             "event_code": &#123;"type": "string"&#125;,  
+             "event_uuid": &#123;"type": "string"&#125;,  
+             "event_time": &#123;"type": "integer"&#125;,  
+             "event_type": &#123;"type": "string"&#125;,  
+             "event_source": &#123;"type": "string"&#125;,  
+             "email_id": &#123;"type": "string"&#125;,  
+             "uid": &#123;"type": "string"&#125;,  
+             "event_attributes": &#123;  
+               "type": "object",  
+               "properties": &#123;  
+                 "campaign_id"     : &#123;"type": "string"&#125;,  
+                 "campaign_name"   : &#123;"type": "string"&#125;,  
+                 "campaign_type"   : &#123;"type": "string"&#125;,  
+                 "campaign_channel": &#123;"type": "string"&#125;  
+               &#125;  
+             &#125;,  
+             "user_attributes": &#123;  
+               "type": "object",  
+               "properties": &#123;  
+                 "moengage_user_id"     : &#123;"type": "string"&#125;,  
+                 "d365_lead_id"         : &#123;"type": "string"&#125;,  
+                 "d365_contact_id"      : &#123;"type": "string"&#125;,  
+                 "d365_opportunity_id"  : &#123;"type": "string"&#125;,  
+                 "d365_custom_entity_id": &#123;"type": "string"&#125;,  
+                 "external_identifier"  : &#123;"type": "string"&#125;  
+               &#125;  
+             &#125;,  
+             "device_attributes": &#123;  
+               "type": "object",  
+               "properties": &#123; "moengage_device_id": &#123;"type": "string"&#125; &#125;  
+             &#125;  
+           &#125;,  
+           "required": ["event_name", "event_time", "user_attributes"]  
+         &#125;  
+       &#125;  
+     &#125;,  
+     "required": ["app_name", "source", "events"]  
+    &#125;
+
+| check_circle |  **Save and Get the URL** After adding the schema, click **Save**. Power Automate will generate a unique **HTTP POST URL**. Copy this URL - you'll need it to configure MoEngage Streams later.
+
+| --- | --- |  
+  
+## Step 2: Apply to Each Event
+
+Since MoEngage can send multiple events in a single request, add an **Apply to each** loop to process them individually.
+
+  1. Click **New Step**
+  2. Search for **Control** and select **Apply to each** (Control)
+  3. In the **Select an output from previous steps** field, choose **events** from the JSON dynamic content
+
+
+
+| info |  **Note** All subsequent actions will be added **inside** this "Apply to each" loop to process each event from the MoEngage payload.
+
+| --- | --- |  
+  
+![](/images/partner_43270355310100.png)
+
+## Step 3: Create Custom Table and Add Event Records
+
+For this integration, we have created a custom table called **"MoEngage Event"** in Power Apps to store all engagement event data from MoEngage campaigns against Leads. 
+
+This approach allows you to maintain a complete historical record of all customer interactions, and you can configure this for your desired entities.
+
+| info |  **Creating Your Custom Table in Power Apps** Before configuring the Power Automate action, create a custom table in Power Apps to store MoEngage event data. Create a table with the necessary columns (Event Name, Event Date, Campaign Name, Campaign Channel, Event Code, Event UUID) and add a lookup relationship to your desired entity (Lead, Contact, or Opportunity). **Learn how to create custom tables and add relationships:**  
+[Microsoft Power Apps - Create Custom Tables Documentation](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/create-custom-entity)
+
+| --- | --- |  
+  
+### Add Dataverse Action to Create Event Records
+
+  1. Add a **Microsoft Dataverse** action (inside the Apply to each loop)
+  2. Select **Add a new row**
+  3. Table name: Select your custom table (e.g., **MoEngage Events**)
+  4. Configure the field mappings as described below
+
+
+
+### Field Mapping Instructions
+
+For each field in your MoEngage Events table, map data from the incoming MoEngage payload. Here's an example of how to map the Event Name field:
+
+Field Name
+
+| How to Map | Expression/Dynamic Content <br/>- |-
+
+| --| |
+
+---
+
+| **Event Name** | Click the field → Click **/** → Select from dynamic content list | Select **event_name** from the dynamic content picker  
+![](/images/partner_43271000194580.png)
+
+| info |  **Using Dynamic Content vs Expressions** **For most fields** (Event Name, Campaign Name, Event Code, Event UUID, etc.):
+
+  * Click in the field and type **/** or click the lightning bolt icon
+  * Select the appropriate value from the dynamic content picker
+
+**For Lookup fields :**
+
+  * **Only for the lookup field (eg: Lead)** : Click the field → Enter: /leads(&#123;&#123;Type / and select the id&#125;&#125;)
+
+| --- | --- |  
+  
+## Step 4: Convert Unix Timestamp to DateTime
+
+MoEngage sends event timestamps as Unix epoch time (e.g., 1731421200). You need to convert this to a D365-compatible datetime format when mapping to date/time fields.
+
+  1. In the **Inputs** field, use this expression:
+
+
+
+Expression
+    
+    
+    formatDateTime(addSeconds('1970-01-01', items('Apply_to_each')?['event_time']), 'yyyy-MM-dd HH:mm:ss')
+
+![](/images/partner_43270361463188.png)
+
+## Step 5: Test the Integration
+
+### Test with Manual Trigger
+
+  1. In Power Automate, click **Test** → **Manually**
+  2. Click **Test** to start the flow in listening mode
+  3. Use a tool like **Postman** or **cURL** to send a test payload to your webhook URL
+
+
+
+#### Sample Test Payload
+
+JSON
+    
+    
+    &#123;
+      "app_name": "App Name",
+      "source": "MOENGAGE",
+      "moe_request_id": "test_request_12345",
+      "events": [
+        &#123;
+          "event_name": "Email Opened",
+          "event_code": "37930333",
+          "event_uuid": "moe_unique_event_id_001",
+          "event_time": 1731421200,
+          "event_type": "CAMPAIGN_EVENT",
+          "event_source": "MOENGAGE",
+          "email_id": "test@example.com",
+          "uid": "moe_customer_123",
+          "event_attributes": &#123;
+            "campaign_id": "q4_nurture_series_001",
+            "campaign_name": "Q4 Nurture Series",
+            "campaign_type": "General",
+            "campaign_channel": "Email"
+          &#125;,
+          "user_attributes": &#123;
+            "moengage_user_id": "moe_internal_user_id",
+            "d365_lead_id": "<>"
+          &#125;,
+          "device_attributes": &#123;
+            "moengage_device_id": "moe_internal_device_id"
+          &#125;
+        &#125;
+      ]
+    &#125;
+
+### Verification Steps
+
+  1. Monitor the flow run in Power Automate
+  2. Check for successful execution (green checkmarks on all actions)
+  3. Open your custom MoEngage Events table in Power Apps or D365
+  4. Verify that a new event record was created with all the mapped data
+  5. Verify that the Lead lookup field correctly points to the Lead record
+
+![](/images/partner_43270976890900.png)
+
+## Step 7: Enable MoEngage Streams
+
+Once you have successfully tested the integration, enable MoEngage Streams to start sending real-time event data to your Power Automate webhook.
+
+| info |  **Configure MoEngage Streams**
+
+  1. Copy the **HTTP POST URL** from Step 1 (your Power Automate webhook URL)
+  2. Follow the official MoEngage Streams documentation to enable and configure the stream:  
+[MoEngage Streams Documentation →](https://developers.moengage.com/hc/en-us/articles/4952761690644-MoEngage-Streams#01H7YXY47G6F01SR4CZVRYYM31)
+
+| --- | --- |

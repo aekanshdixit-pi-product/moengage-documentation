@@ -1,0 +1,538 @@
+---
+title: "Webhook"
+---
+
+The Webhook alert destination allows you to receive real-time alert notifications by sending an HTTP POST request with a detailed JSON payload to a URL you specify. This guide details the structure of the JSON payload and provides sample requests for different alert types.
+
+| info |  **Information** When a configured alert is triggered, MoEngage sends an HTTP POST request to your designated webhook URL, enabling seamless integration with your internal systems, monitoring tools, or third-party services.
+
+| --- | --- |  
+  
+## MoEngage <> Webhook
+
+The Webhook integration allows you to configure a generic HTTP endpoint as an alert destination. This is designed for advanced users who want to route MoEngage alerts to internal systems, third-party monitoring tools, or data warehouses that support HTTP POST requests. When an alert is triggered, MoEngage sends a detailed JSON payload containing all relevant alert data to your specified URL.
+
+With this integration, you can do the following:
+
+  * Programmatically ingest alert data into your own infrastructure.
+  * Trigger custom automated workflows in third-party systems based on MoEngage alerts.
+  * Securely validate alert authenticity using digital signatures.
+
+
+
+## Use Cases
+
+Integrating Webhooks as an alert destination supports the following use cases:
+
+  * **Incident management integration** : Automatically create tickets in tools like PagerDuty, OpsGenie, or Jira when critical alerts (for example, Token Expiry or Delivery Rate drops) occur.
+  * **Custom dashboards** : Ingest alert statistics into internal data visualization tools (like Grafana or Tableau) for long-term trend analysis.
+  * **Automated remediation** : Trigger server-side scripts to pause campaigns or adjust settings automatically when specific alert thresholds are breached.
+
+
+
+# Integration
+
+| library_add_check |  **Prerequisites** Before you begin the configuration, ensure you have the following:
+
+  * A publicly accessible Endpoint URL that accepts HTTP POST requests and JSON bodies.
+  * Technical resources to parse the JSON payload and (optionally) validate the SHA-256 signature for security.
+  * Access to your MoEngage workspace with permissions to configure alert management.
+
+| --- | --- |  
+  
+## Set Up Your Webhook URL
+
+To set up a webhook destination, you must provide a URL. Your URL must be a publicly accessible endpoint that accepts `HTTP POST` requests with a JSON body.
+
+| info |  **Information** Your webhook URL is the address of your application or service that will listen for and process the incoming alert notifications.
+
+| --- | --- |  
+  
+After obtaining your URL using one of these methods, enter it in the Webhook URL field when configuring the alert destination.
+
+## Webhook Payload Structure
+
+All webhook notifications follow a consistent JSON structure. The table below describes each field in the payload. Note that some fields, particularly within the `entity_data` object, are specific to certain alert types.
+
+Field Name
+
+| Data Type | Description <br/>- |-
+
+| --| |
+
+---  
+alert_id
+
+| String | The unique identifier for the alert that was triggered. <br/>- alert_name | 
+
+| String | |
+
+ The user-defined name of the alert.  
+alert_type
+
+| String |  The type of the alert. Possible values include: <br/>- CAMPAIGN_STATS <br/>- FLOW_STATS <br/>- CAMPAIGN_EXPIRY <br/>- APNS_TOKEN_EXPIRY <br/>- FACEBOOK_TOKEN_EXPIRY <br/>- db_name | 
+
+| String | |
+
+ The name of the workspace associated with the alert.  
+alert_evaluation_frequency
+
+| Object | An object describing how often the alert condition is checked. <br/>- alert_evaluation_frequency.value | 
+
+| Number | |
+
+ The numeric value for the frequency (for example, 1).  
+alert_evaluation_frequency.unit
+
+| String | The unit of frequency (for example, day, hour). <br/>- alert_triggered_at | 
+
+| String | |
+
+ The ISO 8601 timestamp indicating when the alert was triggered.  
+alert_evaluation_criteria
+
+| Object | An object containing the specific conditions that triggered the alert. <br/>- alert_evaluation_criteria.name | 
+
+| String | |
+
+ The name of the metric being evaluated (for example, DELIVERY_RATE, EXPIRY_DAYS).  
+alert_evaluation_criteria.operator
+
+| String | The comparison operator used. For example, gt (greater than), lt (less than). <br/>- alert_evaluation_criteria.threshold | 
+
+| Number | |
+
+ The threshold value that was breached.  
+alert_evaluation_criteria.unit
+
+| String | The unit for the threshold (for example, percentage, count, day). <br/>- alert_evaluation_criteria.range_start | 
+
+| String | |
+
+ The ISO 8601 timestamp for the start of the evaluation window.  
+alert_evaluation_criteria.range_end
+
+| String | The ISO 8601 timestamp for the end of the evaluation window. <br/>- alert_evaluation_criteria.moving_avg_range | 
+
+| Object | |
+
+ Available only for relative alerts. Describes the window used to calculate the moving average (for example, the last 7 days).  
+entity_data
+
+| Object | A flexible object containing details about the specific entities (for example, campaigns, flows) that triggered the alert. This object is not available for certain alerts, such as APNS_TOKEN_EXPIRY. <br/>- entity_data.count | 
+
+| Number | |
+
+ The total number of entities listed in the content array.  
+entity_data.content
+
+| Array | An array of objects, where each object represents a single entity that met the alert criteria. The fields within each object vary depending on the alert_type. <br/>- ### entity_data.content Object <br/>- The following table describes the possible fields in each object in the entity_data.content array. <br/>- Field Name | 
+
+| Data Type | |
+
+ Description  
+---
+
+| :--- | :--- |
+
+ The name of the campaign.  
+campaign_id
+
+| String | The unique identifier for the campaign. <br/>- flow_name | 
+
+| String | |
+
+ The name of the flow.  
+flow_id
+
+| String | The unique identifier for the flow. <br/>- version_name | 
+
+| String | |
+
+ The name of the flow version.  
+channel
+
+| String | The communication channel (for example, PUSH, EMAIL). <br/>- delivery_type | 
+
+| String | |
+
+ The delivery type (for example, PROMOTIONAL, TRANSACTIONAL).  
+current_value
+
+| Number | The metric's current value for the entity that triggered the alert. <br/>- moving_avg_value | 
+
+| Number | |
+
+ The metric's calculated moving average value. Available only for relative alerts.  
+expiry_in_days
+
+| Integer | The number of days until the campaign expires. <br/>- event_type | 
+
+| String | |
+
+ The type of the event being tracked.
+
+| event_name | String | The name of the event being tracked.  
+  
+#### Verify the Webhook Signature
+
+To ensure that webhook requests are authentic and originate from MoEngage, we include a digital signature in the request headers.
+
+| info |  **Info** It is recommended to validate this signature on your server to prevent unauthorized access and ensure data integrity.
+
+| --- | --- |  
+  
+The signature is passed in the `Signature` HTTP header. It is generated by creating a SHA-256 hash of your API key concatenated with the raw request body.
+
+**Generate and Verify the Signature**
+
+  1. **Get your Campaign Report API Key** : You can find this key in your MoEngage UI by navigating to **Settings > Account > APIs**.
+|   2. **Prepare the Signature String** : Concatenate your [Campaign Report API](https://developers.moengage.com/hc/en-us/articles/4409329518484-Campaign-Report-API) key, a pipe character (`|`), and the raw JSON request body.  
+| _Format:`YOUR_API_KEY + "|" + RAW_REQUEST_BODY`_
+  3. **Calculate the Hash** : Create a SHA-256 hash of the signature string and encode it as a hexdigest.
+  4. **Compare Signatures** : Compare the hash you generated with the value from the `Signature` header in the incoming request. If they match, the request is authentic.
+
+
+
+**Example: Generate the Signature in Python**
+
+Python
+    
+    
+    from hashlib import sha256 
+    request_body_str = '&#123;"alert_id":"","alert_name":"",...&#125;'# step 1
+    campaigns_report_api_key = "YOUR_CAMPAIGN_REPORT_API_KEY" 
+|     signature_base_string = campaigns_report_api_key + "|" + request_body_str # step 2
+    generated_signature = sha256(signature_base_string.encode('utf-8')).hexdigest() # step 3
+    print("Generated Signature: ", generated_signature) #step 4
+    
+
+## Sample Payloads and cURL Requests
+
+Below are samples of `cURL` commands demonstrating the `POST` request and JSON payload your webhook endpoint will receive. Replace `'https://your-webhook-url.com/endpoint'` with your actual endpoint URL.
+
+### Campaign Stats (CAMPAIGN_STATS)
+
+#### Absolute Threshold Alert
+
+This alert triggers when a metric crosses a fixed value.
+
+cURL
+    
+    
+    curl -X POST 'https://your-webhook-url.com/endpoint' \
+    -H 'Content-Type: application/json' \
+    -d '
+          &#123;
+        "alert_id": "&#123;&#123;alert_id&#125;&#125;",
+        "alert_name": "Delivery Rate Breach",
+        "alert_type": "CAMPAIGN_STATS",
+        "db_name": "&#123;&#123;db_name&#125;&#125;",
+        "alert_evaluation_frequency": &#123;
+            "value": 1,
+            "unit": "day"
+        &#125;,
+        "alert_triggered_at": "2025-03-21T23:59:00Z",
+    
+        "alert_evaluation_criteria": &#123;
+            "name": "DELIVERY_RATE",
+            "operator": "gt",
+            "threshold": 10,
+            "unit": "percentage",
+            "range_start": "2025-03-21T23:59:00Z",
+            "range_end": "2025-03-22T23:59:00Z"
+        &#125;,
+    
+        "entity_data": &#123;
+            "count": 2,
+            "content": [
+                &#123;
+                    "campaign_name": "",
+                    "campaign_id": "",
+                    "flow_name": "",
+                    "flow_id": "",
+                    "version_name": "",
+                    "channel": "",
+                    "delivery_type": "",
+                    "current_value": 70.5
+                &#125;,
+                &#123;
+                    "campaign_name": "",
+                    "campaign_id": "",
+                    "flow_name": "",
+                    "flow_id": "",
+                    "version_name": "",
+                    "channel": "",
+                    "delivery_type": "",
+                    "current_value": 70.5
+                &#125;
+            ]
+        &#125;
+    
+    &#125;
+    '
+
+#### Relative Threshold Alert (with Moving Average)
+
+This alert triggers when a metric deviates from its historical moving average. A moving average is the average of a metric over a specific number of past periods (for example, the last 7 days), which helps identify significant deviations from recent performance trends.
+
+cURL
+    
+    
+    curl -X POST 'https://your-webhook-url.com/endpoint' \
+    -H 'Content-Type: application/json' \
+    -d '
+    &#123;
+          &#123;
+        "alert_id": "&#123;&#123;alert_id&#125;&#125;",
+        "alert_name": "Delivery Rate Breach",
+        "alert_type": "CAMPAIGN_STATS",
+        "db_name": "&#123;&#123;db_name&#125;&#125;",
+        "alert_evaluation_frequency": &#123;
+            "value": 1,
+            "unit": "day"
+        &#125;,
+        "alert_triggered_at": "2025-03-21T23:59:00Z",
+    
+        "alert_evaluation_criteria": &#123;
+            "name": "DELIVERY_RATE",
+            "operator": "gt",
+            "threshold": 10,
+            "unit": "percentage",
+            "moving_avg_range": &#123;
+                "value": 7,
+                "unit": "day"
+            &#125;,
+            "range_start": "2025-03-21T23:59:00Z",
+            "range_end": "2025-03-22T23:59:00Z"
+        &#125;,
+    
+        "entity_data": &#123;
+            "count": 2,
+            "content": [
+                &#123;
+                    "campaign_name": "",
+                    "campaign_id": "",
+                    "flow_name": "",
+                    "flow_id": "",
+                    "version_name": "",
+                    "channel": "",
+                    "delivery_type": "",
+                    "current_value": 70.5,
+                    "moving_avg_value": 10.9
+                &#125;,
+                &#123;
+                    "campaign_name": "",
+                    "campaign_id": "",
+                    "flow_name": "",
+                    "flow_id": "",
+                    "version_name": "",
+                    "channel": "",
+                    "delivery_type": "",
+                    "current_value": 70.5,
+                    "moving_avg_value": 10.9
+                &#125;
+            ]
+        &#125;
+    
+    &#125;
+    '
+
+### Flow Stats (FLOW_STATS)
+
+These alerts are similar to Campaign Stats but focus on flow-level metrics.
+
+cURL
+    
+    
+    curl -X POST 'https://your-webhook-url.com/endpoint' \
+    -H 'Content-Type: application/json' \
+    -d '
+    &#123;
+          &#123;
+        "alert_id": "&#123;&#123;alert_id&#125;&#125;",
+        "alert_name": "new alert for the flow commons",
+        "alert_type": "FLOW_STATS",
+        "db_name": "&#123;&#123;db_name&#125;&#125;",
+        "alert_evaluation_frequency": &#123;
+            "value": 1,
+            "unit": "day"
+        &#125;,
+        "alert_triggered_at": "2025-03-21T23:59:00Z",
+    
+        "alert_evaluation_criteria": &#123;
+            "name": "TRIP_STARTED",
+            "operator": "lt",
+            "threshold": 20,
+            "unit": "count",
+            "range_start": "2025-03-21T23:59:00Z",
+            "range_end": "2025-03-22T23:59:00Z"
+        &#125;,
+    
+        "entity_data": &#123;
+            "count": 2,
+            "content": [
+                &#123;
+                    "campaign_name": "",
+                    "campaign_id": "",
+                    "flow_name": "",
+                    "flow_id": "",
+                    "version_name": "",
+                    "channel": "",
+                    "delivery_type": "",
+                    "current_value": 70.5
+                &#125;,
+                &#123;
+                    "campaign_name": "",
+                    "campaign_id": "",
+                    "flow_name": "",
+                    "flow_id": "",
+                    "version_name": "",
+                    "channel": "",
+                    "delivery_type": "",
+                    "current_value": 70.5
+                &#125;
+            ]
+        &#125;
+    
+    &#125;
+    '
+
+### Campaign Expiry (CAMPAIGN_EXPIRY)
+
+This alert notifies you when campaigns are nearing their expiration date.
+
+cURL
+    
+    
+    curl -X POST 'https://your-webhook-url.com/endpoint' \
+    -H 'Content-Type: application/json' \
+    -d '
+    &#123;
+          &#123;
+        "alert_id": "&#123;&#123;alert_id&#125;&#125;",
+        "alert_name": "Expiry Breach",
+        "alert_type": "CAMPAIGN_EXPIRY",
+        "db_name": "&#123;&#123;db_name&#125;&#125;",
+        "alert_evaluation_frequency": &#123;
+            "value": 1,
+            "unit": "day"
+        &#125;,
+        "alert_triggered_at": "2025-03-21T23:59:00Z",
+    
+        "alert_evaluation_criteria": &#123;
+            "name": "EXPIRY_DAYS",
+            "operator": "lt",
+            "threshold": 7,
+            "unit": "day",
+            "range_start": "2025-03-21T23:59:00Z",
+            "range_end": "2025-03-22T23:59:00Z"
+        &#125;,
+    
+        "entity_data": &#123;
+            "count": 2,
+            "content": [
+                &#123;
+                    "campaign_name": "",
+                    "campaign_id": "",
+                    "channel": "",
+                    "delivery_type": "",
+                    "expiry_in_days": 5
+                &#125;,
+                &#123;
+                    "campaign_name": "",
+                    "campaign_id": "",
+                    "channel": "",
+                    "delivery_type": "",
+                    "expiry_in_days": 5
+                &#125;
+            ]
+        &#125;
+    
+    &#125;
+    '
+
+### APNS Token Expiry (APNS_TOKEN_EXPIRY)
+
+This alert warns you when your Apple Push Notification Service (APNS) token is about to expire. Note that this payload does not contain an `entity_data` object.
+
+cURL
+    
+    
+    curl -X POST 'https://your-webhook-url.com/endpoint' \
+    -H 'Content-Type: application/json' \
+    -d '
+    &#123;
+        "alert_id": "&#123;&#123;alert_id&#125;&#125;",
+        "alert_name": "Apns token Breach",
+        "alert_type": "APNS_TOKEN_EXPIRY",
+        "db_name": "&#123;&#123;db_name&#125;&#125;",
+        "alert_evaluation_frequency": &#123;
+            "value": 1,
+            "unit": "day"
+        &#125;,
+        "alert_triggered_at": "2025-03-21T23:59:00Z",
+    
+        "alert_evaluation_criteria": &#123;
+            "name": "EXPIRY_DAYS",
+            "operator": "lt",
+            "threshold": 7,
+            "unit": "day",
+            "range_start": "2025-03-21T23:59:00Z",
+            "range_end": "2025-03-22T23:59:00Z"
+        &#125;
+    &#125;
+    '
+
+### Facebook Token Expiry (FACEBOOK_TOKEN_EXPIRY)
+
+This alert warns you when your Facebook token is about to expire. This payload also does not contain an `entity_data` object.
+
+cURL
+    
+    
+    curl -X POST 'https://your-webhook-url.com/endpoint' \
+    -H 'Content-Type: application/json' \
+    -d '
+    &#123;
+          &#123;
+        "alert_id": "&#123;&#123;alert_id&#125;&#125;",
+        "alert_name": "fb token Breach",
+        "alert_type": "FACEBOOK_TOKEN_EXPIRY",
+        "db_name": "&#123;&#123;db_name&#125;&#125;",
+        "alert_evaluation_frequency": &#123;
+            "value": 1,
+            "unit": "day"
+        &#125;,
+        "alert_triggered_at": "2025-03-21T23:59:00Z",
+    
+        "alert_evaluation_criteria": &#123;
+            "name": "EXPIRY_DAYS",
+            "operator": "lt",
+            "threshold": 7,
+            "unit": "day",
+            "range_start": "2025-03-21T23:59:00Z",
+            "range_end": "2025-03-22T23:59:00Z"
+        &#125;
+    &#125;
+    '
+
+## Integrate Alert Management via Webhook URL
+
+  1. On the left navigation menu of your MoEngage UI, click **App marketplace**.  
+![slackkkkkkk.png](/images/partner_43421536760340.png)
+  2. On the App marketplace page, click **Alert management** , and then select **Webhooks**.  
+![webhooksssss1.png](/images/partner_43421549366036.png)
+  3. On the Webhooks page, click the **Integrate** tab.  
+![webhooksss.png](/images/partner_43421536761108.png)
+  4. On the Integrate tab, enter the following details: 
+     * **Connection name** : Enter the connection name.
+     * **Connection URL** : Enter the Webhook URL created as mentioned [here](https://help.moengage.com/hc/en-us/articles/39608420239252#h_01K8JPVV3X0SXGBS4DQZ5D0PX6).
+  5. Click **Connect**.  
+![webhooksfinallllll.png](/images/partner_43421536761876.png)
+  6. After the connection is defined, you can select the defined new destination from the **Send Alerts On** list while creating an alert on the [Alert management](https://help.moengage.com/hc/en-us/articles/19094285198484-Create-an-Alert) page.  
+![dashboard4.png](/images/partner_43421536762516.png)
+  7. After adding the destinations, you can view the defined alert destinations on the [Alert management](https://help.moengage.com/hc/en-us/articles/19094285198484-Create-an-Alert) page.  
+![slackemailfinal.png](/images/partner_43421536762900.png)
+
+

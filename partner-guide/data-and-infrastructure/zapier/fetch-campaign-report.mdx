@@ -1,0 +1,142 @@
+---
+title: "Fetch Campaign Report"
+---
+
+# Introduction  
+  
+[Zapier](https://zapier.com/) is an online platform that helps you automate workflows by connecting your apps and services you use. Using the MoEngage <> Zapier integration, you can create custom workflow automations for more than 5,000+ apps on Zapier. 
+
+The action "Fetch Campaign Report" helps to fetch reports configured in MoEngage that can be later uploaded to any cloud storage services. 
+
+# Use Cases
+
+With this action, you can fetch your configured Campaign Reports from Zapier. Some ideas to get you started - 
+
+  1. Every day, fetch campaign report and upload it to Google Drive.
+  2. Fetch Campaign Report, unzip it using Convert API and upload it to Amazon S3.
+
+
+
+| library_add_check |  **Prerequisites**
+
+  * Ensure you have access to your Zapier account and have connected it to your MoEngage account. You can [follow the steps here to connect Zapier to MoEngage. ](https://partners.moengage.com/hc/en-us/articles/7542196666388)
+  * Ensure you already have [configured a report](https://developers.moengage.com/hc/en-us/articles/4409329518484-Campaign-Report-API#h_01FRQ8BN2NGWGJGWD1K4M53XHC) in MoEngage Dashboard.
+
+| --- | --- |  
+  
+# Integration
+
+The action makes use of MoEngage's [Campaign Report API](https://developers.moengage.com/hc/en-us/articles/4409329518484-Campaign-Report-API). For this tutorial, we will pick up Use Case #1: Every day, fetch campaign report and upload it to Google Drive. On your [Zapier Dashboard](https://zapier.com/app/dashboard), and click on "+ Create Zap" on the top-left corner. 
+
+## Prerequisites
+
+Be sure to have configured a campaign report inside MoEngage that is set to trigger everyday.
+
+![Action3-Step0.png](https://partners.moengage.com/hc/article_attachments/7900954392340/Action3-Step0.png)
+
+## Step 1: Select Schedule by Zapier as the Trigger App
+
+For the trigger, type "Schedule by Zapier" and select it. This will be the trigger that will start your zap.
+
+![Action3-Step1.png](https://partners.moengage.com/hc/article_attachments/7900691080852/Action3-Step1.png)
+
+## Step 2: Setup the trigger app
+
+  1. Select the event from the dropdown: "Every Day". Click continue.
+  2. Under the "Set up trigger" step, select the time of the day from the dropdown. Click continue.
+  3. Click on "Test Trigger" to pull in a recent datetime as sample data.
+  4. Once you are satisfied with this data, click continue. 
+
+
+
+![Action3-Step2-1.png](https://partners.moengage.com/hc/article_attachments/7901055453972/Action3-Step2-1.png)
+
+![Action3-Step2-2.png](https://partners.moengage.com/hc/article_attachments/7901056844436/Action3-Step2-2.png)
+
+## Step 3: Convert date time into required format
+
+We need to pass the datetime in our APIs according to the format mentioned in the Campaign Report API which is: `YYYYMMDD`. For this, add a new action app: "Formatter by Zapier".
+
+![Action3-Step3.png](https://partners.moengage.com/hc/article_attachments/7901369335828/Action3-Step3.png)
+
+  1. Select "Formatter by Zapier".
+  2. From the event dropdown, select "Date / Time". Click continue.
+  3. In the setup up action step, under Transform select "Format".
+  4. Under Values >> Input, select ID from the previous step.
+  5. Under "To Format" >> select "Custom" and type "YYYYMMDD".
+  6. Optionally, you can choose to select timezone as per your needs. Click continue when satisfied.
+
+
+
+![Action3-Step5-1.png](https://partners.moengage.com/hc/article_attachments/7901548387092/Action3-Step5-1.png)
+
+![Action3-Step5-2.png](https://partners.moengage.com/hc/article_attachments/7901583637908/Action3-Step5-2.png)
+
+  7. On the next step, click "Test & continue". Your output data will be shown.
+
+
+
+## Step 4: Add MoEngage as the Action app
+
+Click on "+" to add a new step. Then, search for "MoEngage" from the apps and select it.
+
+![Step8.png](https://partners.moengage.com/hc/article_attachments/7568867646612/Step8.png)
+
+## Step 5: Setup MoEngage Action
+
+  1. From the event dropdown, select: "Fetch Campaign Report". Click continue.
+  2. If you have followed the prerequisites, you should see your MoEngage account already listed. You can either choose that or connect a new one. Click continue once done.
+  3. In the next step "Set up action", you will see a form for you to either fill-in or map from the previous step. [Click here to know more](https://developers.moengage.com/hc/en-us/articles/4409329518484-Campaign-Report-API).
+  4. Under File Name, type in your report and then for the timestamp, chose "Output" from the "Date / Time in Formatter by Zapier" step.
+  5. Under API secret, type in your API secret. (Navigate to MoEngage dashboard > Settings > APIs. In the **General** tab, under **Transaction Push/Report Settings** , click **Click here to show APP secret!** in **API Secret**.)
+
+
+
+![Action3-Step6.png](https://partners.moengage.com/hc/article_attachments/7901829271316/Action3-Step6.png)
+
+  6. For our setup, we have linked the following: 
+     1. `File Name` -> `Zapier-Final-Testing_&#123;Output: 20220719&#125;.zip`
+     2. `API Secret` -> `********`
+     3. Once you are satisfied with your mappings, click on "Continue".
+  7. You will now be presented with an option to test this setup.
+  8. Click on "Test & continue" to test this setup.
+  9. If the API call was successful, you should see a "success" return.
+
+
+
+![Action3-Step7-1.png](https://partners.moengage.com/hc/article_attachments/7902503281428/Action3-Step7-1.png)
+
+![Action3-Step7-2.png](https://partners.moengage.com/hc/article_attachments/7902012125716/Action3-Step7-2.png)
+
+## Step 6: Setup Drive Action
+
+Next, you need to add another action step. Click "+" and select "Google Drive" from the action list.
+
+  1. Type "Google Drive" and select it from the list of apps.
+  2. Under Event, choose "Upload File". Click continue.
+  3. Connect your Google Drive Account, if not done already. Once selected, click continue to move to the next step.
+  4. Under "Set up action", select your Google Drive.
+  5. Select your folder where you want the Google Drive to upload the reports.
+  6. Under File, select the File from the previous MoEngage step.
+
+
+
+![Action3-Step8.png](https://partners.moengage.com/hc/article_attachments/7902141017492/Action3-Step8.png)
+
+  7. You can leave the File Name and File Extension blank, or fill them up according to your needs. When you are satisfied with the form, click Continue.
+  8. You will then be asked to test your trigger. Click on "Test & continue".
+  9. If your API call is successful, you will get the following information:
+
+
+
+![Action3-Step9-1.png](https://partners.moengage.com/hc/article_attachments/7902573281172/Action3-Step9-1.png)
+
+![Action3-Step9-2.png](https://partners.moengage.com/hc/article_attachments/7902264906516/Action3-Step9-2.png)
+
+You can also verify this in your Google Drive folder. You should see your newly uploaded zip file here. This confirms that your Zap was successful.
+
+![Action3-Step10.png](https://partners.moengage.com/hc/article_attachments/7902414661908/Action3-Step10.png)
+
+  10. Once you are satisfied that everything works, click on "Publish Zap" and it will run every time a new registrant is added to your Webinar.
+
+
