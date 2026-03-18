@@ -15,49 +15,50 @@ Perform the following steps:
    - Test the push notification. If successful, no further action is required. Otherwise, follow the steps below.
    - If you are using Firebase push notifications, skip this step and proceed with the following steps.
 2. **Disable MoEngage Proxy**:
-   - Add MoEngageAppDelegateProxyEnabled key in info.plist with the value Boolean = false/NO <img alt="boolean.png" src="/images/moengage_6550ce.png" />
+   - Add MoEngageAppDelegateProxyEnabled key in info.plist with the value Boolean = false/NO
+      <img alt="boolean.png" src="/images/moengage_6550ce.png" />
 3. **Override didRegisterForRemoteNotificationsWithDeviceToken Function**:
    - Override the didRegisterForRemoteNotificationsWithDeviceToken function of the AppDelegate.m file.
-
-     Objective-C
-
-     ```swift
-     - (void)application:(UIApplication \*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData \*)deviceToken
-     {
-     [super application: application didRegisterForRemoteNotificationsWithDeviceToken: deviceToken];
-     //7.xx version
-     [[MoEngage sharedInstance] setPushToken:deviceToken];
-     //8.xx version
-     [[MOMessaging sharedInstance] setPushToken:deviceToken];
-     //9.xx version
-     [[MoEngageSDKMessaging sharedInstance] setPushToken:deviceToken];
+     ```swift Objective-C
+     - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+     { 
+       [super application: application didRegisterForRemoteNotificationsWithDeviceToken: deviceToken]; 
+       
+       //7.xx version
+       [[MoEngage sharedInstance] setPushToken:deviceToken];
+       
+       //8.xx version
+       [[MOMessaging sharedInstance] setPushToken:deviceToken];
+       
+       //9.xx version
+       [[MoEngageSDKMessaging sharedInstance] setPushToken:deviceToken];
      }
      ```
 4. **Override UNUserNotificatoinCenterDelegate Functions**:
    - Override the UNUserNotificatoinCenterDelegate functions in the AppDelegate.m file.
-
-     Objective-C
-
-     ```swift
+     ```objective-c Objective-C wrap
      //Try without willPresent if it works good to go! else override it
-     - (void)userNotificationCenter:(UNUserNotificationCenter \*)center willPresentNotification:(UNNotification \*)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
-     if (notification.request.content.userInfo != nil) {
-     NSDictionary \*dictionary = notification.request.content.userInfo;
-     if (dictionary[@"moengage"] != nil) {
-     completionHandler(UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionBadge);
-     } else {
-     [super userNotificationCenter: center willPresentNotification: notification withCompletionHandler:completionHandler];
+     - (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
+       if (notification.request.content.userInfo != nil) {
+         NSDictionary *dictionary = notification.request.content.userInfo;
+         if (dictionary[@"moengage"] != nil) {
+           completionHandler(UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionBadge);
+         } else {
+           [super userNotificationCenter: center willPresentNotification: notification withCompletionHandler:completionHandler];
+         }
      }
-     }
-     - (void)userNotificationCenter:(UNUserNotificationCenter \*)center didReceiveNotificationResponse:(UNNotificationResponse \*)response withCompletionHandler:(void (^)(void))completionHandler
+     - (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler
      {
-     [super userNotificationCenter: center didReceiveNotificationResponse: response withCompletionHandler: completionHandler];
-     //7.xx version
-     [[MoEngage sharedInstance] userNotificationCenter:center didReceiveNotificationResponse:response];
-     //8.xx version
-     [[MOMessaging sharedInstance] userNotificationCenter:center didReceive:response];
-     //9.xx version
-     [[MoEngageSDKMessaging sharedInstance] userNotificationCenter:center didReceive:response];
-     completionHandler();
+       [super userNotificationCenter: center didReceiveNotificationResponse: response withCompletionHandler: completionHandler];
+       
+       //7.xx version
+       [[MoEngage sharedInstance] userNotificationCenter:center didReceiveNotificationResponse:response];
+       //8.xx version
+       [[MOMessaging sharedInstance] userNotificationCenter:center didReceive:response];
+       
+       //9.xx version
+       [[MoEngageSDKMessaging sharedInstance] userNotificationCenter:center didReceive:response];
+       
+       completionHandler();
      }
      ```
