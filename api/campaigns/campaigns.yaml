@@ -3,28 +3,9 @@ info:
   title: MoEngage Campaigns API
   version: '2025-11-20'
   description: |
-    The MoEngage Campaigns API allows you to create and manage Push and Email campaigns programmatically.
+    The MoEngage Campaigns API allows you to create and manage Push and Email campaigns.
     
-    **Supported Channels:**
-    - Push (Android, iOS, Web)
-    - Email
-    
-    **Supported Delivery Types:**
-    - ONE_TIME
-    - PERIODIC
-    - EVENT_TRIGGERED
-    - BUSINESS_EVENT_TRIGGERED
-    - DEVICE_TRIGGERED (Push only)
-    - LOCATION_TRIGGERED (Push only)
-    - BROADCAST_LIVE_ACTIVITY (Push iOS only)
-    
-    **Rate Limits:** 5 campaigns per minute, 25 campaigns per hour, 100 campaigns per day.
-    
-    <Info>
-    If this API is not enabled for your account, contact your MoEngage Customer Success Manager (CSM) or the Support team to request enablement.
-    </Info>
-    
-    For more details, visit [MoEngage Developer Documentation](https://developers.moengage.com).
+    **To see the Request Body preview:** Click the dropdown in the 'Request Body' section and select **PUSH** or **EMAIL**.
   contact:
     name: MoEngage Developer Team
     email: support@moengage.com
@@ -36,7 +17,6 @@ servers:
     variables:
       dc:
         default: '01'
-        description: 'Your MoEngage Data Center (DC). Can be 01, 02, 03, etc.'
         enum: ['01', '02', '03', '04', '05', '06']
 
 security:
@@ -47,8 +27,6 @@ components:
     BasicAuth:
       type: http
       scheme: basic
-      description: |
-        Authentication is done via Basic Auth. The username is your Workspace ID and the password is your API Key.
 
   parameters:
     MOE-APPKEY:
@@ -60,22 +38,20 @@ components:
       example: "YOUR_WORKSPACE_ID"
 
   responses:
-    NoContent:
-      description: Campaign updated successfully.
     BadRequest:
-      description: Bad Request - Missing or invalid parameters
+      description: Bad Request
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     Unauthorized:
-      description: Authentication Failure
+      description: Unauthorized
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     RateLimitExceeded:
-      description: Rate Limit Breach
+      description: Rate Limit Exceeded
       content:
         application/json:
           schema:
@@ -88,7 +64,7 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
 
   schemas:
-    # ==================== Main Request Schemas ====================
+    # ==================== Main Request Schema ====================
     CampaignCreateRequest:
       oneOf:
         - $ref: '#/components/schemas/PushCampaignRequest'
@@ -99,12 +75,15 @@ components:
           PUSH: '#/components/schemas/PushCampaignRequest'
           EMAIL: '#/components/schemas/EmailCampaignRequest'
 
+    # ==================== Push Campaign Request ====================
     PushCampaignRequest:
+      title: Push Campaign
       type: object
       required: [request_id, channel, campaign_delivery_type, created_by, basic_details, campaign_content, segmentation_details, scheduling_details]
       properties:
         request_id:
           type: string
+          example: "push_req_12345"
         channel:
           type: string
           enum: [PUSH]
@@ -135,12 +114,15 @@ components:
         utm_params:
           $ref: '#/components/schemas/UTMParams'
 
+    # ==================== Email Campaign Request ====================
     EmailCampaignRequest:
+      title: Email Campaign
       type: object
       required: [request_id, channel, campaign_delivery_type, created_by, basic_details, connector, campaign_content, segmentation_details, scheduling_details]
       properties:
         request_id:
           type: string
+          example: "email_req_12345"
         channel:
           type: string
           enum: [EMAIL]
@@ -152,8 +134,6 @@ components:
           format: email
         basic_details:
           $ref: '#/components/schemas/EmailBasicDetails'
-        trigger_condition:
-          $ref: '#/components/schemas/EmailTriggerCondition'
         connector:
           $ref: '#/components/schemas/Connector'
         campaign_content:
@@ -162,8 +142,6 @@ components:
           $ref: '#/components/schemas/SegmentationDetails'
         scheduling_details:
           $ref: '#/components/schemas/SchedulingDetails'
-        delivery_controls:
-          $ref: '#/components/schemas/EmailDeliveryControls'
         conversion_goal_details:
           $ref: '#/components/schemas/ConversionGoalDetails'
         control_group_details:
@@ -173,77 +151,111 @@ components:
         campaign_audience_limit:
           $ref: '#/components/schemas/CampaignAudienceLimit'
 
-    # ==================== Update Requests ====================
-    CampaignUpdateRequest:
-      oneOf:
-        - $ref: '#/components/schemas/PushCampaignUpdateRequest'
-        - $ref: '#/components/schemas/EmailCampaignUpdateRequest'
-      discriminator:
-        propertyName: channel
-
-    PushCampaignUpdateRequest:
+    # ==================== Detailed Components ====================
+    PushBasicDetails:
       type: object
-      required: [request_id, updated_by]
+      required: [name, platforms]
       properties:
-        request_id: { type: string }
-        updated_by: { type: string, format: email }
-        channel: { type: string, enum: [PUSH] }
-        basic_details: { $ref: '#/components/schemas/PushBasicDetails' }
-        campaign_content: { $ref: '#/components/schemas/PushCampaignContent' }
-        segmentation_details: { $ref: '#/components/schemas/SegmentationDetails' }
-        scheduling_details: { $ref: '#/components/schemas/SchedulingDetails' }
-        conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
-        control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
-        utm_params: { $ref: '#/components/schemas/UTMParams' }
+        name: { type: string, example: "Summer Sale Push" }
+        platforms: { type: array, items: { type: string, enum: [ANDROID, IOS, WEB] } }
+        platform_specific_details: { $ref: '#/components/schemas/PlatformSpecificDetails' }
 
-    EmailCampaignUpdateRequest:
+    EmailBasicDetails:
       type: object
-      required: [request_id, updated_by]
+      required: [name, content_type]
       properties:
-        request_id: { type: string }
-        updated_by: { type: string, format: email }
-        channel: { type: string, enum: [EMAIL] }
-        basic_details: { $ref: '#/components/schemas/EmailBasicDetails' }
-        connector: { $ref: '#/components/schemas/Connector' }
-        campaign_content: { $ref: '#/components/schemas/EmailCampaignContent' }
-        segmentation_details: { $ref: '#/components/schemas/SegmentationDetails' }
-        scheduling_details: { $ref: '#/components/schemas/SchedulingDetails' }
-        conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
-        control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
-        utm_params: { $ref: '#/components/schemas/UTMParams' }
+        name: { type: string, example: "Summer Sale Email" }
+        content_type: { type: string, enum: [PROMOTIONAL, TRANSACTIONAL] }
+        subscription_category: { type: string }
 
-    # ==================== Search & Meta ====================
-    CampaignSearchRequest:
+    PushCampaignContent:
       type: object
-      required: [request_id, limit, page]
+      required: [content]
       properties:
-        request_id: { type: string }
-        campaign_fields: { $ref: '#/components/schemas/CampaignSearchFields' }
-        limit: { type: integer, maximum: 15 }
-        page: { type: integer }
+        content:
+          type: object
+          properties:
+            push:
+              $ref: '#/components/schemas/PushContent'
 
-    CampaignSearchFields:
+    EmailCampaignContent:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: object
+          properties:
+            email:
+              $ref: '#/components/schemas/EmailContent'
+
+    PushContent:
       type: object
       properties:
-        channels: { type: array, items: { type: string, enum: [PUSH, EMAIL, SMS] } }
-        status: { type: array, items: { type: string } }
+        android: { $ref: '#/components/schemas/AndroidPushContent' }
+        ios: { $ref: '#/components/schemas/IOSPushContent' }
 
-    CampaignMetaRequest:
+    AndroidPushContent:
       type: object
-      required: [request_id, limit, page]
+      required: [template_type, basic_details]
       properties:
-        request_id: { type: string }
-        campaign_fields: { $ref: '#/components/schemas/CampaignMetaSearchFields' }
-        limit: { type: integer }
-        page: { type: integer }
+        template_type: { type: string, enum: [BASIC, STYLIZED_BASIC, Custom] }
+        basic_details:
+          type: object
+          required: [notification_channel, title, message]
+          properties:
+            notification_channel: { type: string }
+            title: { type: string }
+            message: { type: string }
+            default_click_action: { type: string }
+            default_click_action_value: { type: string }
 
-    CampaignMetaSearchFields:
+    IOSPushContent:
+      type: object
+      required: [template_type, basic_details]
+      properties:
+        template_type: { type: string, enum: [BASIC, Custom] }
+        basic_details:
+          type: object
+          required: [title, message]
+          properties:
+            title: { type: string }
+            message: { type: string }
+
+    EmailContent:
+      type: object
+      required: [subject, from_address, html_content]
+      properties:
+        subject: { type: string }
+        from_address: { type: string, format: email }
+        html_content: { type: string }
+
+    SegmentationDetails:
       type: object
       properties:
-        id: { type: string }
-        channels: { type: array, items: { type: string } }
+        included_filters: { $ref: '#/components/schemas/FilterGroup' }
 
-    # ==================== Utility Schemas ====================
+    FilterGroup:
+      type: object
+      required: [filter_operator, filters]
+      properties:
+        filter_operator: { type: string, enum: [and, or] }
+        filters: { type: array, items: { type: object } }
+
+    SchedulingDetails:
+      type: object
+      required: [delivery_type]
+      properties:
+        delivery_type: { type: string, enum: [ASAP, AT_FIXED_TIME, PERIODIC] }
+        start_time: { type: string, format: date-time }
+
+    Connector:
+      type: object
+      required: [connector_type, connector_name]
+      properties:
+        connector_type: { type: string }
+        connector_name: { type: string }
+
+    # ============= All the requested Missing Schemas =============
     ConversionGoalDetails:
       type: object
       properties:
@@ -255,14 +267,12 @@ components:
       properties:
         goal_name: { type: string }
         goal_event_name: { type: string }
-        is_primary_goal: { type: boolean }
 
     ControlGroupDetails:
       type: object
       properties:
         is_campaign_control_group_enabled: { type: boolean }
         campaign_control_group_percentage: { type: integer }
-        is_global_control_group_enabled: { type: boolean }
 
     UTMParams:
       type: object
@@ -270,36 +280,27 @@ components:
       properties:
         utm_source: { type: string }
         utm_medium: { type: string }
-        utm_campaign: { type: string }
-
-    Connector:
-      type: object
-      required: [connector_type, connector_name]
-      properties:
-        connector_type: { type: string }
-        connector_name: { type: string }
 
     CampaignAudienceLimit:
       type: object
       properties:
         limit: { type: integer }
-        metrics: { type: string }
-        frequency: { type: string }
 
-    PushBasicDetails:
+    PushDeliveryControls:
       type: object
-      required: [name, platforms]
       properties:
-        name: { type: string }
-        platforms: { type: array, items: { type: string } }
-        platform_specific_details: { $ref: '#/components/schemas/PlatformSpecificDetails' }
+        bypass_dnd: { type: boolean }
+        campaign_throttle_rpm: { type: integer }
 
-    EmailBasicDetails:
+    EmailDeliveryControls:
       type: object
-      required: [name, content_type]
       properties:
-        name: { type: string }
-        content_type: { type: string }
+        campaign_throttle_rpm: { type: integer }
+
+    AdvancedDetails:
+      type: object
+      properties:
+        priority: { type: string }
 
     PlatformSpecificDetails:
       type: object
@@ -317,44 +318,6 @@ components:
       properties:
         trigger_delay_type: { type: string }
 
-    PushCampaignContent:
-      type: object
-      required: [content]
-      properties:
-        content: { type: object }
-
-    EmailCampaignContent:
-      type: object
-      required: [content]
-      properties:
-        content: { type: object }
-
-    SegmentationDetails:
-      type: object
-      properties:
-        is_all_user_campaign: { type: boolean }
-
-    SchedulingDetails:
-      type: object
-      required: [delivery_type]
-      properties:
-        delivery_type: { type: string }
-
-    PushDeliveryControls:
-      type: object
-      properties:
-        bypass_dnd: { type: boolean }
-
-    EmailDeliveryControls:
-      type: object
-      properties:
-        bypass_dnd: { type: boolean }
-
-    AdvancedDetails:
-      type: object
-      properties:
-        priority: { type: string }
-
     ErrorResponse:
       type: object
       properties:
@@ -367,88 +330,19 @@ components:
     CampaignCreateSuccessResponse:
       type: object
       properties:
-        campaign_id: { type: string }
-
-    CampaignDetailsResponse:
-      type: object
-      properties:
-        campaign_id: { type: string }
-        status: { type: string }
-
-    CampaignMetaResponse:
-      type: object
-      properties:
-        campaign_id: { type: string }
-        campaign_name: { type: string }
-
-    CampaignStatusChangeRequest:
-      type: object
-      required: [request_id, action, campaign_ids]
-      properties:
-        request_id: { type: string }
-        action: { type: string, enum: [STOP, PAUSE, RESUME] }
-        campaign_ids: { type: array, items: { type: string } }
-
-    # Required for the test endpoints
-    CampaignTestRequest:
-      oneOf:
-        - $ref: '#/components/schemas/PushCampaignTestRequest'
-        - $ref: '#/components/schemas/EmailCampaignTestRequest'
-      discriminator:
-        propertyName: channel
-
-    PushCampaignTestRequest:
-      type: object
-      properties:
-        request_id: { type: string }
-        channel: { type: string }
-        test_campaign_meta: { type: object }
-
-    EmailCampaignTestRequest:
-      type: object
-      properties:
-        request_id: { type: string }
-        channel: { type: string }
-        test_campaign_meta: { type: object }
-
-    TestCampaignSuccessResponse:
-      type: object
-      properties:
-        message: { type: string }
-
-    PersonalizedPreviewRequest:
-      type: object
-      required: [request_id]
-      properties:
-        request_id: { type: string }
-
-    PersonalizedPreviewResponse:
-      type: object
-      properties:
-        personalized_content: { type: object }
-
-    GetChildCampaignsRequest:
-      type: object
-      required: [request_id, limit, page]
-      properties:
-        request_id: { type: string }
-        limit: { type: integer }
-        page: { type: integer }
-
-    ChildCampaignsResponse:
-      type: object
-      properties:
-        executions: { type: array, items: { type: object } }
+        campaign_id: { type: string, example: "camp_abc123" }
 
 paths:
   /campaigns:
     post:
       operationId: create_campaign
       summary: Create Campaign
-      tags: [Create Campaigns]
+      tags:
+        - Create Campaigns
       parameters:
         - $ref: '#/components/parameters/MOE-APPKEY'
       requestBody:
+        description: Select PUSH or EMAIL to see the specific schema.
         required: true
         content:
           application/json:
@@ -456,7 +350,7 @@ paths:
               $ref: '#/components/schemas/CampaignCreateRequest'
       responses:
         '201':
-          description: Created
+          description: Campaign created successfully
           content:
             application/json:
               schema:
@@ -469,158 +363,3 @@ paths:
           $ref: '#/components/responses/RateLimitExceeded'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  /campaigns/{campaign_id}:
-    patch:
-      operationId: update_campaign
-      summary: Update Campaign
-      tags: [Update Campaigns]
-      parameters:
-        - name: campaign_id
-          in: path
-          required: true
-          schema:
-            type: string
-        - $ref: '#/components/parameters/MOE-APPKEY'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CampaignUpdateRequest'
-      responses:
-        '204':
-          $ref: '#/components/responses/NoContent'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /campaigns/search:
-    post:
-      operationId: search_campaigns
-      summary: Search Campaigns
-      tags: [Get Campaign Details]
-      parameters:
-        - $ref: '#/components/parameters/MOE-APPKEY'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CampaignSearchRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CampaignDetailsResponse'
-
-  /campaigns/test:
-    post:
-      operationId: test_campaign
-      summary: Test Campaign
-      tags: [Test Campaigns]
-      parameters:
-        - $ref: '#/components/parameters/MOE-APPKEY'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CampaignTestRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TestCampaignSuccessResponse'
-
-  /personalization/preview:
-    post:
-      operationId: personalized_preview
-      summary: Personalized Preview
-      tags: [Test Campaigns]
-      parameters:
-        - $ref: '#/components/parameters/MOE-APPKEY'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PersonalizedPreviewRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PersonalizedPreviewResponse'
-
-  /campaigns/meta:
-    post:
-      operationId: get_campaign_meta
-      summary: Get Campaign Meta
-      tags: [Get Campaign Details]
-      parameters:
-        - $ref: '#/components/parameters/MOE-APPKEY'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CampaignMetaRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CampaignMetaResponse'
-
-  /campaigns/status:
-    post:
-      operationId: change_campaign_status
-      summary: Change Campaign Status
-      tags: [Update Campaigns]
-      parameters:
-        - $ref: '#/components/parameters/MOE-APPKEY'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CampaignStatusChangeRequest'
-      responses:
-        '200':
-          description: OK
-
-  /campaigns/{parent_campaign_id}/executions:
-    post:
-      operationId: get_child_campaigns
-      summary: Get Child Campaigns
-      tags: [Get Campaign Details]
-      parameters:
-        - name: parent_campaign_id
-          in: path
-          required: true
-          schema:
-            type: string
-        - $ref: '#/components/parameters/MOE-APPKEY'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetChildCampaignsRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChildCampaignsResponse'
