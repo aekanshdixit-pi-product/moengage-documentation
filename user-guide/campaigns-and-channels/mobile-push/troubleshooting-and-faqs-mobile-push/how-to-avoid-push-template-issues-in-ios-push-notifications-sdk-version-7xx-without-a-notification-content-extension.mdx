@@ -10,83 +10,78 @@ Push templates (carousel images, background color, font color, and so on) are no
 
 Perform the following steps:
 
-1. Create a Notification Content Extension target. *<img alt="NCE.png" src="/images/moengage_71e025.png" />* 
+1. Create a Notification Content Extension target.
+    <img alt="NCE.png" src="/images/moengage_71e025.png" />
    - In the **Product Name** box, type a name for the extension target.
-   - In the **Language** list, click a language. **Swift** is recommended as the language because it works seamlessly with Objective-C projects. <img alt="name swift.png" src="/images/moengage_35e6b6.png" />
-   - On the **Signing & Capabilities** tab, add the *AppGroupId* to the Notification Content Extension’s settings. <img alt="signing.png" src="/images/moengage_ac6bfb.png" />
-   - Under **Minimum Deployments**, set the minimum deployment iOS version of the Notification Content Extension to match the main app’s iOS version. <img alt="deployment.png" src="/images/moengage_5c1797.png" />
+   - In the **Language** list, click a language. **Swift** is recommended as the language because it works seamlessly with Objective-C projects.
+      <img alt="name swift.png" src="/images/moengage_35e6b6.png" />
+   - On the **Signing & Capabilities** tab, add the _AppGroupId_ to the Notification Content Extension’s settings.
+      <img alt="signing.png" src="/images/moengage_ac6bfb.png" />
+   - Under **Minimum Deployments**, set the minimum deployment iOS version of the Notification Content Extension to match the main app’s iOS version.
+      <img alt="deployment.png" src="/images/moengage_5c1797.png" />
 2. Integrate the MORichNotification framework into the Notification Content Extension target.
    - In your podfile, add the Notification Content Extension as a separate target and install the MORichNotification framework.
-
-     Swift
-
-     ```swift
+     ```swift Swift
      target 'MoEngageDemo' do
-     use\_frameworks!
-     pod 'MoEngage-iOS-SDK'
+       use_frameworks!
+       pod 'MoEngage-iOS-SDK'
      end
      target 'MoEngageNotificationService' do
-     use\_frameworks! #use use\_frameworks only if included in main target as in above scenario
-     pod 'MORichNotification'
+       use_frameworks! #use use_frameworks only if included in main target as in above scenario
+       pod 'MORichNotification'
      end
      target 'MoegageRichContent" do
-     use\_frameworks! #use use\_frameworks only if included in main target as in above scenario
-     pod 'MORichNotification'
+       use_frameworks! #use use_frameworks only if included in main target as in above scenario
+       pod 'MORichNotification'
      end
      ```
 3. Code changes in **NotificationViewController.swift** file.
-
-   Swift
-
-   ```swift
+   ```swift Swift
    import UIKit
    import UserNotifications
    import UserNotificationsUI
    import MORichNotification
    class NotificationViewController: UIViewController, UNNotificationContentExtension {
-   @IBOutlet var label: UILabel?
-   override func viewDidLoad() {
-   super.viewDidLoad()
-   MORichNotification.setAppGroupID("group.com.XXXXXXXXXXXXXXXX")
-   }
-   func didReceive(\_ notification: UNNotification) {
-   if #available(iOSApplicationExtension 12.0, \*) {
-   MOPushTemplateHandler.sharedInstance().addPushTemplate(to: self, with: notification)
-   } else {
-   // Fallback on earlier versions
-   }
-   }
+       @IBOutlet var label: UILabel?
+       
+       override func viewDidLoad() {
+           super.viewDidLoad()
+           MORichNotification.setAppGroupID("group.com.XXXXXXXXXXXXXXXX")
+       }
+       
+       func didReceive(_ notification: UNNotification) {
+           if #available(iOSApplicationExtension 12.0, *) {
+               MOPushTemplateHandler.sharedInstance().addPushTemplate(to: self, with: notification)
+           } else {
+               // Fallback on earlier versions
+           }
+       }
    }
    ```
-4. Select **MainInterface.storyboard** in the Content extension, remove the default label, and set the background color of the View to clear. <img alt="main.png" src="/images/moengage_771662.png" />
+4. Select **MainInterface.storyboard** in the Content extension, remove the default label, and set the background color of the View to clear.
+    <img alt="main.png" src="/images/moengage_771662.png" />
 5. Info.plist changes:
-
-   Swift
-
-   ```swift
-   NSExtensionAttributes
-
-   UNNotificationExtensionCategory
-   MOE\_PUSH\_TEMPLATE
-   UNNotificationExtensionDefaultContentHidden
-
-   UNNotificationExtensionInitialContentSizeRatio
-   1.2
-   UNNotificationExtensionUserInteractionEnabled
-
+   ```swift Swift
+   <key>NSExtensionAttributes</key> 
+   <dict>
+         <key>UNNotificationExtensionCategory</key>
+         <string>MOE_PUSH_TEMPLATE</string>
+         <key>UNNotificationExtensionDefaultContentHidden</key>
+         <true/>
+         <key>UNNotificationExtensionInitialContentSizeRatio</key>
+         <real>1.2</real>
+         <key>UNNotificationExtensionUserInteractionEnabled</key>
+         <true/>
+   </dict>
    ```
-
-    *<img alt="NSExtension.png" src="/images/moengage_054a69.png" />*
+   ![NSExtension.png](/images/moengage_054a69.png)
 6. Check build phases in the main app target.
-   - In Embed App Extensions/Embed Foundation Extensions, clear the **Copy only when installing** check box. <img alt="copy only.png" src="/images/moengage_968bdb.png" />
-7. Ensure consistent *appGroupId* across configurations.
-
-   - Verify that the *appGroupId* is consistent across all schemes and configurations (for example, Debug/Release/QA/UAT) in the project.
+   - In Embed App Extensions/Embed Foundation Extensions, clear the **Copy only when installing** check box.
+      <img alt="copy only.png" src="/images/moengage_968bdb.png" />
+7. Ensure consistent _appGroupId_ across configurations.
+   - Verify that the _appGroupId_ is consistent across all schemes and configurations (for example, Debug/Release/QA/UAT) in the project.
 8. Align build configuration.
    - When executing or archiving the project, ensure that the build configuration for the main target, Notification Service Extension, and Notification Content Extension target points to the same scheme or configuration.
-
-   <img alt="debug.png" src="/images/moengage_62d0a0.png" />
-
-   <img alt="target.png" src="/images/moengage_c31f9e.png" />
-
-   <img alt="duplicate.png" src="/images/moengage_9ee69a.png" />
+   ![debug.png](/images/moengage_62d0a0.png)
+   ![target.png](/images/moengage_c31f9e.png)
+   ![duplicate.png](/images/moengage_9ee69a.png)
