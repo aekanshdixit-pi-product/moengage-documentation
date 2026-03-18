@@ -8,27 +8,27 @@ Growth teams need to perform a lot of data analysis for their daily operations. 
 
 MoEngage open analytics can help with  -
 
-1. 1. 1. Read and Query data using SQL queries through a console or Programmatically via API
-      2. Visualize the data on the Open Analytics console through in-build visualization methods available
+1. Read and Query data using SQL queries through a console or Programmatically via API
+2. Visualize the data on the Open Analytics console through in-build visualization methods available
 
 <Info>
-MoEngage open analytics is not suitable for data exports. For data export, please use [MoEngage Streams](https://developers.moengage.com/hc/en-us/articles/4952761690644-MoEngage-Streams) or [S3 exports](/user-guide/data/exports/events/data-warehouse/s3-exports).
+  MoEngage open analytics is not suitable for data exports. For data export, please use [MoEngage Streams](https://www.moengage.com/docs/api/data/moengage-streams) or [S3 exports](/user-guide/data/exports/events/data-warehouse/s3-exports).
 </Info>
 
 ## Enable Open Analytics
 
 MoEngage requires 2 sets of information to enable open analytics -
 
-1. 1. 1. Email ids of users
-      2. The static IP address. (This can be your VPN IP as well. Make sure you provide the static IP, IPs provided by your network provider will not work)
+1. Email ids of users
+2. The static IP address. (This can be your VPN IP as well. Make sure you provide the static IP, IPs provided by your network provider will not work)
 
 ## Data Categories
 
 All data received at the MoEngage system can be categorized into 3 kinds –
 
-1. 1. 1. Device data
-      2. User Data
-      3. Event data
+1. Device data
+2. User Data
+3. Event data
 
 The data is collected using the SDK and S2S events and processed and stored with events.
 
@@ -36,18 +36,20 @@ The data is collected using the SDK and S2S events and processed and stored with
 
 MoEngage processes and stores all the device attributes and event attributes in separate event tables for each event.
 
-Table Name - account\_name.event\_name
+Table Name - account_name.event_name
 
-| attribute 1 | attribute 2 | attribute 3 | -- | attribute n-1 | attribute n |
-| --- | --- | --- | --- | --- | --- |
-| ... | ... | ... | ... | ... | ... |
-| ... | ... | ... | ... | ... | ... |
+| attribute 1 | attribute 2 | attribute 3 | --  | attribute n-1 | attribute n |
+| ----------- | ----------- | ----------- | --- | ------------- | ----------- |
+| ...         | ...         | ...         | ... | ...           | ...         |
+| ...         | ...         | ...         | ... | ...           | ...         |
 
-The time window for analysis can be selected using the attribute - **day.** This partition time works for all tables. **Must always use this in your queries to limit the costs.**For Example
+The time window for analysis can be selected using the attribute - **day.** This partition time works for all tables. **Must always use this in your queries to limit the costs.**
 
-SQL
+For Example
 
-```sql
+<CodeGroup>
+
+```sql SQL
 SELECT server\_time, COUNT(server\_time) as metric
 FROM
 "account\_name"."moe\_app\_opened\_828"
@@ -57,11 +59,13 @@ GROUP BY 1
 ORDER BY 1
 ```
 
-Event Tables can be joined using common keys/attributes such as - **user\_id**
+</CodeGroup>
 
-SQL
+Event Tables can be joined using common keys/attributes such as - **user_id**
 
-```sql
+<CodeGroup>
+
+```sql SQL wrap
 SELECT user1
 FROM
 (SELECT user\_id AS user1 FROM "account\_name"."uptete\_spa") table1
@@ -70,39 +74,41 @@ INNER JOIN
 ON table1.user1 = table2.user2
 ```
 
+</CodeGroup>
+
 ### Event & Attribute Naming Convention
 
-Event names have structure as ‘EventName\_XXX’, for example - moe\_app\_opened\_828  
-Event Attribute names have a structure as ‘Datatype\_AttributeName\_XXX’, for example - string\_activity\_name\_880
+Event names have structure as ‘EventName_XXX’, for example - moe_app_opened_828\
+Event Attribute names have a structure as ‘Datatype_AttributeName_XXX’, for example - string_activity_name_880
 
 ### User Attributes
 
-User attributes are stored in the user table, and the table refreshes one time every day.  
-Table Name - **users\_base\_table**  **Column for MoEngage generated User Id - user\_id**
+User attributes are stored in the user table, and the table refreshes one time every day.\
+Table Name - **users_base_table**  **Column for MoEngage generated User Id - user_id**
 
 | attribute 1 | attribute 2 | attribute ... | attribute n |
-| --- | --- | --- | --- |
-| ... | ... | ... | ... |
-| ... | ... | ... | ... |
+| ----------- | ----------- | ------------- | ----------- |
+| ...         | ...         | ...           | ...         |
+| ...         | ...         | ...           | ...         |
 
 ## Important Attribute Information
 
 (These attributes should be present in all of the events)
 
-1. 1. 1. **day** - Time-window for analysis can be selected using this attribute**.** This partition time works for all tables. This should be considered as the date attribute for Tables.
-      2. **server\_time** - UTC at which events reach MoEngage servers.
-      3. **user\_id** - This is a MoEngage-generated User Id.
-      4. **string\_uid\_125** - This is the User Id generated by your App/Site.
-      5. **original\_event\_name** - Event Name
-      6. **user\_time** - Event time in the local time zone
+1. **day** - Time-window for analysis can be selected using this attribute\*\*.\*\* This partition time works for all tables. This should be considered as the date attribute for Tables.
+2. **server_time** - UTC at which events reach MoEngage servers.
+3. **user_id** - This is a MoEngage-generated User Id.
+4. **string_uid_125** - This is the User Id generated by your App/Site.
+5. **original_event_name** - Event Name
+6. **user_time** - Event time in the local time zone
 
 ## Open analytics Usage Best Practices
 
-1. 1. 1. Use **day** in your queries to optimize query performance. Otherwise, MoEngage will scan the entire table, and scanning costs will be higher.
-      2. MoEngage works on a columnar database, so you can use only the columns ( attributes ) you need for analysis. If unnecessary columns are used, cost increases, and query performance decreases.
-      3. To optimize queries, refer to [best practices](https://aws.amazon.com/blogs/big-data/top-10-performance-tuning-tips-for-amazon-athena/).
-      4. A general guide to writing Athena SQL queries -   
-         `<https://docs.aws.amazon.com/athena/latest/ug/querying-athena-tables.html>`
+1. Use **day** in your queries to optimize query performance. Otherwise, MoEngage will scan the entire table, and scanning costs will be higher.
+2. MoEngage works on a columnar database, so you can use only the columns ( attributes ) you need for analysis. If unnecessary columns are used, cost increases, and query performance decreases.
+3. To optimize queries, refer to [best practices](https://aws.amazon.com/blogs/big-data/top-10-performance-tuning-tips-for-amazon-athena/).
+4. A general guide to writing Athena SQL queries -\
+   [https://docs.aws.amazon.com/athena/latest/ug/querying-athena-tables.html](https://docs.aws.amazon.com/athena/latest/ug/querying-athena-tables.html)
 
 ## Programmatic Access to Data
 
@@ -110,7 +116,7 @@ To read data using python or java code, Open Analytics makes APIs available to g
 
 ## Sample Queries
 
-1. 1. 1. [Key Metrics Queries](/user-guide/analyze/analytics-how-to/key-metrics-queries-for-open-analytics)
-      2. [Reachability Queries](/user-guide/analyze/analytics-how-to/reachability-queries-for-open-analytics)
+1. [Key Metrics Queries](/user-guide/analyze/analytics-how-to/key-metrics-queries-for-open-analytics)
+2. [Reachability Queries](/user-guide/analyze/analytics-how-to/reachability-queries-for-open-analytics)
 
 For further assistance, please contact your MoEngage Customer Success Manager (CSM) or the Support team.
