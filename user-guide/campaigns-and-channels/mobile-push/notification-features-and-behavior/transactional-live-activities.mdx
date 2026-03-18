@@ -12,21 +12,18 @@ This article explains how to use MoEngage Inform to create, manage, and analyze 
   alt="TransactionalLA11.png"
   src="/images/moengage_a8fb15.png"
   style={{ width:"27%",display: 'inline-block' , marginRight: '4%'}}
-  
 />
 
 <img
   alt="TransactionalLA22.png"
   src="/images/moengage_b06214.png"
   style={{ width:"27%",display: 'inline-block',marginRight: '4%' }}
-  
 />
 
 <img
   alt="TransactionalLA33.png"
   src="/images/moengage_20c601.png"
   style={{ width:"27%",display: 'inline-block' }}
-  
 />
 
 MoEngage supports Live Activities on the following devices:
@@ -78,7 +75,12 @@ End users must perform the following steps to manage this setting:
 2. Scroll down and select \[App Name\].
 3. Tap **Live Activities**.
 4. Toggle the setting on or off.
-   ![image.png](/images/moengage_7687c7.png)
+
+<img
+  src="/images/moengage_7687c7.png"
+  alt="image.png"
+  style={{ width:"24%" }}
+/>
 
 Adjusting this setting does not affect other notification preferences.
 
@@ -97,11 +99,18 @@ Managing the lifecycle of a Live Activity ensures users receive timely informati
   A live activity can be initiated in two ways:
   - You or your developer can initiate a Live Activity **remotely via the Inform API** (Server-side).
   - The end user can initiate it **locally from their device** (e.g., immediately upon a button tap). This uses the App SDK in the backend.
-  _Example:_ A user places a coffee order. The app instantly starts a Live Activity on the device, or your server triggers the Inform API to start the live activity. The widget appears on the Lock Screen showing "Order Placed - Preparing."
+
+_Example:_ A user places a coffee order. The app instantly starts a Live Activity on the device, or your server triggers the Inform API to start the live activity. The widget appears on the Lock Screen showing "Order Placed - Preparing."
+
 - **Update (Real-Time Status)**\
-  As the event progresses, you send updates to refresh the data on the screen. **Updates must be performed exclusively via the Inform API.**\
-  _Note:_ Even if the end user started an activity locally via the app, only you or your developer can update it via the API once the token is synced.\
-  _Example:_ The barista finishes the drink. Your backend triggers an **Update** via the Inform API. The widget updates instantly to show "Ready for Pickup."
+  As the event progresses, you send updates to refresh the data on the screen. **Updates must be performed exclusively via the Inform API.**\\
+
+<Info>
+  Even if the end user started an activity locally via the app, only you or your developer can update it via the API once the token is synced.
+</Info>
+
+_Example:_ The barista finishes the drink. Your backend triggers an **Update** via the Inform API. The widget updates instantly to show "Ready for Pickup."
+
 - **End (Completion)**\
   When the transaction concludes, you must end the activity to remove it from the user's screen. You or your developer must **end the activity exclusively via the Inform API;** otherwise, it will be terminated automatically upon reaching the configured `dismissal\_date`.\
   _Example:_ The user collects their coffee. Your backend triggers an **End** API call. The widget displays "Enjoy your coffee!" and then disappears from the screen based on the dismissal time logic.
@@ -114,27 +123,31 @@ Managing the lifecycle of a Live Activity ensures users receive timely informati
 
 MoEngage Inform supports two message types (supported only for iOS) for handling delivery and user reachability:
 
-Live Activity Only Live Activity with Push Fallback
+<Tabs>
+  <Tab title="Live Activity Only ">
+   In this mode, the system attempts to start a Live Activity. If the user is ineligible (e.g., missing PTS token), the request fails, and no notification is shown.
 
-In this mode, the system attempts to start a Live Activity. If the user is ineligible (e.g., missing PTS token), the request fails, and no notification is shown.
+   **Example Scenario:** A user orders a meal through a food delivery app and has a valid token.
 
-**Example Scenario:** A user orders a meal through a food delivery app and has a valid token.
+   | Time | Order Status | System Actions (Inform API) | Widget State |
+   | --- | --- | --- | --- |
+   | 7:00 PM | Order Placed | Trigger **Start** API with `transaction\_id: "order\_123"` | The widget appears on the Lock Screen displaying "Preparing your food." |
+   | 7:20 PM | Picked Up | Trigger **Update** API with `transaction\_id: "order\_123"` | The widget updates to display "Driver is on the way." |
+   | 7:40 PM | Delivered | Trigger **End** API with `transaction\_id: "order\_123"` | The widget displays "Enjoy your meal!" and is dismissed automatically. |
+  </Tab>
+  <Tab title="Live Activity with Push Fallback">
+   In this mode, the system attempts to start a Live Activity. If the user is ineligible (e.g., missing a PTS token) during the Start request, the system automatically delivers the configured standard Push Notification instead.
 
-| Time | Order Status | System Actions (Inform API) | Widget State |
-| --- | --- | --- | --- |
-| 7:00 PM | Order Placed | Trigger **Start** API with `transaction\_id: "order\_123"` | The widget appears on the Lock Screen displaying "Preparing your food." |
-| 7:20 PM | Picked Up | Trigger **Update** API with `transaction\_id: "order\_123"` | The widget updates to display "Driver is on the way." |
-| 7:40 PM | Delivered | Trigger **End** API with `transaction\_id: "order\_123"` | The widget displays "Enjoy your meal!" and is dismissed automatically. |
+   **Example Scenario:** A user orders a meal, but is on an older iOS version or has not synced a PTS token.
 
-In this mode, the system attempts to start a Live Activity. If the user is ineligible (e.g., missing a PTS token) during the Start request, the system automatically delivers the configured standard Push Notification instead.
+   | Time | Order Status | System Actions (Inform API) | User Experience |
+   | --- | --- | --- | --- |
+   | 7:00 PM | Order Placed | Trigger **Start** API. _Result: No PTS Token found._ | **Fallback Triggered:** User receives a standard Push Notification: "Your order #123 has been placed." |
+   | 7:20 PM | Picked Up | Trigger **Update** API. _Result: No active Live Activity session found._ | **Fallback Triggered:** User receives a standard Push Notification: "Your driver is on the way." |
+   | 7:40 PM | Delivered | Trigger **End** API. _Result: No active Live Activity session found._ | **Fallback Triggered:** User receives a standard Push Notification: "Your order has been delivered. Enjoy your meal!" |
 
-**Example Scenario:** A user orders a meal, but is on an older iOS version or has not synced a PTS token.
-
-| Time | Order Status | System Actions (Inform API) | User Experience |
-| --- | --- | --- | --- |
-| 7:00 PM | Order Placed | Trigger **Start** API. _Result: No PTS Token found._ | **Fallback Triggered:** User receives a standard Push Notification: "Your order #123 has been placed." |
-| 7:20 PM | Picked Up | Trigger **Update** API. _Result: No active Live Activity session found._ | **Fallback Triggered:** User receives a standard Push Notification: "Your driver is on the way." |
-| 7:40 PM | Delivered | Trigger **End** API. _Result: No active Live Activity session found._ | **Fallback Triggered:** User receives a standard Push Notification: "Your order has been delivered. Enjoy your meal!" |
+  </Tab>
+</Tabs>
 
 # Step-by-Step Instructions for Using MoEngage Live Activities
 
