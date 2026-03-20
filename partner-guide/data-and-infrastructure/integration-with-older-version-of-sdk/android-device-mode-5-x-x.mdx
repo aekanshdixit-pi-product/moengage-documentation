@@ -48,33 +48,33 @@ Refer to the [Android SDK Configuration](https://developers.moengage.com/hc/en-u
 After adding the dependency, you must register the integration with Segment SDK. To do this, import the MoEngage  
 integration:
 
-Java
-    
-    
-    import com.segment.analytics.android.integrations.moengage.MoEngageIntegration;
+
+```java
+import com.segment.analytics.android.integrations.moengage.MoEngageIntegration;
+```
 
 Add the following line:
 
-Java
-    
-    
-    Analytics analytics = new Analytics.Builder(this, "write_key")
-                    .use(MoEngageIntegration.FACTORY)
-                    .build();
+
+```java
+Analytics analytics = new Analytics.Builder(this, "write_key")
+                .use(MoEngageIntegration.FACTORY)
+                .build();
+```
 
 # How to Initialise MoEngage SDK:
 
 Get Workspace ID from the Settings Page `Dashboard --> Settings --> App --> General` and initialize the MoEngage SDK in the `Application` class's `onCreate()`  
 **_Note: It is recommended that you initialize the SDK on the main thread inside` onCreate()` and not create a worker thread and initialize the SDK on that thread._**
 
-Java
-    
-    
-    // this is the instance of the application class and "XXXXXXXXXXX" is the Workspace ID from the dashboard.
-    MoEngage moEngage = new MoEngage.Builder(this, "XXXXXXXXXXX")
-                .enablePartnerIntegration(IntegrationPartner.SEGMENT)
-                .build();
-    MoEngage.initialise(moEngage);
+
+```java
+// this is the instance of the application class and "XXXXXXXXXXX" is the Workspace ID from the dashboard.
+MoEngage moEngage = new MoEngage.Builder(this, "XXXXXXXXXXX")
+            .enablePartnerIntegration(IntegrationPartner.SEGMENT)
+            .build();
+MoEngage.initialise(moEngage);
+```
 
 # Install/Update Differentiation
 
@@ -83,26 +83,25 @@ a new user for your application, or an existing user who has updated to the late
 
 If the user was already using your application and has just updated to a new version which has MoEngage SDK it is an updated call the below API
 
-Java
-    
-    
-    MoEHelper.getInstance(getApplicationContext()).setAppStatus(AppStatus.UPDATE);
+
+```java
+MoEHelper.getInstance(getApplicationContext()).setAppStatus(AppStatus.UPDATE);
+```
 
 In case it is a fresh install call the below API
 
-Java
-    
-    
-    MoEHelper.getInstance(getApplicationContext()).setAppStatus(AppStatus.INSTALL);
+
+```java
+MoEHelper.getInstance(getApplicationContext()).setAppStatus(AppStatus.INSTALL);
+```
 
 # How To - Push Notifications:
 
 Copy the Server Key from the FCM console and add it to the MoEngage Dashboard(Not sure where to find the Server Key refer to [Getting FCM Server Key](https://developers.moengage.com/hc/en-us/articles/4402838582292)). To upload it, navigate to MoEngage Dashboard --> Settings --> Channel --> Push --> Mobile Push --> Android and add the Server Key and package name.
 
-| warning |  **Warning** Ensure you add the keys both in the Test and Live environment.
-
-| --- | --- |  
-  
+<Warning>
+Ensure you add the keys both in the Test and Live environment.
+</Warning>
 ## Adding meta information for push notification
 
 To show push notifications some metadata regarding the notification is required where the small icon and large icon drawable are the mandatory ones.  
@@ -111,15 +110,15 @@ To show push notifications some metadata regarding the notification is required 
 
 Use the `configureNotificationMetaData()` to pass on the configuration to the SDK.
 
-Java
-    
-    
-    MoEngage moEngage =
-            new MoEngage.Builder(this, "XXXXXXXXXX")
-                .configureNotificationMetaData(new NotificationConfig(R.drawable.small_icon, R.drawable.large_icon))
-                .enablePartnerIntegration(IntegrationPartner.SEGMENT)
-                .build();
-    MoEngage.initialise(moEngage);
+
+```java
+MoEngage moEngage =
+        new MoEngage.Builder(this, "XXXXXXXXXX")
+            .configureNotificationMetaData(new NotificationConfig(R.drawable.small_icon, R.drawable.large_icon))
+            .enablePartnerIntegration(IntegrationPartner.SEGMENT)
+            .build();
+MoEngage.initialise(moEngage);
+```
 
 ## Configuring Firebase Cloud Messaging
 
@@ -138,25 +137,25 @@ By default, MoEngage SDK attempts to register for push token, since your applica
 
 To opt-out of MoEngage's token registration mechanism disable token registration while configuring FCM in the `MoEngage.Builder` as shown below
 
-Java
-    
-    
-    MoEngage moEngage = new MoEngage.Builder(this, "XXXXXXXXXX")
-                .configureNotificationMetaData(new NotificationConfig(R.drawable.small_icon, R.drawable.large_icon, R.color.notiColor, "sound", true, true, true))
-                .configureFcm(FcmConfig(false))
-                .enablePartnerIntegration(IntegrationPartner.SEGMENT)
-                .build();
-    MoEngage.initialise(moEngage);
+
+```java
+MoEngage moEngage = new MoEngage.Builder(this, "XXXXXXXXXX")
+            .configureNotificationMetaData(new NotificationConfig(R.drawable.small_icon, R.drawable.large_icon, R.color.notiColor, "sound", true, true, true))
+            .configureFcm(FcmConfig(false))
+            .enablePartnerIntegration(IntegrationPartner.SEGMENT)
+            .build();
+MoEngage.initialise(moEngage);
+```
 
 ## Pass the Push Token To MoEngage SDK
 
 The Application would need to pass the Push Token received from FCM to the MoEngage SDK for the MoEngage platform to send out push notifications to the device.  
 Use the below API to pass the push token to the MoEngage SDK.
 
-Java
-    
-    
-    MoEFireBaseHelper.getInstance().passPushToken(getApplicationContext(), token);
+
+```java
+MoEFireBaseHelper.getInstance().passPushToken(getApplicationContext(), token);
+```
 
 _Note:_ Please make sure the token is passed to MoEngage SDK whenever the push token is refreshed and on application update. Passing tokens on application updates is important for migration to the MoEngage Platform.
 
@@ -165,27 +164,27 @@ _Note:_ Please make sure the token is passed to MoEngage SDK whenever the push t
 To pass the push payload to the MoEngage SDK call the MoEngage API from the `onMessageReceived()` from the Firebase receiver.  
 Before passing the payload to the MoEngage SDK you should check if the payload is from the MoEngage platform using the helper API provided by the SDK.
 
-Java
-    
-    
-    if (MoEPushHelper.getInstance().isFromMoEngagePlatform(remoteMessage.getData())) &#123;
-      MoEFireBaseHelper.Companion.getInstance().passPushPayload(getApplicationContext(), remoteMessage.getData());
-    &#125;else&#123;
-      // your app's business logic to show notification
-    &#125;
+
+```java
+if (MoEPushHelper.getInstance().isFromMoEngagePlatform(remoteMessage.getData())) &#123;
+  MoEFireBaseHelper.Companion.getInstance().passPushPayload(getApplicationContext(), remoteMessage.getData());
+&#125;else&#123;
+  // your app's business logic to show notification
+&#125;
+```
 
 ## Push Registration and Receiving handled by SDK
 
 Add the below code in your manifest file.
 
-XML
-    
-    
-    &lt;service android:name="com.moengage.firebase.MoEFireBaseMessagingService"&gt;
-     	<intent-filter>
-    		&lt;action android:name="com.google.firebase.MESSAGING_EVENT" /&gt;
-     	</intent-filter>
-    &lt;/service&gt;
+
+```xml
+&lt;service android:name="com.moengage.firebase.MoEFireBaseMessagingService"&gt;
+ 	<intent-filter>
+		&lt;action android:name="com.google.firebase.MESSAGING_EVENT" /&gt;
+ 	</intent-filter>
+&lt;/service&gt;
+```
 
 When MoEngage SDK handles push registration it optionally provides a callback to the Application whenever a new token is registered or token is refreshed.  
 An application can get this callback by implementing `FirebaseEventListener` and registering for a callback in the Application class' `onCreate()` using `MoEFireBaseHelper.getInstance().addEventListener()`  
@@ -197,14 +196,14 @@ An application can get this callback by implementing `FirebaseEventListener` and
 Add the following snippet and replace `[PARENT_ACTIVITY_NAME]` with the name of the parent  
 activity; `[ACTIVITY_NAME]` with the activity name which should be the parent of the Rich Landing Page
 
-XML
-    
-    
-    &lt;activity
-        android:name="com.moe.pushlibrary.activities.MoEActivity"
-        android:label="[ACTIVITY_NAME]"
-        android:parentActivityName="[PARENT_ACTIVITY_NAME]" &gt;
-     &lt;/activity&gt;
+
+```xml
+&lt;activity
+    android:name="com.moe.pushlibrary.activities.MoEActivity"
+    android:label="[ACTIVITY_NAME]"
+    android:parentActivityName="[PARENT_ACTIVITY_NAME]" &gt;
+ &lt;/activity&gt;
+```
 
 You are now all set up to receive push notifications from MoEngage. For more information on features provided in MoEngage Android SDK refer to the following links:
 

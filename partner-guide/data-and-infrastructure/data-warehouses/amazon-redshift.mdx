@@ -12,14 +12,11 @@ The MoEngage and Redshift integration exports Campaign Interaction Events data d
 
 # Integration 
 
-| library_add_check |  **Prerequisites**
-
-  * Ensure you have an Amazon Web Services account with permission to create/edit Redshift clusters, roles, and policies.
+<Info>
+* Ensure you have an Amazon Web Services account with permission to create/edit Redshift clusters, roles, and policies.
   * Optional: To create a new user, you need to have access to create a new user in your Redshift Cluster.
   * Exports to Redshift are part of the Streams add-on. Contact your dedicated MoEngage CSM (customer success manager) to enable it for your account
-
-| --- | --- |  
-  
+</Info>
 ## Step 1: Make sure your Redshift cluster is publicly accessible
 
 Make sure your Redshift Cluster has the "Publicly Accessible" setting turned on.
@@ -38,16 +35,16 @@ In the properties, turn on publicly accessible and then save
 
 We will connect to your Redshift cluster using the credentials you provide. It is recommended to create a new user with limited permissions just for MoEngage. You can also provide an existing user's credentials. To create a new dedicated user, run the below commands in your Redshift cluster:
 
-SQL
-    
-    
-    -- create a new user with a strong password
-    CREATE USER &lt;username&gt; PASSWORD &lt;password&gt;;
-    -- create a new schema where MoEngage will dump data
-    -- you can skip this if you want to use existing schema
-    CREATE SCHEMA IF NOT EXISTS &lt;schema_name&gt;;
-    -- grant create access on the above schema or existing schema
-    GRANT CREATE, USAGE ON SCHEMA &lt;schema_name&gt; TO &lt;username&gt;;
+
+```sql
+-- create a new user with a strong password
+CREATE USER &lt;username&gt; PASSWORD &lt;password&gt;;
+-- create a new schema where MoEngage will dump data
+-- you can skip this if you want to use existing schema
+CREATE SCHEMA IF NOT EXISTS &lt;schema_name&gt;;
+-- grant create access on the above schema or existing schema
+GRANT CREATE, USAGE ON SCHEMA &lt;schema_name&gt; TO &lt;username&gt;;
+```
 
 You can also use an existing schema. MoEngage will create tables in the schema you provide while setting up the connection on the App Marketplace.
 
@@ -63,24 +60,22 @@ From your EC2 Console, under "Network & Security", open the Security Groups page
   2. Select the VPC (by default, it is already selected).
   3. Add a new inbound rule with the following details:
 
-| **Property** | **Value**
-
-| --- | --- |  
-| Type | Redshift  
-| Protocol | TCP  
-| Port range | 5439  
-| Source |  From the dropdown, select **Custom**. In the CIDR block: Depending on your MoEngage Dashboard's data center, you need to enter the corresponding CIDR. Refer to the table below.  
-| Description | Give an optional description.  
+| **Property** | **Value** |
+| --- | --- |
+| Type | Redshift |
+| Protocol | TCP |
+| Port range | 5439 |
+| Source | From the dropdown, select **Custom**. In the CIDR block: Depending on your MoEngage Dashboard's data center, you need to enter the corresponding CIDR. Refer to the table below. |
+| Description | Give an optional description. |
   
 The correct IP address to enter in the "source" field depends on your MoEngage Data Center region:
 
-| **Data Center Region** | **CIDR block**
-
-| --- | --- |  
-| DC-01 | 52.1.205.204/32  
-| DC-02 | 18.195.110.23/32  
-| DC-03 | 3.6.251.95/32  
-| DC-04 | 10.22.3.193/32  
+| **Data Center Region** | **CIDR block** |
+| --- | --- |
+| DC-01 | 52.1.205.204/32 |
+| DC-02 | 18.195.110.23/32 |
+| DC-03 | 3.6.251.95/32 |
+| DC-04 | 10.22.3.193/32 |
   
 You only need to add one inbound rule. For example, if you're based in MoEngage's DC-01 servers, you need to add just the first CIDR block:
 
@@ -120,18 +115,19 @@ You need to create a new IAM Policy that will allow us to transfer data from S3 
   2. On the Create Policy page, switch to the JSON tab and paste the following policy:  
 
 
-JSON
-         
-         &#123;
-             "Version": "2012-10-17",
-             "Statement": [
-                 &#123;
-                     "Sid": "VisualEditor1",
-                     "Effect": "Allow",
-                     "Action": [
-                         "s3:Get*",
-                         "s3:List*"
-                     ],
+
+```json
+&#123;
+    "Version": "2012-10-17",
+    "Statement": [
+        &#123;
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "s3:Get*",
+                "s3:List*"
+            ],
+```
 "Resource": [ "&lt;bucket-arn&gt;",
                                   "&lt;bucket-arn&gt;/*"]
                  &#125;
@@ -407,18 +403,21 @@ We will dump the data at hourly intervals.
 
 # Frequently Asked Questions
 
-arrow_drop_down **How soon will I start getting the data?**
-
+<AccordionGroup>
+<Accordion title="How soon will I start getting the data?">
 It typically takes up to 30 minutes for the automated data exports to be set up for your account and for you to start seeing data there.
+</Accordion>
 
-arrow_drop_down **Can I export additional events at a later time?**
-
+<Accordion title="Can I export additional events at a later time?">
 Yes, if you need to export new events at a later time, you can always edit your configuration on the App Marketplace and get the new events added to your exports.
+</Accordion>
 
-arrow_drop_down **Can I export historical data using Automated Data Exports?**
-
+<Accordion title="Can I export historical data using Automated Data Exports?">
 As of now, you cannot export historical data using Automated Data Exports. Once configured, you will start seeing data for each event from the time you enabled your exports.
+</Accordion>
 
-arrow_drop_down **Is there any pricing involved for Automated Data Exports?**
-
+<Accordion title="Is there any pricing involved for Automated Data Exports?">
 If your billing plan does not cover this already and you need to get this enabled at a later time, you would need to work with your Customer Success Manager to get this included in your billing plan. Based on the amount of data that MoEngage will place in your Data warehouse/Partner/API on a monthly basis, this could lead to additional charges.
+</Accordion>
+</AccordionGroup>
+

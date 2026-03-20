@@ -28,13 +28,10 @@ With the MoEngage and Tableau integration, you can:
 
 # Integration
 
-| library_add_check |  **Prerequisites**
-
-  * You will need access to your Tableau dashboard and have sufficient permissions to add a data source and create reports.
+<Info>
+* You will need access to your Tableau dashboard and have sufficient permissions to add a data source and create reports.
   * You will need to enable [Data Warehouses Exports](https://help.moengage.com/hc/en-us/sections/16100638998804-Data-warehouse) for your account.
-
-| --- | --- |  
-  
+</Info>
 To retrieve Campaign Data from MoEngage, it must be exported to a destination that is compatible with Tableau:
 
   * Snowflake
@@ -93,62 +90,62 @@ All the event attributes will be also stored as part of a JSON column called eve
 
 Tableau does not have native support for changing JSON structures and hence it is recommended to extract the attributes required for computation to make the computation faster. This can be done by creating a view on top of the tables created by MoEngage. Below is an example for a few attributes, but the same can be extended to any of your use cases:
 
-arrow_drop_down  **Snowflake**
-
+<AccordionGroup>
+<Accordion title="Snowflake">
 To create a view in Snowflake, you can use the following command as a base:
 
-SQL
-    
-    
-    CREATE VIEW moe_event_add_to_cart COMMENT='Add to cart' AS  
-    
-          SELECT *,  
-    
-          e.event_attributes['cart_value'] as cart_value,  
-    
-          e.event_attributes['total_items'] as total_items,  
-    
-          e.event_attributes['discount'] as discount,  
-    
-          FROM moe_events_1714216012 AS e WHERE e.event_name = 'Add to cart';
-    
 
-arrow_drop_down  **Redshift**
+```sql
+CREATE VIEW moe_event_add_to_cart COMMENT='Add to cart' AS  
 
+      SELECT *,  
+
+      e.event_attributes['cart_value'] as cart_value,  
+
+      e.event_attributes['total_items'] as total_items,  
+
+      e.event_attributes['discount'] as discount,  
+
+      FROM moe_events_1714216012 AS e WHERE e.event_name = 'Add to cart';
+```
+</Accordion>
+
+<Accordion title="Redshift">
 To create a view in Redshift, you can use the following command as a base:
 
-SQL
-    
-    
-    CREATE VIEW moe_event_add_to_cart AS
-          SELECT *,
-          json_extract_path_text(e.event_attributes, 'cart_value') as cart_value,
-          json_extract_path_text(e.event_attributes, 'total_items') as total_items,
-          json_extract_path_text(e.event_attributes, 'discount') as discount
-          FROM moe_events_1714216012 AS e WHERE e.event_name = 'Add to cart';
-    
 
-arrow_drop_down  **BigQuery**
+```sql
+CREATE VIEW moe_event_add_to_cart AS
+      SELECT *,
+      json_extract_path_text(e.event_attributes, 'cart_value') as cart_value,
+      json_extract_path_text(e.event_attributes, 'total_items') as total_items,
+      json_extract_path_text(e.event_attributes, 'discount') as discount
+      FROM moe_events_1714216012 AS e WHERE e.event_name = 'Add to cart';
+```
+</Accordion>
 
+<Accordion title="BigQuery">
 To create a view in BigQuery, you can use the following command as a base:
 
-SQL
-    
-    
-    CREATE VIEW moe_event_add_to_cart AS
-          SELECT *,
-          JSON_VALUE(e.event_attributes, '$.cart_value') AS cart_value,
-          JSON_VALUE(e.event_attributes, '$.total_items') AS total_items,
-          JSON_VALUE(e.event_attributes, '$.discount') AS discount
-          FROM `moe_events_1714216012` AS e WHERE e.event_name = 'Add to cart';
-    
+
+```sql
+CREATE VIEW moe_event_add_to_cart AS
+      SELECT *,
+      JSON_VALUE(e.event_attributes, '$.cart_value') AS cart_value,
+      JSON_VALUE(e.event_attributes, '$.total_items') AS total_items,
+      JSON_VALUE(e.event_attributes, '$.discount') AS discount
+      FROM `moe_events_1714216012` AS e WHERE e.event_name = 'Add to cart';
+```
+</Accordion>
+</AccordionGroup>
+
 
 ## Step 3: Load the data inside Tableau
 
 After creating various views to analyze necessary events, you have the ability to load these views as a new data source within Tableau:
 
-arrow_drop_down  **Snowflake**
-
+<AccordionGroup>
+<Accordion title="Snowflake">
 To connect your Snowflake database to Tableau:
 
   1. Open Tableau Desktop, and under Connect, select Snowflake.
@@ -175,9 +172,9 @@ To connect your Snowflake database to Tableau:
 
 
 Note: Snowflake as a Data Source is only available on the Tableau Desktop Version. Additional drivers might be required to download.
+</Accordion>
 
-arrow_drop_down  **Redshift**
-
+<Accordion title="Redshift">
 To connect your Redshift database to Tableau:
 
   1. Open Tableau Desktop, and under Connect, select Redshift.
@@ -204,9 +201,9 @@ To connect your Redshift database to Tableau:
 
 
 Note: Redshift as a Data Source is only available on the Tableau Desktop Version. Additional drivers might be required to download.
+</Accordion>
 
-arrow_drop_down  **BigQuery**
-
+<Accordion title="BigQuery">
 To connect your BigQuery database to Tableau:
 
   1. Open Tableau Desktop, and under Connect, select BigQuery.
@@ -230,6 +227,9 @@ To connect your BigQuery database to Tableau:
 
 
 Note: BigQuery as a Data Source is only available on the Tableau Desktop Version. Additional drivers might be required to download.
+</Accordion>
+</AccordionGroup>
+
 
 ## Examples use cases
 

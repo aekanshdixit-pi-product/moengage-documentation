@@ -12,14 +12,14 @@ Integrate the mParticle Android SDK before starting with MoEngage Kit Integratio
 
 Integrating MoEngage SDK using a Version Catalog is the recommended way of integration, refer to the [Configure Version Catalog](https://developers.moengage.com/hc/en-us/articles/4407395989268-Installing-Version-Catalog) document to configure a catalog if not done already. Once you have configured the catalog add the dependency in the _**app/build.gradle**_ file as shown below
 
-build.gradle
-    
-    
-    dependencies &#123;
-        ...
-        implementation("com.moengage:mparticle-android-integration-moengage:$sdkVersion")
-        implementation("com.mparticle:android-kit-base:5.58.3")
-    &#125;
+
+```groovy build.gradle
+dependencies &#123;
+    ...
+    implementation("com.moengage:mparticle-android-integration-moengage:$sdkVersion")
+    implementation("com.mparticle:android-kit-base:5.58.3")
+&#125;
+```
 
 replace $**sdkVersion** with latest kit version
 
@@ -27,12 +27,12 @@ replace $**sdkVersion** with latest kit version
 
 MoEngage SDK depends on the following Jetpack libraries provided by Google for its functioning, make sure you add them if it isn't already present in the application.
 
-build.gradle
-    
-    
-    implementation("androidx.core:core:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("androidx.lifecycle:lifecycle-process:2.7.0")
+
+```groovy build.gradle
+implementation("androidx.core:core:1.13.1")
+implementation("androidx.appcompat:appcompat:1.6.1")
+implementation("androidx.lifecycle:lifecycle-process:2.7.0")
+```
 
 Refer to the [Android SDK Configuration](https://developers.moengage.com/hc/en-us/articles/4401984733972) documentation to know more about the build config and other libraries used by the SDK.
 
@@ -40,38 +40,43 @@ Refer to the [Android SDK Configuration](https://developers.moengage.com/hc/en-u
 
 Get Workspace ID (earlier App ID) from the Settings Page Dashboard --> Settings --> Account --> General and configure the MoEngage SDK in the _Application_ class's _onCreate()_ before initializing the mParticle Kit.
 
-KotlinJava
-    
-    
-    val moEngageBuilder = MoEngage.Builder(this, "WORKSPACE_ID", [YOUR_DATA_CENTER])
-    MoEngage.configureForDefaultInstance(moEngageBuilder, IntegrationPartner.M_PARTICLE)
-    
-    
-    MoEngage.Builder moEngageBuilder = new MoEngage.Builder(this, "WORKSPACE_ID", [YOUR_DATA_CENTER]);
-    MoEngage.configureForDefaultInstance(moEngageBuilder, IntegrationPartner.M_PARTICLE);
+
+<CodeGroup>
+```kotlin Kotlin
+val moEngageBuilder = MoEngage.Builder(this, "WORKSPACE_ID", [YOUR_DATA_CENTER])
+MoEngage.configureForDefaultInstance(moEngageBuilder, IntegrationPartner.M_PARTICLE)
+```
+
+```java Java
+MoEngage.Builder moEngageBuilder = new MoEngage.Builder(this, "WORKSPACE_ID", [YOUR_DATA_CENTER]);
+MoEngage.configureForDefaultInstance(moEngageBuilder, IntegrationPartner.M_PARTICLE);
+```
+</CodeGroup>
 
 ## Add MoEngage SDK to mParticle SDK
 
 MoEngage Kit needs to be added as a kit during initializing the mParticle SDK.
 
-KotlinJava
-    
-    
-    // 1167 is Unique ID for the MoEngage Kit
-    val options = MParticleOptions.builder(this)
-        .credentials("YOU MPARTICLE API KEY", "YOUR MPARTICLE API SECRET")
-        .configuration(KitOptions().addKit(1167, MoEngageKit::class.java))
-        .build()  
-    
-    MParticle.start(options)
-    
-    
-    // 1167 is Unique ID for the MoEngage Kit
-    MParticleOptions options = MParticleOptions.builder(this)
-        .credentials(M_PARTICLE_API_KEY, M_PARTICLE_API_SECRET)
-        .configuration(new KitOptions().addKit(1167, MoEngageKit.class))
-        .build();
-    MParticle.start(options);
+
+<CodeGroup>
+```kotlin Kotlin
+// 1167 is Unique ID for the MoEngage Kit
+val options = MParticleOptions.builder(this)
+    .credentials("YOU MPARTICLE API KEY", "YOUR MPARTICLE API SECRET")
+    .configuration(KitOptions().addKit(1167, MoEngageKit::class.java))
+    .build()  
+MParticle.start(options)
+```
+
+```java Java
+// 1167 is Unique ID for the MoEngage Kit
+MParticleOptions options = MParticleOptions.builder(this)
+    .credentials(M_PARTICLE_API_KEY, M_PARTICLE_API_SECRET)
+    .configuration(new KitOptions().addKit(1167, MoEngageKit.class))
+    .build();
+MParticle.start(options);
+```
+</CodeGroup>
 
 # Exclude MoEngage Storage File from Auto-Backup
 
@@ -90,38 +95,35 @@ Refer to the [Exclude MoEngage Storage File from Auto-Backup](https://developers
 
 Copy the Server Key from the FCM console and add it to the MoEngage Dashboard (Not sure where to find the Server Key refer to [Getting FCM Server Key](https://developers.moengage.com/hc/en-us/articles/4402838582292)). To upload it, navigate to MoEngage Dashboard --> Settings --> Channel --> Push --> Mobile Push --> Android and add the Server Key and package name.
 
-| warning |  **Important** Ensure you add the keys both in the Test and Live environment.
-
-| --- | --- |  
-  
+<Warning>
+Ensure you add the keys both in the Test and Live environment.
+</Warning>
 ## Adding metadata for push notification
 
 Metadata regarding the notification is required to show push notifications where the small icon and large icon drawable are mandatory.
 
 Use the _configureNotificationMetaData()_ to transfer the configuration to the SDK.
 
-Kotlin Java
-    
-    
-    val moEngageBuilder = MoEngage.Builder(this, "WORKSPACE_ID", [YOUR_DATA_CENTER])
-         .configureNotificationMetaData(NotificationConfig(R.drawable.small_icon, R.drawable.large_icon)) 
-          
-    MoEngage.configureForDefaultInstance(moEngageBuilder, IntegrationPartner.M_PARTICLE)
-    
-    
-    
-    MoEngage.Builder moEngageBuilder = new MoEngage.Builder(this, "WORKSPACE_ID", [YOUR_DATA_CENTER])
-        .configureNotificationMetaData(new NotificationConfig(R.drawable.small_icon, R.drawable.large_icon));
-    
-    MoEngage.configureForDefaultInstance(moEngageBuilder, IntegrationPartner.M_PARTICLE);
-    
+
+<CodeGroup>
+```kotlin Kotlin
+val moEngageBuilder = MoEngage.Builder(this, "WORKSPACE_ID", [YOUR_DATA_CENTER])
+     .configureNotificationMetaData(NotificationConfig(R.drawable.small_icon, R.drawable.large_icon)) 
+MoEngage.configureForDefaultInstance(moEngageBuilder, IntegrationPartner.M_PARTICLE)
+```
+
+```java Java
+MoEngage.Builder moEngageBuilder = new MoEngage.Builder(this, "WORKSPACE_ID", [YOUR_DATA_CENTER])
+    .configureNotificationMetaData(new NotificationConfig(R.drawable.small_icon, R.drawable.large_icon));
+MoEngage.configureForDefaultInstance(moEngageBuilder, IntegrationPartner.M_PARTICLE);
+```
+</CodeGroup>
 
 Ensure that the SDK is configured with the metadata in the _onCreate()_ of the Application class for push notifications to work.
 
-| info |  **Notification Small Icon Guidelines** Notification small icon should be flat, pictured face on, and must be white on a transparent background.
-
-| --- | --- |  
-  
+<Info>
+Notification small icon should be flat, pictured face on, and must be white on a transparent background.
+</Info>
 ## Configuring Firebase Cloud Messaging
 
 ### Configuring with mParticle SDK
@@ -188,27 +190,30 @@ This setup must be performed at a specific point in your app's startup sequence:
 
 The best place for this logic is in your **Application's _onCreate()_ method**.
 
-Kotlin Java
-    
-    
-    // In your Application class's onCreate() method
-    // 1. Define the mappings
-    val identitiesMapping: Map&lt;mparticle.identitytype, String&gt; = mapOf()
-    /**
-     * 2. Set the Identity mapping for mParticle and MoEngage
-     * Example Usage: setMappingForIdentity(mapOf(MParticle.IdentityType.Facebook to "u_fb"))
-     */   
-    MoEMParticleHelper.setMappingForIdentity(identitiesMapping)
-    
-    
-    // In your Application class's onCreate() method
-    // 1. Define the mappings
-    Map&lt;MParticle.IdentityType, String&gt; identitiesMapping = Map.of();  
-    /** 
-     * 2. Set the Identity mapping for mParticle and MoEngage
-     * Example Usage: setMappingForIdentity(mapOf(MParticle.IdentityType.Facebook to "u_fb"))
-     */
-    MoEMParticleHelper.INSTANCE.setMappingForIdentity(identitiesMapping);
+
+<CodeGroup>
+```kotlin Kotlin
+// In your Application class's onCreate() method
+// 1. Define the mappings
+val identitiesMapping: Map&lt;mparticle.identitytype, String&gt; = mapOf()
+/**
+ * 2. Set the Identity mapping for mParticle and MoEngage
+ * Example Usage: setMappingForIdentity(mapOf(MParticle.IdentityType.Facebook to "u_fb"))
+ */   
+MoEMParticleHelper.setMappingForIdentity(identitiesMapping)
+```
+
+```java Java
+// In your Application class's onCreate() method
+// 1. Define the mappings
+Map&lt;MParticle.IdentityType, String&gt; identitiesMapping = Map.of();  
+/** 
+ * 2. Set the Identity mapping for mParticle and MoEngage
+ * Example Usage: setMappingForIdentity(mapOf(MParticle.IdentityType.Facebook to "u_fb"))
+ */
+MoEMParticleHelper.INSTANCE.setMappingForIdentity(identitiesMapping);
+```
+</CodeGroup>
 
 ## Event Tracking
 

@@ -30,27 +30,23 @@ With this integration, you can:
 
 # Step-by-Step Integration Guide
 
-| library_add_check |  **Prerequisites**
-
-  * Admin access to Microsoft Power Platform and D365 Sales environment
+<Info>
+* Admin access to Microsoft Power Platform and D365 Sales environment
   * D365 Sales security role with write permissions on Lead, Contact, and Opportunity entities
   * **MoEngage Data Requirement** : MoEngage must send one of the following D365 entity IDs in the `user_attributes` field for proper record matching:
     * `d365_lead_id` (Lead GUID) - for updating Lead records
     * `d365_contact_id` (Contact GUID) - for updating Contact records
     * `d365_opportunity_id` (Opportunity GUID) - for updating Opportunity records
 These identifiers must be synced to MoEngage during the outbound integration (D365 Sales → MoEngage) so that MoEngage can include them when sending events back to D365 Sales. When configuring MoEngage Streams, specify which user properties to export under **"User properties to export"** \- select either "All" or list the specific identifier fields you need (e.g., `d365_lead_id`, `d365_contact_id`).
-
-| --- | --- |  
-  
-| info |  **Accepted Entity Identifiers** Microsoft Dataverse accepts the following primary identifiers for updating records:
+</Info>
+<Info>
+**Accepted Entity Identifiers** Microsoft Dataverse accepts the following primary identifiers for updating records:
 
   * **Primary Key (GUID)** : The unique identifier for each entity (leadid, contactid, opportunityid, etc.)
   * **Alternate Keys** : Custom alternate keys if configured in your D365 environment (e.g., email address as an alternate key for Contacts)
 
 For this integration, we recommend using the **Primary Key (GUID)** as it is guaranteed to be unique and immutable across all D365 environments.
-
-| --- | --- |  
-  
+</Info>
 ## Step 1: Create the HTTP Request Trigger in Power Automate
 
   1. Open [Power Automate](https://flow.microsoft.com/)
@@ -125,9 +121,8 @@ JSON Schema
      "required": ["app_name", "source", "events"]  
     &#125;
 
-| check_circle |  **Save and Get the URL** After adding the schema, click **Save**. Power Automate will generate a unique **HTTP POST URL**. Copy this URL - you'll need it to configure MoEngage Streams later.
-
-| --- | --- |  
+| check_circle | **Save and Get the URL** After adding the schema, click **Save**. Power Automate will generate a unique **HTTP POST URL**. Copy this URL - you'll need it to configure MoEngage Streams later. |
+| --- | --- |
   
 ## Step 2: Apply to Each Event
 
@@ -139,10 +134,9 @@ Since MoEngage can send multiple events in a single request, add an **Apply to e
 
 
 
-| info |  **Note** All subsequent actions will be added **inside** this "Apply to each" loop to process each event from the MoEngage payload.
-
-| --- | --- |  
-  
+<Info>
+All subsequent actions will be added **inside** this "Apply to each" loop to process each event from the MoEngage payload.
+</Info>
 ![](/images/partner_43270355310100.png)
 
 ## Step 3: Create Custom Table and Add Event Records
@@ -151,11 +145,10 @@ For this integration, we have created a custom table called **"MoEngage Event"**
 
 This approach allows you to maintain a complete historical record of all customer interactions, and you can configure this for your desired entities.
 
-| info |  **Creating Your Custom Table in Power Apps** Before configuring the Power Automate action, create a custom table in Power Apps to store MoEngage event data. Create a table with the necessary columns (Event Name, Event Date, Campaign Name, Campaign Channel, Event Code, Event UUID) and add a lookup relationship to your desired entity (Lead, Contact, or Opportunity). **Learn how to create custom tables and add relationships:**  
+<Info>
+**Creating Your Custom Table in Power Apps** Before configuring the Power Automate action, create a custom table in Power Apps to store MoEngage event data. Create a table with the necessary columns (Event Name, Event Date, Campaign Name, Campaign Channel, Event Code, Event UUID) and add a lookup relationship to your desired entity (Lead, Contact, or Opportunity). **Learn how to create custom tables and add relationships:**  
 [Microsoft Power Apps - Create Custom Tables Documentation](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/create-custom-entity)
-
-| --- | --- |  
-  
+</Info>
 ### Add Dataverse Action to Create Event Records
 
   1. Add a **Microsoft Dataverse** action (inside the Apply to each loop)
@@ -180,7 +173,8 @@ Field Name
 | **Event Name** | Click the field → Click **/** → Select from dynamic content list | Select **event_name** from the dynamic content picker  
 ![](/images/partner_43271000194580.png)
 
-| info |  **Using Dynamic Content vs Expressions** **For most fields** (Event Name, Campaign Name, Event Code, Event UUID, etc.):
+<Info>
+**Using Dynamic Content vs Expressions** **For most fields** (Event Name, Campaign Name, Event Code, Event UUID, etc.):
 
   * Click in the field and type **/** or click the lightning bolt icon
   * Select the appropriate value from the dynamic content picker
@@ -188,9 +182,7 @@ Field Name
 **For Lookup fields :**
 
   * **Only for the lookup field (eg: Lead)** : Click the field → Enter: /leads(&#123;&#123;Type / and select the id&#125;&#125;)
-
-| --- | --- |  
-  
+</Info>
 ## Step 4: Convert Unix Timestamp to DateTime
 
 MoEngage sends event timestamps as Unix epoch time (e.g., 1731421200). You need to convert this to a D365-compatible datetime format when mapping to date/time fields.
@@ -218,39 +210,39 @@ Expression
 
 #### Sample Test Payload
 
-JSON
-    
-    
+
+```json
+&#123;
+  "app_name": "App Name",
+  "source": "MOENGAGE",
+  "moe_request_id": "test_request_12345",
+  "events": [
     &#123;
-      "app_name": "App Name",
-      "source": "MOENGAGE",
-      "moe_request_id": "test_request_12345",
-      "events": [
-        &#123;
-          "event_name": "Email Opened",
-          "event_code": "37930333",
-          "event_uuid": "moe_unique_event_id_001",
-          "event_time": 1731421200,
-          "event_type": "CAMPAIGN_EVENT",
-          "event_source": "MOENGAGE",
-          "email_id": "test@example.com",
-          "uid": "moe_customer_123",
-          "event_attributes": &#123;
-            "campaign_id": "q4_nurture_series_001",
-            "campaign_name": "Q4 Nurture Series",
-            "campaign_type": "General",
-            "campaign_channel": "Email"
-          &#125;,
-          "user_attributes": &#123;
-            "moengage_user_id": "moe_internal_user_id",
-            "d365_lead_id": "×"
-          &#125;,
-          "device_attributes": &#123;
-            "moengage_device_id": "moe_internal_device_id"
-          &#125;
-        &#125;
-      ]
+      "event_name": "Email Opened",
+      "event_code": "37930333",
+      "event_uuid": "moe_unique_event_id_001",
+      "event_time": 1731421200,
+      "event_type": "CAMPAIGN_EVENT",
+      "event_source": "MOENGAGE",
+      "email_id": "test@example.com",
+      "uid": "moe_customer_123",
+      "event_attributes": &#123;
+        "campaign_id": "q4_nurture_series_001",
+        "campaign_name": "Q4 Nurture Series",
+        "campaign_type": "General",
+        "campaign_channel": "Email"
+      &#125;,
+      "user_attributes": &#123;
+        "moengage_user_id": "moe_internal_user_id",
+        "d365_lead_id": "×"
+      &#125;,
+      "device_attributes": &#123;
+        "moengage_device_id": "moe_internal_device_id"
+      &#125;
     &#125;
+  ]
+&#125;
+```
 
 ### Verification Steps
 
@@ -266,10 +258,10 @@ JSON
 
 Once you have successfully tested the integration, enable MoEngage Streams to start sending real-time event data to your Power Automate webhook.
 
-| info |  **Configure MoEngage Streams**
+<Info>
+**Configure MoEngage Streams**
 
   1. Copy the **HTTP POST URL** from Step 1 (your Power Automate webhook URL)
   2. Follow the official MoEngage Streams documentation to enable and configure the stream:  
 [MoEngage Streams Documentation →](https://developers.moengage.com/hc/en-us/articles/4952761690644-MoEngage-Streams#01H7YXY47G6F01SR4CZVRYYM31)
-
-| --- | --- |
+</Info>
