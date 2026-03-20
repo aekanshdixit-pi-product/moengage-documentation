@@ -7,7 +7,9 @@ title: "How to Avoid Common Push Notification Issues on iOS Devices Using iOS Ob
 Common issues with Push notifications, including Push Campaign impressions not being tracked and images not rendering even though Push notifications are successfully delivered to device with Objective C version 7.x.x.
 
 <Info>
-- For Push Campaign impressions to be tracked, verify that the **Show iOS impressions** toggle on the MoEngage dashboard is turned on. <img alt="iOS imp.png" src="/images/moengage_4305e1.png" />
+  For Push Campaign impressions to be tracked, verify that the **Show iOS impressions** toggle on the MoEngage dashboard is turned on.
+
+   <img alt="iOS imp.png" src="/images/moengage_4305e1.png" />
 </Info>
 
 ## Solution
@@ -15,79 +17,74 @@ Common issues with Push notifications, including Push Campaign impressions not b
 Perform the following steps:
 
 1. **Check for app\_group\_id in your project’s main target for each configuration**:
-
    You can add the same app\_group\_id or different ones across configurations.
-
    <Info>
-   Issues may arise if your configurations use different Bundle Identifiers but share the same app\_group\_id. Specifically, the Notification Service Extension may fail if two apps with different Bundle Identifiers but the same app\_group\_id are installed on the same device.
-
-   To avoid this, you can use the same app\_group\_id across multiple configurations, but be aware that you won't be able to test all apps simultaneously on a single device.
+     Issues may arise if your configurations use different Bundle Identifiers but share the same app\_group\_id. Specifically, the Notification Service Extension may fail if two apps with different Bundle Identifiers but the same app\_group\_id are installed on the same device.
+     To avoid this, you can use the same app\_group\_id across multiple configurations, but be aware that you won't be able to test all apps simultaneously on a single device.
    </Info>
-
-   <img alt="app group.png" src="/images/moengage_673da2.png" />
-2. **Check for app\_group\_id during SDK initialization**:  
+   ![app group.png](/images/moengage_673da2.png)
+2. **Check for app\_group\_id during SDK initialization**:
    - If the SDK is initialized using info.plist, the APP\_GROUP\_ID key must be there inside the MoEngage key in your info.plist file.
-   - If the SDK is initialized using sdkConfig, the APP\_GROUP\_ID must be in the sdkConfig variable inside the AppDelegate file.  
-   **app\_group\_id in info.plist:** <img alt="app id.png" src="/images/moengage_93f26b.png" />   
-
+   - If the SDK is initialized using sdkConfig, the APP\_GROUP\_ID must be in the sdkConfig variable inside the AppDelegate file.\
+     **app\_group\_id in info.plist:**
+      <img alt="app id.png" src="/images/moengage_93f26b.png" />
    **app\_group\_id in sdkConfig variable:**
-
-   Objective-C
-
-   ```swift
-   MOSDKConfig\* sdkConfig = [[MOSDKConfig alloc] initWithAppID: @"XXXXXXXXXXXXXXXX"];
-   sdkConfig.moeDataCenter = DATA\_CENTER\_0X;
+   ```objective-c Objective-C
+   MOSDKConfig* sdkConfig = [[MOSDKConfig alloc] initWithAppID: @"XXXXXXXXXXXXXXXX"];
+   sdkConfig.moeDataCenter = DATA_CENTER_0X;
    sdkConfig.appGroupID = @"group.com.XXXXXXXXXXXXXXXX";
    //if SDK initialized without sdkConfig in AppDelegate file
    [MoEngage setAppGroupID: @"group.com.XXXXXXXXXXXXXXXX"];
    ```
-3. **Check for a Notification Service Extension Target**:  
-   - **Enable Push Notifications**: In the extension target's Signing & Capabilities section, make sure to enable Push Notifications and add the AppGroupId. <img alt="enable.png" src="/images/moengage_9707f2.png" />
+3. **Check for a Notification Service Extension Target**:
+   - **Enable Push Notifications**: In the extension target's Signing & Capabilities section, make sure to enable Push Notifications and add the AppGroupId.
+      <img alt="enable.png" src="/images/moengage_9707f2.png" />
    - **Align the Minimum Deployment iOS Version**: Ensure that the minimum deployment iOS version of the Notification Service Extension matches the iOS version of the main app. <img alt="support.png" src="/images/moengage_2b0134.png" />
 4. Integrate the MORichNotification framework into the Notification Service Extension target.
-
-   Objective-C
-
-   ```swift
+   ```objective-c Objective-C
    target 'MoEngageDemo' do
-   use\_frameworks!
-   pod 'MoEngage-iOS-SDK'
+     use_frameworks!
+     pod 'MoEngage-iOS-SDK'
    end
    target 'MoEngageNotificationService' do
-   use\_frameworks! #use use\_frameworks only if included in main target as in above scenario
-   pod 'MORichNotification'
+     use_frameworks! #use use_frameworks only if included in main target as in above scenario
+     pod 'MORichNotification'
    end
    ```
-5. NotificationService.m file looks like this:  
-
-   Objective-C
-
-   ```swift
+5. NotificationService.m file looks like this:
+   ```swift Objective-C
    #import "NotificationService.h"
-   #import
+   #import 
    @interface NotificationService ()
-   @property (nonatomic, strong) void (^contentHandler)(UNNotificationContent \*contentToDeliver);
-   @property (nonatomic, strong) UNMutableNotificationContent \*bestAttemptContent;
+    
+   @property (nonatomic, strong) void (^contentHandler)(UNNotificationContent *contentToDeliver);
+   @property (nonatomic, strong) UNMutableNotificationContent *bestAttemptContent;
+    
    @end
+    
    @implementation NotificationService
-   - (void)didReceiveNotificationRequest:(UNNotificationRequest \*)request withContentHandler:(void (^)(UNNotificationContent \* \_Nonnull))contentHandler {
-   @try {
-   [MORichNotification setAppGroupID: @"group.com.XXXXXXXXXXXXXXXX"];
-   self.contentHandler = contentHandler;
-   self.bestAttemptContent = [request.content mutableCopy];
-   [MORichNotification handleRichNotificationRequest:request withContentHandler:contentHandler];
-   } @catch (NSException \*exception) {
-   NSLog(@"MoEngage : exception : %@",exception);
-   }
+    
+   - (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler {
+       @try {
+         	[MORichNotification setAppGroupID: @"group.com.XXXXXXXXXXXXXXXX"];
+           self.contentHandler = contentHandler;
+           self.bestAttemptContent = [request.content mutableCopy];
+           [MORichNotification handleRichNotificationRequest:request withContentHandler:contentHandler];
+       } @catch (NSException *exception) {
+           NSLog(@"MoEngage : exception : %@",exception);
+       }
    }
    /// Save the image to disk
    - (void)serviceExtensionTimeWillExpire {
-   // Called just before the extension will be terminated by the system.
-   // Use this as an opportunity to deliver your "best attempt" at modified content, otherwise the original push payload will be used.
-   self.contentHandler(self.bestAttemptContent);
+       // Called just before the extension will be terminated by the system.
+       // Use this as an opportunity to deliver your "best attempt" at modified content, otherwise the original push payload will be used.
+       self.contentHandler(self.bestAttemptContent);
    }
    @end
    ```
-6. **Check Build Phases for the Main App Target**: In the Build Phases section of the main app target, locate the Embed App Extensions / Embed Foundation Extensions section. Ensure that the **Copy only when installing** option is unchecked. <img alt="copy.png" src="/images/moengage_31c681.png" />
+6. **Check Build Phases for the Main App Target**: In the Build Phases section of the main app target, locate the Embed App Extensions / Embed Foundation Extensions section. Ensure that the **Copy only when installing** option is unchecked.
+    <img alt="copy.png" src="/images/moengage_31c681.png" />
 7. **Ensure Consistent appGroupId Across Configurations**: Verify that the appGroupId is consistent across all schemes and configurations (e.g. Debug/Release/QA/UAT) in the project.
-8. **Align Build Configuration**: When running or archiving the project, ensure that the Build Configuration for the Main Target and Notification Service Extension Target points to the same scheme/configuration. <img alt="run.png" src="/images/moengage_54f991.png" /> <img alt="build.png" src="/images/moengage_c35886.png" />
+8. **Align Build Configuration**: When running or archiving the project, ensure that the Build Configuration for the Main Target and Notification Service Extension Target points to the same scheme/configuration.
+    <img alt="run.png" src="/images/moengage_54f991.png" />
+    <img alt="build.png" src="/images/moengage_c35886.png" />
