@@ -155,46 +155,44 @@ MoEngage supports importing data from CSV and JSON files. Your files must adhere
     - [Import Anonymous Users Sample File](https://app-cdn.moengage.com/partners-integration-ui/app-marketplace-public/helpdoc/anonymous_user_data.json)
     - [Import Events Sample File](https://app-cdn.moengage.com/partners-integration-ui/app-marketplace-public/helpdoc/sample_event.json)
     - [Sample Manifest/Mapping File](https://app-cdn.moengage.com/partners-integration-ui/app-marketplace-public/helpdoc/upload_mapping.json)
-  
-  #### File Structure and Mapping JSON Levels
 
-When you upload or select a JSON file, MoEngage generates a flattened, tabular preview of the data. This preview will represent keys up to two levels deep (root level \+ one nested level) as distinct columns:
+    #### File Structure and Mapping JSON Levels
 
-JSON
+    When you upload or select a JSON file, MoEngage generates a flattened, tabular preview of the data. This preview will represent keys up to two levels deep (root level \+ one nested level) as distinct columns:
 
-```json
-{
-Level 1 "item-id": 123,
-Level 1 "item-type": "books",
-Level 1 "item-cost": {
-Level 2     "amount": {
-Level 3        "cost-price": 100,
-Level 3        "discount": 0
-},
-Level 2     "currency": "USD"
-}
-}
-```
+    JSON
 
-#### Mapping Capabilities
+    ```json
+    {
+    Level 1 "item-id": 123,
+    Level 1 "item-type": "books",
+    Level 1 "item-cost": {
+    Level 2     "amount": {
+    Level 3        "cost-price": 100,
+    Level 3        "discount": 0
+    },
+    Level 2     "currency": "USD"
+    }
+    }
+    ```
 
-- **Mapping Primitive Keys**: You can map any primitive key from Level 1 or Level 2 directly to a standard MoEngage attribute.
-- **Mapping Entire Objects or Arrays of Objects**: You can map a complete JSON object or an array of objects to a single MoEngage attribute of type "Object" or "Array of Objects" respectively. When an entire object is mapped, its internal structure and all its nested keys are preserved and imported. It is not possible to rename these keys within MoEngage.
-- **Cherry-Picking Fields**: If you only want to map specific primitive fields from an object (up to Level 2) and not the entire parent object, you must skip the parent object attribute in the mapping table, and then map its individual nested primitive keys.
-- **Manifest Files**: You can use manifest files to automate your JSON key mappings. The manifest file will reference the flattened JSON paths (for example.,`"column": "user\_profile.id"`)
+    #### Mapping Capabilities
 
-#### Map Limitations
+    - **Mapping Primitive Keys**: You can map any primitive key from Level 1 or Level 2 directly to a standard MoEngage attribute.
+    - **Mapping Entire Objects or Arrays of Objects**: You can map a complete JSON object or an array of objects to a single MoEngage attribute of type "Object" or "Array of Objects" respectively. When an entire object is mapped, its internal structure and all its nested keys are preserved and imported. It is not possible to rename these keys within MoEngage.
+    - **Cherry-Picking Fields**: If you only want to map specific primitive fields from an object (up to Level 2) and not the entire parent object, you must skip the parent object attribute in the mapping table, and then map its individual nested primitive keys.
+    - **Manifest Files**: You can use manifest files to automate your JSON key mappings. The manifest file will reference the flattened JSON paths (for example.,`"column": "user\_profile.id"`)
 
-**Level-2 Keys within an Array of Objects**: You cannot directly map individual Level 2 keys that are nested within an array of objects. You can map the entire array of objects to an "Array of Objects" attribute, which imports its full nested structure.
+    #### Map Limitations
 
-#### Behavior during the data ingestion
+    **Level-2 Keys within an Array of Objects**: You cannot directly map individual Level 2 keys that are nested within an array of objects. You can map the entire array of objects to an "Array of Objects" attribute, which imports its full nested structure.
 
-- **Null or Blank Strings**: If a mapped key's value in your JSON file is null or an empty string, MoEngage will skip it and not update the corresponding data.
-- **Unmapped/Skipped Keys**: Any additional keys in your JSON file that are neither explicitly mapped nor marked as skipped will be ignored and will not be ingested into MoEngage during the import process.
+    #### Behavior during the data ingestion
 
-</Tab>
+    - **Null or Blank Strings**: If a mapped key's value in your JSON file is null or an empty string, MoEngage will skip it and not update the corresponding data.
+    - **Unmapped/Skipped Keys**: Any additional keys in your JSON file that are neither explicitly mapped nor marked as skipped will be ignored and will not be ingested into MoEngage during the import process.
+  </Tab>
 </Tabs>
-
 
 For each type of import, MoEngage requires you to have a column that can be mapped to a mandatory attribute:
 
@@ -210,87 +208,88 @@ For each type of import, MoEngage requires you to have a column that can be mapp
 
 A manifest file contains mappings between the source column and a MoEngage Attribute. It also contains the data type of the column. This file must be in JSON format. An example of a manifest file is shown below. Using the MoEngage Dashboard, you can map the columns in your CSV or JSON files to attributes inside MoEngage. Or optionally, you can also choose to upload a manifest file.
 
-CSV Files JSON Files
-
-JSON
+<Tabs>
+  <Tab title="CSV Files">
+  ```json
+{
+"mapping": [
+  {
+   "column": "ID",
+   "moe_attr": "uid",
+   "type": "string",
+   "is_skipped": false
+ },
+{
+   "column": "First Name",
+   "moe_attr": "u_fn",
+   "type": "string",
+   "is_skipped": false
+ },
+{
+   "column": "First Seen",
+   "moe_attr": "cr_t",
+   "type": "datetime",
+   "datetime_format": "YYYY-MM-DD hh:mm:ss",
+   "is_skipped": false
+ },
+{
+   "column": "LTV",
+   "moe_attr": "t_rev",
+   "type": "double",
+   "is_skipped": false
+ },
+{
+   "column": "Install Status",
+   "moe_attr": "installed",
+   "type": "bool",
+   "is_skipped": false
+ }
+]
+}
+```
+  </Tab>
+  <Tab title="JSON Files">
 
 ```json
 {
 "mapping": [
+   {
+   "column": "customer_id",
+   "moe_attr": "uid",
+   "type": "string",
+   "is_skipped": false
+ },
 {
-"column": "ID",
-"moe\_attr": "uid",
-"type": "string",
-"is\_skipped": false
+   "column": "user.first_name",
+   "moe_attr": "u_fn",
+   "type": "string",
+   "is_skipped": false
+ },
+{
+   "column": "user.first_seen",
+   "moe_attr": "cr_t",
+   "type": "datetime",
+   "datetime_format": "YYYY-MM-DD hh:mm:ss",
+   "is_skipped": false
 },
 {
-"column": "First Name",
-"moe\_attr": "u\_fn",
-"type": "string",
-"is\_skipped": false
-},
+   "column": "attribution.lifetime_value",
+   "moe_attr": "t_rev",
+   "type": "double",
+   "is_skipped": false
+ },
 {
-"column": "First Seen",
-"moe\_attr": "cr\_t",
-"type": "datetime",
-"datetime\_format": "YYYY-MM-DD hh:mm:ss",
-"is\_skipped": false
-},
-{
-"column": "LTV",
-"moe\_attr": "t\_rev",
-"type": "double",
-"is\_skipped": false
-},
-{
-"column": "Install Status",
-"moe\_attr": "installed",
-"type": "bool",
-"is\_skipped": false
-}
+   "column": "attribution.device_installed",
+   "moe_attr": "installed",
+   "type": "bool",
+   "is_skipped": false
+ }
 ]
 }
 ```
+  </Tab>
+</Tabs>
 
-JSON
-
-```json
-{
-"mapping": [
-{
-"column": "customer\_id",
-"moe\_attr": "uid",
-"type": "string",
-"is\_skipped": false
-},
-{
-"column": "user.first\_name",
-"moe\_attr": "u\_fn",
-"type": "string",
-"is\_skipped": false
-},
-{
-"column": "user.first\_seen",
-"moe\_attr": "cr\_t",
-"type": "datetime",
-"datetime\_format": "YYYY-MM-DD hh:mm:ss",
-"is\_skipped": false
-},
-{
-"column": "attribution.lifetime\_value",
-"moe\_attr": "t\_rev",
-"type": "double",
-"is\_skipped": false
-},
-{
-"column": "attribution.device\_installed",
-"moe\_attr": "installed",
-"type": "bool",
-"is\_skipped": false
-}
-]
-}
-```
 
 For each column, you must mention the following fields:
 
