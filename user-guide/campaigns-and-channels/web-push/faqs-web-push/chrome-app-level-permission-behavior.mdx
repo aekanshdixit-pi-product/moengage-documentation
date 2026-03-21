@@ -10,41 +10,41 @@ Web push subscribers were observed to be going down for most of the websites, in
 
 The following was observed:
 
-- - - Drop in web push subscriber count.
+- Drop in web push subscriber count.
 
-- - - Push tokens are sometimes marked "Not Registered" by FCM incorrectly, leading to increased sending failures.
-    - A high volume of "Unsubscribed to web push" events on specific dates.
+- Push tokens are sometimes marked "Not Registered" by FCM incorrectly, leading to increased sending failures.
+- A high volume of "Unsubscribed to web push" events on specific dates.
 
 # Why is this happening?
 
-- - - It has been reported by multiple other websites as well.
-    - As a part of the [Chromium 109.0.5414.22 Release](https://www.gitclear.com/open_repos/chromium/chromium/release/109.0.5414.22), there was a  [change related to app-level permission.](https://github.com/chromium/chromium/commit/a14acf5afd8b6d024003d8ad29e3740703d399b8)
-    - This means that if the Chrome browser does not have permission on the user's device to send notifications (App-level permission), even if the users accept permission on the website (site-level permission), the browser will invalidate the push token after a 3-day grace period.
+- It has been reported by multiple other websites as well.
+- As a part of the [Chromium 109.0.5414.22 Release](https://www.gitclear.com/open_repos/chromium/chromium/release/109.0.5414.22), there was a  [change related to app-level permission.](https://github.com/chromium/chromium/commit/a14acf5afd8b6d024003d8ad29e3740703d399b8)
+- This means that if the Chrome browser does not have permission on the user's device to send notifications (App-level permission), even if the users accept permission on the website (site-level permission), the browser will invalidate the push token after a 3-day grace period.
 
 # What is the user behavior now on the new system?
 
-- - - For new users to your website, if the App-level permission is turned off, it will block the "Hard ask" from being displayed to give site-level permission.
-    - For existing users with site-level permission, if the user opens the site after app-level permission is turned off, the browser will invalidate the push token after a 3-day grace period.
-    - If the user gets back on the site again after three days, the following will happen:
+- For new users to your website, if the App-level permission is turned off, it will block the "Hard ask" from being displayed to give site-level permission.
+- For existing users with site-level permission, if the user opens the site after app-level permission is turned off, the browser will invalidate the push token after a 3-day grace period.
+- If the user gets back on the site again after three days, the following will happen:
 
-      - - - MoEngage Web SDK will trigger the "Unsubscribed to web push" event.
-          - MoEngage Web SDK will remove the Web Push token for that user.
-          - Chrome will set the browser permission is set to "Ask" or "Blocked".
-          - If the user does not return to the site after three days, and you attempt a notification to this device, you may get a "Not registered" failure. There is no specific documentation for this behavior in Chromium of FCM documentation, and sometimes it may take longer for "not registered" failure to appear for such cases. Till this happens, the notification will be marked as successfully sent and delivered for this customer.
-          - At this point, Chrome does not allow a website to read Chrome's app-level permission; hence MoEngage cannot proactively:
+    - MoEngage Web SDK will trigger the "Unsubscribed to web push" event.
+    - MoEngage Web SDK will remove the Web Push token for that user.
+    - Chrome will set the browser permission is set to "Ask" or "Blocked".
+    - If the user does not return to the site after three days, and you attempt a notification to this device, you may get a "Not registered" failure. There is no specific documentation for this behavior in Chromium of FCM documentation, and sometimes it may take longer for "not registered" failure to appear for such cases. Till this happens, the notification will be marked as successfully sent and delivered for this customer.
+    - At this point, Chrome does not allow a website to read Chrome's app-level permission; hence MoEngage cannot proactively:
 
-            - - - Reset the site-level permission
-                - Nudge the user to enable app-level permission
-                - Track device level permission as a reason to mark unsubscription reason
-                - Show soft-ask now
+            - Reset the site-level permission
+            - Nudge the user to enable app-level permission
+            - Track device level permission as a reason to mark unsubscription reason
+            - Show soft-ask now
 
 # Is this rolled out for my users?
 
 The impact depends on how many of your users are on the new system:
 
-- - - They must be on Chrome 110 and above.
-    - This is an incremental rollout; even for users on the latest Chrome version, this change may have yet to be rolled out, depending on their geography.
-    - So far, we have seen that this impacts different accounts differently, and there are release dates where Chrome rolls out this change for a chunk of users. We have observed one or more "Peak instances" for accounts where many unsubscribers were seen on that day, and thus, the overall unsubscription rate increased slightly.
+- They must be on Chrome 110 and above.
+- This is an incremental rollout; even for users on the latest Chrome version, this change may have yet to be rolled out, depending on their geography.
+- So far, we have seen that this impacts different accounts differently, and there are release dates where Chrome rolls out this change for a chunk of users. We have observed one or more "Peak instances" for accounts where many unsubscribers were seen on that day, and thus, the overall unsubscription rate increased slightly.
 
 *The typical day-wise split of unsubscriptions for any account in the last six months is shown below. Note that this data may vary from account to account.*
 
@@ -54,9 +54,9 @@ The impact depends on how many of your users are on the new system:
 
 These are only general observations, and the account-to-account behavior may differ.
 
-- - - **Web push subscribers would drop roughly 30%** after the "Peak instance(s)".
-    - For push campaigns for the web platform only, the sent count and impression count may decrease; the **delivery rate will roughly remain the same.**
-    - Since this only affects the devices where the app-level permission is turned off, this only affects users who could not see notifications in the first place; this does not affect the engagement you receive from the campaigns. You may observe **your CTR go up.**
-    - This does not affect push reachability for Android or iOS platforms or tracking of user data on the web.
+- **Web push subscribers would drop roughly 30%** after the "Peak instance(s)".
+- For push campaigns for the web platform only, the sent count and impression count may decrease; the **delivery rate will roughly remain the same.**
+- Since this only affects the devices where the app-level permission is turned off, this only affects users who could not see notifications in the first place; this does not affect the engagement you receive from the campaigns. You may observe **your CTR go up.**
+- This does not affect push reachability for Android or iOS platforms or tracking of user data on the web.
 
 We have reached out to the Chromium developer team regarding this change. They are still observing the feature, have seen issues with the recent release, and will be making changes to it from now on. This will be an iterative change from the Chromium team, and you may see more changes concerning how site-level and app-level permission work in tandem.
