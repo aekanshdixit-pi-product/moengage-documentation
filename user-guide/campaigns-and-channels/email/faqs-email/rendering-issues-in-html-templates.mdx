@@ -12,9 +12,9 @@ By default, the Gmail Android app turns on auto-fit email messages. Gmail automa
 
 Turn off this setting to ensure that the mobile preview is used. To turn it off, do the following:
 
-1. 1. 1. Navigate to the Gmail app.
-      2. Tap the menu icon on the top left.
-      3. Tap General Settings and uncheck the Auto-fit Email Messages option.
+1. Navigate to the Gmail app.
+2. Tap the menu icon on the top left.
+3. Tap General Settings and uncheck the Auto-fit Email Messages option.
 
 If images are pixelated even though they've been added to the template using the image URL option during Email campaign creation, Auto-fit Email Messages could be causing the issue. MoEngage does not process the images in this option. Turn off the Auto-Fit Email Messages option to ensure that the image renders fine.
 
@@ -22,19 +22,18 @@ If images are pixelated even though they've been added to the template using the
 
 The Gmail client can show clipping messages for many reasons, some of which are listed below:
 
-- - 1. The size of the email template is large. We recommend limiting the size of the template to within 90KB.
-    2. Gmail may display the text “Message has been clipped" without actually clipping the message if the following characters are present in the email:
-
-       1. - Non-ASCII characters such as the copyright symbol ©, registered symbol ®, trademark symbol ™
-          - Some HTML entities, such as the ones added for whitespace (nbsp), can cause clipping issues. An HTML entity is of the format *&\<entity\_code\>, and* the ones listed below may cause email clipping:
-            - - - -   - non-breaking space (in a few cases)
-                  - &copy; - ©copyright
-                  - &reg; - ®registered trademark
-                  - &yen; - ¥ yen
-                  - &pound; - £ pound
-                  - &cent; - ¢ cent
-          - We recommend that you inspect the HTML template code and remove the above-mentioned entities from it to ensure that clipping doesn't happen. For example, if you find trailing * * at the end or beginning of the template or any * * used in between the content(or tags) to add a white space like *Hello User* in the template, remove it. Replace *Hello User* with *Hello User* and resend the email.
-    3. If you observe clipping in test emails, this might be because they have the same subject line. Gmail often combines, or "threads," emails with the same subject line into a single email in your inbox. If you send several test emails for the same campaign, this may lead to the message becoming so large that Gmail clips it. However, for testing purposes, you can change the subject line or delete the previous test emails in your inbox and then send the test email again.
+1. The size of the email template is large. We recommend limiting the size of the template to within 90KB.
+2. Gmail may display the text “Message has been clipped" without actually clipping the message if the following characters are present in the email:
+   - Non-ASCII characters such as the copyright symbol ©, registered symbol ®, trademark symbol ™
+   - Some HTML entities, such as the ones added for whitespace (nbsp), can cause clipping issues. An HTML entity is of the format `&<entity_code>,` and the ones listed below may cause email clipping:
+     - `&nbsp;` - non-breaking space (in a few cases)
+     - `&copy;` - ©copyright
+     - `&reg;` - ®registered trademark
+     - `&yen;` - ¥ yen
+     - `&pound;` - £ pound
+     - `&cent;` - ¢ cent
+   - We recommend that you inspect the HTML template code and remove the above-mentioned entities from it to ensure that clipping doesn't happen. For example, if you find trailing `&nbsp;` at the end or beginning of the template or any `&nbsp;` used in between the content(or tags) to add a white space like `Hello&nbsp;User` in the template, remove it. Replace `Hello&nbsp;User` with _Hello User_ and resend the email.
+3. If you observe clipping in test emails, this might be because they have the same subject line. Gmail often combines, or "threads," emails with the same subject line into a single email in your inbox. If you send several test emails for the same campaign, this may lead to the message becoming so large that Gmail clips it. However, for testing purposes, you can change the subject line or delete the previous test emails in your inbox and then send the test email again.
 
 # Blank Preview for Emails
 
@@ -48,35 +47,38 @@ HTML editors move the JINJA code away from the table to the top if you place the
 
 Let's say you want to render the names of the products in a table in each row. The below syntax will fail to render correctly in the HTML editor.
 
-HTML
+<CodeGroup>
 
-```
-
-<% for item in items %>|  |
-| --- |
-| {{item.name}} |
+```html HTML wrap
+<table>
+<% for item in items %>
+<tr><td>{{item.name}}</td></tr>
 <% endfor %>
-
+</table>
 ```
+
+</CodeGroup>
 
 The right way to render a table using the JINJA value is to include a dummy row with JINJA syntax. A dummy row is usually written by using the display property as None.
 
-HTML
+<CodeGroup>
 
-```|{% JINJA CODE %}
-|  |
+```html HTML wrap
+<tr style="display:none;">{% JINJA CODE %}</td></tr>
 ```
+
+</CodeGroup>
 
 Using the above code, we can now try to render the table correctly by putting the JINJA code in the dummy row.
 
-HTML
+<CodeGroup>
 
+```text HTML
+<table>
+<tr style="display:none;"><td><% for item in items %></td></tr>
+<tr><td>{{item.name}}</td></tr>
+<tr style="display:none;"><td><% endfor %></td></tr>
+</table>
 ```
 
-|  |
-| --- |
-| <% for item in items %> |
-| {{item.name}} |
-| <% endfor %> |
-
-```
+</CodeGroup>
