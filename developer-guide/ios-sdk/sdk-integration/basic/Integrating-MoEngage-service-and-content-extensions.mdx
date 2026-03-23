@@ -117,8 +117,8 @@ If you require rich content or templates, integrate the `MoEngageRichNotificatio
     2. Run pod install:
 
     ```ruby lines wrap
-    pod repo update
-    pod install
+     pod repo update
+     pod install
     ```
   </Tab>
 </Tabs>
@@ -128,19 +128,43 @@ If you require rich content or templates, integrate the `MoEngageRichNotificatio
 Automate the extension configuration by adding a custom script to your build process.
 
 1. In your application target, add a **New Run Script Phase**.
+   <Info>
+     If you have already added a script phase and configured the input files, you can simply update the run command as described in Step 3.
+   </Info>
+
+<Frame>
+  <img
+    src="/images/newrunscriptphase.png"
+    alt="Newrunscriptphase"
+    title="Newrunscriptphase"
+    style={{ width:"51%" }}
+  />
+</Frame>
+
 2. Add the following paths to the **Input Files** section:
-   - `$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)`
-   - `$(INSTALL_DIR)/$(INFOPLIST_PATH)`
+
+- `$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)`
+- `$(INSTALL_DIR)/$(INFOPLIST_PATH)`
+
+<Frame>
+  <img
+    src="/images/path.png"
+    alt="Path"
+    title="Path"
+    style={{ width:"58%" }}
+  />
+</Frame>
+
 3. Enter the command relevant to your dependency manager, replacing `$OPTIONS` with your desired configuration:
 
 <Tabs>
   <Tab title="Swift Packet Maneger (SPM)">
-    ```bash
+    ```bash Swift Packet Maneger (SPM) lines wrap
     ${OBJROOT}/../../SourcePackages/artifacts/apple-sdk/moengage-extensions-integration/moengage-extensions-integration.artifactbundle/moengage-extensions-integration/bin/moengage-extensions-integration $OPTIONS
     ```
   </Tab>
   <Tab title="CocoaPods">
-    ```bash
+    ```bash CocoaPods lines wrap
     ${PODS_ROOT}/MoEngageExtensionsIntegration/moengage-extensions-integration.artifactbundle/moengage-extensions-integration/bin/moengage-extensions-integration $OPTIONS
     ```
   </Tab>
@@ -148,13 +172,26 @@ Automate the extension configuration by adding a custom script to your build pro
 
 #### Available options
 
+Replace `$OPTIONS` with one or more of the following:
+
 | Option | Description |
 | :-- | :-- |
 | `--enable-push-notification-templates` | Required if the content extension from Step 2 is used. |
-| `--notification-service-extension-name` | Sets a custom service extension name (Default: `MoEngageNotificationService`). |
-| `--notification-content-extension-name` | Sets a custom content extension name (Default: `MoEngageNotificationContent`). |
+| `--notification-service-extension-name $CUSTOM_SERVICE_EXTENSION_NAME` | Sets a custom name for the service extension. Use this when migrating to this tool from a custom service extension implementation.  (Default: `MoEngageNotificationService`). |
+| `--notification-content-extension-name $CUSTOM_CONTENT_EXTENSION_NAME` | Sets a custom name for the content extension. Use this when migrating to this tool from a custom content extension implementation. (Default: `MoEngageNotificationContent`). |
+
+Example Command (SPM)
+
+For integrating a service extension named `NotificationService` and a content extension named `NotificationContent`, the complete command for SPM would be:
+
+```bash Swift Packet Maneger (SPM) lines wrap
+${OBJROOT}/../../SourcePackages/artifacts/apple-sdk/moengage-extensions-integration/moengage-extensions-integration.artifactbundle/moengage-extensions-integration/bin/moengage-extensions-integration --enable-push-notification-templates --notification-service-extension-name NotificationService --notification-content-extension-name NotificationContent
+```
 
 4. **Disable sandboxing:** In your application target **Build Settings**, set **ENABLE\_USER\_SCRIPT\_SANDBOXING** to **No**.
+   <Frame>
+     ![User Scriptsandboxing](/images/UserScriptsandboxing.png)
+   </Frame>
 
 ### Step 5: Additional configuration (Optional)
 
