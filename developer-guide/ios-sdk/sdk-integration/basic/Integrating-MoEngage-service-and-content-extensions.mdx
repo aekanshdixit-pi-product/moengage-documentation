@@ -1,0 +1,113 @@
+---
+title: Integrating MoEngage service and content extensions
+description: Comprehensive guide to integrating MoEngage extensions for rich media delivery and notification tracking.
+---
+
+# Integrating MoEngage service and content extensions
+
+This guide describes how to integrate MoEngage service and content extensions into your iOS application. These extensions enable notification impression tracking, support for rich media (images, GIFs, and video), and the use of rich push notification templates.
+
+
+## Prerequisites
+
+Ensure the following requirements are met before beginning the integration:
+
+* **SDK initialization:** Initialize the MoEngage SDK using file-based initialization.
+* **App Group configuration:** * Define an App Group in your configuration using the `AppGroupName` key (for example, `group.com.organization.app`).
+    * Add this App Group to the **Application Capabilities** in Xcode.
+* **Keychain access:** If prompted for keychain access during code signing, select **Always Allow**.
+
+
+
+## Integrating service and content extensions
+
+### Step 1: Configure the service extension
+The service extension tracks notification impressions and downloads rich media content.
+
+1.  **Create an App Identifier:** Use the format `[appBundleId].[serviceExtensionName]`. 
+    * *Example:* If your app bundle identifier is `com.org.app` and your extension is named `NotificationService`, the identifier is `com.org.app.NotificationService`.
+2.  **Assign App Group:** Add the App Group name defined in your SDK initialization to the extension capabilities.
+3.  **Generate provisioning profile:** Create and download a provisioning profile for this identifier in Xcode.
+
+### Step 2: Configure the content extension (Optional)
+The content extension is required only if you intend to use MoEngage rich push notification templates.
+
+1.  **Create an App Identifier:** Use the format `[appBundleId].[contentExtensionName]`.
+    * *Example:* `com.org.app.NotificationContent`.
+2.  **Assign App Group:** Add the SDK App Group name to the extension capabilities.
+3.  **Generate provisioning profile:** Create and download a provisioning profile for this identifier.
+
+### Step 3: Integrate MoEngageRichNotification (Optional)
+If you require rich content or templates, integrate the `MoEngageRichNotification` library. This step is mandatory if you integrated the content extension in Step 2.
+
+#### Swift Package Manager (SPM)
+1.  Navigate to **File > Add Package**.
+2.  Enter the repository URL:
+    * **SDK v9.23.0 and above:** `https://github.com/moengage/apple-sdk`
+    * **Earlier versions:** `https://github.com/moengage/MoEngage-iOS-SDK`
+3.  Select the **master** branch or a specific version and select **Add Package**.
+4.  Target the package to your application.
+
+#### CocoaPods
+Add the following to your `Podfile` and run `pod install`:
+
+```ruby
+target 'YourApp' do
+  use_frameworks!
+  pod 'MoEngage-iOS-SDK'
+  pod 'MoEngage-iOS-SDK/RichNotification'
+end
+```
+
+### Step 4: Integrate the extension integrator tool
+Automate the extension configuration by adding a custom script to your build process.
+
+1.  In your application target, add a **New Run Script Phase**.
+2.  Add the following paths to the **Input Files** section:
+    * `$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)`
+    * `$(INSTALL_DIR)/$(INFOPLIST_PATH)`
+3.  Enter the command relevant to your dependency manager, replacing `$OPTIONS` with your desired configuration:
+
+**For SPM:**
+```bash
+${OBJROOT}/../../SourcePackages/artifacts/apple-sdk/moengage-extensions-integration/moengage-extensions-integration.artifactbundle/moengage-extensions-integration/bin/moengage-extensions-integration $OPTIONS
+```
+
+**For CocoaPods:**
+```bash
+${PODS_ROOT}/MoEngageExtensionsIntegration/moengage-extensions-integration.artifactbundle/moengage-extensions-integration/bin/moengage-extensions-integration $OPTIONS
+```
+
+#### Available options 
+
+| Option | Description |
+| :--- | :--- |
+| `--enable-push-notification-templates` | Required if the content extension from Step 2 is used. |
+| `--notification-service-extension-name` | Sets a custom service extension name (Default: `MoEngageNotificationService`). |
+| `--notification-content-extension-name` | Sets a custom content extension name (Default: `MoEngageNotificationContent`). |
+
+4.  **Disable sandboxing:** In your application target **Build Settings**, set **ENABLE_USER_SCRIPT_SANDBOXING** to **No**.
+
+### Step 5: Additional configuration (Optional)
+Use these build settings to provide configuration details for local or CI builds:
+
+* `MOENGAGE_EXTENSION_PROFILES_SEARCH_PATHS`: Folders to scan for provisioning profiles.
+* `MOENGAGE_NOTIFICATION_SERVICE_EXTENSION_PROFILE`: Explicit profile filename for the service extension.
+* `MOENGAGE_NOTIFICATION_CONTENT_EXTENSION_PROFILE`: Explicit profile filename for the content extension.
+
+
+
+## Migrating to the extension integrator tool
+To migrate an existing manual implementation to the integrator tool, complete only **Step 3** and **Step 4** of this guide.
+
+
+
+## Resolving errors
+If the integrator tool returns an error, review the build logs for detailed information. Common causes include:
+
+* **Missing configuration:** The `Info.plist` is missing MoEngage configuration options.
+* **App Group mismatch:** The `AppGroupName` in `Info.plist` is not included in the extension bundle identifier capabilities.
+* **Provisioning issues:**
+    * The profile does not match the build environment (for example, using a development profile for an App Store build).
+    * Profiles are not located in default Xcode directories (use Step 5 to specify custom paths).
+    * The profile has expired or the certificate configuration is incorrect.
