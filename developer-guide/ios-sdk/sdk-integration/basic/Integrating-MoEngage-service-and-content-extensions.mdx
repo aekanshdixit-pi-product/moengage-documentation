@@ -16,6 +16,7 @@ This guide describes how to integrate MoEngage service and content extensions in
           alt="Image1"
           title="Image1"
           style={{ width:"48%" }}
+          className="mr-auto"
         />
       </Frame>
   - **After integration is complete you might get prompt to access keychain for code signing, click on Always Allow in this prompt.**
@@ -25,6 +26,7 @@ This guide describes how to integrate MoEngage service and content extensions in
         alt="Keychain"
         title="Keychain"
         style={{ width:"48%" }}
+        className="mr-auto"
       />
     </Frame>
 </Tip>
@@ -209,7 +211,7 @@ If you are migrating an existing manual implementation to the integrator tool, y
 
 ## Resolving errors
 
-If the integrator tool returns an error, review the build logs for detailed information. 
+If the integrator tool returns an error, review the build logs for detailed information.
 
 <Frame>
   <img
@@ -234,34 +236,34 @@ Common causes include:
 
 <AccordionGroup>
   <Accordion title="Do I need to integrate both the Service and Content extensions?">
-     No, The Service Extension is mandatory for tracking notification impressions and downloading rich media (images/GIFs/video). 
-     The Content Extension is only required if you intend to use MoEngage's interactive *Rich Push Templates* (e.g., carousels or custom button layouts).
+    No, The Service Extension is mandatory for tracking notification impressions and downloading rich media (images/GIFs/video). The Content Extension is only required if you intend to use MoEngage's interactive _Rich Push Templates_ (e.g., carousels or custom button layouts).
   </Accordion>
 
   <Accordion title="Why is the 'App Group' configuration mandatory?">
-      iOS extensions run in a separate sandbox from your main application. The **App Group** creates a shared container that allows the MoEngage SDK in the main app to share authentication tokens, user data, and local storage with the extension. Without it, the extension cannot verify the user or track impressions correctly.
+    iOS extensions run in a separate sandbox from your main application. The **App Group** creates a shared container that allows the MoEngage SDK in the main app to share authentication tokens, user data, and local storage with the extension. Without it, the extension cannot verify the user or track impressions correctly.
   </Accordion>
 
   <Accordion title="Why must I disable 'User Script Sandboxing' in Build Settings?">
-      The **Extension Integrator Tool** needs to access the project’s built products and provisioning profiles located in system folders outside the standard Xcode sandbox. If `ENABLE_USER_SCRIPT_SANDBOXING` is set to **Yes**, the script will be blocked, resulting in a "Permission Denied" error during the build phase.
+    The **Extension Integrator Tool** needs to access the project’s built products and provisioning profiles located in system folders outside the standard Xcode sandbox. If `ENABLE_USER_SCRIPT_SANDBOXING` is set to **Yes**, the script will be blocked, resulting in a "Permission Denied" error during the build phase.
   </Accordion>
 
   <Accordion title="What if I already have an existing Notification Service Extension?">
-     The integrator tool is designed to be additive. You can pass your existing extension’s name using the `--notification-service-extension-name` flag in the Run Script phase. The tool will then inject the necessary MoEngage logic into your current implementation without overwriting your custom code.
+    The integrator tool is designed to be additive. You can pass your existing extension’s name using the `--notification-service-extension-name` flag in the Run Script phase. The tool will then inject the necessary MoEngage logic into your current implementation without overwriting your custom code.
   </Accordion>
 
   <Accordion title="How do I handle multiple build environments (Dev/Staging/Prod) with the tool?">
-     You can use the **Additional Configuration** variables (Step 5) to pass environment-specific paths. By setting `MOENGAGE_EXTENSION_PROFILES_SEARCH_PATHS` as an environment variable in your CI/CD pipeline or build scheme, the tool will dynamically find the correct provisioning profile for the specific Bundle ID being built.
+    You can use the **Additional Configuration** variables (Step 5) to pass environment-specific paths. By setting `MOENGAGE_EXTENSION_PROFILES_SEARCH_PATHS` as an environment variable in your CI/CD pipeline or build scheme, the tool will dynamically find the correct provisioning profile for the specific Bundle ID being built.
   </Accordion>
 
   <Accordion title="My rich media isn’t rendering in the notification. What’s wrong?">
     This usually stems from one of three technical gaps:
-    1.  **App Group Mismatch:** Ensure the `AppGroupName` string in your `Info.plist` matches the Entitlements file exactly.
-    2.  **Payload Timeout:** iOS gives extensions ~30 seconds to download media. If your assets are too large or the network is slow, it will fail over to plain text.
-    3.  **Deployment Target:** If your extension target’s iOS version is higher than the device's OS version, the extension won't fire.
+
+    1. **App Group Mismatch:** Ensure the `AppGroupName` string in your `Info.plist` matches the Entitlements file exactly.
+    2. **Payload Timeout:** iOS gives extensions ~30 seconds to download media. If your assets are too large or the network is slow, it will fail over to plain text.
+    3. **Deployment Target:** If your extension target’s iOS version is higher than the device's OS version, the extension won't fire.
   </Accordion>
 
   <Accordion title="Does this tool work with custom Derived Data paths or CI/CD?">
-     Yes, but be careful with the SPM path in Step 4. The path `${OBJROOT}/../../SourcePackages/...` assumes a standard Xcode structure. If your CI environment (like Jenkins or Bitrise) uses a custom build directory, you may need to provide the absolute path to the `moengage-extensions-integration` binary.
+    Yes, but be careful with the SPM path in Step 4. The path `${OBJROOT}/../../SourcePackages/...` assumes a standard Xcode structure. If your CI environment (like Jenkins or Bitrise) uses a custom build directory, you may need to provide the absolute path to the `moengage-extensions-integration` binary.
   </Accordion>
 </AccordionGroup>
