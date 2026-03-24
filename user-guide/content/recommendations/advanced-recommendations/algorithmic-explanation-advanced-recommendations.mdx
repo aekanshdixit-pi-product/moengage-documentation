@@ -1,43 +1,80 @@
 ---
-title: "Creating Advanced Recommendations"
+title: "Algorithmic Explanation - Advanced Recommendations"
 ---
 
+# **Algorithmic Details**
+
+Each of these models has a different algorithm to learn and generate recommendations.
+
+| Recommendation model | Algorithm | Data points |
+| --- | --- | --- |
+| **Recommended Items**<br />(Similar Users) | Hierarchical Recurrent Neural Network (HRNN) | <ul><li>Product viewed items</li><li>Added to Cart items</li><li>Added to Wishlist items</li><li>Product purchased items</li><li>User attributes</li></ul> |
+| **Similar Items** | Item-item Collaborative filtering +<br />Item attribute Similarity | <ul><li>Product viewed items</li><li>Added to Cart items</li><li>Added to Wishlist items</li><li>Product purchased items</li><li>Catalog attributes</li></ul> |
+| **Frequently Bought Together** | Item-item Collaborative filtering | <ul><li>Product purchased items</li></ul> |
+| **Frequently Viewed Together** | Item-item Collaborative filtering | <ul><li>Product viewed items</li></ul> |
+
 <Info>
-The recommendations can be created by Admin/ Manager / Marketer roles only
+For each model, there should be a minimum of 1000 user action events where a minimum of 25 unique users should have performed 2 interactions each. It's essential to note that this is only the minimum criteria for the model to function. The more data you have, the better results your model will yield.
 </Info>
-<Tip>
-Before you proceed, you must map the user actions and add a catalog. For more information, refer to [User Actions](/user-guide/content/recommendations/prerequisites/map-user-actions-settings) and [Catalogs](/user-guide/content/recommendations/prerequisites/catalogs).
-</Tip>
 
-To create a recommendation, perform the following steps:
+## **Hierarchical Recurrent Neural Network (HRNN)**
 
-1. On the sidebar menu in MoEngage, hover over the Content menu item <img alt="content icon.png"  src="/images/moengage_247c78.png"  /> . The **Content** menu appears.
-2. Click **Recommendations**.  
-    <img  src="/images/moengage_054d37.png"  />   
-   The Recommendations page appears.
-3. Click **+ Create recommendation**. The Create recommendation page is displayed. <img src="/images/moengage_82987a.png" />
-4. Select the relevant model according to your use case and click **Next**.  
-    <img src="/images/moengage_69c183.png" />
-5. In the **Recommendation name** field, enter a name for the recommendation.
-6. In the **Recommendation description** field, enter a description for the recommendation
-7. In the **Catalog** drop-down list, select the relevant catalog from which you wish to retrieve these recommendations.  
-   **Note:** All AI recommendations consider one catalog. After you use a catalog in any AI recommendations, it will be automatically configured for all other types of AI recommendations.
-8. Choose the relevant **user actions** based on your use case from the drop-down list.
-   - In the case of Similar items, Frequently bought together items, and Frequently viewed together items, the recent most item based on the configured user action events will be used to generate.
-   - In the case of Recommended items, you are not required to configure any user actions. All performed user actions by a user are considered to learn their behavior patterns automatically and the recommendations are generated tailored to the shifting interests of individuals.
-9. Turn the **Filter items by user actions** toggle on to add filtering criteria and control which items to recommend to their customers. These filters are applied to the results of the core recommendation further. You will see two types of filters for user actions:  
-    <img alt="user action filter.png" src="/images/moengage_961199.png" />
-   - **Select user action to keep items**: Marketers can define the user action criteria that includes only those items that are common in filtering user action criteria and recommendation results. Click **+ User actions** and select the items to be included.
-   - **Select user action to remove items**: Marketers can define the user action criteria that removes the items according to the filtering user action criteria from recommendation items. Click **+ User actions** and select the items to be excluded.
-10. Turn the **Filter items by item attributes** toggle on to add filtering criteria based on catalog information. These filters are also applied to the results of the core recommendation further. <img src="/images/moengage_4ccdd3.png" />
-11. Click **Save**. A recommendation is created with a 'Processing' state on the Recommendations page. It can take a maximum of 24 hours for recommendations to be active.  
-     <img alt="mceclip5.png" src="/images/moengage_6c48ff.png" />
-12. After the recommendation is ready, you can test results for sample users before using it in any campaign.
+HRNN identifies patterns in how users interact with different items on your platform. By doing so, it can predict which item a user is likely to be interested in next, based on their past behavior. This approach assumes that if user A has the same opinion as user B (where B is a similar user in terms of interaction patterns) in a session, A is more likely to have B's opinion on a different session than that of a random user.
 
-# Best Practices
+1. **User Behavior Patterns:** The key to HRNN's effectiveness is its ability to deduce relationships between items based on their interaction patterns, even if the items don't have explicit attributes linking them. These patterns might include which items are viewed together or in close sequence.
+2. **Embedding Layers:** In HRNN, both users and items are represented by embeddings, which are dense vectors of floating-point values. The model uses these embeddings to represent the 'closeness' of items and users in a high-dimensional space. Items that are frequently interacted with by users are positioned closer to each other in this space.
+3. **Recurrent Layers**: The HRNN uses recurrent layers to remember patterns across long sequences of data, allowing it to make better predictions and identify complex relationships between items. The timestamp of the interaction event gives the temporal edge to recommendations beyond sequences.
 
-- Choose the global catalog inclusive of all the business offerings or the type of offerings you want to generate recommendations for.
-- Map all relevant events in the relevant user action buckets.
-- Ensure that the unique item ID attribute has the same information as the unique item ID in the catalog.
-- Configure all possible user-item interactions in the Recommended Items settings, such as Product Viewed, Added to Wishlist, Added to Cart, and Product Purchased. This allows the algorithm to learn from a wide range of user behaviors and adapt to rapid changes.
-- Test the results for sample users before incorporating them into your campaign.
+## **Collaborative Filtering**
+
+Item-item collaborative filtering is a specific approach focusing on the relationships between items rather than between users. Item-item collaborative filtering tends to be more stable (but less personalized) than Similar User behavior models because item preferences change less frequently than user preferences.
+
+This approach examines the co-interactions of users with items and then determines the similarity of items at a global level based on interaction data. To give an idea, refer to the following basic interpretation of how the computation is done.
+
+| User ID | Item ID | Timestamp |
+| --- | --- | --- |
+| <span style={{ color: '#9333ea' }}>**U1**</span> | <span style={{ color: '#16a34a' }}>**P1**</span> | 2023-07-23 11:24:02.112 |
+| <span style={{ color: '#9333ea' }}>**U1**</span> | <span style={{ color: '#ea580c' }}>**P2**</span> | 2023-07-24 12:20:05.096 |
+| <span style={{ color: '#9333ea' }}>**U1**</span> | <span style={{ color: '#0891b2' }}>**P3**</span> | 2023-08-12 04:34:34.234 |
+| <span style={{ color: '#db2777' }}>**U2**</span> | <span style={{ color: '#16a34a' }}>**P1**</span> | 2023-07-05 12:30:00.090 |
+| <span style={{ color: '#db2777' }}>**U2**</span> | <span style={{ color: '#ea580c' }}>**P2**</span> | 2023-08-02 14:45:45.010 |
+| <span style={{ color: '#0d9488' }}>**U3**</span> | <span style={{ color: '#16a34a' }}>**P1**</span> | 2023-08-25 15:52.12.020 |
+| <span style={{ color: '#dc2626' }}>**U4**</span> | <span style={{ color: '#ca8a04' }}>**P4**</span> | 2023-08-24 05:52.12.020 |
+| <span style={{ color: '#dc2626' }}>**U4**</span> | <span style={{ color: '#16a34a' }}>**P1**</span> | 2023-06-24 03:25.12.020 |
+| <span style={{ color: '#dc2626' }}>**U4**</span> | <span style={{ color: '#ea580c' }}>**P2**</span> | 2023-07-09 06:37.25.100 |
+| <span style={{ color: '#dc2626' }}>**U4**</span> | <span style={{ color: '#0284c7' }}>**P5**</span> | 2023-08-04 09:35.14.080 |
+| <span style={{ color: '#dc2626' }}>**U4**</span> | <span style={{ color: '#16a34a' }}>**P1**</span> | 2023-06-24 01:25.12.456 |
+| <span style={{ color: '#2563eb' }}>**U5**</span> | <span style={{ color: '#ea580c' }}>**P2**</span> | 2023-07-14 04:15.22.030 |
+| <span style={{ color: '#2563eb' }}>**U5**</span> | <span style={{ color: '#ca8a04' }}>**P4**</span> | 2023-08-04 10:25.12.120 |
+
+This can be transformed to an item-item matrix based on no of users who interacted with the items, as following:
+
+| | <span style={{ color: '#16a34a' }}>**P1**</span> | <span style={{ color: '#ea580c' }}>**P2**</span> | <span style={{ color: '#0891b2' }}>**P3**</span> | <span style={{ color: '#ca8a04' }}>**P4**</span> | <span style={{ color: '#0284c7' }}>**P5**</span> |
+| --- | --- | --- | --- | --- | --- |
+| <span style={{ color: '#16a34a' }}>**P1**</span> | 5 | 4 | 1 | 2 | 1 |
+| <span style={{ color: '#ea580c' }}>**P2**</span> | 4 | 4 | 1 | 2 | 1 |
+| <span style={{ color: '#0891b2' }}>**P3**</span> | 1 | 1 | 1 | 0 | 0 |
+| <span style={{ color: '#ca8a04' }}>**P4**</span> | 2 | 2 | 0 | 2 | 1 |
+| <span style={{ color: '#0284c7' }}>**P5**</span> | 1 | 1 | 0 | 1 | 1 |
+
+Hence, excluding the relationship of the item with itself, the recommendation results will be as follows:
+
+| **Anchor item** (last interacted item) | **Results from Collaborative filtering** |
+| --- | --- |
+| P1 | P2, P4, P3, P5 |
+| P2 | P1, P4, P3, P5 |
+| P3 | P1, P2 |
+| P4 | P1, P2, P5 |
+| P5 | P1, P2, P4 |
+
+***Note:*** *the above explanation is merely a basic representation of logic. The actual algorithm is much more complicated than this.*
+
+## **Item Attributes Similarity**
+
+To capture the relationships among items, the item metadata embedding is created for each item ID that is essentially represented in multi-dimensional space, where each dimension corresponds to a hidden variable or latent factor. These embeddings represent the attributes of the items, such as genre or category.
+
+After generating item embeddings from user-item interactions and item metadata, they're merged in a fusion layer. This layer, during training, learns to adjust weights based on item characteristics and user preferences. It decides the importance of embeddings from user interactions versus those from item metadata. Through a deep learning model, it effectively balances recommendations by weighing both interaction data and item metadata similarities.
+
+## **Popularity Count**
+
+Popularity count is a weighted aggregation-based model, but it suggests the most popular items based on overall interaction counts. This plays a role of fallback for scenarios where historical data is minimal or unavailable.
