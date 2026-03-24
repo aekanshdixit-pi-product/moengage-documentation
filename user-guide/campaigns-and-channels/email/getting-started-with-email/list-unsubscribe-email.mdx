@@ -75,72 +75,83 @@ You can use either of the two options based on your requirements:
     - Set up an event-triggered connector campaign. Configure it to trigger when _Email Unsubscribed event is triggered_ to hit your or the third-party system's API and update the value. For more information, refer to [Create a Connector Campaign](/user-guide/campaigns-and-channels/connectors/create/create-a-connector-campaign).
     - Set up MoEngage Streams to pass the \_Email Unsubscribed\_event to your endpoint. You can then further process this data or forward it to other systems. For more information, refer to [MoEngage Streams](https://developers.moengage.com/hc/en-us/articles/4952761690644-MoEngage-Streams#01H7YXY47GPXND1M0RYEZ9M3QZ).
   </Tab>
- <Tab title="Configure via Self-Managed approach">
-  **Self Managed**
-  Under Self-Managed, you must provide an unsubscribe URL and an email ID. MoEngage adds these to the HTTPS URL and mail-to sections of the email header while sending any email. However, you are responsible for the further processing of unsubscribe requests. To ensure compliance, you must process un-subscriptions within 48 hours. You must also pass the updated preference back to MoEngage so that we automatically exclude these unsubscribed users from future campaigns.
+  <Tab title="Configure via Self-Managed approach">
+    **Self Managed** Under Self-Managed, you must provide an unsubscribe URL and an email ID. MoEngage adds these to the HTTPS URL and mail-to sections of the email header while sending any email. However, you are responsible for the further processing of unsubscribe requests. To ensure compliance, you must process un-subscriptions within 48 hours. You must also pass the updated preference back to MoEngage so that we automatically exclude these unsubscribed users from future campaigns.
 
-  To configure the list-unsubscribe via the self-managed approach:
+    To configure the list-unsubscribe via the self-managed approach:
 
-  1. Log in to your MoEngage dashboard.
-  2. Navigate to **Settings** \> **Channels** \> **Email settings** \> **Sender Configuration** tab.
-  3. Click the email connector.
-  4. Click the ellipsis icon and click **Edit**.
-  5. Under **One-click unsubscribe**, click **Self Managed**. 
-   <img src="/images/moengage_e0b94d.png" alt="email sendgrid.gif" />
+    1. Log in to your MoEngage dashboard.
+    2. Navigate to **Settings** \> **Channels** \> **Email settings** \> **Sender Configuration** tab.
+    3. Click the email connector.
+    4. Click the ellipsis icon and click **Edit**.
+    5. Under **One-click unsubscribe**, click **Self Managed**.
 
-  Then, you must provide the following:
+    ![email sendgrid.gif](/images/moengage_e0b94d.png)
 
-   1. **One-click unsubscribe URL:** Provide a link that directly unsubscribes the user with a click. Make sure to add the parameters using JINJA to this URL to identify the unsubscribing user and act accordingly. Also, ensure that this link directly unsubscribes the user without redirection or requiring a landing page for further input or confirmation.\
-   Note that if the added identifier contains special characters like "@", standard URL encoding applies. For more information, refer [here](https://developers.google.com/maps/url-encoding#common-characters-that-need-encoding).<br/> For example, if the provided link is `https://www.abc.com/unsubscribe?emailAddress={{UserAttribute['Email (Standard)']|default('email')}} `,then, along with this, a parameter from Moengage will be added to the HTTPS section of the email header, which then looks like this:<br/>
-   `https://www.abc.com/unsubscribe?emailAddress=bob@bob.com&qmoe=abc123`
-   Here,
-    - **_https://www.abc.com/unsubscribe?emailAddress_** is the URL that you have entered within One-click unsubscribe URL & **_emailAddress_** is the parameter used to identify your users to manage preferences.
-    - **_bob@bob.com_** is the value of the Jinja provided as the value for the parameter
+    Then, you must provide the following:
+
+    1. **One-click unsubscribe URL:** Provide a link that directly unsubscribes the user with a click. Make sure to add the parameters using JINJA to this URL to identify the unsubscribing user and act accordingly. Also, ensure that this link directly unsubscribes the user without redirection or requiring a landing page for further input or confirmation.\
+       Note that if the added identifier contains special characters like "@", standard URL encoding applies. For more information, refer [here](https://developers.google.com/maps/url-encoding#common-characters-that-need-encoding).\
+        For example, if the provided link is `https://www.abc.com/unsubscribe?emailAddress={{UserAttribute['Email (Standard)']|default('email')}} `,then, along with this, a parameter from Moengage will be added to the HTTPS section of the email header, which then looks like this:\
+        `https://www.abc.com/unsubscribe?emailAddress=bob@bob.com&qmoe=abc123` Here,
+
+    - [**_https://www.abc.com/unsubscribe?emailAddress_**](https://www.abc.com/unsubscribe?emailAddress) is the URL that you have entered within One-click unsubscribe URL & **_emailAddress_** is the parameter used to identify your users to manage preferences.
+    - [**_bob@bob.com_**](mailto:bob@bob.com) is the value of the Jinja provided as the value for the parameter
     - The _qmoe_ is the parameter MoEngage appends to the URL  to identify the user & the campaign from which this request originated.
-   <Info>
-     Make sure to include a default value while adding the parameters to the link and the identifier as well. For example, the value should be like:`https://www.abc.com/unsubscribe?emailAddress=bob@bob.com&qmoe=abc123`
-   </Info>
-   2. **One-click unsubscribe email:** Provide an email ID to be added to the mail-to section of the email header.<br/>
-   When you provide an email ID, the **User Identifier** field appears for identification purposes. MoEngage customizes the email's subject line, sent from the ISP, to include this information in Base64-encrypted format. This allows you to parse the subject line, decode it, and securely identify the user who needs to be unsubscribed.<br/>
-   The value for the **User identifier** depends on how you identify your users. Examples of values that you can use are below. You must add these using Jinja, the templating language used by MoEngage:
-  <Info>
-   - You must always add the default value while entering the user identifier to be able to save this.
-   - In some cases, ISPs may corrupt information sent via the subject line. Therefore, identifying the preference via email will be the better option, as you will always be able to find the email via the “From ID” in the email.
-  </Info>
 
-### How to process the received request?
+    <Info>
+      Make sure to include a default value while adding the parameters to the link and the identifier as well. For example, the value should be like:`https://www.abc.com/unsubscribe?emailAddress=bob@bob.com&qmoe=abc123`
+    </Info>
 
- <Info>
-  It is critical that you return these un-subscriptions to MoEngage after processing. This ensures that MoEngage can prevent sending future emails to target users who have unsubscribed via this method can be dropped before sending. If you do not update MoEngage, these users might still receive emails because MoEngage was not aware of the preference change.
- </Info>
+    2. **One-click unsubscribe email:** Provide an email ID to be added to the mail-to section of the email header.\
+        When you provide an email ID, the **User Identifier** field appears for identification purposes. MoEngage customizes the email's subject line, sent from the ISP, to include this information in Base64-encrypted format. This allows you to parse the subject line, decode it, and securely identify the user who needs to be unsubscribed.\
+        The value for the **User identifier** depends on how you identify your users. Examples of values that you can use are below. You must add these using Jinja, the templating language used by MoEngage:
+       | **User Identifier Example** | **JINJA Format** |
+       | --- | --- |
+       | ID | &#123;&#123;UserAttribute['ID']\|default('ID')&#125;&#125;|
+       | Email ID |  |
 
- Whenever the user unsubscribes via the List unsubscribe method, you need to do the following:
+    <Info>
+      - You must always add the default value while entering the user identifier to be able to save this.
+      - In some cases, ISPs may corrupt information sent via the subject line. Therefore, identifying the preference via email will be the better option, as you will always be able to find the email via the “From ID” in the email.
+    </Info>
 
- - **If the request was handled by the ISP through the One-click URL:**
-  1. Identify the unsubscribing user using the parameters you added. In our above example provided, the \_emailAddress\_parameter should help you identify the user and process the same.
-  2. Execute the following public API by passing the qmoe parameter to help MoEngage update the subscription status of the user:
-     ```text
-     https://api-0x.moengage.com/v1/emailunsubscribe?qmoe=
-     ```
-     - The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping here.
-     - _\<qmoe\_parameter\>_, as mentioned above, is a parameter that will be appended to the URL by MoEngage to identify the user & the campaign. In the above example, _qmoe\_parameter_ is _abc123._
-     - **If the request was handled by the ISP through the Mail-to Approach:**
-    1. Parse the subject line of the email sent by the ISP to the inbox you mentioned to identify the user and unsubscribe them from the list you manage. A sample subject line would look like below:
-     ```text
-     Unsubscribe | cattr:YzlhZjVkYzUtYWRkMi00MTZkLTg4OTQtNWNlZmRkYTJjNDYw-WTRv4uSIgrZTVV5fJSvAZkS2smalAXvg8qX\_0qz3AXdXNRHz.AwCwAo2OsppN0DGt2qd0R4qSg-5YLB5qTvuHp.2EIBfDrKmDauXjQXySNcGHo0w\_\_OdsmU2\_LAzK1aAynsczTVn.yuaRa.4MGgjQ-lq\_KXmK.l7mgq17UL1WOZsjqPOJGzcrHTW3iZYOXt2O5Ikgwk9CJgO0Hg7Z8ZO3OewvzeED8BFN4fuAwyvkCV7yPQtHTMZ\_coK\_Yu42TPeysvhhgr0yFlLvrXIMsEolDk64xtNx8Ie76YcE
-     ```
-     - In the subject line above, you must parse through to find the sub-text that’s between **_cattr:_** and the **_first hyphen_**; that is, in this example, the sub-text you'll find is `YzlhZjVkYzUtYWRkMi00MTZkLTg4OTQtNWNlZmRkYTJjNDYw`.
-     - Then, decode this via the Base64 method to find the user who must be unsubscribed.
+    ### How to process the received request?
+
+    <Info>
+      It is critical that you return these un-subscriptions to MoEngage after processing. This ensures that MoEngage can prevent sending future emails to target users who have unsubscribed via this method can be dropped before sending. If you do not update MoEngage, these users might still receive emails because MoEngage was not aware of the preference change.
+    </Info>
+
+    Whenever the user unsubscribes via the List unsubscribe method, you need to do the following:
+
+    - **If the request was handled by the ISP through the One-click URL:**
+
+    1. Identify the unsubscribing user using the parameters you added. In our above example provided, the \_emailAddress\_parameter should help you identify the user and process the same.
+    2. Execute the following public API by passing the qmoe parameter to help MoEngage update the subscription status of the user:
+       ```text
+       https://api-0x.moengage.com/v1/emailunsubscribe?qmoe=
+       ```
+       - The 'X' in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping here.
+       - _\<qmoe\_parameter\>_, as mentioned above, is a parameter that will be appended to the URL by MoEngage to identify the user & the campaign. In the above example, _qmoe\_parameter_ is _abc123._
+       - **If the request was handled by the ISP through the Mail-to Approach:**
+    3. Parse the subject line of the email sent by the ISP to the inbox you mentioned to identify the user and unsubscribe them from the list you manage. A sample subject line would look like below:
+
+    ```text
+    Unsubscribe | cattr:YzlhZjVkYzUtYWRkMi00MTZkLTg4OTQtNWNlZmRkYTJjNDYw-WTRv4uSIgrZTVV5fJSvAZkS2smalAXvg8qX\_0qz3AXdXNRHz.AwCwAo2OsppN0DGt2qd0R4qSg-5YLB5qTvuHp.2EIBfDrKmDauXjQXySNcGHo0w\_\_OdsmU2\_LAzK1aAynsczTVn.yuaRa.4MGgjQ-lq\_KXmK.l7mgq17UL1WOZsjqPOJGzcrHTW3iZYOXt2O5Ikgwk9CJgO0Hg7Z8ZO3OewvzeED8BFN4fuAwyvkCV7yPQtHTMZ\_coK\_Yu42TPeysvhhgr0yFlLvrXIMsEolDk64xtNx8Ie76YcE
+    ```
+
+    - In the subject line above, you must parse through to find the sub-text that’s between **_cattr:_** and the **_first hyphen_**; that is, in this example, the sub-text you'll find is `YzlhZjVkYzUtYWRkMi00MTZkLTg4OTQtNWNlZmRkYTJjNDYw`.
+    - Then, decode this via the Base64 method to find the user who must be unsubscribed.
+
     2. To help MoEngage update the subscription status of the user, forward the email to the inbox, `unsubscribe-DC0X@moengage.com`.
-     - Here, the 'X' in the email ID refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](/user-guide/data/key-concepts/data-centers-in-moengage).
-     - You can always set up auto-forward of emails received in your inbox to make this easier. To set up the same, please refer below:
-       - [Yahoo](https://help.yahoo.com/kb/SLN29133.html?guccounter=1)
-       - [Microsoft](https://learn.microsoft.com/en-us/microsoft-365/admin/email/configure-email-forwarding?view=o365-worldwide)
-       - Gmail
- </Tab>
- </Tabs>
 
-
+    - Here, the 'X' in the email ID refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number (value of X) and replace the value of 'X' in the URL by referring to the DC and API endpoint mapping [here](/user-guide/data/key-concepts/data-centers-in-moengage).
+    - You can always set up auto-forward of emails received in your inbox to make this easier. To set up the same, please refer below:
+      - [Yahoo](https://help.yahoo.com/kb/SLN29133.html?guccounter=1)
+      - [Microsoft](https://learn.microsoft.com/en-us/microsoft-365/admin/email/configure-email-forwarding?view=o365-worldwide)
+      - Gmail
+  </Tab>
+</Tabs>
 
 # How to Find Users who Unsubscribed via this
 
