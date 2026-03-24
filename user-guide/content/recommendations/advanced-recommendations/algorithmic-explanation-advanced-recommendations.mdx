@@ -6,13 +6,12 @@ title: "Algorithmic Explanation - Advanced Recommendations"
 
 Each of these models has a different algorithm to learn and generate recommendations.
 
-|  |  |  |
+| Recommendation model | Algorithm | Data points |
 | --- | --- | --- |
-| **Recommendation model** | **Algorithm** | **Data points** |
-| **Recommended Items**  **(Similar Users)** | Hierarchical Recurrent Neural Network (HRNN) | - Product viewed items - Added to Cart items - Added to Wishlist items - Product purchased items - User attributes |
-| **Similar Items** | Item-item Collaborative filtering +  Item attribute Similarity | - Product viewed items - Added to Cart items - Added to Wishlist items - Product purchased items - Catalog attributes |
-| **Frequently Bought Together** | Item-item Collaborative filtering | - Product purchased items |
-| **Frequently Viewed Together** | Item-item Collaborative filtering | - Product viewed items |
+| **Recommended Items**<br />(Similar Users) | Hierarchical Recurrent Neural Network (HRNN) | <ul><li>Product viewed items</li><li>Added to Cart items</li><li>Added to Wishlist items</li><li>Product purchased items</li><li>User attributes</li></ul> |
+| **Similar Items** | Item-item Collaborative filtering +<br />Item attribute Similarity | <ul><li>Product viewed items</li><li>Added to Cart items</li><li>Added to Wishlist items</li><li>Product purchased items</li><li>Catalog attributes</li></ul> |
+| **Frequently Bought Together** | Item-item Collaborative filtering | <ul><li>Product purchased items</li></ul> |
+| **Frequently Viewed Together** | Item-item Collaborative filtering | <ul><li>Product viewed items</li></ul> |
 
 <Info>
 For each model, there should be a minimum of 1000 user action events where a minimum of 25 unique users should have performed 2 interactions each. It's essential to note that this is only the minimum criteria for the model to function. The more data you have, the better results your model will yield.
@@ -32,39 +31,36 @@ Item-item collaborative filtering is a specific approach focusing on the relatio
 
 This approach examines the co-interactions of users with items and then determines the similarity of items at a global level based on interaction data. To give an idea, refer to the following basic interpretation of how the computation is done.
 
-|  |  |  |
+| User ID | Item ID | Timestamp |
 | --- | --- | --- |
-| **User ID** | **Item ID** | **Timestamp** |
-| **U1** | **P1** | 2023-07-23 11:24:02.112 |
-| **U1** | **P2** | 2023-07-24 12:20:05.096 |
-| **U1** | **P3** | 2023-08-12 04:34:34.234 |
-| **U2** | **P1** | 2023-07-05 12:30:00.090 |
-| **U2** | **P2** | 2023-08-02 14:45:45.010 |
-| **U3** | **P1** | 2023-08-25 15:52.12.020 |
-| **U4** | **P4** | 2023-08-24 05:52.12.020 |
-| **U4** | **P1** | 2023-06-24 03:25.12.020 |
-| **U4** | **P2** | 2023-07-09 06:37.25.100 |
-| **U4** | **P5** | 2023-08-04 09:35.14.080 |
-| **U4** | **P1** | 2023-06-24 01:25.12.456 |
-| **U5** | **P2** | 2023-07-14 04:15.22.030 |
-| **U5** | **P4** | 2023-08-04 10:25.12.120 |
+| <span style={{ color: '#9333ea' }}>**U1**</span> | <span style={{ color: '#16a34a' }}>**P1**</span> | 2023-07-23 11:24:02.112 |
+| <span style={{ color: '#9333ea' }}>**U1**</span> | <span style={{ color: '#ea580c' }}>**P2**</span> | 2023-07-24 12:20:05.096 |
+| <span style={{ color: '#9333ea' }}>**U1**</span> | <span style={{ color: '#0891b2' }}>**P3**</span> | 2023-08-12 04:34:34.234 |
+| <span style={{ color: '#db2777' }}>**U2**</span> | <span style={{ color: '#16a34a' }}>**P1**</span> | 2023-07-05 12:30:00.090 |
+| <span style={{ color: '#db2777' }}>**U2**</span> | <span style={{ color: '#ea580c' }}>**P2**</span> | 2023-08-02 14:45:45.010 |
+| <span style={{ color: '#0d9488' }}>**U3**</span> | <span style={{ color: '#16a34a' }}>**P1**</span> | 2023-08-25 15:52.12.020 |
+| <span style={{ color: '#dc2626' }}>**U4**</span> | <span style={{ color: '#ca8a04' }}>**P4**</span> | 2023-08-24 05:52.12.020 |
+| <span style={{ color: '#dc2626' }}>**U4**</span> | <span style={{ color: '#16a34a' }}>**P1**</span> | 2023-06-24 03:25.12.020 |
+| <span style={{ color: '#dc2626' }}>**U4**</span> | <span style={{ color: '#ea580c' }}>**P2**</span> | 2023-07-09 06:37.25.100 |
+| <span style={{ color: '#dc2626' }}>**U4**</span> | <span style={{ color: '#0284c7' }}>**P5**</span> | 2023-08-04 09:35.14.080 |
+| <span style={{ color: '#dc2626' }}>**U4**</span> | <span style={{ color: '#16a34a' }}>**P1**</span> | 2023-06-24 01:25.12.456 |
+| <span style={{ color: '#2563eb' }}>**U5**</span> | <span style={{ color: '#ea580c' }}>**P2**</span> | 2023-07-14 04:15.22.030 |
+| <span style={{ color: '#2563eb' }}>**U5**</span> | <span style={{ color: '#ca8a04' }}>**P4**</span> | 2023-08-04 10:25.12.120 |
 
-This can be transformed to an item-item matrix based on no of users who interacted with the items, as following
+This can be transformed to an item-item matrix based on no of users who interacted with the items, as following:
 
-|  |  |  |  |  |  |
+| | <span style={{ color: '#16a34a' }}>**P1**</span> | <span style={{ color: '#ea580c' }}>**P2**</span> | <span style={{ color: '#0891b2' }}>**P3**</span> | <span style={{ color: '#ca8a04' }}>**P4**</span> | <span style={{ color: '#0284c7' }}>**P5**</span> |
 | --- | --- | --- | --- | --- | --- |
-|  | **P1** | **P2** | **P3** | **P4** | **P5** |
-| **P1** | 5 | 4 | 1 | 2 | 1 |
-| **P2** | 4 | 4 | 1 | 2 | 1 |
-| **P3** | 1 | 1 | 1 | 0 | 0 |
-| **P4** | 2 | 2 | 0 | 2 | 1 |
-| **P5** | 1 | 1 | 0 | 1 | 1 |
+| <span style={{ color: '#16a34a' }}>**P1**</span> | 5 | 4 | 1 | 2 | 1 |
+| <span style={{ color: '#ea580c' }}>**P2**</span> | 4 | 4 | 1 | 2 | 1 |
+| <span style={{ color: '#0891b2' }}>**P3**</span> | 1 | 1 | 1 | 0 | 0 |
+| <span style={{ color: '#ca8a04' }}>**P4**</span> | 2 | 2 | 0 | 2 | 1 |
+| <span style={{ color: '#0284c7' }}>**P5**</span> | 1 | 1 | 0 | 1 | 1 |
 
 Hence, excluding the relationship of the item with itself, the recommendation results will be as follows:
 
-|  |  |
-| --- | --- |
 | **Anchor item** (last interacted item) | **Results from Collaborative filtering** |
+| --- | --- |
 | P1 | P2, P4, P3, P5 |
 | P2 | P1, P4, P3, P5 |
 | P3 | P1, P2 |
