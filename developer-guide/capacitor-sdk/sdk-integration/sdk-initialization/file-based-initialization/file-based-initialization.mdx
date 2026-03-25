@@ -5,12 +5,14 @@ title: "File Based Initialization"
 ## Overview
 
 <Info>
-  Starting with the \[PLACEHOLDER\] versions, the MoEngage Capacitor SDK supports file-based initialization.
+  Starting with v6.0.0.0, the MoEngage Capacitor SDK supports file-based initialization.
 </Info>
 
 To streamline the integration process and minimize initialization errors, MoEngage supports Script-Based Initialization. This approach allows you to manage App IDs and configuration settings directly within native configuration files, keeping them separate from your application logic.
 
-This article outlines how you can use the form-based interface to generate a validated code snippet for initialization and access module-specific configurations.
+## Script-based Initialization
+
+This approach outlines how you can use the form-based interface to generate a validated code snippet for initialization and access module-specific configurations.
 
 <Info>
   Alternatively, the SDK can be initialized manually. If you require this approach, please refer to the guide on [Framework Initialization](/developer-guide/capacitor-sdk/sdk-integration/sdk-initialization/framework-initialization).
@@ -19,12 +21,10 @@ This article outlines how you can use the form-based interface to generate a val
 Follow these steps to generate your initialization script:
 
 1. Navigate to the [Initialization Website.](https://app-cdn.moengage.com/sdk/integration/config/index.html)
-2. Configure the values based on your application requirements. Refer to the Configuration Parameters tables below:
-   - [Android](#h_01KBCZFV92B5XTVYSR70KEH5ZE)
-   - [iOS](#h_01KBCZFV9289RR4PR4XXCZ1NZP)
+2. Configure the values based on your application requirements. Refer to the Configuration Parameters tables below.
 3. Click **Generate Code** at the bottom of the form.
 
-## Step 1: Android Configuration (XML)
+## Android Configuration (XML)
 
 For Android, initialization is handled by placing an XML configuration file in the application's resource directory.
 
@@ -63,11 +63,11 @@ Below is the comprehensive list of keys available for `moengage.xml`.
 
 ### Add Configuration File
 
-Place the generated file in your Capacitor Android project at `android/app/src/main/res/values/`.
+Place the generated `moengage.xml` file in your Capacitor Android project at `android/app/src/main/res/values/`.
 
-\[placedholder for initialization snippet\]
+\[PLACEHOLDER: Insert XML snippet generated from the MoEngage portal here\]
 
-## Step 2: iOS Configuration (Info.plist)
+## iOS Configuration (Info.plist)
 
 For iOS, initialization is handled by adding a configuration dictionary to your `Info.plist`.
 
@@ -143,25 +143,84 @@ Configure the integer corresponding to your region. Incorrect values will result
 
 </CodeGroup>
 
-## Step 3: Framework Level Initialization
+## Framework Level Initialization
 
-After you configure the native files, the initialization code in your hybrid framework is simplified.
+After you configure the native files, you need to trigger the initialization in both your native wrappers and your Capacitor framework.
 
-Import the `MoEngage` Capacitor plugin in your project's main entry file (e.g., `app.component.ts` or `index.ts/js`) and call the **initialize()** method as shown below:
+### Android Native Setup
+
+Ensure your `MainApplication.java` triggers the default initialization so the SDK reads from the `moengage.xml` file.
 
 <CodeGroup>
 
-```typescript TypeScript
-[placeholder]
+```java Java wrap
+/**
+    * Initialize SDK using file based configuration.
+    *
+    * Note: While using this function to initialise the SDK, make sure you have configured all the
+    * required configuration in the xml as resource value
+    *
+    * @param application instance of [Application]
+    * @param sdkState instance of [SdkState]
+    */
+    @JvmStatic
+    @JvmOverloads
+    public fun initialiseDefaultInstance(
+        application: Application,
+        sdkState: SdkState? = null
+    )
 ```
 
 </CodeGroup>
 
-## Step 4: Migration and Precedence
+### iOS Native Setup
+
+Ensure your `AppDelegate.swift` triggers the SDK initialization using the default instance method, allowing it to read from your `Info.plist`.
+
+<CodeGroup>
+
+```swift Swift wrap
+// ios/App/App/AppDelegate.swift
+
+import UIKit
+import Capacitor
+// [PLACEHOLDER: Verify exact MoEngage imports for your setup, e.g., import MoEngageSDK, import CapacitorMoengageCore]
+
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    
+    var window: UIWindow?
+    
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        
+        // Initialize MoEngage using the default instance setup
+        // [PLACEHOLDER: Verify if initializeDefaultInstance() requires a config object passed in for your specific use case]
+        MoECapacitorInitializer.sharedInstance.initializeDefaultInstance() 
+        
+        return true
+    }
+}
+```
+
+</CodeGroup>
+
+### Initialize Capacitor Component
+
+Import the MoEngage Core plugin in your project's main entry file (e.g., `app.component.ts`, `main.ts`, or `index.ts/js`) and call the initialization method.
+
+<CodeGroup>
+
+```typescript TypeScript
+need info
+```
+
+</CodeGroup>
+
+## Migration and Precedence
 
 To migrate from manual code-based initialization to the file-based approach, refer [here](/developer-guide/capacitor-sdk/sdk-integration/sdk-initialization/file-based-initialization/migration-and-precedence).
 
-## Step 5: Environments (Test vs. Live)
+## Environments (Test vs. Live)
 
 You can configure Test/Live environments within these files.
 
