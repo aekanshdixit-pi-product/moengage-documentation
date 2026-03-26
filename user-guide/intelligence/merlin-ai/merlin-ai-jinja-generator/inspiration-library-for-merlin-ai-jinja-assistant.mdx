@@ -12,30 +12,422 @@ Titles & descriptions from similar items. Truncate descriptions if descriptions 
 
 **✅ A good Jinja description:**
 
-Show 6 titles & descriptions from Product Set Similar\_Items. Truncate descriptions to a length of over 50 characters.
+Show 6 titles & descriptions from Product Set Similar_Items. Truncate descriptions to a length of over 50 characters.
 
 # Inspiration Library
 
 With Merlin AI Jinja Assistant, you can create dynamic content with ease. The following are some examples of natural language queries and their corresponding Jinja code outputs. These examples can provide inspiration for crafting your own detailed natural language requests for optimal Jinja code generation.
 
-| **Dynamic Content** | Custom Solution |
-| --- | --- |
-| Print all the values from the event attribute\["Product Titles"\] of array data type. | <CodeGroup> ```jinja Jinja {% for title in EventAttribute['Product Titles'] %} {{ title }} {% endfor %} ``` </CodeGroup> |
-| Print the first value of EventAttribute\["Product Titles"\] of array data type only if its value is 'Tshirt'. | <CodeGroup> ```jinja Jinja {% if EventAttribute['Product Titles'][0] == 'Tshirt' %} {{ EventAttribute['Product Titles'][0] }} {% endif %} ``` </CodeGroup> |
-| Print the first 10 product titles from the ProductSet.CouponCode of object data type. If there are not enough products in the product set, use the ProductSet. DemoRecommendations to add more products such that the complete list of titles from both product sets is 10. | <CodeGroup> ```jinja Jinja {% set products = ProductSet.CouponCode[:10] %} {% if products|length < 10 %} {% set additional_products = ProductSet.DemoRecommendations[:10 - products|length] %} {% set products = products + additional_products %} {% endif %} {% for product in products %} {{ product.title }} {% endfor %} ``` </CodeGroup> |
-| Fetch ProductSet DemoRecommendations. Check if it exists, and if it exists, print the title from the ProductSet, but a maximum of 5, and truncate to 20 characters. | <CodeGroup> ```jinja Jinja {% if ProductSet.DemoRecommendations %} {% for product in ProductSet.DemoRecommendations[:5] %} {{ product.title[:20] + '...' if product.title|length > 20 else product.title }} {% endfor %} {% endif %} ``` </CodeGroup> |
-| From ProductSet DemoRecommendations, check if it exists, and for ProductSet DemoRecommendations, fetch Product Title and Product Price, but only the odd number, and add a serial number as well. | <CodeGroup> ```jinja Jinja {% if ProductSet.DemoRecommendations %} {% for product in ProductSet.DemoRecommendations %} {% if loop.index is odd %} {{ loop.index }}. {{ product.title }} - {{ product.price }} {% endif %} {% endfor %} {% endif %} ``` </CodeGroup> |
-| Check ProductSet CouponCode if it exists, and for ProductSet CouponCode fetch Product price, which should be the discounted price by 50%. | <CodeGroup> ```jinja Jinja {% if ProductSet.CouponCode %} {% for product in ProductSet.CouponCode %} {{ product.price * 0.5 }} {% endfor %} {% endif %} ``` </CodeGroup> |
-| Fetch ProductSet CouponCode if it exists for ProductSet CouponCode. Check if the product title count is 6, then fetch 6 product titles. In case the number of products is less than 6, run the other ProductSet DemoRecommendations and fetch the last remaining products from this ProductSet DemoRecommendations. In case both product sets have the same product, display only one product. | <CodeGroup> ```jinja Jinja {% set displayed_titles = [] %} {% if ProductSet.CouponCode %} {% for product in ProductSet.CouponCode %} {% if displayed_titles|length < 6 and product.title not in displayed_titles %} {{ product.title }} {% set _ = displayed_titles.append(product.title) %} {% endif %} {% endfor %} {% endif %} {% if displayed_titles|length < 6 and ProductSet.DemoRecommendations %} {% for product in ProductSet.DemoRecommendations %} {% if displayed_titles|length < 6 and product.title not in displayed_titles %} {{ product.title }} {% set _ = displayed_titles.append(product.title) %} {% endif %} {% endfor %} {% endif %} ``` </CodeGroup> |
-| What kind of personalization can I use with the Product set DemoRecommendations? I want only one product. Can you add the price also? | <CodeGroup> ```jinja Jinja {% if ProductSet.DemoRecommendations %} {% for product in ProductSet.DemoRecommendations[0:1] %} {{ product.title }} - {{ product.price }} {% endfor %} {% endif %} ``` </CodeGroup> |
-| Please create Jinja code to create a condition to check whether the value from the UserAttribute data type is a string or an array of strings. | <CodeGroup> ```jinja Jinja {% if UserAttribute is string %} {% elif UserAttribute is sequence and UserAttribute[0] is string %} {% endif %} ``` </CodeGroup> |
-| Correct this JINJA `{% if ProductSet.DemoRecommendations %} {% for product in ProductSet.DemoRecommendations[:5] %} {{ product.title[:20] + '...' if product.title|length > 20 else product.title }} {% endfor %} {% endif %}` | <CodeGroup> ```jinja Jinja {% if ProductSet.DemoRecommendations %} {% for product in ProductSet.DemoRecommendations[:5] %} {{ product.title[:19] + '...' if product.title|length > 20 else product.title }} {% endfor %} {% endif %} ``` </CodeGroup> |
-| How can I get the current time in the format HH:MM:SS? | <CodeGroup> ```jinja Jinja {{ '%H:%M:%S' | today() }} ``` </CodeGroup> |
-| I need a program that can extract the EventAttribute Delivery Date, format it to dd/mm/yyyy format, calculate the number of days difference from today's date in IST timezone, and handle conditional checks to see if the difference is greater than or equal to 2 days or less than 2 days. Remember the date. The Delivery Date could be of the future or the past, but you should consider the absolute difference. | <CodeGroup> ```jinja Jinja {% set date = EventAttribute['Delivery Date'] %} {% set now = '%d/%m/%Y'|today('IST') %} {% set diff = (EventAttribute['Delivery Date']|dateFormatter('%d/%m/%Y')|days('%d/%m/%Y'|today('IST')))|abs %} {% if diff >= 2 %} {{ "Difference is greater than or equal to 2 days." }} {% else %} {{ "Difference is less than 2 days." }} {% endif %} ``` </CodeGroup> |
-| I want a datetime formatter that will give me the difference between two dates. | <CodeGroup> ```jinja Jinja {% set date1 = UserAttribute['Date1'] %} {% set date2 = UserAttribute['Date2'] %} {% set diff = date1|dateFormatter('%d/%m/%Y')|days(date2|dateFormatter('%d/%m/%Y')) %} {% set year = diff // 365 %} {% set month = (diff - (year * 365)) // 30 %} {% set day = diff - (year * 365) - (month * 30) %} {{ year }} Years, {{ month }} Months, {{ day }} Days ``` </CodeGroup> |
-| Fetch the title from the product sets CouponCode. If there are duplicate descriptions, remove them by keeping only the first value. Finally, print only the unique titles and descriptions. | <CodeGroup> ```jinja Jinja {% set unique_titles = [] %} {% set unique_descriptions = [] %} {% if ProductSet.CouponCode %} {% for product in ProductSet.CouponCode %} {% if product.description not in unique_descriptions %} {{ unique_titles.append(product.title)|replace('None', '') }} {{ unique_descriptions.append(product.description)|replace('None', '') }} {% endif %} {% endfor %} {% endif %} {% for i in range(0, unique_titles|length) %} {{ unique_titles[i] }}: {{ unique_descriptions[i] }} {% endfor %} ``` </CodeGroup> |
-| Print the first name. | <CodeGroup> ```jinja Jinja {{ UserAttribute['First Name'] }} ``` </CodeGroup> |
-| We have the following SMS that we would need support for Event Attribute 'currency' and 'Order Value' to be delivered in Jinja. Hi. Your payment for `{{Order Value}}` was declined, as your credit card is currently suspended. Rules 1. Main currencies would need to be formatted with the symbol instead as: GBP = £, USD = $, AUD = $ , EUR = € (Important: No spaces between currency symbol and 'amount'. Example, €8.00). Any other currency code that could be coming in the payload would maintain its currency code. Example, AED 8.00 (Important: SPACE between currency symbol and 'Order Value') 2. 'Order Value' must be formatted with 1000s separation. For example, 1,989, 12,986, 123,098, etc. | <CodeGroup> ```jinja Jinja {% set currency_symbols = {'GBP': '£', 'USD': '$', 'AUD': '$', 'EUR': '€'} %} {% set currency_symbol = currency_symbols.get(currency, currency) %} {% if currency in currency_symbols %} {% set formatted_amount = amount|string|replace(',', '')|int|format('%0,.2f') %} {% set display_amount = currency_symbol ~ formatted_amount %} {% else %} {% set formatted_amount = amount|string|replace(',', '')|int|format('%0,.2f') %} {% set display_amount = currency_symbol ~ ' ' ~ formatted_amount %} {% endif %} Hi. Your payment for {{ Order Value }} was declined, as your credit card is currently suspended. Please see the email we sent you, or get in touch if you need help. ``` </CodeGroup> |
-| Concatenate the first and second value of event attribute\["Product Titles"\], which is of array data type, with a '\+'. If the concatenated value is greater than 5 characters, print 5 characters of the concatenated string and append '...' at the end. | <CodeGroup> ```jinja Jinja {% set concatenated = EventAttribute['Product Titles'][0] ~ '+' ~ EventAttribute['Product Titles'][1] %} {% if concatenated|length > 5 %} {{ concatenated[:5] ~ '...' }} {% else %} {{ concatenated }} {% endif %} ``` </CodeGroup> |
-| Fix this Jinja `{% set target_date = '13/03/2025' %} {% set today_date = '%d/%m/%Y'|today('EST') %} {% set diff = target|days(today_date) %} {{ diff }} Days` | <CodeGroup> ```jinja Jinja {% set target_date = '13/03/2025' %} {% set today_date = '%d/%m/%Y'|today('EST') %} {% set diff = target_date|days(today_date) %} {{ diff }} Days ``` </CodeGroup> |
-| Remove the tailing decimal zeros of the Event Attribute "Order Value", which is of float data type and then convert the data type from float to string. | <CodeGroup> ```jinja Jinja {% set value = EventAttribute['Order Value'] %} {% set formatted_value = ('%.15g' % value)|string %} {{ formatted_value }} ``` </CodeGroup> |
+<table style={{ width: "100%", tableLayout: "fixed" }}>
+  <thead>
+    <tr>
+      <th style={{ width: "50%", textAlign: "left", paddingBottom: "1rem", borderBottom: "2px solid #e5e7eb", fontWeight: "bold" }}>
+        Dynamic Content
+      </th>
+      <th style={{ width: "50%", textAlign: "left", paddingBottom: "1rem", borderBottom: "2px solid #e5e7eb", fontWeight: "bold" }}>
+        Custom Solution
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Print all the values from the event attribute["Product Titles"] of array data type.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% for title in EventAttribute['Product Titles'] %}
+  {{ title }}
+{% endfor %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Print the first value of EventAttribute["Product Titles"] of array data type only if its value is 'Tshirt'.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% if EventAttribute['Product Titles'][0] == 'Tshirt' %}
+  {{ EventAttribute['Product Titles'][0] }}
+{% endif %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Print the first 10 product titles from the ProductSet.CouponCode of object data type. If there are not enough products in the product set, use the ProductSet. DemoRecommendations to add more products such that the complete list of titles from both product sets is 10.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% set products = ProductSet.CouponCode[:10] %}
+{% if products|length < 10 %}
+  {% set additional_products = ProductSet.DemoRecommendations[:10 - products|length] %}
+  {% set products = products + additional_products %}
+{% endif %}
+{% for product in products %}
+  {{ product.title }}
+{% endfor %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Fetch ProductSet DemoRecommendations. Check if it exists, and if it exists, print the title from the ProductSet, but a maximum of 5, and truncate to 20 characters.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% if ProductSet.DemoRecommendations %}
+  {% for product in ProductSet.DemoRecommendations[:5] %}
+    {{ product.title[:20] + '...' if product.title|length > 20 else product.title }}
+  {% endfor %}
+{% endif %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      From ProductSet DemoRecommendations, check if it exists, and for ProductSet DemoRecommendations, fetch Product Title and Product Price, but only the odd number, and add a serial number as well.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% if ProductSet.DemoRecommendations %}
+  {% for product in ProductSet.DemoRecommendations %}
+    {% if loop.index is odd %}
+      {{ loop.index }}. {{ product.title }} - {{ product.price }}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Check ProductSet CouponCode if it exists, and for ProductSet CouponCode fetch Product price, which should be the discounted price by 50%.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% if ProductSet.CouponCode %}
+  {% for product in ProductSet.CouponCode %}
+    {{ product.price * 0.5 }}
+  {% endfor %}
+{% endif %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Fetch ProductSet CouponCode if it exists for ProductSet CouponCode. Check if the product title count is 6, then fetch 6 product titles. In case the number of products is less than 6, run the other ProductSet DemoRecommendations and fetch the last remaining products from this ProductSet DemoRecommendations. In case both product sets have the same product, display only one product.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% set displayed_titles = [] %}
+{% if ProductSet.CouponCode %}
+  {% for product in ProductSet.CouponCode %}
+    {% if displayed_titles|length < 6 and product.title not in displayed_titles %}
+      {{ product.title }}
+      {% set _ = displayed_titles.append(product.title) %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+{% if displayed_titles|length < 6 and ProductSet.DemoRecommendations %}
+  {% for product in ProductSet.DemoRecommendations %}
+    {% if displayed_titles|length < 6 and product.title not in displayed_titles %}
+      {{ product.title }}
+      {% set _ = displayed_titles.append(product.title) %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      What kind of personalization can I use with the Product set DemoRecommendations? I want only one product. Can you add the price also?
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% if ProductSet.DemoRecommendations %}
+  {% for product in ProductSet.DemoRecommendations[0:1] %}
+    {{ product.title }} - {{ product.price }}
+  {% endfor %}
+{% endif %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Please create Jinja code to create a condition to check whether the value from the UserAttribute data type is a string or an array of strings.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% if UserAttribute is string %}
+{% elif UserAttribute is sequence and UserAttribute[0] is string %}
+{% endif %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Correct this JINJA `{% if ProductSet.DemoRecommendations %} {% for product in ProductSet.DemoRecommendations[:5] %} {{ product.title[:20] + '...' if product.title|length > 20 else product.title }} {% endfor %} {% endif %}`
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% if ProductSet.DemoRecommendations %}
+  {% for product in ProductSet.DemoRecommendations[:5] %}
+    {{ product.title[:19] + '...' if product.title|length > 20 else product.title }}
+  {% endfor %}
+{% endif %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      How can I get the current time in the format HH:MM:SS?
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{{ '%H:%M:%S' | today() }}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      I need a program that can extract the EventAttribute Delivery Date, format it to dd/mm/yyyy format, calculate the number of days difference from today's date in IST timezone, and handle conditional checks to see if the difference is greater than or equal to 2 days or less than 2 days. Remember the date. The Delivery Date could be of the future or the past, but you should consider the absolute difference.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% set date = EventAttribute['Delivery Date'] %}
+{% set now = '%d/%m/%Y'|today('IST') %}
+{% set diff = (EventAttribute['Delivery Date']|dateFormatter('%d/%m/%Y')|days('%d/%m/%Y'|today('IST')))|abs %}
+{% if diff >= 2 %}
+  {{ "Difference is greater than or equal to 2 days." }}
+{% else %}
+  {{ "Difference is less than 2 days." }}
+{% endif %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      I want a datetime formatter that will give me the difference between two dates.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% set date1 = UserAttribute['Date1'] %}
+{% set date2 = UserAttribute['Date2'] %}
+{% set diff = date1|dateFormatter('%d/%m/%Y')|days(date2|dateFormatter('%d/%m/%Y')) %}
+{% set year = diff // 365 %}
+{% set month = (diff - (year * 365)) // 30 %}
+{% set day = diff - (year * 365) - (month * 30) %}
+{{ year }} Years, {{ month }} Months, {{ day }} Days
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Fetch the title from the product sets CouponCode. If there are duplicate descriptions, remove them by keeping only the first value. Finally, print only the unique titles and descriptions.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% set unique_titles = [] %}
+{% set unique_descriptions = [] %}
+{% if ProductSet.CouponCode %}
+  {% for product in ProductSet.CouponCode %}
+    {% if product.description not in unique_descriptions %}
+      {{ unique_titles.append(product.title)|replace('None', '') }}
+      {{ unique_descriptions.append(product.description)|replace('None', '') }}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+{% for i in range(0, unique_titles|length) %}
+  {{ unique_titles[i] }}: {{ unique_descriptions[i] }}
+{% endfor %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Print the first name.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{{ UserAttribute['First Name'] }}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      We have the following SMS that we would need support for Event Attribute 'currency' and 'Order Value' to be delivered in Jinja. Hi. Your payment for `{{Order Value}}` was declined, as your credit card is currently suspended. Rules 1. Main currencies would need to be formatted with the symbol instead as: GBP = £, USD = $, AUD = $ , EUR = € (Important: No spaces between currency symbol and 'amount'. Example, €8.00). Any other currency code that could be coming in the payload would maintain its currency code. Example, AED 8.00 (Important: SPACE between currency symbol and 'Order Value') 2. 'Order Value' must be formatted with 1000s separation. For example, 1,989, 12,986, 123,098, etc.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% set currency_symbols = {'GBP': '£', 'USD': '$', 'AUD': '$', 'EUR': '€'} %}
+{% set currency_symbol = currency_symbols.get(currency, currency) %}
+{% if currency in currency_symbols %}
+  {% set formatted_amount = amount|string|replace(',', '')|int|format('%0,.2f') %}
+  {% set display_amount = currency_symbol ~ formatted_amount %}
+{% else %}
+  {% set formatted_amount = amount|string|replace(',', '')|int|format('%0,.2f') %}
+  {% set display_amount = currency_symbol ~ ' ' ~ formatted_amount %}
+{% endif %}
+Hi. Your payment for {{ Order Value }} was declined, as your credit card is currently suspended. Please see the email we sent you, or get in touch if you need help.
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Concatenate the first and second value of event attribute["Product Titles"], which is of array data type, with a '+'. If the concatenated value is greater than 5 characters, print 5 characters of the concatenated string and append '...' at the end.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% set concatenated = EventAttribute['Product Titles'][0] ~ '+' ~ EventAttribute['Product Titles'][1] %}
+{% if concatenated|length > 5 %}
+  {{ concatenated[:5] ~ '...' }}
+{% else %}
+  {{ concatenated }}
+{% endif %}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Fix this Jinja `{% set target_date = '13/03/2025' %} {% set today_date = '%d/%m/%Y'|today('EST') %} {% set diff = target|days(today_date) %} {{ diff }} Days`
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% set target_date = '13/03/2025' %}
+{% set today_date = '%d/%m/%Y'|today('EST') %}
+{% set diff = target_date|days(today_date) %}
+{{ diff }} Days
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: "top", paddingRight: "1rem", paddingTop: "1rem", wordWrap: "break-word", borderBottom: "1px solid #e5e7eb" }}>
+
+      Remove the tailing decimal zeros of the Event Attribute "Order Value", which is of float data type and then convert the data type from float to string.
+
+      </td>
+      <td style={{ verticalAlign: "top", paddingTop: "1rem", borderBottom: "1px solid #e5e7eb" }}>
+
+<CodeGroup>
+```jinja Jinja
+{% set value = EventAttribute['Order Value'] %}
+{% set formatted_value = ('%.15g' % value)|string %}
+{{ formatted_value }}
+```
+</CodeGroup>
+
+      </td>
+    </tr>
+  </tbody>
+</table>
