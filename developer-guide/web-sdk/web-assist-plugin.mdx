@@ -4,64 +4,131 @@ title: "Web Assist Plugin"
 
 # Overview
 
-The _Web Assist Plugin_ is a diagnostic tool that integrates directly into your website to report SDK-related errors, data, user tracking information, and campaign details. Unlike previous methods that only displayed data post-integration or required raising Support Engineering (SE) tickets, this plugin proactively validates integration points to significantly reduce delays in go-live.
+The Web Assist Plugin is a diagnostic tool that integrates directly into your website to report SDK-related errors, data, user tracking information, and campaign details. Unlike previous methods that only displayed data post-integration or required raising Support Engineering (SE) tickets, this plugin proactively validates integration points to significantly reduce delays in go-live.
 
-<Info> 
+<Info>
+  **Key Capabilities**
 
-**Key Capabilities**
-
-The plugin actively monitors and proactively reports on the following:
-
-- **Service Worker & Web Push:** Detects registration failures or missing files.
-- **SDK Error Tracking:** Captures handled and unhandled SDK errors. As part of the native SDK capabilities, the Logger module actively emits events for selected warnings and errors, which are then captured by the plugin.
-- **Browser Storage Alerts:** Listens for browser storage clear alerts. Specifically, the plugin monitors crucial SDK storage keys such as `[INSERT_STORAGE_KEY_1]` and `[INSERT_STORAGE_KEY_2]`.
-- **Lifecycle Events:** Tracks SDK events via standard MoEngage lifecycle hooks.
-
+  The plugin actively monitors and proactively reports on the following:
+  - **Service Worker & Web Push:** Detects registration failures or missing files.
+  - **SDK Error Tracking:** Captures handled and unhandled SDK errors. As part of the native SDK capabilities, the Logger module actively emits events for selected warnings and errors, which are then captured by the plugin.
+  - **Browser Storage Alerts:** Listens for browser storage clear alerts. Specifically, the plugin monitors the `MOE_DATA` storage key to ensure session integrity.
+  - **Lifecycle Events:** Tracks SDK events via standard MoEngage lifecycle hooks.
 </Info>
 
-# Architecture and DOM Injection
+# Architecture and Detailed Flow
 
-This section covers the architectural setup and how the plugin renders within your project.
+This section covers the architectural setup, how the plugin renders within your project, and the exact data flow from detection to issue reporting.
 
-The Web Assist Plugin operates directly within the parent website's environment:
+## Step 1: Detection and Injection
 
-1. **Extension Detection**: The Web SDK is detected on the website using the Chrome extension logic (`moeSdkDetector.js`).
+The lifecycle of the Web Assist Plugin begins with detecting the MoEngage SDK and injecting the necessary scripts into the client's website.
+
+1. **Extension Detection**: The Web SDK is detected on the website using the Chrome extension (`moeSdkDetector.js`).
 2. **Script Injection**: Once detected, the Web Assist script is injected directly into the DOM.
-3. **Native Element Rendering**: The Web Assist UI forms a native `<div>` on the client's website, and not an `<iframe>`. This specific approach allows the plugin to directly access the parent website’s storage and other properties.
+3. **UI Rendering**: The Web Assist UI uses the MoEngage dashboard commons library for UI components. It forms a native `<div>` on the client's website, and **not** an `<iframe>`. This specific approach allows the plugin to directly access the parent website’s storages and properties.
 4. **Existing Logic**: Web Assist utilizes the existing Assist extension logic for the Setup Info, Track, and Campaign sections.
 
-# Implementing the Web Assist Plugin
+## Step 2: Event Listeners and Storage Monitoring
 
-Once injected, the plugin automatically adds several listeners and validation checks to monitor your environment.
-
-## Step 1: Understand Event Listeners
-
-Upon initialization, the plugin adds standard listeners to the `window` to monitor the environment for errors, unhandled rejections, lifecycle events, and storage modifications. This works in tandem with the Logger module emitting warnings and errors.
+Upon initialization, the plugin adds standard listeners to the `window` to monitor the environment for errors, unhandled rejections, lifecycle events, and critical storage modifications. 
 
 <CodeGroup>
 
 ```javascript JavaScript wrap
 window.onerror = function(message, source, lineno, colno, error) {
-  issueHandler('error', {message, source, lineno, colno, error})
+    issueHandler('error', { message, source, lineno, colno, error })
 };
 
 window.addEventListener('unhandledrejection', function(event) {
-  issueHandler('unhandledrejection', {event})
+    issueHandler('unhandledrejection', { event })
 });
 
 window.addEventListener('MOE_LIFECYCLE', function(event) {
-  issueHandler('moeLifecycle', {event})
+    issueHandler('moeLifecycle', { event })
 });
 
 window.addEventListener('storage', function(event) {
-  // If the key is null, it means the item was deleted or the storage was cleared
-  // This is where keys like [INSERT_STORAGE_KEY_1] are monitored
+    // If the key is null, it means the item was deleted or the storage was cleared
+    if (event.key === null || event.key === 'MOE_DATA') {
+        const currentMoeData = localStorage.getItem('MOE_DATA');
+        if (!currentMoeData) {
+            reportIssue({
+                type: 'Critical',
+                title: 'Local storage has been cleared',
+                desc: 'Clearing localStorage manually will reset the MoEngage SDK session and break event tracking.',
+                timestamp: new Date().getTime(),
+            });
+        }
+    }
+});
+````
+
+</CodeGroup>
+
+## Step 3: Issue Caching and Reevaluation
+
+To maintain an accurate state of integration health, the plugin uses a caching and reevaluation algorithm:
+
+1.  **Storage & Mapping**: Issues and their details are stored in local storage. Known issues are assigned labels, descriptions, and other metadata according to a predefined mapper logic.
+2.  **Caching**: Issues are cached with a specific expiry time.
+3.  **Triggering Updates**: The Web Assist state updates on every Page Viewed event, Assist UI open, and on every call to event handlers.
+4.  **Reevaluation Algorithm**: During an update, the reevaluation phase runs. The number of valid and unexpired issues stay in the storage, while expired or resolved issues are removed.
+
+## Step 4: Chrome Extension Syncing
+
+When the number of active issues updates during the reevaluation phase, an event is sent to the Chrome extension to dynamically update its issue badge count.
+
+<CodeGroup>
+
+```javascript JavaScript wrap
+// Inside Assist UI Plugin logic
+function notifyExtensionOfErrors(count) {
+    window.postMessage({
+        source: 'MOE_ASSIST_PLUGIN',
+        type: 'UPDATE_BADGE_COUNT',
+        payload: { count: count }
+    }, "*"); // Send to the same window
+}
+
+// In Chrome extension detector.js/content.js
+window.addEventListener("message", (event) => {
+    // Security check: only accept messages from your own plugin
+    if (event.source !== window || event.data?.source !== 'MOE_ASSIST_PLUGIN') return;
+    
+    if (event.data.type === 'UPDATE_BADGE_COUNT') {
+        // Relay the count to the background worker
+        chrome.runtime.sendMessage({
+            action: "SET_BADGE",
+            count: event.data.payload.count
+        });
+    }
+});
+
+// In Chrome extension background.js
+chrome.runtime.onMessage.addListener((message, sender) => {
+    if (message.action === "SET_BADGE") {
+        const tabId = sender.tab.id; // Target only the tab where error occurred
+        const countText = message.count > 0 ? message.count.toString() : "";
+        
+        // Update the badge text
+        chrome.action.setBadgeText({
+            text: countText,
+            tabId: tabId
+        });
+        
+        // Set badge color
+        chrome.action.setBadgeBackgroundColor({
+            color: "#d32f2f",
+            tabId: tabId
+        });
+    }
 });
 ```
 
 </CodeGroup>
 
-## Step 2: Service Worker Validation
+## Step 5: Service Worker Validation
 
 To detect service worker issues, the plugin checks if the service worker is active and correctly placed at the root directory.
 
@@ -69,36 +136,41 @@ To detect service worker issues, the plugin checks if the service worker is acti
 
 ```javascript JavaScript wrap
 async function checkServiceWorker(swPath) {
-  try {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      const moeSW = registrations.find(r => r.active && r.active.scriptURL.includes(swPath));
-      
-      if (!moeSW) {
-          reportIssue({
-              type: 'Setup',
-              title: 'Service worker file missing',
-              desc: 'Service worker register failed. Check if sw.js is at the root.',
-              link: 'Navigate to Setup info',
-              timestamp: new Date().getTime(),
-          });
-      }
-  } catch (err) {
-      // Browser might not support Service Workers or blocked by security
-  }
+    try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        const moeSW = registrations.find(r => r.active && r.active.scriptURL.includes(swPath));
+        
+        if (!moeSW) {
+            reportIssue({
+                type: 'Setup',
+                title: 'Service worker file missing',
+                desc: 'Service worker register failed. Check if sw.js is at the root.',
+                link: 'Navigate to Setup info',
+                timestamp: new Date().getTime(),
+            });
+        }
+    } catch (err) {
+        // Browser might not support Service Workers or blocked by security
+    }
 }
 ```
 
 </CodeGroup>
 
-## Step 3: Triggering the Assist UI
+# Managing the Plugin State
 
-You can trigger the Web Assist UI programmatically using the public SDK method.
+You can interact with the plugin locally from the app or extension. Clicking the Chrome extension will automatically open the Web Assist UI. Alternatively, you can trigger the Web Assist UI programmatically using the public SDK method.
 
-<Note> 
+<Note>
 
-**Extension Check**
+**API Behavior: `Moengage.enableAssist()`**
 
-If the Chrome extension is already installed, calling this method will do nothing and simply log a warning message advising the developer to use the extension instead.
+Invoking this method executes the following logic:
+
+1.  If the Chrome extension is installed, it does nothing and logs a warning message (advising the user to use Web Assist directly through the Chrome extension).
+2.  Otherwise, it checks if the Web Assist script is already injected.
+3.  If not injected, it inserts the Web Assist script and opens its UI.
+4.  If the Web Assist script already exists, it simply opens the UI.
 
 </Note>
 
@@ -110,46 +182,5 @@ Moengage.enableAssist();
 
 </CodeGroup>
 
-# Testing and Validation
-
-Once your app is configured, you can run tests in your development or staging environment to ensure the Web Assist Plugin is successfully catching integration issues.
-
-### Test Standard Errors
-
-Open your browser console and manually throw an error to trigger the `window.onerror` listener. The Assist UI should capture and report this as a handled/unhandled error.
-
-<CodeGroup>
-
-```javascript JavaScript wrap
-throw new Error("Testing Web Assist Error Listener");
 ```
-
-</CodeGroup>
-
-### Test Promise Rejections
-
-Trigger an unhandled promise rejection in the console to test the `unhandledrejection` listener. The Assist UI should log this rejection.
-
-<CodeGroup>
-
-```javascript JavaScript wrap
-Promise.reject(new Error("Testing Promise Rejection"));
 ```
-
-</CodeGroup>
-
-### Test Storage Alerts
-
-Open your browser's Developer Tools, navigate to the Application/Storage tab, and manually delete `[INSERT_STORAGE_KEY_1]` or `[INSERT_STORAGE_KEY_2]` from Local Storage.
-
-<Check> 
-
-**Success/Developer Info**
-
-The `storage` event listener should detect the key becoming null and successfully trigger a browser storage clear alert in the plugin. 
-
-</Check>
-
-### Test Service Worker Validation
-
-Temporarily rename your `sw.js` file (or move it out of the root directory) and reload the page. The `checkServiceWorker` function should fail to find the active script URL matching the path, and the plugin should report a "Setup" issue stating: "Service worker register failed. Check if sw.js is at the root."
