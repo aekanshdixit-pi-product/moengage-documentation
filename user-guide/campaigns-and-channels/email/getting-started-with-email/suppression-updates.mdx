@@ -1,4 +1,47 @@
 ---
-title: 'Suppression Updates'
+title: "Suppression Updates"
 ---
 
+# Overview
+
+_Suppression Updates_ helps maintain your global email subscription list. You can use this feature to ensure that users who should not be contacted are restricted from receiving emails. This is essential for maintaining compliance and protecting your sender reputation.
+
+<Info>
+  If you use MoEngage Managed Email, reachability updates are automatically propagated to SendGrid. However, if you integrate your own SendGrid account, this automatic sync is not supported; you must manage suppression updates directly within your SendGrid dashboard.
+</Info>
+
+# Use Cases
+
+- **Migrate from legacy email marketing platforms or ESPs**: Bulk import historical suppression lists (bounces/unsubscribes/spams) when moving to MoEngage to protect your sender reputation from day one.
+- **Automate SendGrid sync:** Automatically propagate suppression updates to SendGrid to keep your non-transactional senders compliant without manual work. This applies only if you select [**SendGrid Tracking**](https://partners.moengage.com/hc/en-us/articles/4422510567700-Sendgrid#h_01J1VJTR9DT27WCVRCYBDPZ8R2) in **Unsubscribe Settings** while configuring an email sender in MoEngage.
+- \*\*Protect critical emails: \*\*Maintain a global suppression list for marketing campaigns without blocking essential transactional alerts, such as one-time passwords (OTPs) or password resets.
+- **Manage suppression requests independently**: Unsubscribe or resubscribe users in [self-service](/user-guide/campaigns-and-channels/email/getting-started-with-email/self-service-for-email-onboarding) enabled workspaces, eliminating the need to raise support tickets for individual status updates.
+
+# Bulk Import of Users
+
+A primary function of _Suppression Updates_ is to import existing subscription lists in bulk. This is a critical step during email onboarding, especially when migrating from a previous email marketing platform or ESP.
+
+Use this feature to upload CSV lists of users who have previously:
+
+- Experienced email bounces.
+- Unsubscribed from your communications.
+- Marked your emails as spam (complained).
+
+## CSV File Requirements
+
+To ensure your subscription list is imported correctly, your CSV file must follow these requirements:
+
+- The CSV file must strictly follow the column sequence listed below. While column headers are case-insensitive, the sequence must not be altered to ensure successful processing.
+  - Identifier column: Label this column _Email ID_, _MoEngage ID,_ or _Email ID/MoEngage ID_. Note that if PII tokenization is enabled for your workspace, you must label this column _ID_.
+  - _Unsubscribe_
+  - _Bounce_
+  - _Spam_
+- For each user, the CSV should specify _true_ or _false_ (case-insensitive) for the columns: Unsubscribe, Bounce, and Spam. For example, a user who unsubscribed but never bounced or marked the email as spam would have the following values:
+  - _Unsubscribe_: true
+  - _Bounce_: false
+  - _Spam_: false
+- Your CSV file must not contain duplicate email entries. If duplicates are found, MoEngage processes only the last entry in the file and skips all preceding duplicates. 
+- A user is considered resubscribed only when MoEngage updates their status from true (suppressed) to false (active) for all three suppression categories. If the user's current status for all three entries is already false, no update is performed.
+- A user becomes reachable if all three suppression categories are set to false, and the user is suppressed if any of the three categories is set to true.
+- You can use the same CSV file to unsubscribe or resubscribe a user, depending on the value specified in the _Unsubscribe_ column. To make a previously unsubscribed user reachable, upload a file with the _Unsubscribe_ value set to _false_. If _Bounce_ and _Complaint_ are also _false_, the user is eligible to receive emails again.
+- MoEngage generates the following events when the status of BUC attributes (Bounce, Unsubscribe, or Complaint) changes:
