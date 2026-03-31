@@ -10,6 +10,7 @@ The Web Assist Plugin is a diagnostic tool that integrates directly into your we
   **Key Capabilities**
 
   The plugin actively monitors and proactively reports on the following:
+
   - **Service Worker & Web Push:** Detects registration failures or missing files.
   - **SDK Error Tracking:** Captures handled and unhandled SDK errors. As part of the native SDK capabilities, the Logger module actively emits events for selected warnings and errors, which are then captured by the plugin.
   - **Browser Storage Alerts:** Listens for browser storage clear alerts. Specifically, the plugin monitors the `MOE_DATA` storage key to ensure session integrity.
@@ -26,12 +27,12 @@ The lifecycle of the Web Assist Plugin begins with detecting the MoEngage SDK an
 
 1. **Extension Detection**: The Web SDK is detected on the website using the Chrome extension (`moeSdkDetector.js`).
 2. **Script Injection**: Once detected, the Web Assist script is injected directly into the DOM.
-3. **UI Rendering**: The Web Assist UI uses the MoEngage dashboard commons library for UI components. It forms a native `<div>` on the client's website, and **not** an `<iframe>`. This specific approach allows the plugin to directly access the parent website’s storages and properties.
+3. **UI Rendering**: The Web Assist UI uses the MoEngage dashboard commons library for UI components. It forms a native `<div>` on the client's website, and **not** an `<iframe>`. This specific approach allows the plugin to directly access the parent website’s storage and properties.
 4. **Existing Logic**: Web Assist utilizes the existing Assist extension logic for the Setup Info, Track, and Campaign sections.
 
 ## Step 2: Event Listeners and Storage Monitoring
 
-Upon initialization, the plugin adds standard listeners to the `window` to monitor the environment for errors, unhandled rejections, lifecycle events, and critical storage modifications. 
+Upon initialization, the plugin adds standard listeners to the `window` to monitor the environment for errors, unhandled rejections, lifecycle events, and critical storage modifications.
 
 <CodeGroup>
 
@@ -62,7 +63,7 @@ window.addEventListener('storage', function(event) {
         }
     }
 });
-````
+```
 
 </CodeGroup>
 
@@ -70,10 +71,10 @@ window.addEventListener('storage', function(event) {
 
 To maintain an accurate state of integration health, the plugin uses a caching and reevaluation algorithm:
 
-1.  **Storage & Mapping**: Issues and their details are stored in local storage. Known issues are assigned labels, descriptions, and other metadata according to a predefined mapper logic.
-2.  **Caching**: Issues are cached with a specific expiry time.
-3.  **Triggering Updates**: The Web Assist state updates on every Page Viewed event, Assist UI open, and on every call to event handlers.
-4.  **Reevaluation Algorithm**: During an update, the reevaluation phase runs. The number of valid and unexpired issues stay in the storage, while expired or resolved issues are removed.
+1. **Storage & Mapping**: Issues and their details are stored in local storage. Known issues are assigned labels, descriptions, and other metadata according to a predefined mapper logic.
+2. **Caching**: Issues are cached with a specific expiry time.
+3. **Triggering Updates**: The Web Assist state updates on every Page Viewed event, Assist UI open, and on every call to event handlers.
+4. **Reevaluation Algorithm**: During an update, the reevaluation phase runs. The number of valid and unexpired issues stay in the storage, while expired or resolved issues are removed.
 
 ## Step 4: Chrome Extension Syncing
 
@@ -162,16 +163,14 @@ async function checkServiceWorker(swPath) {
 You can interact with the plugin locally from the app or extension. Clicking the Chrome extension will automatically open the Web Assist UI. Alternatively, you can trigger the Web Assist UI programmatically using the public SDK method.
 
 <Note>
+  **API Behavior: `Moengage.enableAssist()`**
 
-**API Behavior: `Moengage.enableAssist()`**
+  Invoking this method executes the following logic:
 
-Invoking this method executes the following logic:
-
-1.  If the Chrome extension is installed, it does nothing and logs a warning message (advising the user to use Web Assist directly through the Chrome extension).
-2.  Otherwise, it checks if the Web Assist script is already injected.
-3.  If not injected, it inserts the Web Assist script and opens its UI.
-4.  If the Web Assist script already exists, it simply opens the UI.
-
+  1. If the Chrome extension is installed, it does nothing and logs a warning message (advising the user to use Web Assist directly through the Chrome extension).
+  2. Otherwise, it checks if the Web Assist script is already injected.
+  3. If not injected, it inserts the Web Assist script and opens its UI.
+  4. If the Web Assist script already exists, it simply opens the UI.
 </Note>
 
 <CodeGroup>
@@ -181,6 +180,3 @@ Moengage.enableAssist();
 ```
 
 </CodeGroup>
-
-```
-```
