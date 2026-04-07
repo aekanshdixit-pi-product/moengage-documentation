@@ -411,6 +411,26 @@ A duplicate import is considered when the:
 - Event name/ Registered/ Anonymous/ All users import subtypes are the same.
 - Event name/ Registered/Anonymous/All users import types with the same Databricks connection.
 - Event name/ Registered/Anonymous/All users import types with the Schema/Dataset and Table/View are the same.
+## Import Failure Policy
+
+In the event of a connection failure, a recurring Databricks import will retry up to 10 times. If all retries fail, the import is marked FAILED. The following table outlines the behavior and required action when a recurring Databricks import fails due to connection issues (for example, credentials, network, or warehouse unavailability).
+
+| Policy | Description | Action |
+| --- | --- | --- |
+| Automatic Retry | MoEngage automatically attempts to restore the connection and retries the import up to 10 times in the event of a connection failure. | None (MoEngage handles automatically) |
+| Import Failure | If all 10 retries fail, MoEngage marks the import as FAILED and stops all further automatic attempts and future imports. After it has failed, you must create a new import by either duplicating the failed import or creating a fresh one. | Mandatory Investigation and Restart |
+
+### Restart a Failed Import
+
+Any import that has FAILED requires your manual intervention:
+
+1. You must investigate and resolve the underlying issue on your Databricks side (for example, update credentials, check permissions, or ensure warehouse availability).
+2. After resolving the issue, you must manually duplicate the import from the MoEngage UI to restart it.
+
+<Note>
+  - The first successful execution of any new recurring import is always a historical import (it fetches all the data from the configured table/view).
+  - Duplicating a failed import initiates a new historical import. If the original import previously succeeded, this duplication may result in redundant data. To control data flow effectively, MoEngage recommends using views.
+</Note>
 
 # FAQ
 
