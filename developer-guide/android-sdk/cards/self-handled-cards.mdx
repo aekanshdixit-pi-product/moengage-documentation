@@ -3,21 +3,15 @@ title: "Self Handled Cards"
 description: "Build custom card views in your Android app using the MoEngage self-handled Cards SDK."
 ---
 
-
 Self-handled cards give you the flexibility of creating Card Campaigns on the MoEngage Platform and displaying the cards anywhere inside the application. SDK provides APIs to fetch the campaign's data using which you can create your own view for cards.
-
 
 # SDK Installation
 
-
 ## Installing using BOM
-
 
 Integration using BOM  is the recommended way of integration; refer to the [Install Using BOM](/developer-guide/android-sdk/sdk-integration/basic-integration/Install-Using-BOM) document. Once you have configured the BOM add the dependency in the _app/build.gradle_ file as shown below
 
-
 <CodeGroup>
-
 
 ```kotlin build.gradle.kts wrap
 dependencies {
@@ -26,34 +20,25 @@ dependencies {
 }
 ```
 
-
 </CodeGroup>
-
 
 Once the BOM is configured, include the specific MoEngage modules required for the application. \
 Note: Version numbers are not required for these dependencies; the BOM automatically manages them.
 
-
 # Implementing Self Handled Cards
-
 
 Use the below APIs to fetch the card's data and build your own UI. The SDK provides both blocking and async APIs for fetching the data. In this document, we have just added the blocking APIs, refer to the API reference for [_MoECardHelper_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/index.html) for the async APIs.
 
-
 ## Notify on Section Load/Unload
-
 
 You can show the cards on a separate screen or a section of the screen. When the cards screen/section is loaded call [_onCardSectionLoaded()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/on-card-section-loaded.html) and call [_onCardSectionUnloaded()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/on-card-section-unloaded.html) when the screen/section is no longer visible or going to background.
 
-
 <Info>
- - _When onCardSectionLoaded()_ and _onCardSectionUnloaded()_ are called together, the SDK automatically tracks the card impressions.
- - The _onCardSectionLoaded()_ has an SLA of 5 minutes.
+  - _When onCardSectionLoaded()_ and _onCardSectionUnloaded()_ are called together, the SDK automatically tracks the card impressions.
+  - The _onCardSectionLoaded()_ has an SLA of 5 minutes.
 </Info>
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 // call on section or screen load
@@ -62,7 +47,6 @@ MoECardHelper.onCardSectionLoaded(context,listener);
 MoECardHelper.onCardSectionUnloaded(context);
 ```
 
-
 ```Java Java
 // call on section or screen load
 MoECardHelper.INSTANCE.onCardSectionLoaded(context,listener);
@@ -70,176 +54,129 @@ MoECardHelper.INSTANCE.onCardSectionLoaded(context,listener);
 MoECardHelper.INSTANCE.onCardSectionUnloaded(context);
 ```
 
-
 </CodeGroup>
-
 
 ## Fetch Cards from the Server
 
-
 Use the [_fetchCards()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/fetch-cards.html) API to refresh cards from the MoEngage server.
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.fetchCards(Context, CardAvailableListener)
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.fetchCards(Context, CardAvailableListener);
 ```
 
-
 </CodeGroup>
 
-
 <Info>
- _fetchCards()_ hits the server at most once every 5 minutes. If called more frequently, the existing cached cards are returned via the callback.
+  _fetchCards()_ hits the server at most once every 5 minutes. If called more frequently, the existing cached cards are returned via the callback.
 </Info>
-
 
 ## Refresh Cards
 
-
 Checks the server for card updates. Returns a `hasUpdates` flag. If `hasUpdates` is true, the latest cards are stored in local storage. Call `getCards()` / `getCardsForCategory()` / `getCardsInfo()` to retrieve the updated cards from local storage.
-
 
 **Method signature:** `MoECardHelper.refreshCards(context, listener)`
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.refreshCards(context, listener)
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.refreshCards(context, listener);
 ```
 
-
 </CodeGroup>
 
-
 <Info>
- _refreshCards()_ has a  shorter SLA (~5 seconds) compared to fetchCards() (5 minutes), making it suitable for near-real-time card updates.
+  _refreshCards()_ has a  shorter SLA (~5 seconds) compared to fetchCards() (5 minutes), making it suitable for near-real-time card updates.
 </Info>
-
 
 ## Fetch Categories
 
-
 To fetch all the categories for which cards are configured, use the [_getCardCategories()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/get-card-categories.html) API.
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.getCardCategories(context)
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.getCardCategories(context);
 ```
 
-
 </CodeGroup>
-
 
 Additionally, you can optionally have an **All** category which would be like a superset of other categories. Use the [_isAllCategoryEnabled()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/is-all-category-enabled.html) API.
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.isAllCategoryEnabled(context)
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.isAllCategoryEnabled(context);
 ```
 
-
 </CodeGroup>
-
 
 ## Fetch Cards for Categories
 
-
 To fetch cards eligible for display for a specific category, use the [_getCardsForCategory()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/get-cards-for-category.html) API
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.getCardsForCategory(context, "[YOUR_CATEGORY]")
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.getCardsForCategory(context, "[YOUR_CATEGORY]");
 ```
 
-
 </CodeGroup>
-
 
 To fetch all the cards eligible for display irrespective of the category, pass the category **CARD\_CATEGORY\_ALL** as shown below
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.getCardsForCategory(context, CARDS_CATEGORY_ALL)
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.getCardsForCategory(context, MoECardsCoreConstants.CARDS_CATEGORY_ALL);
 ```
 
-
 </CodeGroup>
-
 
 Refer to the documentation of the [_Card_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core.model/-card/index.html) model to know more about the fields and data present.
 
-
 Instead of using separate APIs to fetch the Cards and categories, you can use the [_getCardsInfo()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/get-cards-info.html) API to fetch all the information in one go
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.getCardsInfo(context)
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.getCardsInfo(context);
 ```
 
-
 </CodeGroup>
-
 
 ## Widget and Widget Id Mapping
 
-
 ### Basic Card/Illustration Card
-
 
 | Widget Id | Widget Type | Widget Information |
 | --- | --- | --- |
@@ -248,129 +185,95 @@ MoECardHelper.INSTANCE.getCardsInfo(context);
 | 2 | Text (WidgetType.TEXT) | Message text for the card. |
 | 3 | Button (WidgetType.Button) | Call to action(CTA) for the card. |
 
-
 ## Track Statistics for Cards
-
 
 Since the UI/display of the cards is controlled by the application to track statistics on delivery, display, and click, we need the application to notify the SDK.
 
-
 ### Delivered
-
 
 To track delivery to the card section of the application, call the [_cardDelivered()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/card-delivered.html) API when the cards section of the application is loaded.
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.cardDelivered(context)
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.cardDelivered(context);
 ```
 
-
 </CodeGroup>
-
 
 ### Impression
 
-
 Call the [_cardShown()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/card-shown.html) API when a specific card is visible on the screen.
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.cardShown(context, card)
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.cardShown(context, card);
 ```
 
-
 </CodeGroup>
-
 
 ### Click
 
-
-Call the [_cardClicked()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/card-clicked.html) API whenever a user clicks on a card, along with the card object widget identifier for the UI element clicked should also be passed. 
-
+Call the [_cardClicked()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/card-clicked.html) API whenever a user clicks on a card, along with the card object widget identifier for the UI element clicked should also be passed.
 
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.cardClicked(context, card, widgetId)
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.cardClicked(context, card, widgetId);
 ```
 
-
 </CodeGroup>
-
 
 ## Delete Card
 
-
 Call the [_deleteCard()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/delete-card.html) API to delete a card
 
-
 <CodeGroup>
-
 
 ```Kotlin Kotlin wrap
 MoECardHelper.deleteCard(context, card)
 ```
 
-
 ```Java Java
 MoECardHelper.INSTANCE.deleteCard(context, card);
 ```
 
-
 </CodeGroup>
-
 
 To delete a list of cards, use [_deleteCards()_](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/delete-cards.html) API.
 
-
 Please take a look at the [documentation](https://moengage.github.io/android-api-reference/cards-core/com.moengage.cards.core/-mo-e-card-helper/index.html) for a complete guide on available helper APIs.
-
 
 # FAQs
 
-
 <Accordion title="What is the recommended implementation for a standard Cards Inbox?">
- user navigates to the cards section, call onCardSectionLoaded(). When they leave, call onCardSectionUnloaded(). This handles server sync, event deduplication, and impression tracking automatically.
+  MoEngage recommends calling onCardSectionLoaded() when the user enters the Cards section and onCardSectionUnloaded() when they leave. Doing so allows the SDK to automatically handle server synchronization, event deduplication, and impression tracking.
 </Accordion>
-
 
 <Accordion title="How do I handle near-real-time card updates (e.g., replacing a card after a user action)">
- Follow this 3-step pattern to ensure cards are always fresh without hitting rate limits:
+  Follow this 3-step pattern to ensure cards are always fresh without hitting rate limits:
 
-
- 1. **Initial Load**: On page load, call `fetchCards()` to get the latest cards from the server.
- 2. **Trigger Update**: When you need to check for updates (e.g., after a survey submission), call `refreshCards()`.
- 3. **Retrieve Data**: If `refreshCards()` returns `hasUpdates = true`, call `getCardsForCategory()` or `getCardsInfo()` to pull the updated cards from local storage.
+  1. **Initial Load**: On page load, call `fetchCards()` to get the latest cards from the server.
+  2. **Trigger Update**: When you need to check for updates (e.g., after a survey submission), call `refreshCards()`.
+  3. **Retrieve Data**: If `refreshCards()` returns `hasUpdates = true`, call `getCardsForCategory()` or `getCardsInfo()` to pull the updated cards from local storage.
 </Accordion>
-
 
 <Accordion title="What is the difference between onCardSectionLoaded() and fetchCards()?">
- | Feature | `onCardSectionLoaded() + onCardSectionUnLoaded()` | `fetchCards()` |
- | :-- | :-- | :-- |
- | **Use Case** | **Recommended** for card inbox screens. | One-time refresh outside the section lifecycle. |
- | **Impression Tracking** | The SDK tracks card impressions automatically. | User have to track impressions Manually |
+  | Feature | `onCardSectionLoaded() + onCardSectionUnLoaded()` | `fetchCards()` |
+  | :-- | :-- | :-- |
+  | **Use Case** | **Recommended** for card inbox screens. | One-time refresh outside the section lifecycle. |
+  | **Impression Tracking** | The SDK tracks card impressions automatically. | User have to track impressions Manually |
 </Accordion>
-
