@@ -30,9 +30,9 @@ Data is sent to Google Analytics using the Measurement Protocol Data in two part
 
 | Parameter Name | Description |
 | --- | --- |
-| `api_secret` | **Required.**<br />An `API Secret` that is generated through the Google Analytics UI. An API Secret that is generated through the Google Analytics UI.  To create a new secret, navigate in the Google Analytics UI to:  Admin \> Data Streams \> choose your stream \> Measurement Protocol \> Create |
+| `api_secret` | **Required.**<br />An `API Secret` that is generated through the Google Analytics UI. An API Secret that is generated through the Google Analytics UI.  <br />To create a new secret, navigate in the Google Analytics UI to:  <br />Admin \> Data Streams \> choose your stream \> Measurement Protocol \> Create |
 | `measurement_id` | Optional.  <br />Measurement ID. The identifier for a Data Stream. Found in the Google Analytics UI under:  Admin \> Data Streams \> choose your stream \> Measurement ID |
-| `firebase_app_id` | \*\*Required only if using a Firebase app. \*\*<br />Firebase App ID. The identifier for a Firebase app. Found in the Firebase console under:  Project Settings \> General \> Your Apps \> App ID |
+| `firebase_app_id` | **Required only if using a Firebase app.**<br />Firebase App ID. The identifier for a Firebase app. Found in the Firebase console under:  Project Settings \> General \> Your Apps \> App ID |
 
 [Read more](https://developers.google.com/analytics/devguides/collection/protocol/ga4/reference?client_type=gtag#payload) about the required query parameters of the Measurement Protocol.
 
@@ -42,8 +42,8 @@ The payload of your request depends on the events and attributes that you want t
 
 | Parameter Name | Description |
 | --- | --- |
-| `client\_id` | **Required only if using gtag.js.**<br />Uniquely identifies a user instance of a web client. See [send event to the Measurement Protocol](https://developers.google.com/gtagjs/reference/api#get_mp_example). |
-| `app\_instance\_id` | **Required only if using a Firebase app.**<br />Uniquely identifies a specific installation of a Firebase app. This value needs to be retrieved through the Firebase SDK. |
+| `client_id` | **Required only if using gtag.js.**<br />Uniquely identifies a user instance of a web client. See [send event to the Measurement Protocol](https://developers.google.com/gtagjs/reference/api#get_mp_example). |
+| `app_instance_id` | **Required only if using a Firebase app.**<br />Uniquely identifies a specific installation of a Firebase app. This value needs to be retrieved through the Firebase SDK. |
 | `events` | **Required.**<br />An array of event items. |
 
 [Read more](https://developers.google.com/analytics/devguides/collection/protocol/ga4/reference?client_type=firebase#payload_post_body) about the required JSON post-body parameters of the Measurement Protocol.
@@ -61,12 +61,31 @@ To create a connector campaign on MoEngage,
 7. Click next to proceed to the next step.
 8. On step 2 of the campaign,
    - Select the method as POST.
-   - Add Webhook URL as : `https://www.google-analytics.com//mp/collect?api\_secret=&measurement\_id=`
-   - The URL parameters list should auto-populate. Replace `with your API Secret Key. You can swap this parameter with `firebase\_app\_id` if you're using a Firebase app. Replace` with the ID of your Data Stream.
+   - Add Webhook URL as : `https://www.google-analytics.com//mp/collect?api_secret=<api_secret>&measurement_id=<measurement_id>`
+   - The URL parameters list should auto-populate. Replace `<api_secret>` with your API Secret Key. You can swap this parameter with `firebase_app_id` if you're using a Firebase app. Replace `<measurement_id>` with the ID of your Data Stream.
    - In Headers, add `Content-Type` as `application/json`.
    - In Body, choose Raw and use the content depending on what events you want to send to Google Analytics. Below is an example:\
-     **PROTECTED\_11**
-     - Make sure to replace \`\` with the client ID (if using `gtag.js`). You can also swap this key with `app\_instance\_id` if you're using a Firebase app.
+     ```text
+     {
+         "client_id": "<client_id>",
+         "user_id": "{{UserAttribute['ID']}}",
+         "timestamp_micros": "{{EventAttribute['Event Time (UTC)']}}",
+         "user_properties": {
+             "email": {
+                 "value": "{{UserAttribute['Email (Standard)']}}"
+             }
+         },
+         "events": [
+             {
+                 "name": "cart_checkout",
+                 "params": {
+                     "checkout_value": 1000
+                 }
+             }
+         ]
+     }
+     ```
+     - Make sure to replace `<client_id>` with the client ID (if using `gtag.js`). You can also swap this key with `app_instance_id` if you're using a Firebase app.
 
 ![](/images/moengage_9cf6b7.png)
 
