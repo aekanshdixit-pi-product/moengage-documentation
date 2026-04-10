@@ -20,7 +20,6 @@ Jinja
 .
 ```
 
-
 Or with a subscript notation:
 
 Jinja
@@ -179,23 +178,25 @@ Jinja
 - One can also use the custom variable with a loop; Tags control the logic of the template and can perform conditional statements, loops, macros, and so on.
 
 Sample Loop
-  ```text
-  {% set products = [{‘name’: ‘Nike’, ‘href’: 'https://www.example.com/nike'}, {‘name’: ‘Adidas’, ‘href’: 'https://www.example.com/adidas'}] %}
-  {% for product in
-  products
-  %}- __PROTECTED_9__
-  {% endfor %}
-  ```
+
+```text
+{% set products = [{‘name’: ‘Nike’, ‘href’: 'https://www.example.com/nike'}, {‘name’: ‘Adidas’, ‘href’: 'https://www.example.com/adidas'}] %}
+{% for product in
+products
+%}- __PROTECTED_9__
+{% endfor %}
+```
 
 Sample condition
-  ```text
 
-  {% if `products` %}
-  `<p>`The products are not empty.`</p>`
-  {% else %}\
-  `<p>`The products are empty.`</p>`
-  {% endif %}
-  ```
+```text
+
+{% if `products` %}
+`<p>`The products are not empty.`</p>`
+{% else %}\
+`<p>`The products are empty.`</p>`
+{% endif %}
+```
 
 ## Escaping
 
@@ -208,6 +209,7 @@ Jinja
 ```text
 {{
 ```
+
 is by using a variable expression:
 
 Jinja
@@ -619,6 +621,12 @@ list.index(item[, start[, end]])
 
 Returns the item at index position in List and also removes it from the List. If no index provided, returns and removes the last item in the list. list.pop() throws an error if index not within the List.
 
+Jinja
+
+```text
+list.pop([index])
+```
+
 <Note>
   MoEngage currently supports all other standard functions of Jinja. If you want to learn more about standard functions in Jinja, refer to List of Global Functions.
 </Note>
@@ -629,13 +637,28 @@ Returns the item at index position in List and also removes it from the List. If
 
 Date Formatter - Converts any given date to the format mentioned in toFormat.
 
+```text
+Usage
+{{'14/10/2020'|dateFormatter('%m/%d/%Y')}}
+```
+
 Output: 10/14/2020
 
 Date Difference - Returns the difference between 2 dates. Return values can be positive, zero, or negative.
 
+```text
+Usage
+{{'12/10/2020'|days('14/10/2020')}}
+```
+
 Output: 2
 
 Today Function - Returns current date in the given format and timezone.
+
+```text
+Usage (For a MM/DD/YYYY in EST Timezone)_ 
+{{'%m/%d/%Y'|today('EST')}}
+```
 
 Output: 05/23/2024
 
@@ -643,9 +666,28 @@ Date and Time Formatter Function -
 
 Format date and time  - Converts any given date to the mentioned format.
 
+```text
+Method:
+
+dateTimeFormatter(toFormat='%Y-%m-%d %H:%M:%S %p')
+
+Usage
+{{ "2012-01-19 17:21:00 CST" |dateTimeFormatter(toFormat='%Y-%m-%d %H:%M:%S %p')}}
+```
+
 Output: 2012-01-19 05:21:00 PM
 
 Timezone Conversion - Displays date and time in the respective Timezone, and adds the defined number of minutes to the time.
+
+```text
+Method:
+
+dateTimeFormatter(tzOffset=-330) dateTimeFormatter(timeZone='Asia/Kolkata')
+
+Usage 
+{{ "2012-01-19 17:21:00 CST" |dateTimeFormatter(tzOffset=-330)}}
+{{ "2012-01-19 17:21:00 CST" |dateTimeFormatter(timeZone='Asia/Kolkata')}}
+```
 
 Output:
 
@@ -654,7 +696,8 @@ Output:
 2012-01-19 22:51:00 PM
 
 <Note>
-  If both the timeZone and tzOffset methods are used, tzOffset is given priority irrespective of the sequence. If the tzOffset value is not available or is -1000, the timeZone method will be used.
+  - Within dateTimeFormatter filter, multiple methods can be used. For example, to display a user attribute in a particular format and user Timezone, the following code can be used. `{{UserAttribute['First Seen']|dateTimeFormatter(toFormat='%Y-%m-%d %H:%M', timeZone='Asia/Kolkata',tzOffset=UserAttribute['User Time Zone Offset (Mins)'])}}`
+  - If both the timeZone and tzOffset methods are used, tzOffset is given priority irrespective of the sequence. If the tzOffset value is not available or is -1000, the timeZone method will be used.
 </Note>
 
 ### Strikethrough Text
@@ -665,11 +708,67 @@ Input: Price USD 100
 
 Output: Price USD 100
 
+Jinja
+
+```text
+Price USD <s>{{100}}</s>
+```
+
 ### Content Break
 
 This will allow you to loop through a list of items and have precise control over the loop's execution. You can use continue to skip over certain items that you don't want to fully process, and you can use break to stop the entire loop prematurely once a specific condition is met.
 
 For example, to display recent articles on a homepage, `continue` can skip "draft" articles, and `break` can stop the list after the first "featured" article, preventing the page from becoming too long.
+
+Jinja
+
+```text
+{% for item in my_list %}
+BEFORE: {{ item }}
+{% if item == continue_condition %}
+SKIPPING (simulating continue)
+{% continue %}
+{% endif %}
+{% if item == stop_condition %}
+BREAKING
+{% break %}
+{% endif %}
+AFTER: {{ item }}
+{% endfor %}
+```
+
+Input
+
+```text
+{
+"my_list": [
+"apple",
+"continue_value",
+"banana",
+"stop_value",
+"cherry",
+"date"
+],
+"continue_condition": "continue_value",
+"stop\_condition": "stop_value"
+}
+```
+
+Output
+
+```text
+BEFORE: apple
+AFTER: apple
+BEFORE: continue_value
+SKIPPING (simulating continue)
+BEFORE: banana
+AFTER: banana
+BEFORE: stop_value
+BREAKING
+```
+
+- When "stop\_value" is encountered, the `{% break %}` statement stops the loop, and "cherry" and "date" are not processed.
+- When "continue\_value" is encountered, the `{% continue %}` statement skips the rest of the code execution within the loop block for that specific iteration.
 
 ## Encryption and Decryption
 
