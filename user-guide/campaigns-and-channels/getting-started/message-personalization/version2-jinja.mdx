@@ -222,9 +222,27 @@ When generating HTML from templates, there is always a risk that a variable will
 
 It’s your responsibility to escape variables if needed. What to escape? If you have a variable that may include any of the following characters
 
+Jinja
+
+```text
+>, <, &, or "
+```
+
 you **must** escape it unless the variable contains well-formed and trusted HTML. Escaping works by _piping_ the variable through the
 
-filter
+Jinja
+
+```text
+|e
+```
+
+filter:
+
+Jinja
+
+```text
+{{UserAttribute['First Name']|e}}
+```
 
 ## Control Structures
 
@@ -236,11 +254,27 @@ A control structure refers to all those things that control the flow of a progra
 
 With the default syntax, control structures appear inside
 
+Jinja
+
+```text
+{% ... %}
+```
+
 blocks.
 
 ### For
 
 Loop over each item in a sequence. For example, to display a list of users provided in a variable called users:
+
+HTML
+
+```text
+
+# Members
+
+{% for user in users %}- {{ user.username|e }}
+{% endfor %}
+```
 
 Within a _for_-loop, it’s possible to cycle among a list of strings or variables each time through the loop by using the special _cycle_ helper:
 
@@ -250,11 +284,40 @@ You can call variables that are defined outside of a loop from within a loop, bu
 
 In the simplest form, you can use it to test if a variable is defined, not empty, or not false:
 
+Jinja
+
+```text
+{% if UserAttribute.interests %}
+Your interests:
+
+{% for interest in UserAttribute.interests %}- {{ interest|e }}
+{% endfor %}
+{% endif %}
+```
+
 For multiple branches, _elif_ and _else_ can be used too:
+
+Jinja
+
+```text
+{% if UserAttribute.membership == 'Gold' %}
+You are a Gold member!
+{% elif UserAttribute.membership == 'Silver' %}
+You are a Silver member!
+{% else %}
+Please become a member today!
+{% endif %}
+```
 
 ## Working with Default Values
 
 In the MoEngage email templates, when a message contains a null value, it will not be sent. Hence, we need to assign default fallback values to avoid such situations. In this example, if we don’t have the user’s location, this message would not be sent:
+
+Jinja
+
+```text
+Welcome to {{UserAttribute['Location']}}
+```
 
 To ensure that messages are sent in such a situation, we need to provide a default fallback value that will be returned by the variable in case the value is null. MoEngage email template displays an overlay pop-up window that provides options to handle the situation where an attribute returns a null.
 
@@ -266,9 +329,32 @@ To ensure the message isn’t sent when an attribute value is missing, set the f
 
 The option selected by you will be automatically used while sending messages based on the value returned. If a default value is provided, then the personalized message looks like this:
 
+Jinja
+
+```text
+Welcome, {{UserAttribute['First name']|default('Guest')}}
+```
+
 Alternatively, we can also use
 
+Jinja
+
+```text
+{% set firstName = UserAttribute['First name'] %}
+{% if firstName %}
+Welcome, {{ firstName }}
+{% else %}
+Welcome!
+{% endif %}
+```
+
 If you don't want to send the message and if the value of the attribute is not found, you can use
+
+Jinja
+
+```text
+Welcome, {{UserAttribute['First name']|default('MOE\_NOT\_SEND')}}
+```
 
 ### Custom JINJA Error Message
 
