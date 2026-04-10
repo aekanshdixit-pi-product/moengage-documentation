@@ -1,0 +1,401 @@
+---
+title: "Version2 Jinja"
+---
+
+MoEngage Templating Language is based on Jinja, the popular and simple templating language that enables you to have the highest degree of control over your customization and personalization requirements.
+
+<Info>
+  MoEngage currently supports Jinja version 3.1.
+</Info>
+
+## Variables
+
+Variables can also be expressions, which evaluate a new variable. Anything inside double brackets is evaluated and inserted into the final content.
+
+Often a variable is a collection of attributes. In the MoEngage email template, these attributes can be accessed using a dot operator:
+
+Or with a subscript notation:
+
+To insert variables, enclose them in double braces. For example, to insert the user attribute labeled FirstName:
+
+For example, UserAttributes is a collection of all attributes belonging to the current user. If you want to insert the value of the attribute FirstName, use the following code:
+
+<Note>
+  - It is recommended to use the subscript notation when using Jinja.
+  - If the defined attribute that you are using contains spaces, you must use the subscript notation. For example:
+</Note>
+
+Expressions
+
+MoEngage supports basic expressions everywhere. Expressions can be used to create variables from other variables or expressions, such as by performing mathematical, logical, or other operations.
+
+To use Expressions or Statements, enclose them as follows:
+
+MoEngage Personalization Objects
+
+MoEngage provides several special objects that you can use to personalize your templates with dynamic data.
+
+Product Set
+
+Product Set refers to an array of product data associated with a user's action, such as "Product Viewed" or "Added to Cart". You can loop through this data to display product names, images, prices, and other attributes.
+
+Recommendation
+
+Recommendation provides access to product recommendations generated for a specific user. This allows you to personalize campaigns with dynamically suggested items based on user behavior or collaborative filtering.
+
+Auxiliary Data
+
+Auxiliary Data allows you to pass additional, contextual data at the time of sending a campaign, often through an API trigger. This is useful for including transactional details like order IDs, flight numbers, or any other information that is not stored as a user or event attribute.
+
+Content API
+
+Content API enables you to fetch live, real-time data from external APIs directly within your template. This is powerful for including dynamic content that changes frequently, such as live sports scores, stock prices, weather updates, or real-time inventory levels.
+
+For detailed code examples and practical use cases demonstrating how to use Product Sets, Recommendations, and Content APIs, refer to the Jinja Use Cases article.
+
+Literals
+
+Literals are the simplest form of expression. Literals represent variables such as strings and numbers. The following literals exist:
+
+| Literal | Description |
+| --- | --- |
+|  |  |
+|  |  |
+
+Math
+
+MoEngage allows you to calculate with values. The following operators are supported:
+
+|  |  |  |
+| --- | --- | --- |
+|  |  |  |
+|  |  |  |
+
+Comparisons
+
+|  |  |  |
+| --- | --- | --- |
+|  |  |  |
+|  |  |  |
+
+Logic
+
+|  |  |  |
+| --- | --- | --- |
+|  |  |  |
+|  |  |  |
+
+Expression Tests
+
+Tests can be used to test a variable against a common expression. To test a variable or expression, add is and the name of the test after the variable.
+
+For example, to find out if a variable is defined, you can do "name is defined", which will then return true or false depending on whether the name is defined in the current context of the template.
+
+Tests can also accept arguments. If the test only takes one argument, you can leave out the parentheses. For example, the following two expressions do the same thing:
+
+For more information, refer to Jinja Pallets.
+
+Comments
+
+To comment out part of a line in a template, use the comment syntax, which is by default set to . This is useful to comment out parts of the template for debugging or to add information for other template designers or yourself:
+
+Assignments
+
+Inside code blocks, you can also assign values to variables. Assignments at the top level (outside of blocks, macros, or loops) are exported from the template like top-level macros and can be imported by other templates.
+
+Assignments use the set tag and can have multiple targets:
+
+Conditional statements, loops
+
+One can also use the custom variable with a loop; Tags control the logic of the template and can perform conditional statements, loops, macros, and so on.
+
+Sample condition
+
+Escaping
+
+It is sometimes desirable (even necessary) to have MoEngage ignore parts it would otherwise handle as variables or blocks. For example, if, with the default syntax, you want to use  as a raw string in a template and not to start a variable, you must use a trick.
+
+The easiest way to output a literal variable delimiter
+
+is by using a variable expression:
+
+HTML Escaping
+
+When generating HTML from templates, there is always a risk that a variable will include characters that affect the resulting HTML.
+
+It’s your responsibility to escape variables if needed. What to escape? If you have a variable that may include any of the following characters
+
+you must escape it unless the variable contains well-formed and trusted HTML. Escaping works by piping the variable through the
+
+filter
+
+Control Structures
+
+A control structure refers to all those things that control the flow of a program:
+
+conditionals (that is, if/elif/else)
+
+for-loops
+
+macros and blocks
+
+With the default syntax, control structures appear inside
+
+blocks.
+
+For
+
+Loop over each item in a sequence. For example, to display a list of users provided in a variable called users:
+
+Within a for-loop, it’s possible to cycle among a list of strings or variables each time through the loop by using the special cycle helper:
+
+You can call variables that are defined outside of a loop from within a loop, but not the other way around.
+
+If
+
+In the simplest form, you can use it to test if a variable is defined, not empty, or not false:
+
+For multiple branches, elif and else can be used too:
+
+Working with Default Values
+
+In the MoEngage email templates, when a message contains a null value, it will not be sent. Hence, we need to assign default fallback values to avoid such situations. In this example, if we don’t have the user’s location, this message would not be sent:
+
+To ensure that messages are sent in such a situation, we need to provide a default fallback value that will be returned by the variable in case the value is null. MoEngage email template displays an overlay pop-up window that provides options to handle the situation where an attribute returns a null.
+
+To ensure the message isn’t sent when an attribute value is missing, set the fallback value to Do not send if the variable is null. The MoEngage email template displays an overlay pop-up window with options for handling unsent messages.
+
+The option selected by you will be automatically used while sending messages based on the value returned. If a default value is provided, then the personalized message looks like this:
+
+Alternatively, we can also use
+
+If you don't want to send the message and if the value of the attribute is not found, you can use
+
+Custom JINJA Error Message
+
+You can define custom error messages in your Jinja templates using the MOE\_NOT\_SEND tag. This feature allows you to specify a clear reason when a content personalization or delivery condition fails for a user.
+
+In the Error breakdown section of the campaign's Analytics page, MoEngage tracks all users for whom the content personalization failed. The custom error message you defined, along with the count of users who triggered that specific error based on your campaign's segmentation, is displayed here.
+
+Example 1:
+
+This example checks if the user's brand attribute is Puma. If the brand attribute does not match, a custom error message is generated.
+
+Based on the condition defined, if the brand attribute is not Puma, the custom error, Brand name doesn't exist for user appears in the Error breakdown section of the analytics page.
+
+Example 2:
+
+This example uses a conditional logic to check for the presence of a first name and a last name. It provides a distinct error message for every failure scenario.
+
+Example 2 has the following scenarios :
+
+Success: If both names exist, the content is sent.
+
+Scenario 1: If the last name is missing, the Last Name doesn't exist for user error appears.
+
+Scenario 2: If the first name is missing, the First Name doesn't exist for user error appears.
+
+Scenario 3: If both first and last names are missing, the Both First Name and Last Name doesn't exist for user error appears.
+
+In this code, if the user is missing a first name, a last name, or both, the corresponding custom error (for example, "Last Name doesn't exist for user") will appear in the error breakdown section of the analytics page.
+
+Jinja Filters (Functions)
+
+The following are a few of the global functions supported by Jinja:
+
+String Filters
+
+Convert to Proper Case/ Title Case
+
+This will allow you to convert a string to Title case. For example:
+
+Input: joHn doE
+
+Output: John Doe
+
+Capitalize First Letter
+
+This will allow you to capitalize the first letter of each sentence in a string. For example:
+
+Input: joHn doE. his age is 20.
+
+Output: John doe. His age is 20.
+
+Upper Case
+
+This will allow you to convert a string to uppercase. For example:
+
+Input: joHn doE
+
+Output: JOHN DOE
+
+Lower Case
+
+This will allow you to convert a string to lowercase. For example:
+
+Input: JoHn doE
+
+Output: john doe
+
+Replace a String
+
+This will allow you to replace a part of a string with another string. For example, let's replace "jo" in joHn with "ma":
+
+Input: joHn doE
+
+Output: mahn doe
+
+Check if a String Contains a Substring
+
+This will allow you to check if a string contains a substring. For example:
+
+Input String: Click on me now!
+
+Input Substring: now
+
+Output: true block
+
+Number Filters
+
+Add \+91
+
+This will allow you to replace a part of add "\+91" to a mobile number. For example:
+
+Input: 9991119991
+
+Output: \+919991119991
+
+Consider 10 digits
+
+This will allow you to consider only 10 digits of a mobile number. For example:
+
+Input: \+919991119991
+
+Output: 9991119991
+
+Integer Filters
+
+Bit Length of Data
+
+Returns the number of bits necessary to represent an integer in binary, excluding the sign and leading zeros.
+
+Conjugate of the Complex Number
+
+Returns the conjugate of the complex number. Complex numbers are not supported, so int.conjugate() returns the number itself.
+
+Float Filters
+
+Identify whether the Float is a Finite Integer
+
+Returns True if the float instance is finite with an integral value, and False otherwise.
+
+Hexadecimal String
+
+Returns float represented by a hexadecimal string. The string may have leading and trailing whitespace.
+
+Conjugate of the Complex Number
+
+Returns the conjugate of the complex number. Complex numbers are not supported, so float.conjugate() returns the number itself.
+
+List Filters
+
+Occurrences of an Item
+
+Returns the number of occurrences of the given item in the List.
+
+Lowest Index in the List
+
+Returns the lowest index in the List where the given item is found within the slice s\[start:end\]. Optional arguments start and end are interpreted as in slice notation. Similar to str.index().
+
+list.index() throws an error if index not within the List.
+
+Remove Item at Index Position in the List
+
+Returns the item at index position in List and also removes it from the List. If no index provided, returns and removes the last item in the list. list.pop() throws an error if index not within the List.
+
+<Note>
+  MoEngage currently supports all other standard functions of Jinja. If you want to learn more about standard functions in Jinja, refer to List of Global Functions.
+</Note>
+
+Custom Functions
+
+Date Time Functions and Formatters
+
+Date Formatter - Converts any given date to the format mentioned in toFormat.
+
+Output: 10/14/2020
+
+Date Difference - Returns the difference between 2 dates. Return values can be positive, zero, or negative.
+
+Output: 2
+
+Today Function - Returns current date in the given format and timezone.
+
+Output: 05/23/2024
+
+Date and Time Formatter Function -
+
+Format date and time  - Converts any given date to the mentioned format.
+
+Output: 2012-01-19 05:21:00 PM
+
+Timezone Conversion - Displays date and time in the respective Timezone, and adds the defined number of minutes to the time.
+
+Output:
+
+2012-01-19 11:51:00 AM
+
+2012-01-19 22:51:00 PM
+
+<Note>
+  If both the timeZone and tzOffset methods are used, tzOffset is given priority irrespective of the sequence. If the tzOffset value is not available or is -1000, the timeZone method will be used.
+</Note>
+
+Strikethrough Text
+
+This will allow you to strikethrough the text. For example, you want to show the old price of a product in strikethrough.
+
+Input: Price USD 100
+
+Output: Price USD 100
+
+Content Break
+
+This will allow you to loop through a list of items and have precise control over the loop's execution. You can use continue to skip over certain items that you don't want to fully process, and you can use break to stop the entire loop prematurely once a specific condition is met.
+
+For example, to display recent articles on a homepage, `continue` can skip "draft" articles, and `break` can stop the list after the first "featured" article, preventing the page from becoming too long.
+
+Encryption and Decryption
+
+SHA 256 Encryption
+
+Jinja now supports SHA 256 encryption in two ways:
+
+SHA256 with a Secret Key - Encrypts the string using SHA256 with the secret key
+
+SHA256 without a Secret Key - Encrypts the string using SHA256
+
+Base64 Encoding
+
+Encrypts the string using Base64 encoding.
+
+Base64 Decoding
+
+Encrypts the string using Base64 decoding.
+
+URL Encoding
+
+Encrypts the string using URL encoding.
+
+URL Decoding
+
+Encrypts the string using URL decoding.
+
+Other Operators
+
+The following operators are very useful but don’t fit into any of the other two categories:
+
+|  |  |  |
+| --- | --- | --- |
+|  |  |  |
+|  |  |  |
