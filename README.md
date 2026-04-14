@@ -2,19 +2,39 @@
 
 # MoEngage Documentation
 
-The official MoEngage documentation. This repo contains SDK integration guides and API reference docs for MoEngage.
+The official MoEngage documentation. This repo contains SDK integration guides, API reference docs, and product user guides for MoEngage.
 
 ## Project Structure
 
 ```
 ├── api/                  # API reference docs (OpenAPI specs + overview pages)
-├── developer-guide/      # SDK integration Docs
+├── developer-guide/      # SDK integration docs
+├── user-guide/           # Product user guides (campaigns, analytics, settings, etc.)
 ├── images/               # Documentation images and screenshots
 ├── logo/                 # Brand assets (favicon, light/dark logos)
 ├── snippets/             # Reusable content snippets
 ├── docs.json             # Site configuration
 └── style.css             # Custom styles
 ```
+
+## User Guide
+
+Product documentation covering the MoEngage dashboard, features, and workflows (1000+ pages):
+
+- **Getting Started** — Initial setup, integration, validation, and migration
+- **Campaigns & Channels** — Email, Push, SMS/MMS/RCS, In-App, Cards, Web Push, WhatsApp, On-Site Messages, Connected Apps, and more
+- **Flows** — Cross-channel messaging flows: creation, analysis, and FAQs
+- **Analyze** — Analytics, dashboards, and custom analysis
+- **Segment** — Segmentation basics, reachability, and advanced operations
+- **Content** — Templates, content blocks, coupons, landing pages, and recommendations
+- **Data** — Imports, exports, user/event data, computed traits, and privacy
+- **Intelligence** — Merlin AI, A/B testing, Predict, timing optimization
+- **Personalize** — Client-side and server-side personalization, split URL testing
+- **Decisioning** — Campaign and offer decisioning
+- **Inform** — Transactional messaging
+- **Settings** — Account, channel, analytics, and reporting configuration
+- **Use Cases** — Scenario-based guides across channels and features
+- **Release Notes** — Monthly release notes (2020–2026)
 
 ## Developer Guide
 
