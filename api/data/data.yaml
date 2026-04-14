@@ -429,6 +429,20 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GetUserRequest'
+            examples:
+              export_users:
+                summary: Export users by identifiers
+                value:
+                  data:
+                    identifiers:
+                      - identifier_type: customer_id
+                        identifier: "6416d1a318r98264512c0f89"
+                      - identifier_type: id
+                        identifier: "62e79fb15ada55x123g987bu"
+                  user_fields_to_export:
+                    - last_name
+                    - customer_id
+                    - name
       responses:
         '200':
           description: This response is returned when the request is processed successfully.
@@ -3867,29 +3881,40 @@ components:
 
     GetUserRequest:
       type: object
+      required:
+        - data
       properties:
-        identifiers:
-          type: array
+        data:
+          type: object
           description: |
-              This field is used to specify the identifiers for the users for whom the data needs to be fetched.
-              Structure:
-              
-                 ```json
-               "identifiers": [
-                 {
-                 "identifier_type": "customer_id",
-                 "identifier": "<customer_id>"
-               },
-              {
-              "identifier_type": "id",
-              "identifier": "<MoEngageID>"
-              },
-              ...{}
-              ]
-              ```
-              
-          items:
-            $ref: '#/components/schemas/IdentifierObject'
+            Wrapper object that contains the user identifiers to look up. The API expects `identifiers` inside this object, not at the root of the JSON body.
+          required:
+            - identifiers
+          properties:
+            identifiers:
+              type: array
+              description: |
+                  This field is used to specify the identifiers for the users for whom the data needs to be fetched.
+                  Structure:
+                  
+                     ```json
+                   "data": {
+                     "identifiers": [
+                       {
+                         "identifier_type": "customer_id",
+                         "identifier": "<customer_id>"
+                       },
+                       {
+                         "identifier_type": "id",
+                         "identifier": "<MoEngageID>"
+                       },
+                       ...{}
+                     ]
+                   }
+                   ```
+                  
+              items:
+                $ref: '#/components/schemas/IdentifierObject'
         user_fields_to_export:
           type: array
           items:
