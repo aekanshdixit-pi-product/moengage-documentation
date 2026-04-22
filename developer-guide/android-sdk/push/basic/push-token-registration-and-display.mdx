@@ -74,17 +74,30 @@ To opt out of MoEngage's token registration mechanism, disable token registratio
 <CodeGroup>
 
 ```Kotlin Kotlin wrap
-val moEngage = MoEngage.Builder(this, "XXXXXXXX")
-    	.configureNotificationMetaData(NotificationConfig(R.drawable.small_icon, R.drawable.large_icon, R.color.notiColor, null, true, isBuildingBackStackEnabled = false, isLargeIconDisplayEnabled = true))
-    .configureFcm(FcmConfig(false))
+val moEngage = MoEngage.Builder(
+        application = this,
+        appId = "XXXXXXXX",
+        dataCenter = DataCenter.DATA_CENTER_X
+    )
+    .configureNotificationMetaData(
+        NotificationConfig(
+            smallIcon = R.drawable.small_icon,
+            largeIcon = R.drawable.large_icon,
+            notificationColor = R.color.notiColor,
+            isMultipleNotificationInDrawerEnabled = false,
+            isBuildingBackStackEnabled = false,
+            isLargeIconDisplayEnabled = true
+        )
+    )
+    .configureFcm(FcmConfig(isRegistrationEnabled = false))
     .build()
 MoEngage.initialiseDefaultInstance(moEngage)
 ```
 
 
 ```Java Java
-MoEngage moEngage = new MoEngage.Builder(this, "XXXXXXXXXX")
-    .configureNotificationMetaData(new NotificationConfig(R.drawable.small_icon, R.drawable.large_icon, R.color.notiColor, "sound", true, true, true))
+MoEngage moEngage = new MoEngage.Builder(this, "XXXXXXXXXX", DataCenter.DATA_CENTER_X)
+    .configureNotificationMetaData(new NotificationConfig(R.drawable.small_icon, R.drawable.large_icon, R.color.notiColor, true, true, true))
     .configureFcm(new FcmConfig(false))
     .build();
 MoEngage.initialiseDefaultInstance(moEngage);
@@ -134,7 +147,7 @@ if (MoEPushHelper.getInstance().isFromMoEngagePlatform(remoteMessage.data)){
 
 ```Java Java
 if (MoEPushHelper.getInstance().isFromMoEngagePlatform(remoteMessage.getData())) {
-    MoEFireBaseHelper.Companion.getInstance().passPushPayload(getApplicationContext(), remoteMessage.getData());
+    MoEFireBaseHelper.getInstance().passPushPayload(getApplicationContext(), remoteMessage.getData());
  }else{
     // your app's business logic to show notification
  }
