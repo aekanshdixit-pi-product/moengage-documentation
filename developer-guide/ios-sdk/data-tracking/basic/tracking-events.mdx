@@ -80,17 +80,22 @@ MoEngageGeoLocation* pickupLocation = [[MoEngageGeoLocation alloc] initWithLatit
   Events that should not affect the session duration calculation in anyways in MoEngage Analytics should be marked as a Non-Interactive events. Refer to [this](/developer-guide/ios-sdk/data-tracking/advanced/session-and-source-tracking) for more info on the same.
 </Info>
 
-Ensure that you are tracking event attributes without changing their data types. Also, make sure the attributes have the same data type across platforms. For instance, in the above purchase event, price is tracked in the numeric form, therefore when the same event is tracked in Android SDK make sure to track it as a number and not a string. Our system detects the data type automatically unless you explicitly specify it as a string.
+## Validations and Restrictions
 
-<Warning>
-  **Restrictions**
+Ensure your events adhere to the following rules to maintain data integrity and prevent rejected payloads:
 
-  - Event names and attributes should not contain any special characters other than "\_". It can contain spaces and underscore.
-  - In the SDK we reject events with invalid event attributes. Event attribute values can only have Strings, Numbers & an array(strings or numbers), or else events might get rejected.
-  - Having unique timestamps for events is crucial to maintain accurate and reliable data. Please ensure that events do not share the same timestamp down to the millisecond level.
-</Warning>
-
-If you don’t have any attributes, just pass **nil** as the second argument. For eg.
+- **Consistent Data Types:** Track event attributes without changing their data types across updates or platforms. For example, if `price` is tracked as a number in your iOS app, it must also be tracked as a number in the Android SDK, not as a string. MoEngage SDK detects data types automatically unless explicitly specified as a string.
+- **Event Formatting:** Event names and attributes should not contain any special characters other than underscores (`_`). Spaces and underscores are permitted.
+- **Empty Attribute Names:** Passing an empty string (`""`) as an attribute name is **fatal** and will cause an **app crash** in Debug mode. Always provide a valid, non-empty string for attribute names.
+- **Invalid Attribute Values:** The SDK rejects events with invalid attributes. Attribute values can only be Strings, Numbers, and Arrays (of strings or numbers).
+- **Debug Mode Validation :** To protect backend data integrity, the SDK strictly validates event attributes in Debug mode. Passing unsupported values throws an exception and crashes the app. Common triggers include:
+  - Passing `null` (`NSNull()`).
+  - Passing custom models or UI elements (e.g., `UIColor`, `UIImage`).
+  - Passing invalid numbers like `Double.nan` or `Infinity`.
+  - Passing empty Arrays or Dictionaries.
+  - Nesting `Date` or `MoEngageGeoLocation` objects inside an Array or Dictionary (these must be passed directly as values).
+- **Timestamps:** Unique timestamps are crucial for maintaining accurate and reliable data. Ensure that multiple events do not share the exact same timestamp down to the millisecond.
+- If you don’t have any attributes, just pass **nil** as the second argument. For eg.
 
 <CodeGroup>
 
