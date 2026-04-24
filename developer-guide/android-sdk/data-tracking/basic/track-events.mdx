@@ -4,7 +4,8 @@ description: "Track custom user events and their attributes in your Android app 
 ---
 
 <Info>
-  SDK adheres to the MoEngage FUP policies. For more information, refer to the [Fair Usage Policy](https://www.moengage.com/docs/user-guide/data/key-concepts/fair-usage-policy-fup).
+  - We track certain events by default in our SDK, so please make sure to use the default events instead of tracking a new event for the same scenarios. Find the list of default events tracked by SDK [here](https://www.moengage.com/docs/user-guide/getting-started/integration/default-android-sdk#default-events).
+  - SDK adheres to the MoEngage FUP policies. For more information, refer to the [Fair Usage Policy](https://www.moengage.com/docs/user-guide/data/key-concepts/fair-usage-policy-fup).
 </Info>
 
 Tracking events is how you record any actions your users perform, along with any properties that describe the action. Every trackEvent call records a single user action. We recommend that you make your event names human-readable so that everyone on your team can know what they mean instantly.
@@ -12,6 +13,8 @@ Tracking events is how you record any actions your users perform, along with any
 You can track an event using trackEvent with the event name and its characteristics (attributes/properties).
 
 Every event has 2 attributes, action name, and key, value pairs which represent additional information about the action. Add all the additional information which you think would be useful for segmentation while creating campaigns. For eg., the following code tracks a purchase event of a product. We are including attributes like amount, quantity, a category that describes the event we are tracking.
+
+For eg. The following code tracks an `Purchase` event. We are including attributes such as the `quantity`, `product name` that describes the event we are tracking.
 
 <CodeGroup>
 
@@ -34,7 +37,6 @@ val properties = Properties()
         .addAttribute("jsonObjectAttr", JSONObject().put("name", "value"))
 MoEAnalyticsHelper.trackEvent(context, "Purchase", properties)
 ```
-
 
 ```Java Java wrap
 Properties properties = new Properties();
@@ -59,12 +61,6 @@ MoEAnalyticsHelper.INSTANCE.trackEvent(context, "Purchase", properties);
 </CodeGroup>
 
 context - context instance, change the name accordingly.
-
-Ensure that you are tracking event attributes without changing the data types. For example, in the purchase event, amount and quantity are tracked in numeric form. MoEngage detects the data type automatically unless you explicitly specify it as a String. MoEngage supports the following data types: String, Integer, Long, Double, Float, Boolean, Date, GeoLocation, JSON Object, and JSON Array. If any other data type is passed, MoEngage will reject the payload.
-
-The SDK by default tracks a certain set of commonly used events, make sure you use those events instead of tracking similar events again. Refer to the [documentation](https://www.moengage.com/docs/user-guide/getting-started/integration/default-android-sdk#default-events) to know more about the default events tracked by the SDK.
-
-Having unique timestamps for events is crucial to maintain accurate and reliable data. Please ensure that events do not share the same timestamp down to the millisecond level.
 
 # Analytics
 
@@ -101,7 +97,6 @@ properties.addAttribute("quantity", 2)
 MoEAnalyticsHelper.trackEvent(context, "Purchase", properties)
 ```
 
-
 ```Java Java wrap
 Properties properties = new Properties();
 properties.addAttribute("quantity", 2)
@@ -118,6 +113,15 @@ MoEAnalyticsHelper.INSTANCE.trackEvent(context, "Purchase", properties);
 </CodeGroup>
 
 For more information, refer to [MoEAnalyticsHelper#trackEvent](https://moengage.github.io/android-api-reference/core/com.moengage.core.analytics/[android-jvm]-mo-e-analytics-helper/track-event.html) and [Properties](https://moengage.github.io/android-api-reference/core/com.moengage.core/[android-jvm]-properties/index.html).
+
+## Validations and Restrictions
+
+Ensure your events adhere to the following rules to maintain data integrity and prevent rejected payloads:
+
+- **Consistent Data Types:** Track event attributes without changing their data types. For example, in a purchase event, `amount` and `quantity` should consistently be tracked in numeric form. MoEngage detects the data type automatically unless you explicitly specify it as a String.
+- **Supported Data Types:** MoEngage supports the following data types: `String`, `Integer`, `Long`, `Double`, `Float`, `Boolean`, `Date`, `GeoLocation`, `JSON Object`, and `JSON Array`. If any other data type is passed, MoEngage SDK rejects the payload. 
+- Starting from SDK version **14.09.00**, passing an unsupported data type in an event property will result in an **app crash**.
+- **Unique Timestamps:** Having unique timestamps for events is crucial for maintaining accurate and reliable data. Ensure that events do not share the same timestamp down to the millisecond level.
 
 # Track Custom Event for Exit Intent
 
