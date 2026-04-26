@@ -17,66 +17,77 @@ In this article, we will learn how to incorporate a custom notification tone for
 Perform the following steps:
 
 1. Get a reference to the NotificationManager.\
-   Before you can create a notification channel, you will need a reference to the NotificationManager: 
-   Code
-   ```ruby
+   Before you can create a notification channel, you will need a reference to the NotificationManager:
+   <CodeGroup>
+   ```ruby Code wrap
    NotificationManager notificationManager = getSystemService(NotificationManager.class);
    ```
-2. Create a notification channel. 
-   Code
-   ```ruby
+   </CodeGroup>
+2. Create a notification channel.
+   <CodeGroup>
+   ```ruby Code wrap
    String channelId = "my_channel_id";
    CharSequence channelName = "My Channel";
-   int importance = NotificationManager.IMPORTANCE\_HIGH; // Set the importance level
+   int importance = NotificationManager.IMPORTANCE_HIGH; // Set the importance level
    NotificationChannel notificationChannel = new NotificationChannel(channelId, channelName, importance);
    ```
+   </CodeGroup>
 3. Set auditory properties.\
    You can set custom sounds and vibration patterns for:
-   - **Sound**: 
-     Code
-     ```ruby
+   - **Sound**:
+     <CodeGroup>
+     ```ruby Code wrap
      // Define an audio attribute
      AudioAttributes audioAttributes = new AudioAttributes.Builder()
-     .setContentType(AudioAttributes.CONTENT\_TYPE\_SONIFICATION)
-     .setUsage(AudioAttributes.USAGE\_NOTIFICATION)
+     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+     .setUsage(AudioAttributes.USAGE_NOTIFICATION)
      .build();
      // Set the custom sound and audio attributes to the notification channel
-     notificationChannel.setSound(Uri.parse(ContentResolver.SCHEME\_ANDROID\_RESOURCE + "//"
-     + getApplicationContext().getPackageName() + "/" + R.raw.your\_sound\_file), audioAttributes)
+     notificationChannel.setSound(Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "//"
+     + getApplicationContext().getPackageName() + "/" + R.raw.your_sound_file), audioAttributes)
      ```
+     </CodeGroup>
    - **Vibration**: 
-     Code
-     ```ruby
+     <CodeGroup>
+     ```ruby Code wrap
      long[] vibrationPattern = {100, 200, 300, 400, 500, 400, 300, 200, 400}; // Define your custom pattern
      notificationChannel.setVibrationPattern(vibrationPattern);
      notificationChannel.enableVibration(true);
      ```
+     </CodeGroup>
+
 4. Set visual properties such as light color, lock screen visibility, and badges: 
-   Code
-   ```ruby
+   <CodeGroup>
+   ```ruby Code wrap
    notificationChannel.setLightColor(Color.RED); // Set the light color
    notificationChannel.enableLights(true); // Enable lights
-   notificationChannel.setLockscreenVisibility(Notification.VISIBILITY\_PRIVATE); // Set lock screen visibility
+   notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE); // Set lock screen visibility
    notificationChannel.setShowBadge(true); // Enable badges
    ```
-5. Register the Notification Channel with the system.\
+   </CodeGroup>
+
+6. Register the Notification Channel with the system.\
    Create the notification channel through the _createNotificationChannel()_ method: 
-   Code
-   ```ruby
+   <CodeGroup>
+   ```ruby Code wrap
    assert notificationManager != null;
    notificationManager.createNotificationChannel(notificationChannel);
    ```
-6. Send a notification that shows up in the notification center.\
+   </CodeGroup>
+
+8. Send a notification that shows up in the notification center.\
    Set the channel ID you specified earlier when building the notification: 
-   Code
-   ```ruby
+   <CodeGroup>
+   ```ruby Code wrap
    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
-   .setSmallIcon(R.drawable.notification\_icon)
+   .setSmallIcon(R.drawable.notification_icon)
    .setContentTitle("My notification")
    .setContentText("Hello World!")
-   .setPriority(NotificationCompat.PRIORITY\_HIGH); // Set the priority
+   .setPriority(NotificationCompat.PRIORITY_HIGH); // Set the priority
    notificationManager.notify(1, builder.build());
    ```
+   </CodeGroup>
+
    <Info>
      - The _assert notificationManager != null;_ prevents a NullPointerException if the NotificationManager reference is null. Also, ensure that the entire notifying process runs in a background thread to not block the user interface.
      - Replace _my\_channel\_id_ with a unique ID for your channel and _My Channel_ must be the human-readable name of the channel. These settings will take effect when the channel is first created.
