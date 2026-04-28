@@ -371,134 +371,134 @@
   // Recipe catalog. Fields: t=title, h=href, cap=capability, ch=channel(s), ind=industry(ies)
   const RECIPES = [
     // Push (12)
-    { t: 'Drive users to try products at store', h: '/use-cases/push/drive-users-to-try-out-products-at-store', cap: 'push', ch: ['push'], ind: ['ecommerce'] },
-    { t: 'Get referrals for your app or service', h: '/use-cases/push/get-referrals-for-your-app-or-service', cap: 'push', ch: ['push'], ind: [] },
-    { t: 'Highlight an EMI option', h: '/use-cases/push/highlight-an-emi-option', cap: 'push', ch: ['push'], ind: ['banking', 'fintech'] },
-    { t: 'Use a custom notification tone on Android', h: '/use-cases/push/how-to-use-custom-notification-tone-for-my-android-app', cap: 'push', ch: ['push'], ind: [] },
-    { t: 'Inform users about new EV charging stations', h: '/use-cases/push/inform-users-about-new-charging-station-for-evs', cap: 'push', ch: ['push'], ind: ['travel'] },
-    { t: 'Message users when they enter a location', h: '/use-cases/push/message-users-when-they-enter-a-location', cap: 'push', ch: ['push'], ind: [] },
-    { t: 'Nudge users before policy renewal', h: '/use-cases/push/nudge-users-before-policy-renewal', cap: 'push', ch: ['push'], ind: ['fintech'] },
-    { t: 'Recommend a premium card', h: '/use-cases/push/recommend-a-premium-card', cap: 'push', ch: ['push'], ind: ['banking', 'fintech'] },
-    { t: 'Run A/B experiments on push', h: '/use-cases/push/sample-a-b-experiments-for-push', cap: 'push', ch: ['push'], ind: [] },
-    { t: 'Send a card payment reminder', h: '/use-cases/push/send-a-card-payment-reminder', cap: 'push', ch: ['push'], ind: ['banking', 'fintech'] },
-    { t: 'Send exit-intent push via device triggers', h: '/use-cases/push/send-exit-intent-notification-using-device-triggers', cap: 'push', ch: ['push'], ind: ['ecommerce'] },
-    { t: 'Send flight status updates', h: '/use-cases/push/send-flight-status-updates', cap: 'push', ch: ['push'], ind: ['travel'] },
+    { t: 'Drive users to try products at store', o: 'More store visits',     h: '/use-cases/push/drive-users-to-try-out-products-at-store', cap: 'push', ch: ['push'], ind: ['ecommerce'] },
+    { t: 'Get referrals for your app or service', o: 'Grow referrals',        h: '/use-cases/push/get-referrals-for-your-app-or-service', cap: 'push', ch: ['push'], ind: [] },
+    { t: 'Highlight an EMI option', o: 'Bigger cart',                         h: '/use-cases/push/highlight-an-emi-option', cap: 'push', ch: ['push'], ind: ['banking', 'fintech'] },
+    { t: 'Use a custom notification tone on Android', o: 'Brand recall',      h: '/use-cases/push/how-to-use-custom-notification-tone-for-my-android-app', cap: 'push', ch: ['push'], ind: [] },
+    { t: 'Inform users about new EV charging stations', o: 'EV adoption',     h: '/use-cases/push/inform-users-about-new-charging-station-for-evs', cap: 'push', ch: ['push'], ind: ['travel'] },
+    { t: 'Message users when they enter a location', o: 'Right-place reach',  h: '/use-cases/push/message-users-when-they-enter-a-location', cap: 'push', ch: ['push'], ind: [] },
+    { t: 'Nudge users before policy renewal', o: 'Renewal lift',              h: '/use-cases/push/nudge-users-before-policy-renewal', cap: 'push', ch: ['push'], ind: ['fintech'] },
+    { t: 'Recommend a premium card', o: 'Premium upgrades',                   h: '/use-cases/push/recommend-a-premium-card', cap: 'push', ch: ['push'], ind: ['banking', 'fintech'] },
+    { t: 'Run A/B experiments on push', o: 'Pick the winner',                 h: '/use-cases/push/sample-a-b-experiments-for-push', cap: 'push', ch: ['push'], ind: [] },
+    { t: 'Send a card payment reminder', o: 'On-time payments',               h: '/use-cases/push/send-a-card-payment-reminder', cap: 'push', ch: ['push'], ind: ['banking', 'fintech'] },
+    { t: 'Send exit-intent push via device triggers', o: 'Recover cart',      h: '/use-cases/push/send-exit-intent-notification-using-device-triggers', cap: 'push', ch: ['push'], ind: ['ecommerce'] },
+    { t: 'Send flight status updates', o: 'Trusted updates',                  h: '/use-cases/push/send-flight-status-updates', cap: 'push', ch: ['push'], ind: ['travel'] },
 
     // Email (3)
-    { t: 'Add a countdown timer to emails', h: '/use-cases/email/add-a-countdown-timer-to-emails', cap: 'email', ch: ['email'], ind: ['ecommerce'] },
-    { t: 'Add calendar invites to emails', h: '/use-cases/email/add-calendar-invites-to-emails', cap: 'email', ch: ['email'], ind: ['travel'] },
-    { t: 'Set up purchase confirmation emails', h: '/use-cases/email/how-to-set-up-purchase-confirmation-emails', cap: 'email', ch: ['email'], ind: ['ecommerce'] },
+    { t: 'Add a countdown timer to emails', o: 'Drive urgency',               h: '/use-cases/email/add-a-countdown-timer-to-emails', cap: 'email', ch: ['email'], ind: ['ecommerce'] },
+    { t: 'Add calendar invites to emails', o: 'Higher attendance',            h: '/use-cases/email/add-calendar-invites-to-emails', cap: 'email', ch: ['email'], ind: ['travel'] },
+    { t: 'Set up purchase confirmation emails', o: 'Reinforce trust',         h: '/use-cases/email/how-to-set-up-purchase-confirmation-emails', cap: 'email', ch: ['email'], ind: ['ecommerce'] },
 
     // In-App (14)
-    { t: 'Boost conversions with in-app pop-ups', h: '/use-cases/in-app-message/how-to-boost-conversions-with-in-app-pop-ups', cap: 'in-app', ch: ['in-app'], ind: ['ecommerce'] },
-    { t: 'Collect NPS ratings using a slider', h: '/use-cases/in-app-message/how-to-collect-nps-ratings-using-a-slider', cap: 'in-app', ch: ['in-app'], ind: ['b2b'] },
-    { t: 'Show pop-ups based on user location', h: '/use-cases/in-app-message/how-to-configure-different-pop-up-messages-based-on-location', cap: 'in-app', ch: ['in-app'], ind: [] },
-    { t: 'Create a landscape pop-up using HTML in-app', h: '/use-cases/in-app-message/how-to-create-a-pop-up-for-landscape-view-using-html-in-app', cap: 'in-app', ch: ['in-app'], ind: ['gaming'] },
-    { t: 'Run a customer preference survey', h: '/use-cases/in-app-message/how-to-create-a-survey-using-the-drag-drop-editor-to-understand-customer-preferences', cap: 'in-app', ch: ['in-app'], ind: [] },
-    { t: 'Introduce the app with a video pop-up', h: '/use-cases/in-app-message/how-to-create-a-video-pop-up-using-drag-drop-editor-to-introduce-the-app-to-new-customers', cap: 'in-app', ch: ['in-app'], ind: ['gaming'] },
-    { t: 'Increase iOS app push opt-ins', h: '/use-cases/in-app-message/how-to-increase-ios-app-push-opt-ins', cap: 'in-app', ch: ['in-app'], ind: [] },
-    { t: 'Increase feature adoption with the editor', h: '/use-cases/in-app-message/how-to-increase-the-adoption-of-a-feature-using-the-drag-drop-editor', cap: 'in-app', ch: ['in-app'], ind: ['b2b'] },
-    { t: 'Send a multi-step in-app survey', h: '/use-cases/in-app-message/how-to-send-a-multi-step-survey-using-an-in-app', cap: 'in-app', ch: ['in-app'], ind: [] },
-    { t: 'Show non-intrusive offers using nudges', h: '/use-cases/in-app-message/how-to-show-offers-to-customer-without-being-intrusive-using-nudge', cap: 'in-app', ch: ['in-app'], ind: ['ecommerce'] },
-    { t: 'Show sale offers from a specific time', h: '/use-cases/in-app-message/how-to-show-sale-offers-from-a-specific-time', cap: 'in-app', ch: ['in-app'], ind: ['ecommerce'] },
-    { t: 'Trigger app rating pop-up for champion users', h: '/use-cases/in-app-message/how-to-trigger-app-rating-pop-up-for-champion-users', cap: 'in-app', ch: ['in-app'], ind: ['gaming'] },
-    { t: 'Profile users through in-app surveys', h: '/use-cases/in-app-message/profile-users-through-in-app-surveys', cap: 'in-app', ch: ['in-app'], ind: [] },
-    { t: 'Use GIFs in an onboarding walkthrough', h: '/use-cases/in-app-message/use-gifs-in-an-onboarding-walkthrough', cap: 'in-app', ch: ['in-app'], ind: [] },
+    { t: 'Boost conversions with in-app pop-ups', o: 'More upgrades',         h: '/use-cases/in-app-message/how-to-boost-conversions-with-in-app-pop-ups', cap: 'in-app', ch: ['in-app'], ind: ['ecommerce'] },
+    { t: 'Collect NPS ratings using a slider', o: 'Voice of customer',        h: '/use-cases/in-app-message/how-to-collect-nps-ratings-using-a-slider', cap: 'in-app', ch: ['in-app'], ind: ['b2b'] },
+    { t: 'Show pop-ups based on user location', o: 'Local relevance',         h: '/use-cases/in-app-message/how-to-configure-different-pop-up-messages-based-on-location', cap: 'in-app', ch: ['in-app'], ind: [] },
+    { t: 'Create a landscape pop-up using HTML in-app', o: 'Cinematic moments', h: '/use-cases/in-app-message/how-to-create-a-pop-up-for-landscape-view-using-html-in-app', cap: 'in-app', ch: ['in-app'], ind: ['gaming'] },
+    { t: 'Run a customer preference survey', o: 'Profile users',              h: '/use-cases/in-app-message/how-to-create-a-survey-using-the-drag-drop-editor-to-understand-customer-preferences', cap: 'in-app', ch: ['in-app'], ind: [] },
+    { t: 'Introduce the app with a video pop-up', o: 'Better first run',      h: '/use-cases/in-app-message/how-to-create-a-video-pop-up-using-drag-drop-editor-to-introduce-the-app-to-new-customers', cap: 'in-app', ch: ['in-app'], ind: ['gaming'] },
+    { t: 'Increase iOS app push opt-ins', o: '+30% opt-in',                   h: '/use-cases/in-app-message/how-to-increase-ios-app-push-opt-ins', cap: 'in-app', ch: ['in-app'], ind: [] },
+    { t: 'Increase feature adoption with the editor', o: 'Adoption lift',     h: '/use-cases/in-app-message/how-to-increase-the-adoption-of-a-feature-using-the-drag-drop-editor', cap: 'in-app', ch: ['in-app'], ind: ['b2b'] },
+    { t: 'Send a multi-step in-app survey', o: 'Deeper insights',             h: '/use-cases/in-app-message/how-to-send-a-multi-step-survey-using-an-in-app', cap: 'in-app', ch: ['in-app'], ind: [] },
+    { t: 'Show non-intrusive offers using nudges', o: 'Soft persuasion',      h: '/use-cases/in-app-message/how-to-show-offers-to-customer-without-being-intrusive-using-nudge', cap: 'in-app', ch: ['in-app'], ind: ['ecommerce'] },
+    { t: 'Show sale offers from a specific time', o: 'Limited-time lift',     h: '/use-cases/in-app-message/how-to-show-sale-offers-from-a-specific-time', cap: 'in-app', ch: ['in-app'], ind: ['ecommerce'] },
+    { t: 'Trigger app rating pop-up for champion users', o: 'Higher app rating', h: '/use-cases/in-app-message/how-to-trigger-app-rating-pop-up-for-champion-users', cap: 'in-app', ch: ['in-app'], ind: ['gaming'] },
+    { t: 'Profile users through in-app surveys', o: 'Build personas',         h: '/use-cases/in-app-message/profile-users-through-in-app-surveys', cap: 'in-app', ch: ['in-app'], ind: [] },
+    { t: 'Use GIFs in an onboarding walkthrough', o: 'Sticky onboarding',     h: '/use-cases/in-app-message/use-gifs-in-an-onboarding-walkthrough', cap: 'in-app', ch: ['in-app'], ind: [] },
 
     // Onsite / OSM (9)
-    { t: 'Bring users back with exit-intent banners', h: '/use-cases/on-site-messaging-(osm)/bring-users-back-with-exit-intent-communications', cap: 'onsite', ch: ['onsite'], ind: ['ecommerce'] },
-    { t: 'Collect first-party data using Typeform', h: '/use-cases/on-site-messaging-(osm)/collect-first-party-data-using-typeform', cap: 'onsite', ch: ['onsite'], ind: [] },
-    { t: 'Collect leads from first-time users', h: '/use-cases/on-site-messaging-(osm)/collect-leads-from-first-time-users', cap: 'onsite', ch: ['onsite'], ind: [] },
-    { t: 'Display a non-intrusive countdown timer banner', h: '/use-cases/on-site-messaging-(osm)/display-a-non-intrusive-countdown-timer-banner', cap: 'onsite', ch: ['onsite'], ind: ['ecommerce'] },
-    { t: 'Engage anonymous users on your website', h: '/use-cases/on-site-messaging-(osm)/engage-with-anonymous-users-on-your-website', cap: 'onsite', ch: ['onsite'], ind: [] },
-    { t: 'Encourage anonymous users to log in', h: '/use-cases/on-site-messaging-(osm)/how-to-encourage-anonymous-users-to-log-in-to-the-website', cap: 'onsite', ch: ['onsite'], ind: [] },
-    { t: 'Retarget customers in real time', h: '/use-cases/on-site-messaging-(osm)/how-to-retarget-customers-in-real-time', cap: 'onsite', ch: ['onsite'], ind: ['ecommerce'] },
-    { t: 'Highlight plan benefits and offer an upgrade discount', h: '/use-cases/on-site-messaging-(osm)/how-to-show-an-osm-highlighting-the-benefits-of-a-plan-and-offer-a-discount-for-upgrading', cap: 'onsite', ch: ['onsite'], ind: ['telecom'] },
-    { t: 'Increase newsletter subscriptions', h: '/use-cases/on-site-messaging-(osm)/increase-newsletter-subscriptions', cap: 'onsite', ch: ['onsite'], ind: ['content'] },
+    { t: 'Bring users back with exit-intent banners', o: 'Recover visits',    h: '/use-cases/on-site-messaging-(osm)/bring-users-back-with-exit-intent-communications', cap: 'onsite', ch: ['onsite'], ind: ['ecommerce'] },
+    { t: 'Collect first-party data using Typeform', o: 'Zero-party data',     h: '/use-cases/on-site-messaging-(osm)/collect-first-party-data-using-typeform', cap: 'onsite', ch: ['onsite'], ind: [] },
+    { t: 'Collect leads from first-time users', o: 'Lead growth',             h: '/use-cases/on-site-messaging-(osm)/collect-leads-from-first-time-users', cap: 'onsite', ch: ['onsite'], ind: [] },
+    { t: 'Display a non-intrusive countdown timer banner', o: 'Drive urgency', h: '/use-cases/on-site-messaging-(osm)/display-a-non-intrusive-countdown-timer-banner', cap: 'onsite', ch: ['onsite'], ind: ['ecommerce'] },
+    { t: 'Engage anonymous users on your website', o: 'Activate visitors',    h: '/use-cases/on-site-messaging-(osm)/engage-with-anonymous-users-on-your-website', cap: 'onsite', ch: ['onsite'], ind: [] },
+    { t: 'Encourage anonymous users to log in', o: 'Identify users',          h: '/use-cases/on-site-messaging-(osm)/how-to-encourage-anonymous-users-to-log-in-to-the-website', cap: 'onsite', ch: ['onsite'], ind: [] },
+    { t: 'Retarget customers in real time', o: 'Quick recovery',              h: '/use-cases/on-site-messaging-(osm)/how-to-retarget-customers-in-real-time', cap: 'onsite', ch: ['onsite'], ind: ['ecommerce'] },
+    { t: 'Highlight plan benefits and offer an upgrade discount', o: 'Plan upgrades', h: '/use-cases/on-site-messaging-(osm)/how-to-show-an-osm-highlighting-the-benefits-of-a-plan-and-offer-a-discount-for-upgrading', cap: 'onsite', ch: ['onsite'], ind: ['telecom'] },
+    { t: 'Increase newsletter subscriptions', o: 'Subscriber growth',         h: '/use-cases/on-site-messaging-(osm)/increase-newsletter-subscriptions', cap: 'onsite', ch: ['onsite'], ind: ['content'] },
 
     // Cards (2)
-    { t: 'Add carousel banners on the app home page', h: '/use-cases/cards/how-to-add-carousel-banners-on-app-home-page', cap: 'cards', ch: ['cards'], ind: ['ecommerce'] },
-    { t: 'Trigger card deletion via custom connector', h: '/use-cases/cards/trigger-card-deletion-through-custom-connector-campaigns', cap: 'cards', ch: ['cards'], ind: [] },
+    { t: 'Add carousel banners on the app home page', o: 'Home-screen impact', h: '/use-cases/cards/how-to-add-carousel-banners-on-app-home-page', cap: 'cards', ch: ['cards'], ind: ['ecommerce'] },
+    { t: 'Trigger card deletion via custom connector', o: 'Clean inventory',  h: '/use-cases/cards/trigger-card-deletion-through-custom-connector-campaigns', cap: 'cards', ch: ['cards'], ind: [] },
 
     // WhatsApp (2)
-    { t: 'Send WhatsApp based on last activity', h: '/use-cases/whatsapp/how-to-send-messages-in-whatsapp-based-on-users-last-activity-on-the-app', cap: 'whatsapp', ch: ['whatsapp'], ind: [] },
-    { t: 'Use conversational messaging in WhatsApp', h: '/use-cases/whatsapp/use-conversational-messaging-in-whatsapp', cap: 'whatsapp', ch: ['whatsapp'], ind: ['ecommerce'] },
+    { t: 'Send WhatsApp based on last activity', o: 'Smart re-engagement',    h: '/use-cases/whatsapp/how-to-send-messages-in-whatsapp-based-on-users-last-activity-on-the-app', cap: 'whatsapp', ch: ['whatsapp'], ind: [] },
+    { t: 'Use conversational messaging in WhatsApp', o: 'Two-way chats',      h: '/use-cases/whatsapp/use-conversational-messaging-in-whatsapp', cap: 'whatsapp', ch: ['whatsapp'], ind: ['ecommerce'] },
 
     // Facebook (1)
-    { t: 'Retarget customers using Facebook', h: '/use-cases/facebook/retarget-customers-using-facebook', cap: 'facebook', ch: [], ind: [] },
+    { t: 'Retarget customers using Facebook', o: 'Win-back ads',              h: '/use-cases/facebook/retarget-customers-using-facebook', cap: 'facebook', ch: [], ind: [] },
 
     // Flows (13)
-    { t: 'Onboarding experience for FinTech products', h: '/use-cases/flows/how-create-onboarding-experience-in-fintech-products', cap: 'flows', ch: [], ind: ['fintech'] },
-    { t: 'Convert free trial users into paid users', h: '/use-cases/flows/how-to-convert-free-trial-users-into-paid-users', cap: 'flows', ch: [], ind: ['b2b'] },
-    { t: 'Create a welcome experience for new users', h: '/use-cases/flows/how-to-create-welcome-experience-for-new-users', cap: 'flows', ch: [], ind: [] },
-    { t: 'Cross-sell bill payments', h: '/use-cases/flows/how-to-cross-sell-bill-payments', cap: 'flows', ch: [], ind: ['fintech', 'telecom'] },
-    { t: 'Nudge users to renew their subscription', h: '/use-cases/flows/how-to-nudge-users-to-renew-their-subscription', cap: 'flows', ch: [], ind: ['telecom'] },
-    { t: 'Nudge guests to extend their stay', h: '/use-cases/flows/how-to-nudge-your-guests-to-extend-their-stay', cap: 'flows', ch: [], ind: ['travel'] },
-    { t: 'Reduce browse abandonment', h: '/use-cases/flows/how-to-reduce-browse-abandonment', cap: 'flows', ch: [], ind: ['ecommerce'] },
-    { t: 'Reduce card application abandonment', h: '/use-cases/flows/how-to-reduce-card-application-abandonment', cap: 'flows', ch: [], ind: ['banking', 'fintech'] },
-    { t: 'Reduce eKYC abandonment', h: '/use-cases/flows/how-to-reduce-ekyc-abandonment', cap: 'flows', ch: [], ind: ['banking', 'fintech'] },
-    { t: 'Reduce loan application abandonment', h: '/use-cases/flows/how-to-reduce-loan-application-abandonment', cap: 'flows', ch: [], ind: ['banking', 'fintech'] },
-    { t: 'Retarget dropped-off customers', h: '/use-cases/flows/how-to-retarget-dropped-off-customers', cap: 'flows', ch: [], ind: ['ecommerce'] },
-    { t: 'Use gamification to engage users', h: '/use-cases/flows/how-to-use-gamification-to-engage-the-users', cap: 'flows', ch: [], ind: ['gaming'] },
-    { t: 'Win inactive users back', h: '/use-cases/flows/how-to-win-inactive-users-back', cap: 'flows', ch: [], ind: [] },
+    { t: 'Onboarding experience for FinTech products', o: 'First-deposit lift', h: '/use-cases/flows/how-create-onboarding-experience-in-fintech-products', cap: 'flows', ch: [], ind: ['fintech'] },
+    { t: 'Convert free trial users into paid users', o: 'Trial conversion',   h: '/use-cases/flows/how-to-convert-free-trial-users-into-paid-users', cap: 'flows', ch: [], ind: ['b2b'] },
+    { t: 'Create a welcome experience for new users', o: 'Smooth onboarding', h: '/use-cases/flows/how-to-create-welcome-experience-for-new-users', cap: 'flows', ch: [], ind: [] },
+    { t: 'Cross-sell bill payments', o: 'Wallet share',                       h: '/use-cases/flows/how-to-cross-sell-bill-payments', cap: 'flows', ch: [], ind: ['fintech', 'telecom'] },
+    { t: 'Nudge users to renew their subscription', o: 'Renewal lift',        h: '/use-cases/flows/how-to-nudge-users-to-renew-their-subscription', cap: 'flows', ch: [], ind: ['telecom'] },
+    { t: 'Nudge guests to extend their stay', o: 'More room nights',          h: '/use-cases/flows/how-to-nudge-your-guests-to-extend-their-stay', cap: 'flows', ch: [], ind: ['travel'] },
+    { t: 'Reduce browse abandonment', o: 'Recover browsers',                  h: '/use-cases/flows/how-to-reduce-browse-abandonment', cap: 'flows', ch: [], ind: ['ecommerce'] },
+    { t: 'Reduce card application abandonment', o: 'Reduce drop-offs',        h: '/use-cases/flows/how-to-reduce-card-application-abandonment', cap: 'flows', ch: [], ind: ['banking', 'fintech'] },
+    { t: 'Reduce eKYC abandonment', o: 'KYC completion',                      h: '/use-cases/flows/how-to-reduce-ekyc-abandonment', cap: 'flows', ch: [], ind: ['banking', 'fintech'] },
+    { t: 'Reduce loan application abandonment', o: 'Loan completion',         h: '/use-cases/flows/how-to-reduce-loan-application-abandonment', cap: 'flows', ch: [], ind: ['banking', 'fintech'] },
+    { t: 'Retarget dropped-off customers', o: 'Win-back lift',                h: '/use-cases/flows/how-to-retarget-dropped-off-customers', cap: 'flows', ch: [], ind: ['ecommerce'] },
+    { t: 'Use gamification to engage users', o: 'Daily engagement',           h: '/use-cases/flows/how-to-use-gamification-to-engage-the-users', cap: 'flows', ch: [], ind: ['gaming'] },
+    { t: 'Win inactive users back', o: 'Reactivate users',                    h: '/use-cases/flows/how-to-win-inactive-users-back', cap: 'flows', ch: [], ind: [] },
 
     // Recommendations (13)
-    { t: 'Cross-sell study material packages', h: '/use-cases/recommendations/how-to-cross-sell-study-material-packages-to-students', cap: 'recos', ch: [], ind: [] },
-    { t: 'Drive upsells through recommendations', h: '/use-cases/recommendations/how-to-drive-upsells-through-recommendations', cap: 'recos', ch: [], ind: ['ecommerce'] },
-    { t: 'Personalized shipping confirmation emails', h: '/use-cases/recommendations/how-to-increase-retention-with-personalized-shipping-confirmation-emails', cap: 'recos', ch: ['email'], ind: ['ecommerce'] },
-    { t: 'Nudge users to continue watching content', h: '/use-cases/recommendations/how-to-nudge-users-to-continue-watching-content', cap: 'recos', ch: [], ind: ['ott', 'content'] },
-    { t: 'Recommend apparel by size and availability', h: '/use-cases/recommendations/how-to-recommend-apparels-by-size-and-availability', cap: 'recos', ch: [], ind: ['ecommerce'] },
-    { t: 'Recommend content by preference sequence', h: '/use-cases/recommendations/how-to-recommend-content-to-users-based-on-the-sequence-of-preferences', cap: 'recos', ch: [], ind: ['ott', 'content'] },
-    { t: 'Recommend menu items based on purchase history', h: '/use-cases/recommendations/how-to-recommend-menu-items-based-on-purchase-history', cap: 'recos', ch: [], ind: ['ecommerce'] },
-    { t: 'Increase average cart size', h: '/use-cases/recommendations/how-to-recommend-products-to-increase-the-average-cart-size', cap: 'recos', ch: [], ind: ['ecommerce'] },
-    { t: 'Reduce bounce rates on websites', h: '/use-cases/recommendations/how-to-reduce-bounce-rates-on-websites', cap: 'recos', ch: [], ind: [] },
-    { t: 'Reduce cart abandonment on Shopify', h: '/use-cases/recommendations/how-to-reduce-cart-abandonment-on-shopify-stores', cap: 'recos', ch: [], ind: ['ecommerce'] },
-    { t: 'Announce a price drop with recommendations', h: '/use-cases/recommendations/how-to-use-recommendations-to-announce-price-drop', cap: 'recos', ch: [], ind: ['ecommerce'] },
-    { t: 'Drive the first purchase', h: '/use-cases/recommendations/how-to-use-recommendations-to-drive-first-purchase', cap: 'recos', ch: [], ind: ['ecommerce'] },
-    { t: 'Recommend what to watch next', h: '/use-cases/recommendations/recommend-content-to-watch-next', cap: 'recos', ch: [], ind: ['ott', 'content'] },
+    { t: 'Cross-sell study material packages', o: 'Course expansion',         h: '/use-cases/recommendations/how-to-cross-sell-study-material-packages-to-students', cap: 'recos', ch: [], ind: [] },
+    { t: 'Drive upsells through recommendations', o: 'Higher AOV',            h: '/use-cases/recommendations/how-to-drive-upsells-through-recommendations', cap: 'recos', ch: [], ind: ['ecommerce'] },
+    { t: 'Personalized shipping confirmation emails', o: 'Repeat orders',     h: '/use-cases/recommendations/how-to-increase-retention-with-personalized-shipping-confirmation-emails', cap: 'recos', ch: ['email'], ind: ['ecommerce'] },
+    { t: 'Nudge users to continue watching content', o: 'More watch time',    h: '/use-cases/recommendations/how-to-nudge-users-to-continue-watching-content', cap: 'recos', ch: [], ind: ['ott', 'content'] },
+    { t: 'Recommend apparel by size and availability', o: 'Right-fit picks',  h: '/use-cases/recommendations/how-to-recommend-apparels-by-size-and-availability', cap: 'recos', ch: [], ind: ['ecommerce'] },
+    { t: 'Recommend content by preference sequence', o: 'Smarter recs',       h: '/use-cases/recommendations/how-to-recommend-content-to-users-based-on-the-sequence-of-preferences', cap: 'recos', ch: [], ind: ['ott', 'content'] },
+    { t: 'Recommend menu items based on purchase history', o: 'Reorder lift', h: '/use-cases/recommendations/how-to-recommend-menu-items-based-on-purchase-history', cap: 'recos', ch: [], ind: ['ecommerce'] },
+    { t: 'Increase average cart size', o: 'Bigger carts',                     h: '/use-cases/recommendations/how-to-recommend-products-to-increase-the-average-cart-size', cap: 'recos', ch: [], ind: ['ecommerce'] },
+    { t: 'Reduce bounce rates on websites', o: 'Sticky sessions',             h: '/use-cases/recommendations/how-to-reduce-bounce-rates-on-websites', cap: 'recos', ch: [], ind: [] },
+    { t: 'Reduce cart abandonment on Shopify', o: 'Recover carts',            h: '/use-cases/recommendations/how-to-reduce-cart-abandonment-on-shopify-stores', cap: 'recos', ch: [], ind: ['ecommerce'] },
+    { t: 'Announce a price drop with recommendations', o: 'Buy-it-now lift',  h: '/use-cases/recommendations/how-to-use-recommendations-to-announce-price-drop', cap: 'recos', ch: [], ind: ['ecommerce'] },
+    { t: 'Drive the first purchase', o: 'Activate buyers',                    h: '/use-cases/recommendations/how-to-use-recommendations-to-drive-first-purchase', cap: 'recos', ch: [], ind: ['ecommerce'] },
+    { t: 'Recommend what to watch next', o: 'Binge longer',                   h: '/use-cases/recommendations/recommend-content-to-watch-next', cap: 'recos', ch: [], ind: ['ott', 'content'] },
 
     // Personalize (5)
-    { t: 'Personalize website by user affinity', h: '/use-cases/personalize/how-to-personalize-website-based-on-user-affinity', cap: 'personalize', ch: [], ind: ['b2b'] },
-    { t: 'Personalize the current browsing session', h: '/use-cases/personalize/how-to-personalize-website-user-s-current-browsing-session', cap: 'personalize', ch: [], ind: [] },
-    { t: 'Rearrange webpage elements with Personalize', h: '/use-cases/personalize/how-to-rearrange-elements-on-a-webpage-using-personalize', cap: 'personalize', ch: [], ind: [] },
-    { t: 'Show recently viewed products', h: '/use-cases/personalize/how-to-show-recently-viewed-products-on-website', cap: 'personalize', ch: [], ind: ['ecommerce'] },
-    { t: 'Recommend personalized products with grids', h: '/use-cases/personalize/recommend-personalized-products-using-product-grids', cap: 'personalize', ch: [], ind: ['ecommerce'] },
+    { t: 'Personalize website by user affinity', o: 'Personal homepages',     h: '/use-cases/personalize/how-to-personalize-website-based-on-user-affinity', cap: 'personalize', ch: [], ind: ['b2b'] },
+    { t: 'Personalize the current browsing session', o: 'Real-time match',    h: '/use-cases/personalize/how-to-personalize-website-user-s-current-browsing-session', cap: 'personalize', ch: [], ind: [] },
+    { t: 'Rearrange webpage elements with Personalize', o: 'Better layout',   h: '/use-cases/personalize/how-to-rearrange-elements-on-a-webpage-using-personalize', cap: 'personalize', ch: [], ind: [] },
+    { t: 'Show recently viewed products', o: 'Pick up where left',            h: '/use-cases/personalize/how-to-show-recently-viewed-products-on-website', cap: 'personalize', ch: [], ind: ['ecommerce'] },
+    { t: 'Recommend personalized products with grids', o: 'Personal grids',   h: '/use-cases/personalize/recommend-personalized-products-using-product-grids', cap: 'personalize', ch: [], ind: ['ecommerce'] },
 
     // Segmentation (10)
-    { t: 'Create a birthday email campaign', h: '/use-cases/segmentation/create-a-birthday-email-campaign', cap: 'segments', ch: ['email'], ind: [] },
-    { t: 'Create a birthday push campaign', h: '/use-cases/segmentation/create-a-birthday-push-campaign', cap: 'segments', ch: ['push'], ind: [] },
-    { t: 'Find users in MoEngage', h: '/use-cases/segmentation/find-users-in-moengage', cap: 'segments', ch: [], ind: [] },
-    { t: 'Analyze web activity', h: '/use-cases/segmentation/how-to-analyze-web-activity', cap: 'segments', ch: [], ind: [] },
-    { t: 'Encourage repeat orders without a due date', h: '/use-cases/segmentation/how-to-encourage-users-to-repeat-orders-for-categories-without-a-due-date', cap: 'segments', ch: [], ind: ['ecommerce'] },
-    { t: 'Identify web push subscribers', h: '/use-cases/segmentation/how-to-identify-web-push-subscribers', cap: 'segments', ch: ['web-push'], ind: [] },
-    { t: 'Segment by links clicked in email campaigns', h: '/use-cases/segmentation/segment-users-based-on-the-links-clicked-in-your-email-campaign', cap: 'segments', ch: ['email'], ind: [] },
-    { t: 'Segment users on specific app versions', h: '/use-cases/segmentation/segment-users-of-specific-app-versions', cap: 'segments', ch: [], ind: ['telecom'] },
-    { t: 'Segment users to notify about app updates', h: '/use-cases/segmentation/segment-users-to-notify-app-updates', cap: 'segments', ch: [], ind: [] },
-    { t: 'Segment users who uninstalled the app', h: '/use-cases/segmentation/segment-users-who-uninstalled-your-application', cap: 'segments', ch: [], ind: [] },
+    { t: 'Create a birthday email campaign', o: 'Delight customers',          h: '/use-cases/segmentation/create-a-birthday-email-campaign', cap: 'segments', ch: ['email'], ind: [] },
+    { t: 'Create a birthday push campaign', o: 'Delight customers',           h: '/use-cases/segmentation/create-a-birthday-push-campaign', cap: 'segments', ch: ['push'], ind: [] },
+    { t: 'Find users in MoEngage', o: 'Quick lookup',                         h: '/use-cases/segmentation/find-users-in-moengage', cap: 'segments', ch: [], ind: [] },
+    { t: 'Analyze web activity', o: 'Understand sessions',                    h: '/use-cases/segmentation/how-to-analyze-web-activity', cap: 'segments', ch: [], ind: [] },
+    { t: 'Encourage repeat orders without a due date', o: 'Repeat purchase',  h: '/use-cases/segmentation/how-to-encourage-users-to-repeat-orders-for-categories-without-a-due-date', cap: 'segments', ch: [], ind: ['ecommerce'] },
+    { t: 'Identify web push subscribers', o: 'Clean lists',                   h: '/use-cases/segmentation/how-to-identify-web-push-subscribers', cap: 'segments', ch: ['web-push'], ind: [] },
+    { t: 'Segment by links clicked in email campaigns', o: 'Intent-based',    h: '/use-cases/segmentation/segment-users-based-on-the-links-clicked-in-your-email-campaign', cap: 'segments', ch: ['email'], ind: [] },
+    { t: 'Segment users on specific app versions', o: 'Version-aware',        h: '/use-cases/segmentation/segment-users-of-specific-app-versions', cap: 'segments', ch: [], ind: ['telecom'] },
+    { t: 'Segment users to notify about app updates', o: 'Update adoption',   h: '/use-cases/segmentation/segment-users-to-notify-app-updates', cap: 'segments', ch: [], ind: [] },
+    { t: 'Segment users who uninstalled the app', o: 'Win-back targets',      h: '/use-cases/segmentation/segment-users-who-uninstalled-your-application', cap: 'segments', ch: [], ind: [] },
 
     // Analytics (4)
-    { t: 'Analyze OTT content performance', h: '/use-cases/analytics/how-to-analyze-ott-content-performance', cap: 'analytics', ch: [], ind: ['ott', 'content'] },
-    { t: 'Group and organize campaigns', h: '/use-cases/analytics/how-to-group-and-organise-campaigns', cap: 'analytics', ch: [], ind: [] },
-    { t: 'Identify viewership changes between time periods', h: '/use-cases/analytics/how-to-identify-change-in-viewership-between-two-time-periods', cap: 'analytics', ch: [], ind: ['ott', 'content'] },
-    { t: 'Identify reasons for app uninstalls', h: '/use-cases/analytics/identify-reasons-for-users-uninstalling-the-app', cap: 'analytics', ch: [], ind: [] },
+    { t: 'Analyze OTT content performance', o: 'Content insights',            h: '/use-cases/analytics/how-to-analyze-ott-content-performance', cap: 'analytics', ch: [], ind: ['ott', 'content'] },
+    { t: 'Group and organize campaigns', o: 'Cleaner reporting',              h: '/use-cases/analytics/how-to-group-and-organise-campaigns', cap: 'analytics', ch: [], ind: [] },
+    { t: 'Identify viewership changes between time periods', o: 'Trend visibility', h: '/use-cases/analytics/how-to-identify-change-in-viewership-between-two-time-periods', cap: 'analytics', ch: [], ind: ['ott', 'content'] },
+    { t: 'Identify reasons for app uninstalls', o: 'Reduce churn',            h: '/use-cases/analytics/identify-reasons-for-users-uninstalling-the-app', cap: 'analytics', ch: [], ind: [] },
 
     // Business Events (4)
-    { t: 'Alert on stock price drops', h: '/use-cases/business-events/alert-about-drop-in-stock-price-using-business-events', cap: 'events', ch: [], ind: ['fintech'] },
-    { t: 'Run a price drop campaign', h: '/use-cases/business-events/create-a-price-drop-campaign-using-business-events', cap: 'events', ch: [], ind: ['ecommerce'] },
-    { t: 'Notify users about a new episode', h: '/use-cases/business-events/send-notifications-for-a-new-episode', cap: 'events', ch: [], ind: ['ott', 'content'] },
-    { t: 'Send weather-based contextual messages', h: '/use-cases/business-events/send-weather-based-contextual-messages', cap: 'events', ch: [], ind: ['travel'] },
+    { t: 'Alert on stock price drops', o: 'Timely alerts',                    h: '/use-cases/business-events/alert-about-drop-in-stock-price-using-business-events', cap: 'events', ch: [], ind: ['fintech'] },
+    { t: 'Run a price drop campaign', o: 'Buy-it-now lift',                   h: '/use-cases/business-events/create-a-price-drop-campaign-using-business-events', cap: 'events', ch: [], ind: ['ecommerce'] },
+    { t: 'Notify users about a new episode', o: 'More tune-ins',              h: '/use-cases/business-events/send-notifications-for-a-new-episode', cap: 'events', ch: [], ind: ['ott', 'content'] },
+    { t: 'Send weather-based contextual messages', o: 'Context relevance',    h: '/use-cases/business-events/send-weather-based-contextual-messages', cap: 'events', ch: [], ind: ['travel'] },
 
     // Catalogs (1)
-    { t: 'Activate dormant users with Memories', h: '/use-cases/catalogs/how-to-activate-dormant-users-with-memories', cap: 'catalogs', ch: [], ind: [] },
+    { t: 'Activate dormant users with Memories', o: 'Resurface joy',          h: '/use-cases/catalogs/how-to-activate-dormant-users-with-memories', cap: 'catalogs', ch: [], ind: [] },
 
     // Inform (1)
-    { t: 'Update order status with Inform', h: '/use-cases/inform/how-to-update-order-status-using-inform', cap: 'inform', ch: [], ind: ['ecommerce'] },
+    { t: 'Update order status with Inform', o: 'Trusted updates',             h: '/use-cases/inform/how-to-update-order-status-using-inform', cap: 'inform', ch: [], ind: ['ecommerce'] },
 
     // Merlin AI (1)
-    { t: 'Merlin AI copywriter (global & local)', h: '/use-cases/merlin-ai/merlin-ai-copywriter-for-global-and-local-language', cap: 'ai', ch: [], ind: [] },
+    { t: 'Merlin AI copywriter (global & local)', o: 'Faster copy',           h: '/use-cases/merlin-ai/merlin-ai-copywriter-for-global-and-local-language', cap: 'ai', ch: [], ind: [] },
 
     // Partner Integrations (1)
-    { t: 'Harness loyalty data to drive engagement', h: '/use-cases/partner-integrations/how-to-harness-loyalty-data-to-drive-customer-engagement', cap: 'integrations', ch: [], ind: [] },
+    { t: 'Harness loyalty data to drive engagement', o: 'Reward cycles',      h: '/use-cases/partner-integrations/how-to-harness-loyalty-data-to-drive-customer-engagement', cap: 'integrations', ch: [], ind: [] },
   ];
 
   // Filter ordering preserved across capability groups
@@ -555,6 +555,10 @@
     );
   }
 
+  function outcomeArrowSvg() {
+    return '<svg class="cb-card-outcome-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
+  }
+
   function recipeToHtml(r) {
     const capLabel = CAP_LABELS[r.cap] || r.cap;
     const channels = (r.ch || []).join(',');
@@ -562,19 +566,22 @@
     const indTags = (r.ind || [])
       .map((i) => `<span class="cb-tag">${escapeHtml(INDUSTRY_LABELS[i] || i)}</span>`)
       .join('');
+    const outcome = r.o
+      ? `<div class="cb-card-outcome">${outcomeArrowSvg()}<span>${escapeHtml(r.o)}</span></div>`
+      : '';
     return (
       `<a class="cb-card" href="${escapeHtml(r.h)}" ` +
       `data-cap="${escapeHtml(r.cap)}" ` +
       `data-channels="${escapeHtml(channels)}" ` +
       `data-industries="${escapeHtml(industries)}" ` +
       `aria-label="${escapeHtml(r.t)} — ${escapeHtml(capLabel)}">` +
-      `<span class="cb-card-watermark" aria-hidden="true">${iconSvg(r.cap)}</span>` +
       `<div class="cb-card-head">` +
       `<span class="cb-cap" title="${escapeHtml(capLabel)}">${iconSvg(r.cap)}</span>` +
       arrowSvg() +
       `</div>` +
       `<h3 class="cb-card-title">${escapeHtml(r.t)}</h3>` +
       (indTags ? `<div class="cb-card-tags">${indTags}</div>` : '') +
+      outcome +
       `</a>`
     );
   }
