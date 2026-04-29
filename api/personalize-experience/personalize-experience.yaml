@@ -63,6 +63,22 @@ paths:
       description: |
         This API receives data on active personalization experiences. You can fetch data for one or more server-side experiences by using the **experience_key** field. MoEngage will evaluate targeting rules and in-session attributes automatically and return the correct variation for the user. Typically, you would make this call as part of your larger page and content rendering pipeline.
 
+        ### In-session attributes (custom query parameters)
+
+        To target users on contextual signals such as UTM parameters, referrer, or any custom in-session attribute configured for your workspace, pass the parameter as a **top-level field in the request body using the parameter's own name as the key**. There is no field literally named `Custom_Attribute` — use the actual parameter name configured in the dashboard.
+
+        For example, if you have configured an in-session attribute with the query parameter name `utm_medium` and want to target users who arrived from an email campaign:
+
+        ```json
+        {
+          "identifiers": { "customer_id": "user_8821" },
+          "experience_key": ["email-landing-banner"],
+          "utm_medium": "email"
+        }
+        ```
+
+        You can pass any number of these custom keys alongside the documented fields (`identifiers`, `experience_key`, `DAY_OF_THE_WEEK`, `TIME_OF_THE_DAY`, `USER_IP_ADDRESS`, `USER_AGENT`).
+
       operationId: fetchExperience
       parameters:
         - name: MOE-APPKEY
@@ -79,6 +95,10 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties:
+                type: string
+                description: |
+                  Custom in-session attribute. Pass any in-session attribute query parameter configured in your workspace as a top-level key whose name matches the parameter name (for example, `utm_medium: "email"`). See the endpoint description for details.
               properties:
                 identifiers:
                   type: object
@@ -122,13 +142,6 @@ paths:
                     * all experiences configured for **all users** if customer_id is not part of the request
 
                     **Note**: Keys must be obtained from the [Fetch Experience Metadata](#operation/getMetadata) endpoint. An unrecognized key, or a key that the user does not match, returns a `200` response with an empty `experiences` object — not an error.
-                Custom_Attribute:
-                  type: string
-                  description: |
-                    This field must contain the same value that has been used to identify users using the In-session attribute *Query Parameter*.
-                    
-                    For example, if you want to target users who have opened the app after clicking on a link in an e-mail campaign and you have specified the parameter name as *utm_medium*,
-                    `utm_medium:"email"`
                 DAY_OF_THE_WEEK:
                   type: string
                   description: |
