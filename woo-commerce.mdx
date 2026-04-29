@@ -1,19 +1,610 @@
 ---
-title: "WooCommerce"
+title: "Events and User Data Tracking"
 ---
 
-WooCommerce is an open source e-commerce platform built on WordPress, that is used by more than 3M+ online stores worldwide. This document covers the integration steps required to integrate a store on WooCommerce with Moengage.
+Events and user data tracking allows you to send behavioral data from your Shopify store to MoEngage. After you track these events, you can use them to build segments, trigger campaigns, and personalize communication based on user actions on your store.
 
-- Add Google Tag Manager (GTM) to your WooCommerce store. Refer to this [official documentation](https://woocommerce.com/document/gtm-ecommerce-woo-pro/#how-to-install) [Placeholder_Link] for detailed steps.
-- Complete the GTM and MoEngage integration by following the integration steps [here](https://partners.moengage.com/hc/en-us/articles/18795331766676).[Placeholder_Link]
-- You can track any user event and/or User properties from your store to MoEngage via GTM.
-- This integration allows you to further integrate with the following MoEngage channels.  
+# Tracked Events
 
-| On-site messaging   | Yes                                                                                                                                                    |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Web personalization | Yes ([integration](https://developers.moengage.com/hc/en-us/articles/10645116433812-Web-Personalization-V2) [Placeholder_Link] script should be added) |
-| WebPush             | No                                                                                                                                                     |
+MoEngage tracks the following events when you enable them on your Shopify app during integration.
+
+| Event Type | Event Name | Description |
+| --- | --- | --- |
+| Product Event | Product Viewed | MoEngage tracks this event when a user views a product page. Use this to send back-in-stock alerts or personalized product recommendations.<br /><br />**Note:** This event fires on the default Shopify product page template only. Stores that use custom product page templates require additional implementation — contact support. |
+| Product Event | Product Searched | MoEngage tracks this event when a user searches for a product. Use this to personalize recommendations based on search intent. |
+| Cart Event | Shopify - Add To Cart / Shopify - Update Cart | MoEngage tracks this event when a user adds a product to the cart or updates the cart. Use this to power cart-abandonment campaigns. |
+| Cart Event | Removed from Cart | MoEngage tracks this event when a user removes a product from the cart. |
+| User Login Event | Customer Registered | MoEngage tracks this event when a customer registers with the Shopify store. Use this for welcome messages and onboarding flows. |
+| User Login Event | Customer Logged In | MoEngage tracks this event when a customer logs in to the store. |
+| User Login Event | Customer Logged Out | MoEngage tracks this event when a customer logs out of the store. |
+| Checkout Event | Shopify - Checkout Started | MoEngage tracks this event when the customer initiates checkout. |
+| Checkout Event | Shopify - Checkout Updated | MoEngage tracks this event when the customer updates their cart during checkout. |
+| Order Event | Shopify - Order Placed | MoEngage tracks this event when a customer completes a purchase. Use this for order confirmation messages, loyalty-program nudges, or subscription prompts. |
+| Order Event | Shopify - Order Fulfilled | MoEngage tracks this event when you fulfill an order and it is ready to ship. This event requires enablement by the MoEngage team. Contact your Customer Success Manager or raise a support ticket to activate this event. |
+| Order Event | Shopify - Order Partially Fulfilled | MoEngage tracks this event when you fulfill some, but not all, items in an order. |
+| Order Event | Shopify - Order Cancelled | MoEngage tracks this event when you cancel an order. |
+| Order Event | Shopify - Refund Created | MoEngage tracks this event when you create a refund, either due to a cancellation or a complaint. Use this to send personalized communication and reduce churn. |
+
+<Warning>
+  **Note**
+
+  Do not use "moe\_" as a prefix when you name events, event attributes, or user attributes. It is a reserved system prefix. Using it might result in periodic blacklisting without prior communication.
+</Warning>
+
+# Types of Events
+
+Two sources generate events in the MoEngage Shopify integration:
+
+- **Webhook**: Shopify generates these events and sends them directly to MoEngage via the Shopify webhook system. These represent server-side signals that the Shopify backend triggers — for example, when a user places an order or starts a checkout.
+- **Web SDK**: The MoEngage JavaScript SDK running in the browser generates these events based on user behavior on your store frontend — for example, a product page view or a search action.
+
+Both sources capture some events, such as Add to Cart and Checkout Started. This means two separate event records can appear in MoEngage for the same user action, each with a different name and different attributes.
 
 <Info>
-  Your store must be on WooCommerce Pro plan to complete this integration.
+  **Recommended Event Version for Campaigns and Segmentation**
+
+  For any event that both Webhook and the Web SDK track, use the Webhook version when building segments or triggering campaigns.
+
+  MoEngage receives webhook events directly from the Shopify backend; they are the more reliable signal for campaign logic. Web SDK events are useful for triggering on-site messages (such as on-site campaigns) that must fire in real time within the browser session.
+
+  If you use both versions of the same event in a single campaign or journey — for example, mixing "Add to Cart" (SDK) and "Shopify - Add To Cart" (Webhook) — you will cause conflicts and prevent a single consistent event-triggered flow from running.
 </Info>
+
+# Event Attributes: General Information
+
+### Product URL and Image URL in Webhook Events
+
+Webhook events do not include the product URL or image URL in their payloads. These attributes are present only when you capture the event by using the Web SDK.
+
+**What this means in practice:** If you want to include a product image or link to the product page in a message that a Webhook event triggers — for example, an abandoned cart email triggered by "Shopify - Add To Cart" — those attributes will not be available directly from the event payload.
+
+**To obtain these attributes, perform one of the following:**
+
+- If you sync your product catalog to MoEngage, you can pull the product URL and image URL from the catalog at send time by using **Product set-based personalization**. For more information, refer [here](https://www.moengage.com/docs/user-guide/content/recommendations/basic-recommendations/user-actions-model).
+- If you do not sync the catalog, you must create a custom event that passes these attributes explicitly. See the _Track Custom Events by Using Shopify Liquid_ section on this page.
+
+### Shopify Customer Metafields
+
+MoEngage does not sync Shopify customer metafields — custom data fields attached to the Shopify customer object — to MoEngage user profiles by default. MoEngage also does not include them in event attributes.
+
+**What this means in practice:** If your segmentation or personalization depends on custom customer data that you store in Shopify metafields — for example, a loyalty tier or a custom tag — that data will not be available in MoEngage automatically. Whether you can pass this data depends on how you configure your metafields in Shopify.
+
+#### Check Metafield Storefront Access
+
+Every metafield definition in Shopify has a storefront access setting. To check your setting: in your Shopify admin, go to **Settings** → **Custom data** → **Customers**, open the relevant metafield definition, and check the **Storefront access** setting.
+
+- **Public read:** Use Workaround A below — no API required.
+- **None:** (Common for metafields that third-party apps create) Use Workaround B below.
+
+<Tip>
+  **Workaround A: Liquid-Based Method (Metafields with Public Read Access)**
+
+  If you enable storefront access for the metafield, it is directly readable in Shopify Liquid. You can read the value server-side and pass it to MoEngage by using `Moengage.add_user_attribute()` in your theme. Add the following code to `layout/theme.liquid`, inside the `<body>` tag, after you initialize the MoEngage SDK:
+</Tip>
+
+```liquid
+{% if customer %}
+<script>
+  Moengage.add_user_attribute("Loyalty Tier", "{{ customer.metafields.loyalty.tier.value }}");
+  Moengage.add_user_attribute("Custom Attribute", "{{ customer.metafields.custom.attribute_name.value }}");
+</script>
+{% endif %}
+```
+
+<Info>
+  **Workaround B: Server-Side Sync via Shopify Webhooks (App-Owned Metafields)**
+
+  If a third-party app created the metafield, it will typically have storefront access set to **None**. In this case, you must perform a server-side integration:
+
+  1. Subscribe to the `customers/update` Shopify webhook. Shopify fires this webhook whenever a user updates a customer record.
+  2. In your webhook handler, use the Shopify Admin API to read the customer’s metafield values.
+  3. Call the MoEngage Data API to update the corresponding user attributes on the customer’s profile.
+</Info>
+
+## Sample Event Payloads
+
+The payload samples below show the attributes available for reference when you build segments, personalize messages, or troubleshoot event data. Full payload samples for each event are available in the [MoEngage developer documentation](https://developers.moengage.com).
+
+<Tabs>
+  <Tab title="Shopify - Update Cart">
+    ```json
+    {
+        "Event Received Time": "17th July 2023, 03:25:55 pm",
+        "Product Title": "Sample Product",
+        "Updated At": "17th July 2023, 03:26:15 pm",
+        "Variation ID": "123456",
+        "Currency": "USD",
+        "cart_token": "c1-fcdd3207bee3eef9f98abefaf2ca...",
+        "Product ID": "845236547",
+        "Price": 555.99,
+        "Source": "Shopify",
+        "Vendor Name": "845236547",
+        "Created At": "17th July 2023, 03:25:55 pm",
+        "Quantity": 2
+    }
+    ```
+  </Tab>
+  <Tab title="Removed From Cart">
+    ```json
+    {
+         "Event Received Time": "17th July 2023, 03:25:55 pm",
+         "Product Title": "Sample Product",
+         "Updated At": "17th July 2023, 03:26:15 pm",
+         "Variation ID": "123456",
+         "Currency": "USD",
+         "Product ID": "845236547",
+         "Price": 555.99,
+         "Source": "Shopify",
+         "Vendor Name": "845236547",
+         "Created At": "17th July 2023, 03:25:55 pm",
+         "Quantity": 2
+    }
+    ```
+  </Tab>
+  <Tab title="Shopify - Checkout Started">
+    ```json
+    {
+         "Event Received Time": "17th July 2023, 03:25:55 pm",
+         "Product Title": "Sample Product",
+         "Updated At": "17th July 2023, 03:26:15 pm",
+         "ID": "3cce6aeedf786679ac03e043729fd...",
+         "Variation ID": "0:123456",
+         "Currency": "USD",
+         "Checkout ID": "3cce6aeedf786679ac03e043729fd...",
+         "Source Name": "web",
+         "cart_token": "c1-fcdd3207bee3eef9f98abefaf2ca...",
+         "Checkout URL": "[https://store.myshopify.com/products/snowboard](https://store.myshopify.com/products/snowboard)",
+         "Shopify Customer Id": 36838667059499,
+         "Total Price": 327,
+         "Price": "0:300.00",
+         "Subtotal Price": 300.00,
+         "Source": "Shopify",
+         "Vendor Name": "845236547",
+         "Created At": "17th July 2023, 03:25:55 pm",
+         "Quantity": 2,
+         "Product ID": "845236547"
+    }
+    ```
+  </Tab>
+  <Tab title="Shopify - Checkout Updated">
+    ```json
+    {
+        "Event Received Time": "17th July 2023, 03:25:55 pm",
+        "Product Title": "0:Sample Product01",
+        "Updated At": "17th July 2023, 03:26:15 pm",
+        "ID": "3cce6aeedf786679ac03e043729fd...",
+        "Variation ID": "0:123456",
+        "Currency": "USD",
+        "Checkout ID": "3cce6aeedf786679ac03e043729fd...",
+        "Source Name": "web",
+        "cart_token": "c1-fcdd3207bee3eef9f98abefaf2ca...",
+        "Checkout URL": "[https://store.myshopify.com/products/snowboard](https://store.myshopify.com/products/snowboard)",
+        "Shopify Customer Id": 36838667059499,
+        "Total Price": 327,
+        "Price": ["0:300.00"],
+        "Subtotal Price": 300.00,
+        "Source": "Shopify",
+        "Vendor Name": "845236547",
+        "Created At": "17th July 2023, 03:25:55 pm",
+        "Quantity": ["0:1"],
+        "Product ID": ["0:845236547"]
+    }
+    ```
+  </Tab>
+  <Tab title="Checkout Updated after Shipment">
+    ```json
+    {
+        "Event Received Time": "17th July 2023, 03:25:55 pm",
+        "Shipping Address Country": "US",
+        "Billing Address City": "New York",
+        "Product Title": "0:Sample Product01",
+        "cart_token": "c1-fcdd3207bee3eef9f98abefaf2ca...",
+        "ID": "3cce6aeedf786679ac03e043729fd...",
+        "Checkout ID": "3cce6aeedf786679ac03e043729fd...",
+        "First Name": "John",
+        "Currency": "USD",
+        "Shipping Address Country Code": "US",
+        "Billing Address Country Code": "US",
+        "Updated At": "",
+        "Source Name": "web",
+        "first_name": "John",
+        "Shipping Address Province": "New York",
+        "Checkout URL": "[https://store.myshopify.com/products/snowboard](https://store.myshopify.com/products/snowboard)",
+        "last_name": "Doe",
+        "Shopify Customer Id": 36838667059499,
+        "Total Price": 327,
+        "Price": "0:300.00",
+        "Shipping Address Zip": "10009",
+        "Subtotal Price": 300.00,
+        "Source": "Shopify",
+        "Shipping Address Province Code": "NY",
+        "Vendor Name": "845236547",
+        "Billing Address Country": "US",
+        "Created At": "17th July 2023, 03:25:55 pm",
+        "Variation ID": "0:123456",
+        "Quantity": ["0:1"],
+        "Product ID": ["0:845236547"]
+    }
+    ```
+  </Tab>
+  <Tab title="Shopify - Order Placed">
+    ```json
+    {
+       "Event Received Time": "17th July 2023, 03:25:55 pm",
+       "Current Total Discounts": 0.00,
+       "Product Title": "0:Sample Product01",
+       "cart_token": "c1-fcdd3207bee3eef9f98abefaf2ca...",
+       "ID": "3cce6aeedf786679ac03e043729fd...",
+       "Name": "#1008",
+       "Order Status URL": "",
+       "Total Quantity": 1,
+       "Billing Address Country Code": "US",
+       "Billing Address Zip": 10009,
+       "Order ID": 12334534345,
+       "Currency": "USD",
+       "Total Price": 354,
+       "Checkout ID": "3cce6aeedf786679ac03e043729fd...",
+       "First Name": "John",
+       "Order Number": 1008,
+       "Financial_status": "paid",
+       "Source": "Shopify"
+    }
+    ```
+  </Tab>
+  <Tab title="Order Partially Fulfilled">
+    ```json
+    {
+       "Event Received Time": "17th July 2023, 03:25:55 pm",
+       "product_title": ["0:product 2", "1:product 2"],
+       "Updated At": "17th July 2023, 03:25:57 pm",
+       "product_id": ["0:234234324", "1:97897897897"],
+       "variation_id": ["0:23423423423", "1:23423423444"],
+       "Total Spent": 5687,
+       "Currency": "USD",
+       "Total Price": 354,
+       "Checkout ID": "3cce6aeedf786679ac03e043729fd...",
+       "tracking_company": "1",
+       "vendor_name": ["0:ShopiWeb", "1:ShopifyWeb"],
+       "OrderID": 34343455,
+       "item_fulfilment_status": ["0:partial", "1:fulfilled"], 
+       "Quantity": ["0:4", "1:3"],
+       "item_count": 2,
+       "order_fulfilment_status": "partial",
+       "Subtotal Price": 10500,
+       "Order Status URL": "https://yourshopifystore...",
+       "price": ["0:1500.00", "1:1500.00"],
+       "variation_title": ["0:product 2 - black", "1:product 2 - red"],
+       "Financial status": "refunded",
+       "Created At": "17th July 2023, 03:25:55 pm"
+    }
+    ```
+  </Tab>
+  <Tab title="Shopify - Order Fulfilled">
+    ```json
+    {
+       "Event Received Time": "17th July 2023, 03:25:55 pm",
+       "product_title": ["0:product 2"],
+       "cart_token": "c1-fcdd3207bee3eef9f98abefaf2ca...",        
+       "product_id": ["0:234234324"],
+       "variation_id": ["0:23423423423"],
+       "Total Spent": 5687,
+       "Currency": "USD",
+       "Total Price": 354,
+       "Checkout ID": "3cce6aeedf786679ac03e043729fd...",
+       "Source Name": "web",
+       "vendor_name": ["0:ShopiWeb"],
+       "item_fulfilment_status": ["0:fulfilled"],
+       "Updated At": "17th July 2023, 03:25:58 pm",
+       "OrderID": 34343455,
+       "Quantity": ["0:1"],
+       "item_count": 1,
+       "order_fulfilment_status": "fulfilled",
+       "Subtotal Price": 300,
+       "Order Status URL": "https://yourshopifystore...",
+       "price": ["0:1500.00", "1:1500.00"],
+       "variation_title": ["0:product 2 - black"],
+       "Financial status": "paid",
+       "Created At": "17th July 2023, 03:25:55 pm"
+    }
+    ```
+  </Tab>
+  <Tab title="Shopify - Order Cancelled">
+    ```json
+    {
+       "Event Received Time": "17th July 2023, 03:25:55 pm",
+       "product_title": ["0:product 2", "1:product 2"],
+       "cart_token": "c1-fcdd3207bee3eef9f98abefaf2ca...",        
+       "product_id": ["0:234234324", "0:23423423446"],
+       "variation_id": ["0:23423423423", "0:84353458"],
+       "Total Spent": 5687,
+       "Currency": "USD",
+       "Total Price": 354,
+       "Checkout ID": "3cce6aeedf786679ac03e043729fd...",
+       "cancelled at": "17th July 2023, 03:25:55 pm",
+       "Source Name": "web",
+       "vendor_name": ["0:ShopiWeb", "1:ShopiWeb"],
+       "item_fulfilment_status": ["0:fulfilled"],
+       "Updated At": "17th July 2023, 03:25:58 pm",
+       "OrderID": 34343455,
+       "Quantity": ["0:1", "1:2"],
+       "item_count": 2,
+       "order_fulfilment_status": ["", ""],
+       "Subtotal Price": 300,
+       "Order Status URL": "https://yourshopifystore...",
+       "price": ["0:1500.00", "1:1500.00"],
+       "variation_title": ["0:product 2 - black", "1:product 2 - red"],
+       "Financial status": "refunded",
+       "Created At": "17th July 2023, 03:25:55 pm"
+    }
+    ```
+  </Tab>
+  <Tab title="Shopify - Refund Created">
+    ```json
+    {
+       "Event Received Time": "17th July 2023, 03:25:55 pm",
+       "Variation Title": ["0:Product 2 Black"],
+       "Product Title": ["0:Product 2"],
+       "Updated At": "17th July 2023, 03:25:59 pm",
+       "OrderID": 34343455,
+       "Variation ID": ["0:234234234"],
+       "Currency": "USD",
+       "email": "John.doe@example.com",
+       "user_id": 1545645465,
+       "Refund Created At": "17th July 2023, 03:25:55 pm",
+       "Source": "Shopify",
+       "Vendor Name": ["0:ShopifyWeb"],
+       "Created At": "17th July 2023, 03:25:55 pm",
+       "price": ["0:500.00"],
+       "Quantity": ["0:1"],
+       "Product ID": ["0:8923423"]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Sample Payloads for Web SDK Events
+
+<Tabs>
+  <Tab title="Product Viewed">
+    ```json
+    {
+        "Event Received Time": "17th July 2023, 03:25:55 pm",
+        "Email": "john.doe@example.com",
+        "Product Title": "Sample Product",
+        "Variation ID": "123456",
+        "Total Variants": 3,
+        "Product Handle": "Product 1",
+        "Available": true,
+        "Currency": "USD",
+        "Product ID": "845236547",
+        "Price": 555.99,
+        "Source": "Shopify",
+        "Quantity": 3,
+        "First Session": true,
+        "URL": "[https://yourstore.myshopify.com/products/view](https://yourstore.myshopify.com/products/view)"
+    }
+    ```
+  </Tab>
+  <Tab title="Product Searched">
+    ```json
+    {
+        "Event Received Time": "17th July 2023, 03:25:55 pm",
+        "Variation ID": "123456",
+        "Currency": "USD",
+        "URL": "Search URL",
+        "Search String": "Sneakers Green",
+        "Source": "Shopify",
+        "First Session": true
+    }
+    ```
+  </Tab>
+  <Tab title="Add to Cart">
+    ```json
+    {
+       "Event Received Time": "17th July 2023, 03:25:55 pm",
+       "Email": "john.doe@example.com",
+       "Product Title": "Sample Product",
+       "Variation ID": "123456",
+       "Variation Title": "Sea Green",
+       "Total Variants": 3,
+       "Product Handle": "Product 1",
+       "Available": true,
+       "Currency": "USD",
+       "Product ID": "845236547",
+       "Vendor Name": "845236547",
+       "Price": 555.99,
+       "Source": "Shopify",
+       "Quantity": 3,
+       "First Session": true,
+       "Product URL": "/product/type?type=Sneakers"
+    }
+    ```
+  </Tab>
+  <Tab title="Update Cart">
+    ```json
+    {
+        "Event Received Time": "17th July 2023, 03:25:55 pm",
+        "Email": "john.doe@example.com",
+        "Product Title": "Sample Product",
+        "Variation ID": "123456",
+        "Variation Title": "Sea Green",
+        "Total Variants": 3,
+        "Product Handle": "Product 1",
+        "Available": true,
+        "Currency": "USD",
+        "Product ID": "845236547",
+        "Vendor Name": "845236547",
+        "Price": 555.99,
+        "Source": "Shopify",
+        "Quantity": 3,
+        "First Session": true,
+        "Product URL": "/product/type?type=Sneakers"
+    }
+    ```
+  </Tab>
+  <Tab title="Removed From Cart">
+    ```json
+    {
+         "Event Received Time": "17th July 2023, 03:25:55 pm",
+         "Email": "john.doe@example.com",
+         "Product Title": "Sample Product",
+         "Variation ID": "123456",
+         "Currency": "USD",
+         "Product ID": "845236547",
+         "Price": 555.99,
+         "Source": "Shopify",
+         "Quantity": 3
+    }
+    ```
+  </Tab>
+  <Tab title="Customer Registered">
+    ```json
+    {
+            "Event Received Time": "17th July 2023, 03:25:55 pm",
+            "Email": "john.doe@example.com",
+            "Source": "Shopify",
+            "First Session": true,
+            "URL": "[https://yourstore.myshopify.com/](https://yourstore.myshopify.com/)"
+    }
+    ```
+  </Tab>
+  <Tab title="Customer Logged In">
+    ```json
+    {
+            "Event Received Time": "17th July 2023, 03:25:55 pm",
+            "Email": "john.doe@example.com",
+            "FirstName": "John",
+            "LastName": "Doe",
+            "Customer ID": 7385786908975,
+            "URL": "[https://yourstore.myshopify.com/account](https://yourstore.myshopify.com/account)"
+    }
+    ```
+  </Tab>
+  <Tab title="Checkout Started">
+    ```json
+    {
+            "Event Received Time": "17th July 2023, 03:25:55 pm",
+            "Email": "john.doe@example.com",
+            "currency": "USD",
+            "Total Price": 699.95,
+            "Product Prices": [699.95],
+            "Product IDs": ["8869819679023"],
+            "Product Quantities": [1],
+            "Product Titles": ["The Complete Snowboard - Ice"],
+            "Variation IDs": ["46822634324271"],
+            "Vendor Names": ["Snowboard Vendor"],
+            "Source": "Shopify",
+            "First Session": true,
+            "URL": "[https://yourstore.myshopify.com/products/the-complete-snowboard](https://yourstore.myshopify.com/products/the-complete-snowboard)"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+# Tracked User Properties
+
+MoEngage tracks the following user attributes when you enable them during integration. MoEngage stores these attributes on the user profile for segmentation and personalization.
+
+| Attribute Name | Description |
+| :-- | :-- |
+| First Name | The first name of the user. |
+| Last Name | The last name of the user. |
+| Mobile | The mobile number of the user. |
+| Email | The email address of the user. |
+| Tags | Shopify tags that you apply to the user. |
+| Accepts Marketing | Whether the user has opted in to marketing communication, as Shopify records it. |
+| Orders Count | The total number of orders that the user has placed. |
+| Shopify ID | The user's ID within Shopify. |
+| Shopify LTV | Lifetime value of the user — the cumulative revenue from their purchases. Shopify updates this each time the app conversion goal event fires. |
+| Shipping Mobile Number | The mobile number associated with the user's shipping address. |
+
+# Configure Event and User Data Settings
+
+To select the events and user properties that MoEngage tracks, perform the following steps:
+
+1. Navigate to the **Configuration** tab in your Shopify app.
+2. Select the user events and properties you want to track.
+3. Click **Save configuration**.
+   ![Eventsand User Data Tracking1 (1)](/images/EventsandUserDataTracking1-\(1\).PNG)
+
+<Info>
+  If you have questions about your Shopify integration, refer to the [MoEngage Shopify FAQs](https://help.moengage.com) in the help center.
+</Info>
+
+# Track Custom Events by Using Shopify Liquid
+
+If you must track events beyond the MoEngage default set — for example, a wishlist action or a custom button click — you can add these by using the MoEngage Web SDK inside your Shopify theme's Liquid files.
+
+<Info>
+  **Before You Start**
+
+  This procedure requires that you edit your Shopify theme files, which requires developer access. Check with your web team before you make changes.
+</Info>
+
+### Step 1: Identify the Correct Liquid File to Edit
+
+Shopify themes use Liquid template files to render pages. To find the right file, in your Shopify admin, go to **Online Store** → **Themes** → **Edit code**, and then browse the `sections/` folder. The file you edit depends on where the event should fire:
+
+- **Product page actions:** edit `sections/product-template.liquid` or `sections/main-product.liquid`.
+- **Collection page actions:** edit the relevant collection section file.
+- **All pages:** edit `layout/theme.liquid`. Use this file sparingly — code here runs on every page load.
+
+### Step 2: Add the Track-Event Call
+
+Inside the Liquid file, locate the HTML element with which the user interacts. Add a JavaScript call to the MoEngage **track\_event** method. You must initialize the MoEngage Web SDK on the page. If you have completed the standard MoEngage Shopify setup, the SDK is already initialized.
+
+<Tabs>
+  <Tab title="Track Event with No Attributes">
+    ```javascript
+    Moengage.track_event("EVENT_NAME");
+    ```
+  </Tab>
+  <Tab title="Track Event with Attributes">
+    ```javascript
+    Moengage.track_event("EVENT_NAME", {
+      "attribute_1": "value_1",           // string
+      "attribute_2": 2,                    // number
+      "attribute_3": 3.4,                  // decimal
+      "attribute_4": new Date(2017, 0, 31) // date (31 Jan 2017)
+    });
+    ```
+  </Tab>
+  <Tab title="Example: Track Wishlist Addition">
+    ```html
+    <button id="wishlist-btn" onclick="trackWishlistEvent()">Add to Wishlist</button>
+    
+    <script>
+      function trackWishlistEvent() {
+        Moengage.track_event("Wishlist Added", {
+          "Product ID": "{{ product.id }}",
+          "Product Title": "{{ product.title }}",
+          "Price": {{ product.selected_or_first_available_variant.price | divided_by: 100.0 }},
+          "Product URL": "https://{{ shop.domain }}{{ product.url }}"
+        });
+      }
+    </script>
+    ```
+  </Tab>
+</Tabs>
+
+**Note about Liquid variables:** Shopify resolves Liquid variables such as `{{ product.id }}` server-side before the page reaches the browser. Shopify returns prices in the smallest currency unit. Use `| divided_by: 100.0` to convert to a decimal value. Do not use `moe_` as a prefix in your event name or attribute names.
+
+### Step 3: Validate That the Event Fires
+
+After you save your Liquid file changes, perform the following steps to validate the event:
+
+1. Open your store in Chrome and navigate to the page where the event should fire.
+2. Open Chrome DevTools (right-click → **Inspect**) and go to the **Network** tab.
+3. Trigger the action — for example, click the button.
+4. Filter the Network tab by **collector**. If the event fired, you will see a POST request to `collector.moengage.com` with your event name and attributes in the payload.
+5. Alternatively, open your MoEngage dashboard and go to **Analytics** → **Event Analytics**. Search for your custom event name. Allow up to 5 minutes for new events to appear.
+
+<Warning>
+  **Troubleshoot**
+
+  If the event does not appear, check the following:
+
+  - That the MoEngage SDK is loading correctly — look for `moengage.com` scripts in the **Network** tab.
+  - That you saved your Liquid file changes and published the theme.
+  - That there are no JavaScript errors in the **Console** tab.
+</Warning>
