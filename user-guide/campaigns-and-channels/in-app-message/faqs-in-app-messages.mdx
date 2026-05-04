@@ -1,0 +1,200 @@
+---
+title: "FAQs - In-App Messages"
+description: "Answers to frequently asked questions about MoEngage In-App messages — display behavior, overlapping campaigns, flows, templates, and platform-specific scenarios."
+keywords: ["in-app message faq", "troubleshooting", "delivery", "templates", "self-handled", "react native"]
+---
+
+# Display behavior
+
+<AccordionGroup>
+  <Accordion title="Why are In-App messages displayed with a delay after opening the app?">
+    In-App messages that include images can take time to appear. MoEngage downloads images in the background and shows the In-App message only after the image is completely downloaded. Depending on image size and connection speed, users may experience a short delay.
+  </Accordion>
+
+  <Accordion title="Why are users seeing an In-App message repeatedly?">
+    Users may see an In-App message more than the configured limit due to:
+
+    - The user logged in with the same profile on multiple devices and met the trigger criteria on each.
+    - The user logged out and logged back in.
+    - The app logs users out due to session expiry or inactivity, and users log back in.
+
+    In-App delivery controls are stored against the device ID. When a user logs out, MoEngage sets the user to anonymous and refreshes the device's delivery controls. When the user logs back in, the campaign can show again because the previous controls were reset.
+
+    **Expected behavior:** When users log in with the same user ID across devices, or log out and back in, they may see the campaign again. MoEngage can prevent repeat delivery only when logout is app-initiated, not user-initiated.
+
+    **Resolution:** If your app logs users out automatically (session expiry or inactivity), do not call the MoEngage logout function as part of that flow.
+
+    - **Android** — remove this call from your auto-logout flow:
+
+      <CodeGroup>
+        ```kotlin Kotlin
+        MoECoreHelper.logoutUser(context)
+        ```
+
+        ```java Java
+        MoECoreHelper.INSTANCE.logoutUser(context);
+        ```
+      </CodeGroup>
+    - **iOS** — remove this call from your auto-logout flow:
+
+      <CodeGroup>
+        ```objective-c Objective C
+        [[MoEngageSDKAnalytics sharedInstance] resetUser];
+        ```
+
+        ```swift Swift
+        MoEngageSDKAnalytics.sharedInstance.resetUser()
+        ```
+      </CodeGroup>
+  </Accordion>
+
+  <Accordion title="Why are In-App campaign impressions zero?">
+    A live In-App campaign can show zero impressions for any of these reasons:
+
+    - No users match the segmentation or targeting criteria.
+    - Targeted users have not opened the app since you created the campaign.
+    - The interval between campaign start and expiry is too short and no users opened the app in that window.
+    - `showInApp()` is not called on the screen where the campaign should appear.
+    - Multiple campaigns share the same trigger and segment filters — the higher-priority campaign is delivered.
+    - A global delay condition prevented the campaign from showing.
+    - The wrong screen name is configured for an On Specific Screen trigger.
+    - The In-App module is not integrated with the SDK.
+    - When campaigns share the same priority, MoEngage delivers the one with the latest updated timestamp first.
+  </Accordion>
+
+  <Accordion title="Why does a test In-App fail to render on devices (In-App V2)?">
+    A test In-App may fail to render in In-App V2 due to:
+
+    - **Custom redirection** — when you send a test campaign, a splash or blank activity opens before redirecting to the main activity. Custom redirection can drop the call that fetches the In-App, so the campaign never displays.
+    - **Activity name missing** — testing picks a random activity from the backend; if the activity is missing, MoEngage does not show the message.
+    - **Key-Value pair** — sometimes picked up from the backend during testing. A missing key-value pair can prevent the message from rendering.
+    - **Activity instance is null** — if no screen is available, MoEngage cannot show the In-App.
+
+    **Resolution:** Create a test campaign targeting yourself or a group of test users instead of relying on the random-activity test path.
+  </Accordion>
+</AccordionGroup>
+
+# Overlapping campaigns
+
+<AccordionGroup>
+  <Accordion title="Why do pop-up and GIF In-App campaigns overlap?">
+    A pop-up and a GIF In-App campaign appear at the same time when both are configured to trigger on the same screen with identical trigger conditions.
+
+    To prevent overlap:
+
+    - Add a delay to one of the campaigns so they do not trigger together.
+    - Use different trigger conditions for each campaign.
+    - Place the campaigns on separate screens.
+  </Accordion>
+
+  <Accordion title="Why do In-App nudges and regular In-Apps overlap?">
+    In-App nudges and regular In-Apps can overlap because:
+
+    - The two are designed to coexist (separate **Delivery controls** apply).
+    - The global minimum delay does not apply to nudges, so nudges take priority.
+
+    Overlapping is the expected outcome when both run on the same screen with the same trigger.
+
+    **To avoid overlap:**
+
+    1. Publish the nudge and the regular In-App on different screens.
+    2. Add a delay to one of the campaigns.
+  </Accordion>
+</AccordionGroup>
+
+# Flow and lifecycle
+
+<AccordionGroup>
+  <Accordion title="Why do users receive In-App messages even after the flow has stopped?">
+    Users continue receiving In-App campaigns from a stopped flow because the campaign's expiration date has not been reached, or the flow is not yet retired.
+
+    **Expected behavior:**
+
+    - Flow versions in **Stopped**, **Paused**, or **Completed** status — In-App delivery stops.
+    - Flow versions in **Active** or **Retired** status — In-App delivery continues.
+
+    **Resolution:** Set up the exit criteria in your flows so users leave the flow when expected.
+  </Accordion>
+
+  <Accordion title="Why does dynamically enabling or disabling In-Apps fail?">
+    There is no method to dynamically toggle In-App visibility using a custom Boolean. For example, this approach does not work:
+
+    ```kotlin
+    val isInAppEnable = true
+    if (isEnable) { showInApp() }
+    val isInAppEnable = false
+    if (isEnable) { showInApp() }
+    ```
+
+    **Use one of these approaches instead:**
+
+    - Use event-based In-Apps to show or hide messages based on custom events on specific screens.
+    - Use contextual In-Apps with specified screen names to control visibility across multiple screens.
+  </Accordion>
+</AccordionGroup>
+
+# Templates and customization
+
+<AccordionGroup>
+  <Accordion title="How do I make the In-App template background transparent or set it to any color?">
+    - **HTML templates** — use HTML/CSS code snippets to change the background to transparent or any color.
+    - **Native templates** — set the **Alpha** value to 0 in **Template Settings** to make the background transparent. Use the color picker to choose any color.
+  </Accordion>
+
+  <Accordion title="How do I change the In-App template background overlay color and transparency?">
+    The color picker includes an **Opacity** parameter (0–100). Low opacity = high transparency.
+
+    1. In **Step 2** (**Content**) of campaign creation, select your template.
+    2. Under **Template settings** > **Placement and Background**, click **Background Color**.
+    3. In the color palette, drag the **Color gradient** bar to pick a color.
+    4. Drag the **Opacity** bar to set transparency.
+    5. Click the vertical ellipsis and select **Save template**, or click **Next** to continue.
+  </Accordion>
+
+  <Accordion title="Why does video upload fail for a Nudge In-App campaign?">
+    The "Content upload failed" error during video upload is usually caused by dots or special characters in the file name (for example, `UNLMTD_Slot Machine_25.02.2024.mp4`).
+
+    **Resolution:** Remove dots and special characters from the file name, then upload again. Always check file names for special characters before uploading assets.
+  </Accordion>
+
+  <Accordion title="What happens if an In-App message exceeds device height?">
+    An In-App message does not render if its height exceeds the device's display height.
+  </Accordion>
+
+  <Accordion title="Are images mandatory for In-App templates?">
+    Images are mandatory only for templates designed to contain images. If you do not provide images for those templates, they will not display on the user's device.
+  </Accordion>
+
+  <Accordion title="Is text scaled across different device sizes?">
+    No. Text does not scale automatically across device sizes. The font size you specify is used on all devices.
+  </Accordion>
+
+  <Accordion title="Can I remove images from In-App messages?">
+    No. Images are mandatory for In-App templates that include image components.
+  </Accordion>
+
+  <Accordion title="Can I remove the background color from In-App messages?">
+    Yes. Set the background opacity to 0 in **Template Settings**.
+  </Accordion>
+
+  <Accordion title="What happens to In-App messages when the app is in landscape mode?">
+    Pre-built native In-App messages do not currently display in landscape mode. HTML In-App messages display in landscape if the orientation is allowed during template setup.
+  </Accordion>
+
+  <Accordion title="Are In-App messages supported on tablets?">
+    Pre-built native In-App messages are not currently supported on tablets. HTML In-App messages are supported on tablets.
+  </Accordion>
+</AccordionGroup>
+
+# Platform-specific
+
+<AccordionGroup>
+  <Accordion title="How do self-handled In-Apps work in React Native?">
+    Self-handled In-App functionality in React Native ensures new event listeners are configured only after the active callback completes. This keeps event execution ordered and predictable.
+
+    - **Single invocation** — when the self-handled In-App method is called once, the event listener captures and logs the payload a single time.
+    - **Multiple invocations** — if the method is called multiple times in quick succession, React Native's event-handling model ensures the listener still responds only once.
+
+    Processing each self-handled In-App message one at a time keeps the application stable and predictable.
+  </Accordion>
+</AccordionGroup>
