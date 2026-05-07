@@ -1,0 +1,1208 @@
+openapi: 3.0.3
+info:
+  title: MoEngage Campaigns Drafts API (V2)
+  version: '2025-11-20'
+  description: |
+    The MoEngage Campaigns Draft API (V2) allows you to author Push and Email campaigns iteratively. 
+    You can create a campaign as a draft, patch components one at a time, validate, test, and finally publish it.
+  contact:
+    name: MoEngage Developer Team
+    email: support@moengage.com
+    url: https://developers.moengage.com
+
+servers:
+  - url: 'https://api-{dc}.moengage.com'
+    description: MoEngage Campaigns API Server (v2 Draft-First)
+    variables:
+      dc:
+        default: '01'
+
+security:
+  - BasicAuth: []
+
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+      description: Authentication is done via Basic Auth using base64-encoded 'workspace_id:api_key'.
+  
+  parameters:
+    MOE-APPKEY:
+      name: MOE-APPKEY
+      in: header
+      required: true
+      schema:
+        type: string
+    X-MOE-Tenant-ID:
+      name: X-MOE-Tenant-ID
+      in: header
+      required: true
+      description: Workspace identifier. Service resolves db_name from this.
+      schema:
+        type: string
+    X-MOE-Request-Id:
+      name: X-MOE-Request-Id
+      in: header
+      required: true
+      description: Echoed in response_id. Either this header or request_id in the body must be supplied.
+      schema:
+        type: string
+    Idempotency-Key:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Required on every POST/PATCH except /validate. Must be a UUID v4.
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    # ==================== V2 Draft-First Envelopes ====================
+    V2SuccessEnvelope:
+      type: object
+      properties:
+        response_id: { type: string }
+        type: { type: string, example: "campaign" }
+        data: { type: object }
+          
+    V2ErrorEnvelope:
+      type: object
+      properties:
+        response_id: { type: string }
+        error:
+          type: object
+          properties:
+            code: { type: string, enum: [VALIDATION_FAILED, UNPROCESSABLE_ENTITY, BAD_REQUEST, RATE_LIMITED, UNAUTHORIZED, INTERNAL_ERROR, FORBIDDEN] }
+            message: { type: string }
+            target: { type: string }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  target: { type: string }
+                  message: { type: string }
+
+    # ==================== V2 Request Schemas ====================
+    CampaignCreateV2Request:
+      oneOf:
+        - $ref: '#/components/schemas/PushCampaignCreateV2Request'
+        - $ref: '#/components/schemas/EmailCampaignCreateV2Request'
+      discriminator:
+        propertyName: channel
+        mapping:
+          PUSH: '#/components/schemas/PushCampaignCreateV2Request'
+          EMAIL: '#/components/schemas/EmailCampaignCreateV2Request'
+
+    PushCampaignCreateV2Request:
+      title: Push Campaign Draft
+      type: object
+      required: [channel, campaign_delivery_type, created_by]
+      properties:
+        request_id: { type: string }
+        channel: { type: string, enum: [PUSH] }
+        campaign_delivery_type: { type: string, enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED, BROADCAST_LIVE_ACTIVITY] }
+        created_by: { type: string, format: email }
+        status:
+          type: object
+          properties:
+            draft: { type: boolean, description: "If set to true, basic details (except campaign name and delivery type) become optional." }
+        basic_details: { $ref: '#/components/schemas/PushBasicDetailsV2' }
+        trigger_condition: { $ref: '#/components/schemas/PushTriggerCondition' }
+        campaign_content: { $ref: '#/components/schemas/PushCampaignContent' }
+        segmentation_details: { $ref: '#/components/schemas/SegmentationDetails' }
+        scheduling_details: { $ref: '#/components/schemas/SchedulingDetails' }
+        delivery_controls: { $ref: '#/components/schemas/PushDeliveryControls' }
+        advanced: { $ref: '#/components/schemas/AdvancedDetails' }
+        conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
+        control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
+
+    EmailCampaignCreateV2Request:
+      title: Email Campaign Draft
+      type: object
+      required: [channel, campaign_delivery_type, created_by]
+      properties:
+        request_id: { type: string }
+        channel: { type: string, enum: [EMAIL] }
+        campaign_delivery_type: { type: string, enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED] }
+        created_by: { type: string, format: email }
+        status:
+          type: object
+          properties:
+            draft: { type: boolean, description: "If set to true, basic details (except campaign name and delivery type) become optional." }
+        basic_details: { $ref: '#/components/schemas/EmailBasicDetailsV2' }
+        trigger_condition: { $ref: '#/components/schemas/EmailTriggerCondition' }
+        connector: { $ref: '#/components/schemas/Connector' }
+        campaign_content: { $ref: '#/components/schemas/EmailCampaignContent' }
+        segmentation_details: { $ref: '#/components/schemas/SegmentationDetails' }
+        scheduling_details: { $ref: '#/components/schemas/SchedulingDetails' }
+        delivery_controls: { $ref: '#/components/schemas/EmailDeliveryControls' }
+        conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
+        control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
+        utm_params: { $ref: '#/components/schemas/UTMParams' }
+
+    CampaignPatchV2Request:
+      oneOf:
+        - $ref: '#/components/schemas/PushCampaignPatchV2Request'
+        - $ref: '#/components/schemas/EmailCampaignPatchV2Request'
+      discriminator:
+        propertyName: channel
+        mapping:
+          PUSH: '#/components/schemas/PushCampaignPatchV2Request'
+          EMAIL: '#/components/schemas/EmailCampaignPatchV2Request'
+
+    PushCampaignPatchV2Request:
+      title: Push Campaign Draft
+      type: object
+      properties:
+        request_id: { type: string }
+        channel: { type: string, enum: [PUSH] }
+        campaign_delivery_type: { type: string }
+        status:
+          type: object
+          required: [draft]
+          properties:
+            draft: { type: boolean, description: "Mandatory in patch. If set to true, basic details (except campaign name and delivery type) become optional." }
+        basic_details: { $ref: '#/components/schemas/PushBasicDetailsV2' }
+        trigger_condition: { $ref: '#/components/schemas/PushTriggerCondition' }
+        campaign_content: { $ref: '#/components/schemas/PushCampaignContent' }
+        segmentation_details: { $ref: '#/components/schemas/SegmentationDetails' }
+        scheduling_details: { $ref: '#/components/schemas/SchedulingDetails' }
+        delivery_controls: { $ref: '#/components/schemas/PushDeliveryControls' }
+        advanced: { $ref: '#/components/schemas/AdvancedDetails' }
+        conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
+        control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
+        utm_params: { $ref: '#/components/schemas/UTMParams' }
+
+    EmailCampaignPatchV2Request:
+      title: Email Campaign Draft
+      type: object
+      properties:
+        request_id: { type: string }
+        channel: { type: string, enum: [EMAIL] }
+        campaign_delivery_type: { type: string }
+        status:
+          type: object
+          required: [draft]
+          properties:
+            draft: { type: boolean, description: "Mandatory in patch. If set to true, basic details (except campaign name and delivery type) become optional." }
+        basic_details: { $ref: '#/components/schemas/EmailBasicDetailsV2' }
+        trigger_condition: { $ref: '#/components/schemas/EmailTriggerCondition' }
+        connector: { $ref: '#/components/schemas/Connector' }
+        campaign_content: { $ref: '#/components/schemas/EmailCampaignContent' }
+        segmentation_details: { $ref: '#/components/schemas/SegmentationDetails' }
+        scheduling_details: { $ref: '#/components/schemas/SchedulingDetails' }
+        delivery_controls: { $ref: '#/components/schemas/EmailDeliveryControls' }
+        conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
+        control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
+        utm_params: { $ref: '#/components/schemas/UTMParams' }
+
+    CampaignStatusV2Request:
+      type: object
+      required: [action]
+      properties:
+        request_id: { type: string }
+        action: { type: string, enum: [STOP, PAUSE, RESUME, PUBLISH] }
+
+    SearchV2Request:
+      type: object
+      required: [limit, page]
+      properties:
+        request_id: { type: string }
+        campaign_fields: { $ref: '#/components/schemas/CampaignSearchFieldsV2' }
+        page: { type: integer }
+        limit: { type: integer }
+          
+    CampaignSearchFieldsV2:
+      type: object
+      properties:
+        status: { type: array, items: { type: string, enum: [DRAFT, ACTIVE, SCHEDULED, PAUSED, SENT, STOPPED, ARCHIVED] } }
+
+    MetaV2Request:
+      type: object
+      required: [limit, page]
+      properties:
+        request_id: { type: string }
+        campaign_fields: { $ref: '#/components/schemas/CampaignMetaSearchFieldsV2' }
+        page: { type: integer }
+        limit: { type: integer }
+
+    CampaignMetaSearchFieldsV2:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: array, items: { type: string, enum: [DRAFT, SCHEDULED, ACTIVE, PAUSED, SENT, STOPPED, RETIRED, ARCHIVED] } }
+
+    TestV2Request:
+      oneOf:
+        - $ref: '#/components/schemas/TestV2InlineRequest'
+        - $ref: '#/components/schemas/TestV2DraftIdRequest'
+
+    TestV2InlineRequest:
+      type: object
+      required: [channel, campaign_content, test_campaign_meta]
+      properties:
+        request_id: { type: string }
+        channel: { type: string }
+        basic_details: { type: object }
+        connector: { $ref: '#/components/schemas/Connector' }
+        campaign_content: { type: object }
+        test_campaign_meta: { $ref: '#/components/schemas/TestCampaignMetaV2' }
+
+    TestV2DraftIdRequest:
+      type: object
+      required: [draft_id, test_campaign_meta]
+      properties:
+        request_id: { type: string }
+        draft_id: { type: string }
+        test_campaign_meta: { $ref: '#/components/schemas/TestCampaignMetaV2' }
+
+    TestCampaignMetaV2:
+      type: object
+      required: [identifier, identifier_values]
+      properties:
+        identifier: { type: string }
+        identifier_values: { type: array, items: { type: string } }
+        variation: { type: string }
+        locale_name: { type: string }
+        platform: { type: string, enum: [ANDROID, IOS, WEB] }
+
+    # ==================== Shared V2/V1 Components ====================
+    PushBasicDetailsV2:
+      type: object
+      description: Basic information for draft Push campaign.
+      required: [name]
+      properties:
+        name: { type: string }
+        business_event: { type: string }
+        tags: { type: array, items: { type: string } }
+        team: { type: string }
+        platforms: { type: array, items: { type: string, enum: [ANDROID, IOS, WEB] } }
+        broadcast_live_activity_id: { type: string }
+        geofences: { $ref: '#/components/schemas/Geofences' }
+        send_to_triggered_platform_only: { type: boolean }
+        platform_specific_details: { $ref: '#/components/schemas/PlatformSpecificDetails' }
+        
+    EmailBasicDetailsV2:
+      type: object
+      description: Basic information for draft Email campaign.
+      required: [name]
+      properties:
+        name: { type: string }
+        business_event: { type: string }
+        content_type: { type: string, enum: [PROMOTIONAL, TRANSACTIONAL] }
+        subscription_category: { type: string }
+        tags: { type: array, items: { type: string } }
+        team: { type: string }
+        user_attribute_identifier: { type: string, default: "MOE_EMAIL_ID" }
+
+    PlatformSpecificDetails:
+      type: object
+      properties:
+        android:
+          type: object
+          properties:
+            push_amp_plus_enabled: { type: boolean, default: false }
+        ios:
+          type: object
+          properties:
+            send_to_all_eligible_device: { type: boolean }
+            exclude_provisional_push_devices: { type: boolean }
+            send_to_only_provisional_push_enabled_devices: { type: boolean }
+
+    Geofences:
+      type: object
+      required: [name, latitude, longitude, radius, response_time_value, response_time_granularity, triggered_at]
+      properties:
+        name: { type: string }
+        latitude: { type: string }
+        longitude: { type: string }
+        radius: { type: string }
+        dwell_time_value: { type: string }
+        dwell_time_granularity: { type: string, enum: [MINUTES, HOURS, DAYS] }
+        response_time_value: { type: string }
+        response_time_granularity: { type: string, enum: [MINUTES, HOURS, DAYS] }
+        triggered_at: { type: string, enum: [ENTRY, EXIT, dwell] }
+
+    PushTriggerCondition:
+      type: object
+      properties:
+        included_filters: { $ref: '#/components/schemas/FilterGroup' }
+        secondary_included_filters: { $ref: '#/components/schemas/FilterGroup' }
+        trigger_delay_type: { type: string, enum: [DELAY, ASAP, INTELLIGENT_DELAY] }
+        trigger_delay_value: { type: integer }
+        trigger_delay_granularity: { type: string, enum: [MINUTES, HOURS, DAYS] }
+        trigger_relation: { type: string, enum: [BEFORE, AFTER] }
+        trigger_attr: { type: object }
+        intelligent_delay_optimization:
+          type: object
+          properties:
+            min_delay_value: { type: integer }
+            min_delay_granularity: { type: string, enum: [MINUTES, HOURS] }
+            max_delay_value: { type: integer }
+            max_delay_granularity: { type: string, enum: [HOURS, DAYS] }
+
+    EmailTriggerCondition:
+      type: object
+      properties:
+        included_filters: { $ref: '#/components/schemas/FilterGroup' }
+        secondary_included_filters: { $ref: '#/components/schemas/FilterGroup' }
+        trigger_delay_type: { type: string, enum: [DELAY, ASAP] }
+        trigger_delay_value: { type: integer }
+        trigger_delay_granularity: { type: string, enum: [MINUTES, HOURS, DAYS] }
+        trigger_relation: { type: string, enum: [BEFORE, AFTER] }
+        trigger_attr: { type: object }
+
+    PushCampaignContent:
+      type: object
+      required: [content]
+      properties:
+        locales: { type: array, items: { type: string } }
+        variation_details: { $ref: '#/components/schemas/VariationDetails' }
+        content:
+          type: object
+          required: [push]
+          properties:
+            push: { $ref: '#/components/schemas/PushContent' }
+
+    EmailCampaignContent:
+      type: object
+      required: [content]
+      properties:
+        locales: { type: array, items: { type: string } }
+        variation_details: { $ref: '#/components/schemas/VariationDetails' }
+        content:
+          type: object
+          required: [email]
+          properties:
+            email: { $ref: '#/components/schemas/EmailContent' }
+
+    VariationDetails:
+      type: object
+      required: [distribution_type, no_of_variations]
+      properties:
+        distribution_type: { type: string, enum: [SHERPA, MANUAL] }
+        no_of_variations: { type: integer, minimum: 1 }
+        manual_distribution_percentage: { type: object, additionalProperties: { type: string } }
+        sherpa_campaign_duration: { type: integer }
+        sherpa_distribution_metric: { type: string, enum: ['OPEN RATE', 'CLICK RATE', BOTH] }
+
+    PushContent:
+      type: object
+      properties:
+        android: { $ref: '#/components/schemas/AndroidPushContent' }
+        ios: { $ref: '#/components/schemas/IOSPushContent' }
+        web: { $ref: '#/components/schemas/WebPushContent' }
+
+    AndroidPushContent:
+      type: object
+      required: [template_type]
+      properties:
+        template_type: { type: string, enum: [BASIC, STYLIZED_BASIC, SIMPLE_IMAGE_CAROUSEL, IMAGE_BANNER_WITH_TEXT, TIMER, TIMER_WITH_PROGRESS_BAR, Custom] }
+        custom_template_id: { type: string }
+        custom_template_version: { type: integer }
+        basic_details: { $ref: '#/components/schemas/AndroidBasicDetails' }
+        timer: { $ref: '#/components/schemas/AndroidTimer' }
+        buttons: { type: array, items: { $ref: '#/components/schemas/AndroidButton' } }
+        advanced: { $ref: '#/components/schemas/AndroidAdvanced' }
+        template_backup: { $ref: '#/components/schemas/AndroidTemplateBackup' }
+
+    AndroidBasicDetails:
+      type: object
+      required: [notification_channel, title, message, default_click_action, default_click_action_value]
+      properties:
+        notification_channel: { type: string }
+        include_app_name_and_time: { type: boolean }
+        background_color_code: { type: string }
+        app_name_color_code: { type: string }
+        notification_control_color: { type: string, enum: [LIGHT, DARK] }
+        include_title_and_message: { type: boolean }
+        apply_background_color_in_text_editor: { type: boolean }
+        title: { type: string }
+        message: { type: string }
+        summary: { type: string }
+        image_url: { type: string, format: uri }
+        image_scaling: { type: string, enum: [FIT_INSIDE_IMAGE_CONTAINER, FILL_IMAGE_CONTAINER] }
+        banner_image_url: { type: string, format: uri }
+        input_gif_url: { type: string, format: uri }
+        collapsed_push_notification: { type: string }
+        carousel_content: { $ref: '#/components/schemas/CarouselContent' }
+        default_click_action: { type: string, enum: [DEEPLINKING, NAVIGATE_TO_A_SCREEN, RICH_LANDING] }
+        default_click_action_value: { type: string }
+        key_value_pairs: { type: array, items: { $ref: '#/components/schemas/KeyValuePair' } }
+
+    CarouselContent:
+      type: object
+      required: [slider_transition, slide_data]
+      properties:
+        slider_transition: { type: string, enum: [manual, automatic] }
+        slide_data:
+          type: array
+          items:
+            type: object
+            required: [image_url]
+            properties:
+              image_url: { type: string, format: uri }
+              image_click_action: { type: string, enum: [DEEPLINKING, RICH_LANDING, NAVIGATE_TO_A_SCREEN] }
+              image_click_action_value: { type: string }
+              key_value_pairs: { type: array, items: { $ref: '#/components/schemas/KeyValuePair' } }
+
+    AndroidTimer:
+      type: object
+      required: [timer_ends_at, personalized_value]
+      properties:
+        timer_ends_at: { type: string, enum: [DURATION, SPECIFIC_TIME_USER_TIMEZONE, SPECIFIC_TIME_CAMPAIGN_TIMEZONE] }
+        specific_time: { type: string, format: date-time }
+        time_period: { type: string }
+        personalized_value: { type: boolean }
+        duration_hour: { type: string }
+        duration_minute: { type: string }
+
+    AndroidButton:
+      type: object
+      required: [btn_name, click_action_type, click_action_value]
+      properties:
+        btn_name: { type: string }
+        click_action_type: { type: string, enum: [DEEPLINKING, NAVIGATE_TO_A_SCREEN, RICH_LANDING, CALL, SHARE, COPY, SET_USER_ATTRIBUTE, TRACK_EVENT, CUSTOM_ACTION, SNOOZE, REMIND_LATER] }
+        click_action_name: { type: string }
+        click_action_value: { type: string }
+        key_value_pairs: { type: array, items: { $ref: '#/components/schemas/KeyValuePair' } }
+
+    AndroidAdvanced:
+      type: object
+      properties:
+        coupon_code: { type: string }
+        icon_type_in_notification: { type: string }
+        use_large_icon: { type: boolean }
+        make_notification_sticky: { type: boolean }
+        dismiss_button_text: { type: string }
+        auto_dismiss_notification: { type: boolean }
+        auto_dismiss_notification_time_value: { type: integer }
+        auto_dismiss_notification_time_granularity: { type: string, enum: [DAYS, HOURS, MINUTES] }
+        group_key: { type: string }
+        collapse_replace_key: { type: string }
+
+    AndroidTemplateBackup:
+      type: object
+      required: [title, message, default_click_action, default_click_action_value]
+      properties:
+        title: { type: string }
+        message: { type: string }
+        summary: { type: string }
+        image_url: { type: string, format: uri }
+        default_click_action: { type: string, enum: [DEEPLINKING, NAVIGATE_TO_A_SCREEN, RICH_LANDING] }
+        default_click_action_value: { type: string }
+        key_value_pairs: { type: array, items: { $ref: '#/components/schemas/KeyValuePair' } }
+
+    KeyValuePair:
+      type: object
+      required: [key, value]
+      properties:
+        key: { type: string }
+        value: { type: string }
+
+    IOSPushContent:
+      type: object
+      required: [template_type]
+      properties:
+        template_type: { type: string, enum: [BASIC, STYLIZED_BASIC, SIMPLE_IMAGE_CAROUSEL, Custom] }
+        custom_template_id: { type: string }
+        custom_template_version: { type: integer }
+        basic_details: { $ref: '#/components/schemas/IOSBasicDetails' }
+        buttons: { type: array, items: { $ref: '#/components/schemas/IOSButton' } }
+        advanced: { $ref: '#/components/schemas/IOSAdvanced' }
+        template_backup: { $ref: '#/components/schemas/IOSTemplateBackup' }
+
+    IOSBasicDetails:
+      type: object
+      required: [title, message]
+      properties:
+        background_color_code: { type: string }
+        apply_background_color_in_text_editor: { type: boolean }
+        title: { type: string }
+        message: { type: string }
+        subtitle: { type: string }
+        allow_bg_refresh: { type: boolean }
+        rich_media_type: { type: string, enum: [Image, Video, GIF] }
+        rich_media_value: { type: string, format: uri }
+        image_url: { type: string, format: uri }
+        input_gif_url: { type: string, format: uri }
+        carousel_content: { $ref: '#/components/schemas/IOSCarouselContent' }
+        default_click_action: { type: string, enum: [DEEPLINKING, NAVIGATE_TO_A_SCREEN, RICH_LANDING] }
+        default_click_action_value: { type: string }
+        key_value_pairs: { type: array, items: { $ref: '#/components/schemas/KeyValuePair' } }
+
+    IOSCarouselContent:
+      type: object
+      required: [slider_transition, slide_data]
+      properties:
+        slider_transition: { type: string, enum: [MANUAL, AUTOMATIC] }
+        slide_data:
+          type: array
+          items:
+            type: object
+            required: [image_url]
+            properties:
+              image_url: { type: string, format: uri }
+              image_click_action: { type: string, enum: [DEEPLINKING, RICH_LANDING, NAVIGATE_TO_A_SCREEN] }
+              image_click_action_value: { type: string }
+              key_value_pairs: { type: array, items: { $ref: '#/components/schemas/KeyValuePair' } }
+
+    IOSButton:
+      type: object
+      required: [button_category]
+      properties:
+        button_category: { type: string }
+
+    IOSAdvanced:
+      type: object
+      properties:
+        coupon_code: { type: string }
+        sound_file: { type: string }
+        enable_ios_badge: { type: boolean }
+        group_key: { type: string }
+        collapse_replace_key: { type: string }
+
+    IOSTemplateBackup:
+      type: object
+      required: [title, message]
+      properties:
+        title: { type: string }
+        message: { type: string }
+        subtitle: { type: string }
+        allow_bg_refresh: { type: boolean }
+        rich_media_type: { type: string, enum: [Image, Video, GIF] }
+        rich_media_value: { type: string, format: uri }
+        default_click_action: { type: string, enum: [DEEPLINKING, NAVIGATE_TO_A_SCREEN, RICH_LANDING] }
+        default_click_action_value: { type: string }
+        key_value_pairs: { type: array, items: { $ref: '#/components/schemas/KeyValuePair' } }
+
+    WebPushContent:
+      type: object
+      required: [template_type, basic_details]
+      properties:
+        template_type: { type: string, enum: [BASIC] }
+        basic_details: { $ref: '#/components/schemas/WebBasicDetails' }
+        buttons: { type: array, items: { $ref: '#/components/schemas/WebButton' } }
+        advanced: { $ref: '#/components/schemas/WebAdvanced' }
+
+    WebBasicDetails:
+      type: object
+      required: [title, message, redirect_url]
+      properties:
+        title: { type: string }
+        message: { type: string }
+        redirect_url: { type: string, format: uri }
+        image_url: { type: string, format: uri }
+        auto_dismiss_notification: { type: boolean }
+
+    WebButton:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string }
+        icon_url: { type: string, format: uri }
+        url: { type: string, format: uri }
+
+    WebAdvanced:
+      type: object
+      properties:
+        icon_image_type: { type: string, enum: [DEFAULT, ICON_URL] }
+        icon_url: { type: string, format: uri }
+
+    EmailContent:
+      type: object
+      required: [subject, sender_name, from_address, reply_to_address]
+      properties:
+        subject: { type: string }
+        preview_text: { type: string }
+        sender_name: { type: string }
+        from_address: { type: string, format: email }
+        reply_to_address: { type: string, format: email }
+        cc_ids: { type: array, items: { type: string, format: email } }
+        bcc_ids: { type: array, items: { type: string, format: email } }
+        html_content: { type: string }
+        email_editor: { type: string, enum: ['Froala Editor', 'Ace Editor'] }
+        custom_template_id: { type: string }
+        custom_template_version: { type: integer }
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              file_type: { type: string, enum: [URL, PERSONALIZED_ATTACHMENT] }
+              url: { type: string }
+
+    SegmentationDetails:
+      type: object
+      properties:
+        included_filters: { $ref: '#/components/schemas/FilterGroup' }
+        excluded_filters: { $ref: '#/components/schemas/FilterGroup' }
+        is_all_user_campaign: { type: boolean }
+        send_campaign_to_opt_out_users: { type: boolean }
+
+    FilterGroup:
+      type: object
+      required: [filter_operator, filters]
+      properties:
+        filter_operator: { type: string, enum: [and, or] }
+        filters:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/UserAttributeFilter'
+              - $ref: '#/components/schemas/ActionFilter'
+              - $ref: '#/components/schemas/CustomSegmentFilter'
+
+    UserAttributeFilter:
+      type: object
+      required: [filter_type, data_type, name, operator]
+      properties:
+        filter_type: { type: string, enum: [user_attributes] }
+        data_type: { type: string, enum: [string, double, datetime, bool] }
+        category: { type: string }
+        name: { type: string }
+        operator: { type: string }
+        value: { description: The value to filter on }
+        case_sensitive: { type: boolean }
+        negate: { type: boolean }
+        project_name: { type: string }
+
+    ActionFilter:
+      type: object
+      required: [filter_type, action_name]
+      properties:
+        filter_type: { type: string, enum: [actions] }
+        action_name: { type: string }
+        execution:
+          type: object
+          properties:
+            type: { type: string, enum: [atleast, atmost, exactly] }
+            count: { type: integer }
+        executed: { type: boolean }
+        attributes: { $ref: '#/components/schemas/FilterGroup' }
+        condition: { type: string }
+
+    CustomSegmentFilter:
+      type: object
+      required: [filter_type, id]
+      properties:
+        filter_type: { type: string, enum: [custom_segments] }
+        name: { type: string }
+        id: { type: string }
+
+    SchedulingDetails:
+      type: object
+      required: [delivery_type]
+      properties:
+        delivery_type: { type: string, enum: [ASAP, AT_FIXED_TIME, SEND_IN_BTS, SEND_IN_USER_TIMEZONE] }
+        start_time: { type: string, format: date-time }
+        expiry_time: { type: string, format: date-time }
+        periodic_details: { $ref: '#/components/schemas/PeriodicDetails' }
+        bts_details: { $ref: '#/components/schemas/BTSDetails' }
+        user_timezone_details: { $ref: '#/components/schemas/UserTimezoneDetails' }
+
+    PeriodicDetails:
+      type: object
+      properties:
+        sending_frequency: { type: string, enum: [DAILY, WEEKLY, MONTHLY] }
+        repeat_frequency: { type: integer }
+        no_of_occurences: { type: integer }
+        repeat_on_date_of_month: { type: array, items: { type: integer } }
+        repeat_on_days_of_week: { type: array, items: { type: string, enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY] } }
+        repeat_on_days_of_week_for_month:
+          type: array
+          items:
+            type: object
+            properties:
+              week_granularity: { type: string, enum: [FIRST, SECOND, THIRD, FOURTH, LAST] }
+              repeat_on_days_of_week: { type: array, items: { type: string, enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY] } }
+
+    BTSDetails:
+      type: object
+      properties:
+        send_in_bts: { type: boolean }
+        if_user_bts_is_not_available: { type: string }
+        if_user_bts_outside_time_window: { type: string }
+        window_end_time: { type: string }
+
+    UserTimezoneDetails:
+      type: object
+      properties:
+        send_in_user_timezone: { type: boolean }
+        send_if_user_timezone_has_passed: { type: boolean }
+
+    PushDeliveryControls:
+      type: object
+      properties:
+        bypass_dnd: { type: boolean }
+        campaign_throttle_rpm: { type: integer }
+        count_for_frequency_capping: { type: boolean }
+        ignore_frequency_capping: { type: boolean }
+        minimum_delay_between_two_notification_in_hour: { type: integer }
+        max_time_to_show_message_of_same_camapign: { type: string }
+        expiry_time_of_sync_data_in_hour: { type: string }
+        send_message_in_offline_mode: { type: boolean }
+        send_limit_value: { type: string }
+        send_limit_granularity_in_hours: { type: string }
+
+    EmailDeliveryControls:
+      type: object
+      properties:
+        bypass_dnd: { type: boolean }
+        campaign_throttle_rpm: { type: integer }
+        count_for_frequency_capping: { type: boolean }
+        ignore_frequency_capping: { type: boolean }
+        minimum_delay_between_two_notification_in_hour: { type: integer }
+
+    AdvancedDetails:
+      type: object
+      properties:
+        expiration_settings:
+          type: object
+          properties:
+            expire_notification_after_value: { type: integer }
+            expire_notification_after_type: { type: string, enum: [HOUR, DAY] }
+            remove_from_inbox_after_value: { type: integer }
+            remove_from_inbox_after_type: { type: string, enum: [DAY] }
+        platform_level_priority:
+          type: object
+          properties:
+            android_specific_priority:
+              type: object
+              properties:
+                send_with_priority: { type: boolean }
+            ios_specific_priority:
+              type: object
+              properties:
+                apns_priority: { type: string, enum: ["1", "5", "10"] }
+                interruption_level: { type: string, enum: [Passive, Active, 'Time sensitive', Critical] }
+                relevance_score: { type: number, enum: [0, 0.5, 1] }
+
+    ConversionGoalDetails:
+      type: object
+      properties:
+        attribution_window_in_hours: { type: integer }
+        goals: { type: array, items: { $ref: '#/components/schemas/Goal' } }
+
+    Goal:
+      type: object
+      properties:
+        goal_name: { type: string }
+        goal_event_name: { type: string }
+        goal_event_attribute: { $ref: '#/components/schemas/GoalEventAttribute' }
+        is_primary_goal: { type: boolean }
+        revenue_attribute: { type: string }
+        revenue_currency: { type: string }
+
+    GoalEventAttribute:
+      type: object
+      properties:
+        name: { type: string }
+        condition: { type: string }
+        data_type: { type: string, enum: [STRING, DOUBLE, BOOL, NUMBER, GEOPOINT, DATETIME, ARRAY_DOUBLE, ARRAY_STRING, OBJECT, ARRAY_OBJECT] }
+        value: { type: string }
+        value1: { type: string }
+        negate: { type: boolean }
+        value_type: { type: string }
+        array_filter_type: { type: string }
+        filters: { type: array, items: { type: object } }
+        is_case_sensitive: { type: boolean }
+
+    ControlGroupDetails:
+      type: object
+      properties:
+        is_campaign_control_group_enabled: { type: boolean }
+        campaign_control_group_percentage: { type: integer, minimum: 0, maximum: 100 }
+        is_global_control_group_enabled: { type: boolean }
+
+    UTMParams:
+      type: object
+      required: [utm_source, utm_medium]
+      properties:
+        utm_source: { type: string }
+        utm_medium: { type: string }
+        utm_campaign: { type: string }
+        utm_term: { type: string }
+        utm_content: { type: string }
+        utm_custom: { type: string }
+
+    Connector:
+      type: object
+      required: [connector_type, connector_name]
+      properties:
+        connector_type: { type: string }
+        connector_name: { type: string }
+
+    CampaignAudienceLimit:
+      type: object
+      properties:
+        limit: { type: integer }
+        metrics: { type: string }
+        frequency: { type: string }
+
+    CampaignDetailsResponse:
+      type: object
+      properties:
+        campaign_id: { type: string }
+        status: { type: string, enum: [ACTIVE, SCHEDULED, PAUSED, SENT, STOPPED, ARCHIVED] }
+        channel: { type: string, enum: [PUSH, EMAIL, SMS] }
+        campaign_delivery_type: { type: string, enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED, BROADCAST_LIVE_ACTIVITY] }
+        created_by: { type: string, format: email }
+        updated_by: { type: string, format: email }
+        created_at: { type: string }
+        updated_at: { type: string }
+        sent_time: { type: string }
+        flow_id: { type: string }
+        flow_name: { type: string }
+        parent_id: { type: string }
+        basic_details: { type: object }
+        campaign_content: { type: object }
+        trigger_condition: { type: object }
+        segmentation_details: { $ref: '#/components/schemas/SegmentationDetails' }
+        scheduling_details: { $ref: '#/components/schemas/SchedulingDetails' }
+        delivery_controls: { type: object }
+        advanced: { type: object }
+        conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
+        control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
+        utm_params: { $ref: '#/components/schemas/UTMParams' }
+        connector:
+          type: object
+          properties:
+            connector_type: { type: string }
+            connector_name: { type: string }
+        sender_name: { type: string }
+        campaign_audience_limit: { $ref: '#/components/schemas/CampaignAudienceLimit' }
+
+    CampaignMetaResponse:
+      type: object
+      properties:
+        campaign_id: { type: string }
+        channel: { type: string, enum: [EMAIL, PUSH, SMS, WHATSAPP, FACEBOOK, 'GOOGLE ADS', CONNECTORS] }
+        platform: { type: array, items: { type: string, enum: [ANDROID, IOS, WEB] } }
+        created_by: { type: string, format: email }
+        campaign_delivery_type: { type: string, enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED, BROADCAST_LIVE_ACTIVITY] }
+        campaign_name: { type: string }
+        campaign_team: { type: string }
+        campaign_tags: { type: array, items: { type: string } }
+        campaign_status: { type: string, enum: [SCHEDULED, ACTIVE, PAUSED, SENT, STOPPED, RETIRED, ARCHIVED] }
+        campaign_start_time: { type: string, format: date-time }
+        parent_campaign_id: { type: string }
+        total_child_campaigns: { type: integer }
+        reachability_details:
+          type: object
+          properties:
+            count: { type: integer }
+            last_updated_time: { type: string }
+
+    CampaignMetaResponseV2:
+      allOf:
+        - $ref: '#/components/schemas/CampaignMetaResponse'
+        - type: object
+          properties:
+            rejection_comment:
+              type: string
+
+    V2ValidateResponse:
+      type: object
+      properties:
+        valid: { type: boolean }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              issue: { type: string }
+
+paths:
+  /v2/campaigns:
+    post:
+      operationId: create_draft_campaign_v2
+      summary: Create Draft Campaign
+      description: This API creates a new draft Push or Email campaign in MoEngage with specified content, audience, and delivery settings.
+      tags: [Create Campaigns Draft]
+      parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+        - $ref: '#/components/parameters/Idempotency-Key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CampaignCreateV2Request' }
+      responses:
+        '201':
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2SuccessEnvelope' }
+        '400':
+          description: Request failed schema or component validation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+        '401':
+          description: Authentication failure.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+        '429':
+          description: Rate limited.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+
+  /v2/campaigns/{campaign_id}:
+    get:
+      operationId: get_single_campaign_v2
+      summary: Get Single Campaign
+      description: Fetch a single campaign (deparsed body + status).
+      tags: [Get Campaign Details Draft]
+      parameters:
+        - name: campaign_id
+          in: path
+          required: true
+          description: Raw 24-char ObjectId
+          schema: { type: string }
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+      responses:
+        '200':
+          description: Successfully retrieved campaign details
+          content:
+            application/json:
+              schema: 
+                allOf:
+                  - $ref: '#/components/schemas/V2SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CampaignDetailsResponse' }
+        '400':
+          description: Request failed schema or component validation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+    patch:
+      operationId: patch_draft_campaign_v2
+      summary: Patch Draft Campaign
+      description: Component-level edit OR publish (dispatched on body.status).
+      tags: [Update Campaigns Draft]
+      parameters:
+        - name: campaign_id
+          in: path
+          required: true
+          description: Raw 24-char ObjectId
+          schema: { type: string }
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+        - $ref: '#/components/parameters/Idempotency-Key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CampaignPatchV2Request' }
+      responses:
+        '200':
+          description: Patch accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2SuccessEnvelope' }
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+        '403':
+          description: Forbidden (Scope does not satisfy required action)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+        '409':
+          description: Wrong state for the requested operation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+        '422':
+          description: Body well-formed but publish-validator rejected
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+
+  /v2/campaigns/{campaign_id}/validate:
+    post:
+      operationId: validate_draft_campaign_v2
+      summary: Validate Draft Campaign
+      description: Dry-run validate; never mutates.
+      tags: [Create Campaigns Draft]
+      parameters:
+        - name: campaign_id
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                request_id: { type: string }
+      responses:
+        '200':
+          description: Validation completed (can be valid or invalid)
+          content:
+            application/json:
+              schema: 
+                allOf:
+                  - $ref: '#/components/schemas/V2SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/V2ValidateResponse' }
+        '400':
+          description: Request failed schema validation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+
+  /v2/campaigns/{campaign_id}/status:
+    patch:
+      operationId: change_campaign_status_v2
+      summary: Update Campaign Status (v2)
+      description: Handles the post-publish transitions (STOP / PAUSE / RESUME).
+      tags: [Update Campaigns Draft]
+      parameters:
+        - name: campaign_id
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+        - $ref: '#/components/parameters/Idempotency-Key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CampaignStatusV2Request' }
+      responses:
+        '200':
+          description: Transition accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2SuccessEnvelope' }
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+
+  /v2/campaigns/search:
+    post:
+      operationId: search_campaigns_v2
+      summary: Search campaigns (DRAFT-aware)
+      description: List campaigns (DRAFT-aware via filter).
+      tags: [Get Campaign Details Draft]
+      parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+        - $ref: '#/components/parameters/Idempotency-Key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SearchV2Request' }
+      responses:
+        '200':
+          description: Campaigns matching the filter
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2SuccessEnvelope' }
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+
+  /v2/campaigns/meta:
+    post:
+      operationId: get_campaign_meta_v2
+      summary: Get campaign meta (v2)
+      description: Lightweight per-id meta lookup.
+      tags: [Get Campaign Details Draft]
+      parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+        - $ref: '#/components/parameters/Idempotency-Key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MetaV2Request' }
+      responses:
+        '200':
+          description: Campaign meta rows
+          content:
+            application/json:
+              schema: 
+                allOf:
+                  - $ref: '#/components/schemas/V2SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/CampaignMetaResponseV2' }
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+
+  /v2/campaigns/test:
+    post:
+      operationId: test_campaign_v2
+      summary: Test-send a campaign
+      description: Test-send (inline body OR by draft_id).
+      tags: [Test Campaigns Draft]
+      parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+        - $ref: '#/components/parameters/Idempotency-Key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TestV2Request' }
+      responses:
+        '200':
+          description: Test send result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2SuccessEnvelope' }
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
+        '409':
+          description: Wrong state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V2ErrorEnvelope' }
