@@ -67,7 +67,7 @@ paths:
       parameters:
         - name: Content-Type
           in: header
-          description: Select the file content type.
+          description: Set the Content-Type header to any of the specified types for using the Data API.
           required: true
           schema:
             type: string
@@ -108,6 +108,7 @@ paths:
            * Breaching the limits will reject the request.
            * Per hour and per day limits will consider the calculation based on the last hour and last 24 hrs respectively.
            * The limit of 1000 file segments is calculated only for the file segments that are active. Most of our customers utilize only 30-40% of this limit at any given point.
+           * Segment Processing & Availability: As soon as the request is received at the MoEngage system, MoEngage creates a custom segment with zero users. After this, the file is processed and users are added to the custom segment. If the created custom segment is queried in between the file processing, it will show zero or partial user count.
            </Note>
           
            #### CSV File Requirements
@@ -139,11 +140,6 @@ paths:
               emails: ["user1@example.com", "user2@example.com"]
               expiry_time: 30
       responses:
-        '200':
-          description: Everything worked as expected.
-          content:
-            application/json:
-              example: "No example response body available for this status code."
         '202':
           description: Request accepted for processing.
           content:
@@ -775,28 +771,29 @@ components:
       properties:
         name:
           type: string
-          description: Name of the segment. Must be unique for creation.
+          description: The name of the custom segment. The name should be unique across all segments.
         attribute_name:
           type: string
-          description: Name of the user attribute to use as an identifier (e.g., 'ID', 'email').
+          description: Name of the user attribute on which the segment is created. |
+          | For registered users, use ID (to indicate customer id) or any other unique attribute which uniquely identifies the user. For example, for Anonymous (not registered) users use email, mobile number, or any other identifier as the anonymous user identifier.
         attribute_type:
           type: string
-          description: The data type of the attribute_name.
+          description: The type is string or double based on the type of attribute_name. For double attribute_type, the attribute values should be within 64-bit signed numeric values, that is [-9223372036854775808, 9223372036854775807]
           enum: [string, double]
         file_url:
           type: string
           format: uri
-          description: A public, downloadable URL to a single-column CSV file.
+          description: CSV file from URL should be downloadable without authorization.
         callback_url:
           type: string
           format: uri
-          description: Callback URL to receive the result of segment processing.
+          description: Callback URL to receive the result of segment creation.
         emails:
           type: array
           items:
             type: string
             format: email
-          description: List of email IDs to receive segment processing response.
+          description: List of email ids to receive segment creation response.
       required:
         - name
         - attribute_name
