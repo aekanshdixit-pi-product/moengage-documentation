@@ -91,19 +91,36 @@ MoEngageSDKAnalytics.sharedInstance.trackEvent("Event Name", withProperties: nil
 
 </CodeGroup>
 
-## Validations and Restrictions
+## Validations and restrictions
 
-Ensure your events adhere to the following rules to maintain data integrity and prevent issues:
+Event attributes have two layers of validation that apply across both `DEBUG` and release builds:
 
-- **Empty Attribute Names:** Passing an empty string (`""`) as an attribute name is fatal and will cause an app crash in _Debug_ mode. Always provide a valid, non-empty string for attribute names.
-- **Invalid Attribute Values:** The SDK validates event attributes in all modes. Attribute values can only be Strings, Numbers, Dictionaries, and Arrays (of strings or numbers). If an unsupported data type is passed, the SDK drops the specific invalid attribute (the rest of the event payload will still be tracked successfully).
-- **Debug Mode Exceptions:** While production simply drops invalid attributes, passing unsupported values in _Debug_ mode throws a fatal exception and crashes the app to help you identify data issues early. Common triggers for this crash include:
-  - Passing `null` (`NSNull()`).
-  - Passing custom models or UI elements (e.g., `UIColor`, `UIImage`).
-  - Passing invalid numbers like `Double.nan` or `Infinity`.
-  - Passing empty Arrays or Dictionaries.
-  - Nesting `Date` or `MoEngageGeoLocation` objects inside an Array or Dictionary (these must be passed directly as values).
-- **Reserved Prefixes:** You cannot use `moe_` as a prefix while naming events, event attributes, or user attributes. It is a system prefix, and using it might result in periodic blacklisting without prior communication.
+- **Naming and format rules** — these always apply, regardless of build configuration.
+- **Type validation** — invalid attribute values cause a fatal exception in `DEBUG` builds and are silently dropped from the payload in release builds. The rest of the event is tracked.
+
+<Info>
+  In the iOS SDK, `DEBUG` mode means the SDK was initialized using `initializeDefaultTestInstance(_:)` (TEST workspace) and the app is running attached to Xcode. This is different from a release build that has debug symbols enabled.
+</Info>
+
+### Naming and format rules
+
+- **Attribute names must be non-empty.** Passing an empty string (`""`) as an attribute name causes a fatal exception in `DEBUG` builds. In release builds, the attribute is dropped.
+- **Reserved prefixes.** You cannot use `moe_` as a prefix when naming events, event attributes, or user attributes. It is a system prefix, and using it might result in periodic blocklisting without prior communication.
+
+### Supported attribute value types
+
+Attribute values must be one of: `String`, `Number`, `Date`, `MoEngageGeoLocation`, `Dictionary` (with string keys and supported values), or `Array` (of supported values). If an unsupported value is passed:
+
+- In `DEBUG` builds, the SDK throws a fatal exception and crashes the app to surface data issues early in development.
+- In Release and TestFlight builds, the SDK silently drops the specific invalid attribute and logs the issue. The rest of the event payload is still tracked.
+
+Common triggers for the `DEBUG` exception:
+
+- Passing `null` (`NSNull()`).
+- Passing custom models or UI elements (for example, `UIColor`, `UIImage`).
+- Passing invalid numbers like `NaN` or `Infinity`.
+- Passing empty Arrays or Dictionaries.
+- Nesting `Date` or `MoEngageGeoLocation` objects inside an Array or Dictionary. These must be passed directly as values.
 
 # Manual Sync
 

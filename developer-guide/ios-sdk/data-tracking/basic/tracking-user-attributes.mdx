@@ -122,13 +122,12 @@ MoEngageSDKAnalytics.sharedInstance.setLocation(MoEngageGeoLocation(withLatitude
 
 </CodeGroup>
 
-<Warning>
-  **Note**
-
-  - We support strings and numbers as values for UserAttributes. NSURL is not supported. If you wish to use it, please convert them to string.
+<Note>
   - User Phone No / Mobile Number must be tracked as a string to work properly in MoEngage systems.
-  - For more information on supported data types and data tracking policies, please refer to [Data Tracking Policies](https://help.moengage.com/hc/en-us/articles/360037314991#h_01H9QNZ61VNHSMFQC28MAZJXS9).
-</Warning>
+  - For more information on supported data types and data tracking policies, refer to [Data Tracking Policies](https://help.moengage.com/hc/en-us/articles/360037314991#h_01H9QNZ61VNHSMFQC28MAZJXS9).
+</Note>
+
+For the full list of validation rules and what happens in `DEBUG` versus release builds, refer to [Validations and restrictions](#validations-and-restrictions).
 
 # Custom User Attributes
 
@@ -150,17 +149,7 @@ NSArray *myArray = @[@"Bengaluru", @"Delhi", @"Chennai"];
 
 </CodeGroup>
 
-User Attributes have the following restrictions :
-
-- User Attribute Names should not contain dot(.)
-- User Attribute Names should not start with dollar sign(\$)
-- User Attribute Values should be a String or Number
-
-<Info>
-  **Note**
-
-  You can not use "moe\_" as a prefix while naming events, event attributes, or user attributes. It is a system prefix and using it might result in periodic blacklisting without prior communication.
-</Info>
+For the full list of validation rules, refer to [Validations and restrictions](#validations-and-restrictions).
 
 ## JSON Attributes
 
@@ -232,29 +221,58 @@ MoEngageSDKAnalytics.sharedInstance.setLocation(MoEngageGeoLocation.init(withLat
 
 </CodeGroup>
 
-## Reserved keywords for User Attributes
+# Validations and restrictions
 
-Below is the list of keys that should not be used when tracking user attributes.
+User attributes have two layers of validation that apply across both `DEBUG` and release builds:
 
-- USER_ATTRIBUTE_UNIQUE_ID
-- USER_ATTRIBUTE_USER_EMAIL
-- USER_ATTRIBUTE_USER_MOBILE
-- USER_ATTRIBUTE_USER_NAME
-- USER_ATTRIBUTE_USER_GENDER
-- USER_ATTRIBUTE_USER_FIRST_NAME
-- USER_ATTRIBUTE_USER_LAST_NAME
-- USER_ATTRIBUTE_USER_BDAY
-- MOE_TIME_FORMAT
-- MOE_TIME_TIMEZONE
-- USER_ATTRIBUTE_NOTIFICATION_PREF
-- USER_ATTRIBUTE_OLD_ID
-- MOE_TIME_FORMAT
-- MOE_TIME_TIMEZONE
-- USER_ATTRIBUTE_DND_START_TIME
-- USER_ATTRIBUTE_DND_END_TIME
-- MOE_GAID
-- MOE_ISLAT
-- INSTALL
-- UPDATE
-- status
-- user_id
+- **Naming and format rules** — these always apply, regardless of build configuration.
+- **Type validation** — invalid attribute values cause a fatal exception in `DEBUG` builds and are silently dropped in release builds.
+
+<Info>
+  In the iOS SDK, `DEBUG` mode means the SDK was initialized using `initializeDefaultTestInstance(_:)` (TEST workspace) and the app is running attached to Xcode. This is different from a release build that has debug symbols enabled.
+</Info>
+
+## Naming and format rules
+
+- **Attribute names must be non-empty.** Passing an empty string (`""`) as an attribute name causes a fatal exception in `DEBUG` builds. In release builds, the attribute is dropped.
+- **No dot (`.`) in attribute names.**
+- **Attribute names must not start with a dollar sign (`$`).**
+- **Reserved prefix.** You cannot use `moe_` as a prefix when naming events, event attributes, or user attributes. It is a system prefix, and using it might result in periodic blocklisting without prior communication.
+- **Reserved keywords.** Do not use any of the following keys when tracking user attributes — they are reserved for SDK and system use:
+  - `USER_ATTRIBUTE_UNIQUE_ID`
+  - `USER_ATTRIBUTE_USER_EMAIL`
+  - `USER_ATTRIBUTE_USER_MOBILE`
+  - `USER_ATTRIBUTE_USER_NAME`
+  - `USER_ATTRIBUTE_USER_GENDER`
+  - `USER_ATTRIBUTE_USER_FIRST_NAME`
+  - `USER_ATTRIBUTE_USER_LAST_NAME`
+  - `USER_ATTRIBUTE_USER_BDAY`
+  - `USER_ATTRIBUTE_NOTIFICATION_PREF`
+  - `USER_ATTRIBUTE_OLD_ID`
+  - `USER_ATTRIBUTE_DND_START_TIME`
+  - `USER_ATTRIBUTE_DND_END_TIME`
+  - `MOE_TIME_FORMAT`
+  - `MOE_TIME_TIMEZONE`
+  - `MOE_GAID`
+  - `MOE_ISLAT`
+  - `INSTALL`
+  - `UPDATE`
+  - `status`
+  - `user_id`
+
+## Supported attribute value types
+
+Attribute values must be one of: `String`, `Number`, `Date`, `MoEngageGeoLocation`, `Dictionary`, or `Array` (of strings or numbers). `NSURL` is not supported — convert to a string before passing it.
+
+If an unsupported value is passed:
+
+- In `DEBUG` builds, the SDK throws a fatal exception and crashes the app so you can catch data issues early.
+- In release builds, the SDK drops the specific invalid attribute. Other attributes set on the user are unaffected.
+
+Common triggers for the `DEBUG` exception:
+
+- Passing `null` (`NSNull()`).
+- Passing custom models or UI elements (for example, `UIColor`, `UIImage`).
+- Passing invalid numbers like `NaN` or `Infinity`.
+- Passing empty Arrays or Dictionaries.
+- Nesting `Date` or `MoEngageGeoLocation` objects inside an Array or Dictionary. These must be passed directly as values.
