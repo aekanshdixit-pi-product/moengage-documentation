@@ -30,20 +30,40 @@ components:
       type: http
       scheme: basic
       description: |
-        Authentication is performed at the APISIX gateway using Basic Auth (`base64(username:password)`). 
-        
+        Authentication is done via Basic Auth. This requires a base64-encoded string of your credentials in the format 'username:password'.
+
         - **Username**: Use your MoEngage workspace ID (also known as the App ID). You can find it in the MoEngage dashboard at **Settings** > **Account** > **APIs** > **Workspace ID (earlier app id)**.
         - **Password**: Use your API Key, which you can find within the **Campaign report/Business events/Custom templates/Catalog API/Inform Report** tile.
 
         For more information on authentication and getting your credentials, refer [here](https://www.moengage.com/docs/api/introduction#getting-your-credentials).
+
+        In the `Authorization` header, send `Basic` followed by Base64(`appkey:apisecret`). Authentication is performed at the APISIX gateway.
   
   parameters:
+    Authorization:
+      name: Authorization
+      in: header
+      required: true
+      description: |
+        Basic authentication: value is `Basic` followed by a Base64-encoded string of `appkey:apisecret` (workspace ID and API key).
+
+        Authentication is done via Basic Auth. This requires a base64-encoded string of your credentials in the format 'username:password'.
+
+        - **Username**: Use your MoEngage workspace ID (also known as the App ID). You can find it in the MoEngage dashboard at **Settings** > **Account** > **APIs** > **Workspace ID (earlier app id)**.
+        - **Password**: Use your API Key, which you can find within the **Campaign report/Business events/Custom templates/Catalog API/Inform Report** tile.
+
+        For more information on authentication and getting your credentials, refer [here](https://www.moengage.com/docs/api/introduction#getting-your-credentials).
+      schema:
+        type: string
+      example: "Basic <base64(appkey:apisecret)>"
     X-MOE-Tenant-ID:
       name: X-MOE-Tenant-ID
       in: header
       required: true
       description: |
-        This is the Workspace ID of your MoEngage account that must be passed with the request. You can find it in the MoEngage dashboard at **Settings** > **Account** > **APIs** > **Workspace ID (earlier app id)**.
+        Tenant identifier injected by the IAM gateway. The service uses it to resolve the workspace `db_name`. When the gateway is in front, the gateway sets this header from the authenticated session; callers bypassing the gateway (for example, direct staging tests) must set it themselves to the app key.
+
+        In the MoEngage dashboard you can find the workspace value at **Settings** > **Account** > **APIs** > **Workspace ID (earlier app id)**.
       schema:
         type: string
       example: "YOUR_WORKSPACE_ID"
@@ -51,27 +71,28 @@ components:
       name: X-MOE-Request-Id
       in: header
       required: true
-      description: Echoed in response_id. Either this header or request_id in the body must be supplied.
+      description: |
+        Echoed in `response_id`. Either this header or `request_id` in the body must be supplied; if both are present they must match.
       schema:
         type: string
     Idempotency-Key:
       name: Idempotency-Key
       in: header
       required: false
-      description: Required on every POST/PATCH except `/validate`. Must be a UUID v4.
+      description: |
+        Required on every `POST`/`PATCH` except `/v5/campaigns/{campaign_id}/validate`. Must be a UUID v4. Replays with the same key return the original response.
       schema:
         type: string
         format: uuid
-    X-MOE-Scopes:
-      name: X-MOE-Scopes
+    Idempotency-Key-Required:
+      name: Idempotency-Key
       in: header
-      required: false
+      required: true
       description: |
-        Comma-separated list of resource permissions injected by the gateway.
-        Required for scope-gated routes. 
-        Example: `campaigns:view;create_manage;create_manage_publish`
+        Required on every `POST`/`PATCH` except `/v5/campaigns/{campaign_id}/validate`. Must be a UUID v4. Replays with the same key return the original response.
       schema:
         type: string
+        format: uuid
 
   schemas:
     # ==================== V5 Draft-First Envelopes ====================
@@ -1943,6 +1964,10 @@ components:
       type: object
       description: Detailed information about a campaign.
       properties:
+        id:
+          type: string
+          description: Raw 24-character campaign ObjectId (v5 GET/search responses use `id`).
+          example: "69f1de84f9e401a2d7d9a931"
         campaign_id: 
           type: string
           description: The unique ID of the campaign.
@@ -2124,6 +2149,8 @@ components:
 
     V5ValidateResponse:
       type: object
+      description: |
+        When `valid` is `true`, only `valid` is returned. When `valid` is `false`, `errors` lists field-level issues.
       properties:
         valid: { type: boolean }
         errors:
@@ -2134,78 +2161,170 @@ components:
               field: { type: string }
               issue: { type: string }
 
+    CampaignDraftCreatedData:
+      type: object
+      required: [id, status]
+      description: Payload returned when a draft is successfully created.
+      properties:
+        id:
+          type: string
+          description: Raw 24-character campaign ObjectId.
+          example: "69f1de84f9e401a2d7d9a931"
+        status:
+          type: string
+          enum: [DRAFT]
+          description: Created campaigns are always returned as `DRAFT`.
+
+    CampaignPatchAcceptedData:
+      type: object
+      required: [id]
+      description: >-
+        Returned after a successful component PATCH or after publish with body field `status` set to `PUBLISH`.
+      properties:
+        id:
+          type: string
+          description: Raw 24-character campaign ObjectId.
+          example: "69f1de84f9e401a2d7d9a931"
+
+    CampaignStatusTransitionData:
+      type: object
+      required: [id, action]
+      description: Returned after a successful status transition on a published campaign.
+      properties:
+        id:
+          type: string
+          description: Raw 24-character campaign ObjectId.
+          example: "69f1de84f9e401a2d7d9a931"
+        action:
+          type: string
+          description: The action that was applied (matches the requested action).
+          enum: [STOP, PAUSE, RESUME]
+
+    CampaignSearchResponseData:
+      type: object
+      required: [campaigns]
+      description: Search and meta list endpoints wrap rows under `data.campaigns`.
+      properties:
+        campaigns:
+          type: array
+          items: { $ref: '#/components/schemas/CampaignDetailsResponse' }
+
+    CampaignMetaListResponseData:
+      type: object
+      required: [campaigns]
+      properties:
+        campaigns:
+          type: array
+          items: { $ref: '#/components/schemas/CampaignMetaResponseV5' }
+
+    TestCampaignResultData:
+      type: object
+      description: |
+        Result of a test send. `data` maps keys (for example platform, locale, or variation identifiers) to per-send status objects. `message` summarizes the operation.
+      properties:
+        data:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status: { type: string }
+        message:
+          type: string
+
   responses:
     V5ValidationError:
-      description: Schema mismatch, mutually-exclusive fields, or invalid status action
+      description: Request failed schema or component validation.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
           example:
+            response_id: "abc-101"
             error:
               code: VALIDATION_FAILED
-              message: "Schema validation failed"
+              message: "One or more fields failed validation."
+              details:
+                - target: "campaign_delivery_type"
+                  message: "campaign_delivery_type value is required."
     V5Unauthorized:
-      description: Authentication failure (gateway-side)
+      description: Authentication failure.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
           example:
+            response_id: "abc-101"
             error:
               code: UNAUTHORIZED
-              message: "Invalid API credentials"
+              message: "Invalid or missing credentials."
+              details: []
     V5Forbidden:
-      description: X-MOE-Scopes does not satisfy the required action
+      description: Caller's `X-MOE-Scopes` does not satisfy the required scope for this operation.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
           example:
+            response_id: "abc-450"
             error:
               code: FORBIDDEN
-              message: "Insufficient permissions for campaigns:create_manage_publish"
+              target: "X-MOE-Scopes"
+              message: "Caller does not have the required scope for this operation."
+              details:
+                - target: "X-MOE-Scopes"
+                  message: "Required scope: campaigns:create_manage_publish"
     V5BadRequest:
-      description: Wrong state for operation (e.g., PATCH/validate/test on a non-DRAFT campaign)
+      description: Wrong state for the requested operation (for example, PATCH a non-draft campaign, or duplicate Idempotency-Key reused with a different body).
       content:
         application/json:
           schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
           example:
+            response_id: "abc-301"
             error:
               code: BAD_REQUEST
-              message: "Campaign is not in DRAFT state"
+              message: "Campaign is not in DRAFT state and cannot be patched."
+              details: []
     V5UnprocessableEntity:
-      description: Body well-formed but publish-validator rejected (multi-error case)
+      description: |
+        Body is well-formed but cannot be acted on (e.g. publish-validator failure when calling PATCH /status {action: PUBLISH}).
       content:
         application/json:
           schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
           example:
+            response_id: "abc-601"
             error:
               code: UNPROCESSABLE_ENTITY
-              message: "Publish validation failed"
+              message: "Draft cannot be published; validation failed."
+              details:
+                - target: "campaign_content.content.push.android.basic_details.title"
+                  message: "title is required"
     V5RateLimited:
-      description: Per-app throttle exceeded
+      description: Per-app rate limit exceeded. Retry after the window indicated in `Retry-After` (seconds).
       content:
         application/json:
           schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
           example:
+            response_id: "abc-101"
             error:
               code: RATE_LIMITED
-              message: "Rate limit breached"
+              message: "Rate limit exceeded for app key."
+              details: []
     V5InternalError:
-      description: Unhandled server-side failure
+      description: Unhandled server-side failure.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
           example:
+            response_id: "abc-101"
             error:
               code: INTERNAL_ERROR
-              message: "Internal server error"
+              message: "Internal server error."
+              details: []
 
 paths:
   /v5/campaigns:
     post:
       operationId: create_draft_campaign_v5
-      summary: Create Draft Campaign
+      summary: Create Campaign Draft
       description: |
-        Creates a new campaign with `status=DRAFT` in the standard campaigns collection.
+        This API creates a new Push or Email campaign draft in MoEngage with optional content, audience, and delivery settings. Only `channel`, `campaign_delivery_type`, and `created_by` are required. All other components are optional; if you supply a component, it must be complete and valid according to draft-create validation (`DRAFT_CREATE`).
       x-mint:
         content: |
           #### Rate Limits
@@ -2231,13 +2350,14 @@ paths:
       tags: [Create Campaigns Draft]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
-        - $ref: '#/components/parameters/Idempotency-Key'
+        - $ref: '#/components/parameters/Idempotency-Key-Required'
       requestBody:
         description: >-
-          You can configure campaign content, audience, and scheduling details.
-          
-          **Note:** Use the tabs below to select your campaign type. The schema  will adapt based on the selected channel.
+          Campaign payload. Required top-level fields are `channel`, `campaign_delivery_type`, and `created_by`. Optional sections (`basic_details`, `campaign_content`, audience, scheduling, and so on) can be omitted or supplied in full.
+
+          **Note:** Use the tabs below to select your campaign type. The schema adapts based on the selected channel.
         required: true
         content:
           application/json:
@@ -2247,7 +2367,18 @@ paths:
           description: Draft created
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/V5SuccessEnvelope' }
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/V5SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CampaignDraftCreatedData' }
+              example:
+                response_id: "abc-101"
+                type: "campaign"
+                data:
+                  id: "69f1de84f9e401a2d7d9a931"
+                  status: "DRAFT"
         '400':
           $ref: '#/components/responses/V5ValidationError'
         '401':
@@ -2260,17 +2391,19 @@ paths:
   /v5/campaigns/{campaign_id}:
     get:
       operationId: get_single_campaign_v5
-      summary: Get Single Campaign
-      description: Fetch a single campaign (deparsed body + status).
+      summary: Get Campaign
+      description: |
+        This API returns a single campaign in v5 deparsed form with its current status. Read-only; scope checks are not applied on this route for this release.
       tags: [Get Campaign Details Draft]
       parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
         - name: campaign_id
           in: path
           required: true
           description: Raw 24-char ObjectId
           schema: { type: string }
-        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
-        - $ref: '#/components/parameters/X-MOE-Request-Id'
       responses:
         '200':
           description: Successfully retrieved campaign details
@@ -2282,13 +2415,40 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/CampaignDetailsResponse' }
+              example:
+                response_id: "abc-100"
+                type: "campaign"
+                data:
+                  id: "69f1de84f9e401a2d7d9a931"
+                  status: "DRAFT"
+                  channel: "PUSH"
+                  campaign_delivery_type: "ONE_TIME"
+                  basic_details:
+                    name: "v5 PUSH draft"
+                    platforms: ["ANDROID"]
+                  campaign_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "Hello"
+                            message: "World"
         '400':
           $ref: '#/components/responses/V5ValidationError'
+        '401':
+          $ref: '#/components/responses/V5Unauthorized'
     patch:
       operationId: patch_draft_campaign_v5
-      summary: Edit Draft or Publish Campaign
+      summary: Patch Campaign Draft
       description: |
-        Use this endpoint to incrementally add/edit campaign components (e.g., `basic_details`, `campaign_content`) OR to trigger a publish state transition.
+        This API supports two flows, chosen by the request body:
+
+        - **Component edits** — the body has no `status` key. Submitted components are merged into the draft. Each submitted component is validated in full (`DRAFT_PATCH`). Cross-component checks run on the merged state. Requires scope `campaigns:create_manage`.
+
+        - **Publish** — the body is `{ "request_id": "<optional>", "status": "PUBLISH" }` only. Runs `DRAFT_PUBLISH` on the merged state and transitions the campaign to **ACTIVE**. Requires scope `campaigns:create_manage_publish`.
+
+        You cannot combine `status` and component fields in one request (returns `400`). Only campaigns in **DRAFT** can be patched for edits or publish; otherwise returns `409`. The only accepted `status` value in this release is `PUBLISH` (other values are reserved).
       x-mint:
         content: |
           <Warning>
@@ -2336,6 +2496,9 @@ paths:
           </Note>
       tags: [Update Campaigns Draft]
       parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
         - name: campaign_id
           in: path
           required: true
@@ -2344,10 +2507,7 @@ paths:
             
             You can fetch the campaign ID using the [Get Campaign Details API](/api/get-campaign-details/search-campaigns) by filtering with campaign name, channel, or other criteria.
           schema: { type: string }
-        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
-        - $ref: '#/components/parameters/X-MOE-Request-Id'
-        - $ref: '#/components/parameters/Idempotency-Key'
-        - $ref: '#/components/parameters/X-MOE-Scopes'
+        - $ref: '#/components/parameters/Idempotency-Key-Required'
       requestBody:
         description: |
           In this payload, you can include the fields you want to update.
@@ -2362,10 +2522,20 @@ paths:
             schema: { $ref: '#/components/schemas/CampaignPatchV5Request' }
       responses:
         '200':
-          description: Patch or Publish accepted
+          description: Patch accepted (component edit) or campaign published (`status` `PUBLISH`).
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/V5SuccessEnvelope' }
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/V5SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CampaignPatchAcceptedData' }
+              example:
+                response_id: "abc-301"
+                type: "campaign"
+                data:
+                  id: "69f1de84f9e401a2d7d9a931"
         '400':
           $ref: '#/components/responses/V5ValidationError'
         '401':
@@ -2374,25 +2544,25 @@ paths:
           $ref: '#/components/responses/V5Forbidden'
         '409':
           $ref: '#/components/responses/V5BadRequest'
-        '422':
-          $ref: '#/components/responses/V5UnprocessableEntity'
         '429':
           $ref: '#/components/responses/V5RateLimited'
 
   /v5/campaigns/{campaign_id}/validate:
     post:
       operationId: validate_draft_campaign_v5
-      summary: Validate Draft Campaign
+      summary: Validate Campaign Draft
       description: |
-        Dry-run validation of a draft campaign's publish readiness. Soft-fails with an array of issues if validation fails.
+        This API runs the full publish-time validation chain (`DRAFT_PUBLISH`) without mutating the draft. It always returns HTTP `200` with `valid: true`, or `valid: false` and an `errors` array. An idempotency key is not required for this route.
       tags: [Create Campaigns Draft]
       parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
         - name: campaign_id
           in: path
           required: true
+          description: Raw 24-char ObjectId.
           schema: { type: string }
-        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
-        - $ref: '#/components/parameters/X-MOE-Request-Id'
       requestBody:
         required: true
         content:
@@ -2403,7 +2573,7 @@ paths:
                 request_id: { type: string }
       responses:
         '200':
-          description: Validation completed (can be valid or invalid)
+          description: Validation result
           content:
             application/json:
               schema: 
@@ -2418,8 +2588,11 @@ paths:
   /v5/campaigns/{campaign_id}/status:
     patch:
       operationId: change_campaign_status_v5
-      summary: Update Campaign Status (v5)
-      description: Handles the post-publish transitions (STOP / PAUSE / RESUME).
+      summary: Update Campaign Status
+      description: |
+        This API applies a per-campaign state transition on a campaign that has already been published. Allowed actions: **STOP** (from ACTIVE, SCHEDULED, PAUSED, SENDING), **PAUSE** (from ACTIVE, SCHEDULED, SENDING), **RESUME** (from PAUSED).
+
+        **PUBLISH** is not accepted on this endpoint; publish uses `PATCH /v5/campaigns/{campaign_id}` with body `{ "status": "PUBLISH" }`.
       x-mint:
         content: |
           <Note>
@@ -2439,7 +2612,7 @@ paths:
           | :--- | :--- |
           | change campaign status per second | The total number of change campaign status requests per second per client is 10. |
           | change campaign status per minute | The total number of change campaign status requests per minute per client allowed is 100. |
-          | change campaign statusper hour | The total number of change campaign status requests per hour per client allowed is 6000. | 
+          | change campaign status per hour | The total number of change campaign status requests per hour per client allowed is 6000. |
 
             <Note>
               **Notes**
@@ -2448,13 +2621,15 @@ paths:
             </Note>
       tags: [Update Campaigns Draft]
       parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
         - name: campaign_id
           in: path
           required: true
+          description: Raw 24-char ObjectId.
           schema: { type: string }
-        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
-        - $ref: '#/components/parameters/X-MOE-Request-Id'
-        - $ref: '#/components/parameters/Idempotency-Key'
+        - $ref: '#/components/parameters/Idempotency-Key-Required'
       requestBody:
         description: Send campaign status change request with action.
         required: true
@@ -2466,17 +2641,29 @@ paths:
           description: Transition accepted
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/V5SuccessEnvelope' }
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/V5SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CampaignStatusTransitionData' }
+              example:
+                response_id: "abc-601"
+                type: "campaign"
+                data:
+                  id: "69f1de84f9e401a2d7d9a931"
+                  action: "STOP"
         '400':
           $ref: '#/components/responses/V5ValidationError'
+        '422':
+          $ref: '#/components/responses/V5UnprocessableEntity'
 
   /v5/campaigns/search:
     post:
       operationId: search_campaigns_v5
-      summary: Search campaigns 
+      summary: Search Campaign Draft
       description: |
-        This API fetches a list of Push, Email, or SMS campaigns with all current fields and status. You can pass multiple filters to find specific campaigns.
-        Now DRAFT-aware via filter, and returns CC-7864 version numbers.
+        This API returns deparsed campaign bodies for matches. Drafts appear in results only when `campaign_fields.status` includes `DRAFT`; without that filter, drafts are excluded for v1 backwards-compatibility. Responses include CC-7864 `version_number` where applicable.
       x-mint:
         content: |
           #### Search Capabilities
@@ -2501,8 +2688,9 @@ paths:
       tags: [Get Campaign Details Draft]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
-        - $ref: '#/components/parameters/Idempotency-Key'
+        - $ref: '#/components/parameters/Idempotency-Key-Required'
       requestBody:
         description: |
           Provide the search criteria and pagination parameters for finding campaigns.
@@ -2515,23 +2703,26 @@ paths:
           description: Campaigns matching the filter
           content:
             application/json:
-              schema: 
+              schema:
                 allOf:
                   - $ref: '#/components/schemas/V5SuccessEnvelope'
                   - type: object
                     properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/CampaignDetailsResponse' }
+                      data: { $ref: '#/components/schemas/CampaignSearchResponseData' }
+              example:
+                response_id: "string"
+                type: "campaign"
+                data:
+                  campaigns: []
         '400':
           $ref: '#/components/responses/V5ValidationError'
 
   /v5/campaigns/meta:
     post:
       operationId: get_campaign_meta_v5
-      summary: Get campaign meta (v5)
+      summary: Get Campaign Meta
       description: |
-        This API retrieves campaign details and reachability information for scheduled campaigns. Lightweight per-id meta lookup.
+        This API performs a lightweight metadata lookup. `rejection_comment` is surfaced only when the campaign's current status is **DRAFT** after a rejection. For scheduled campaigns, reachability may be included as documented in the schema.
       x-mint:
         content: |
           #### Supported Channels
@@ -2566,8 +2757,9 @@ paths:
       tags: [Get Campaign Details Draft]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
-        - $ref: '#/components/parameters/Idempotency-Key'
+        - $ref: '#/components/parameters/Idempotency-Key-Required'
       requestBody:
         description: |
           Provide the search criteria for retrieving campaign metadata and reachability information.
@@ -2580,23 +2772,26 @@ paths:
           description: Campaign meta rows
           content:
             application/json:
-              schema: 
+              schema:
                 allOf:
                   - $ref: '#/components/schemas/V5SuccessEnvelope'
                   - type: object
                     properties:
-                      data:
-                        type: array
-                        items: { $ref: '#/components/schemas/CampaignMetaResponseV5' }
+                      data: { $ref: '#/components/schemas/CampaignMetaListResponseData' }
+              example:
+                response_id: "string"
+                type: "campaign"
+                data:
+                  campaigns: []
         '400':
           $ref: '#/components/responses/V5ValidationError'
 
   /v5/campaigns/test:
     post:
       operationId: test_campaign_v5
-      summary: Test-send a campaign
+      summary: Test Campaign
       description: |
-        This API sends a test Push or Email campaign to specific users or identifiers before launching it to your entire audience. Test-send via inline body OR by existing draft_id.
+        This API sends a test Push or Email to specific users or identifiers. **Inline** mode: pass `channel`, `campaign_content`, and for **EMAIL** also `connector`; nothing is persisted. **Draft** mode: pass `draft_id` to load content from a saved **DRAFT**; the server may fan out one test send per platform, locale, and variation unless you pin `test_campaign_meta.platform`, `locale_name`, or `variation`.
       x-mint:
         content: |
           #### Rate Limits
@@ -2615,8 +2810,9 @@ paths:
       tags: [Test Campaigns Draft]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
-        - $ref: '#/components/parameters/Idempotency-Key'
+        - $ref: '#/components/parameters/Idempotency-Key-Required'
       requestBody:
         description: >-
           Test campaign configuration including content and target test users.
@@ -2631,7 +2827,20 @@ paths:
           description: Test send result
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/V5SuccessEnvelope' }
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/V5SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/TestCampaignResultData' }
+              example:
+                response_id: "string"
+                type: "campaign"
+                data:
+                  data:
+                    ANDROID_default_variation_1:
+                      status: "SENT"
+                  message: "Test campaign processed"
         '400':
           $ref: '#/components/responses/V5ValidationError'
         '409':
