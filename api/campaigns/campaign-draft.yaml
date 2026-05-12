@@ -2311,7 +2311,14 @@ paths:
       operationId: create_draft_campaign_v5
       summary: Create Campaign Draft
       description: |
-        This API creates a new Push or Email campaign draft in MoEngage with optional content, audience, and delivery settings. Only `channel`, `campaign_delivery_type`, and `created_by` are required. All other components are optional; if you supply a component, it must be complete and valid according to draft-create validation (`DRAFT_CREATE`).
+        Use this API to create a new Push or Email campaign draft in MoEngage. You can include content, audience, and delivery settings at the time of creation, or add them later as you refine the draft.
+
+        **Required fields:**
+        - `channel`
+        - `campaign_delivery_type`
+        - `created_by`
+
+        All other components are optional, so you can build your campaign progressively. Any components included during creation must meet the `DRAFT_CREATE` validation standards.
       x-mint:
         content: |
           #### Rate Limits
@@ -2379,7 +2386,12 @@ paths:
       operationId: get_single_campaign_v5
       summary: Get Campaign
       description: |
-        Use this API to fetch one campaign in v5 form, including its current status (for example **DRAFT** or **ACTIVE**). Use the response to review configuration, drive UI or integrations, or decide what to patch next.
+        Use this API to fetch a single campaign in v5 form, including its current status (for example, **DRAFT** or **ACTIVE**).
+
+        Use the response to:
+        - Review the campaign configuration.
+        - Drive UI or third-party integrations.
+        - Decide which components to patch next.
       tags: [Get Campaign Details Draft]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
@@ -2427,13 +2439,23 @@ paths:
       operationId: patch_draft_campaign_v5
       summary: Patch Campaign Draft
       description: |
-        This API supports two flows, chosen by the request body:
+        Use this API to either edit individual components of a draft or publish a draft. The request body determines which flow runs.
 
-        - **Component edits** — the body has no `status` key. Submitted components are merged into the draft. Each submitted component is validated in full (`DRAFT_PATCH`). Cross-component checks run on the merged state. Requires scope `campaigns:create_manage`.
+        **Component edits**
+        - The body does not include a `status` key.
+        - Each submitted component is merged into the draft and validated in full (`DRAFT_PATCH`).
+        - Cross-component checks run on the merged state.
+        - Requires the `campaigns:create_manage` scope.
 
-        - **Publish** — the body is `{ "request_id": "<optional>", "status": "PUBLISH" }` only. Runs `DRAFT_PUBLISH` on the merged state and transitions the campaign to **ACTIVE**. Requires scope `campaigns:create_manage_publish`.
+        **Publish**
+        - The body contains only `{ "request_id": "<optional>", "status": "PUBLISH" }`.
+        - The API runs `DRAFT_PUBLISH` on the merged state and transitions the campaign to **ACTIVE**.
+        - Requires the `campaigns:create_manage_publish` scope.
 
-        You cannot combine `status` and component fields in one request (returns `400`). Only campaigns in **DRAFT** can be patched for edits or publish; otherwise returns `409`. The only accepted `status` value in this release is `PUBLISH` (other values are reserved).
+        **Important:**
+        - You cannot combine `status` and component fields in the same request. Doing so returns `400`.
+        - Only campaigns in **DRAFT** can be patched for edits or publish. Other states return `409`.
+        - `PUBLISH` is the only accepted `status` value in this release. Other values are reserved.
       x-mint:
         content: |
           <Warning>
@@ -2536,7 +2558,11 @@ paths:
       operationId: validate_draft_campaign_v5
       summary: Validate Campaign Draft
       description: |
-        Use this API to check whether a draft would pass publish-time validation (`DRAFT_PUBLISH`) without changing the draft. The response is always HTTP `200` with either `valid: true` or `valid: false` and an `errors` array. You do not need an idempotency key on this route.
+        Use this API to check whether a draft would pass publish-time validation (`DRAFT_PUBLISH`) without making any changes to the draft.
+
+        - The response is always HTTP `200`.
+        - The body returns either `valid: true` or `valid: false`, along with an `errors` array.
+        - You do not need an idempotency key for this endpoint.
       tags: [Create Campaigns Draft]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
@@ -2573,9 +2599,14 @@ paths:
       operationId: change_campaign_status_v5
       summary: Update Campaign Status
       description: |
-        This API applies a per-campaign state transition on a campaign that has already been published. Allowed actions: **STOP** (from ACTIVE, SCHEDULED, PAUSED, SENDING), **PAUSE** (from ACTIVE, SCHEDULED, SENDING), **RESUME** (from PAUSED).
+        Use this API to apply a state transition on a campaign that has already been published.
 
-        **PUBLISH** is not accepted on this endpoint; publish uses `PATCH /v5/campaigns/{campaign_id}` with body `{ "status": "PUBLISH" }`.
+        **Allowed actions:**
+        - **STOP** — from `ACTIVE`, `SCHEDULED`, `PAUSED`, or `SENDING`.
+        - **PAUSE** — from `ACTIVE`, `SCHEDULED`, or `SENDING`.
+        - **RESUME** — from `PAUSED`.
+
+        **Note:** `PUBLISH` is not accepted on this endpoint. To publish a draft, use `PATCH /v5/campaigns/{campaign_id}` with the body `{ "status": "PUBLISH" }`.
       x-mint:
         content: |
           <Note>
@@ -2645,7 +2676,15 @@ paths:
       operationId: search_campaigns_v5
       summary: Search Campaign Draft
       description: |
-        Use this API to search your workspace and retrieve full v5 campaign payloads for each match, with pagination and filters (channel, status, tags, name, IDs, dates, and more). Drafts are included only when you add **DRAFT** to `campaign_fields.status`; otherwise draft rows are omitted for compatibility with older search behavior. When campaign versioning is enabled for your workspace, responses can include `version_number`, and you can filter by it—each published revision is a separate document linked by the same canonical `campaign_id`.
+        Use this API to search your workspace and retrieve the full v5 campaign payload for each match. Results support pagination and filtering by channel, status, tags, name, IDs, dates, and more.
+
+        **Draft behavior:**
+        - Drafts are included only when you add **DRAFT** to `campaign_fields.status`.
+        - Otherwise, draft rows are omitted to remain compatible with older search behavior.
+
+        **Versioning behavior:**
+        - When campaign versioning is enabled for your workspace, responses can include `version_number`, and you can filter by it.
+        - Each published revision is a separate document linked by the same canonical `campaign_id`.
       x-mint:
         content: |
           #### Search Capabilities
@@ -2703,7 +2742,10 @@ paths:
       operationId: get_campaign_meta_v5
       summary: Get Campaign Meta
       description: |
-        Use this API to fetch lightweight metadata for one or more campaigns without loading full bodies. After a rejection, `rejection_comment` may appear while the campaign remains in **DRAFT**. For scheduled campaigns, reachability fields may be populated as described in the schema.
+        Use this API to fetch lightweight metadata for one or more campaigns without loading their full bodies.
+
+        - After a rejection, the `rejection_comment` field may appear while the campaign remains in **DRAFT**.
+        - For scheduled campaigns, reachability fields may be populated as described in the schema.
       x-mint:
         content: |
           #### Supported Channels
@@ -2771,7 +2813,17 @@ paths:
       operationId: test_campaign_v5
       summary: Test Campaign
       description: |
-        Use this API to send a test Push or Email to specific users or identifiers before going live. **Inline** mode: send `channel`, `campaign_content`, and for **EMAIL** also `connector`; nothing is stored. **Draft** mode: send `draft_id` to load content from a saved **DRAFT**; the server may send one test per platform, locale, and variation unless you narrow the send with `test_campaign_meta.platform`, `locale_name`, or `variation`.
+        Use this API to send a test Push or Email to specific users or identifiers before going live. The endpoint supports two modes:
+
+        **Inline mode**
+        - Send `channel` and `campaign_content` in the request.
+        - For **EMAIL** campaigns, also include `connector`.
+        - Nothing is stored on the server.
+
+        **Draft mode**
+        - Send `draft_id` to load content from a saved **DRAFT**.
+        - By default, the server sends one test per platform, locale, and variation.
+        - To narrow the send, use `test_campaign_meta.platform`, `locale_name`, or `variation`.
       x-mint:
         content: |
           #### Rate Limits
