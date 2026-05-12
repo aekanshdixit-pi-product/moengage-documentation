@@ -2312,15 +2312,15 @@ paths:
       summary: Create Campaign Draft
       description: |
         Use this API to create a new Push or Email campaign draft in MoEngage. You can include content, audience, and delivery settings at the time of creation, or add them later as you refine the draft.
-
-        **Required fields:**
-        - `channel`
-        - `campaign_delivery_type`
-        - `created_by`
-
-        All other components are optional, so you can build your campaign progressively. Any components included during creation must meet the `DRAFT_CREATE` validation standards.
       x-mint:
         content: |
+          **Required fields:**
+          - `channel`
+          - `campaign_delivery_type`
+          - `created_by`
+
+          All other components are optional, so you can build your campaign progressively. Any components included during creation must meet the `DRAFT_CREATE` validation standards.
+
           #### Rate Limits
           | Rate Limit Name | Rate Limit |
           | :--- | :--- |
@@ -2387,11 +2387,12 @@ paths:
       summary: Get Campaign
       description: |
         Use this API to fetch a single campaign in v5 form, including its current status (for example, **DRAFT** or **ACTIVE**).
-
-        Use the response to:
-        - Review the campaign configuration.
-        - Drive UI or third-party integrations.
-        - Decide which components to patch next.
+      x-mint:
+        content: |
+          Use the response to:
+          - Review the campaign configuration.
+          - Drive UI or third-party integrations.
+          - Decide which components to patch next.
       tags: [Get Campaign Details Draft]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
@@ -2439,25 +2440,27 @@ paths:
       operationId: patch_draft_campaign_v5
       summary: Patch Campaign Draft
       description: |
-        Use this API to either edit individual components of a draft or publish a draft. The request body determines which flow runs.
-
-        **Component edits**
-        - The body does not include a `status` key.
-        - Each submitted component is merged into the draft and validated in full (`DRAFT_PATCH`).
-        - Cross-component checks run on the merged state.
-        - Requires the `campaigns:create_manage` scope.
-
-        **Publish**
-        - The body contains only `{ "request_id": "<optional>", "status": "PUBLISH" }`.
-        - The API runs `DRAFT_PUBLISH` on the merged state and transitions the campaign to **ACTIVE**.
-        - Requires the `campaigns:create_manage_publish` scope.
-
-        **Important:**
-        - You cannot combine `status` and component fields in the same request. Doing so returns `400`.
-        - Only campaigns in **DRAFT** can be patched for edits or publish. Other states return `409`.
-        - `PUBLISH` is the only accepted `status` value in this release. Other values are reserved.
+        Use this API to either edit individual components of a draft or publish a draft.
       x-mint:
         content: |
+          The request body determines which flow runs.
+
+          **Component edits**
+          - The body does not include a `status` key.
+          - Each submitted component is merged into the draft and validated in full (`DRAFT_PATCH`).
+          - Cross-component checks run on the merged state.
+          - Requires the `campaigns:create_manage` scope.
+
+          **Publish**
+          - The body contains only `{ "request_id": "<optional>", "status": "PUBLISH" }`.
+          - The API runs `DRAFT_PUBLISH` on the merged state and transitions the campaign to **ACTIVE**.
+          - Requires the `campaigns:create_manage_publish` scope.
+
+          **Important:**
+          - You cannot combine `status` and component fields in the same request. Doing so returns `400`.
+          - Only campaigns in **DRAFT** can be patched for edits or publish. Other states return `409`.
+          - `PUBLISH` is the only accepted `status` value in this release. Other values are reserved.
+
           <Warning>
           **Publishing vs. Editing**
           You cannot update components and transition status simultaneously. 
@@ -2559,10 +2562,11 @@ paths:
       summary: Validate Campaign Draft
       description: |
         Use this API to check whether a draft would pass publish-time validation (`DRAFT_PUBLISH`) without making any changes to the draft.
-
-        - The response is always HTTP `200`.
-        - The body returns either `valid: true` or `valid: false`, along with an `errors` array.
-        - You do not need an idempotency key for this endpoint.
+      x-mint:
+        content: |
+          - The response is always HTTP `200`.
+          - The body returns either `valid: true` or `valid: false`, along with an `errors` array.
+          - You do not need an idempotency key for this endpoint.
       tags: [Create Campaigns Draft]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
@@ -2600,15 +2604,15 @@ paths:
       summary: Update Campaign Status
       description: |
         Use this API to apply a state transition on a campaign that has already been published.
-
-        **Allowed actions:**
-        - **STOP** — from `ACTIVE`, `SCHEDULED`, `PAUSED`, or `SENDING`.
-        - **PAUSE** — from `ACTIVE`, `SCHEDULED`, or `SENDING`.
-        - **RESUME** — from `PAUSED`.
-
-        **Note:** `PUBLISH` is not accepted on this endpoint. To publish a draft, use `PATCH /v5/campaigns/{campaign_id}` with the body `{ "status": "PUBLISH" }`.
       x-mint:
         content: |
+          **Allowed actions:**
+          - **STOP** — from `ACTIVE`, `SCHEDULED`, `PAUSED`, or `SENDING`.
+          - **PAUSE** — from `ACTIVE`, `SCHEDULED`, or `SENDING`.
+          - **RESUME** — from `PAUSED`.
+
+          **Note:** `PUBLISH` is not accepted on this endpoint. To publish a draft, use `PATCH /v5/campaigns/{campaign_id}` with the body `{ "status": "PUBLISH" }`.
+
           <Note>
             Currently, you can use this API to change the status of Email and Push campaigns. You can update the following statuses of the campaigns:
               - Stop a scheduled One-time campaign (Email and Push)
@@ -2677,16 +2681,16 @@ paths:
       summary: Search Campaign Draft
       description: |
         Use this API to search your workspace and retrieve the full v5 campaign payload for each match. Results support pagination and filtering by channel, status, tags, name, IDs, dates, and more.
-
-        **Draft behavior:**
-        - Drafts are included only when you add **DRAFT** to `campaign_fields.status`.
-        - Otherwise, draft rows are omitted to remain compatible with older search behavior.
-
-        **Versioning behavior:**
-        - When campaign versioning is enabled for your workspace, responses can include `version_number`, and you can filter by it.
-        - Each published revision is a separate document linked by the same canonical `campaign_id`.
       x-mint:
         content: |
+          **Draft behavior:**
+          - Drafts are included only when you add **DRAFT** to `campaign_fields.status`.
+          - Otherwise, draft rows are omitted to remain compatible with older search behavior.
+
+          **Versioning behavior:**
+          - When campaign versioning is enabled for your workspace, responses can include `version_number`, and you can filter by it.
+          - Each published revision is a separate document linked by the same canonical `campaign_id`.
+
           #### Search Capabilities
           - Filter by channel, delivery type, status, tags, name, ID, created by, created date
           - Include child campaigns (flow nodes, periodic children)
@@ -2743,11 +2747,11 @@ paths:
       summary: Get Campaign Meta
       description: |
         Use this API to fetch lightweight metadata for one or more campaigns without loading their full bodies.
-
-        - After a rejection, the `rejection_comment` field may appear while the campaign remains in **DRAFT**.
-        - For scheduled campaigns, reachability fields may be populated as described in the schema.
       x-mint:
         content: |
+          - After a rejection, the `rejection_comment` field may appear while the campaign remains in **DRAFT**.
+          - For scheduled campaigns, reachability fields may be populated as described in the schema.
+
           #### Supported Channels
           - EMAIL: Email campaigns
           - PUSH: Push notification campaigns
@@ -2813,19 +2817,21 @@ paths:
       operationId: test_campaign_v5
       summary: Test Campaign
       description: |
-        Use this API to send a test Push or Email to specific users or identifiers before going live. The endpoint supports two modes:
-
-        **Inline mode**
-        - Send `channel` and `campaign_content` in the request.
-        - For **EMAIL** campaigns, also include `connector`.
-        - Nothing is stored on the server.
-
-        **Draft mode**
-        - Send `draft_id` to load content from a saved **DRAFT**.
-        - By default, the server sends one test per platform, locale, and variation.
-        - To narrow the send, use `test_campaign_meta.platform`, `locale_name`, or `variation`.
+        Use this API to send a test Push or Email to specific users or identifiers before going live.
       x-mint:
         content: |
+          The endpoint supports two modes:
+
+          **Inline mode**
+          - Send `channel` and `campaign_content` in the request.
+          - For **EMAIL** campaigns, also include `connector`.
+          - Nothing is stored on the server.
+
+          **Draft mode**
+          - Send `draft_id` to load content from a saved **DRAFT**.
+          - By default, the server sends one test per platform, locale, and variation.
+          - To narrow the send, use `test_campaign_meta.platform`, `locale_name`, or `variation`.
+
           #### Rate Limits
 
           | Rate  Limit Name | Rate Limit |
