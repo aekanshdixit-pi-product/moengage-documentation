@@ -152,6 +152,8 @@ components:
         advanced: { $ref: '#/components/schemas/AdvancedDetails' }
         conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
         control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
+        utm_params: { $ref: '#/components/schemas/UTMParams' }
+        campaign_audience_limit: { $ref: '#/components/schemas/CampaignAudienceLimit' }
 
     EmailCampaignCreateV5Request:
       title: Email Campaign Draft
@@ -188,6 +190,7 @@ components:
         conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
         control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
         utm_params: { $ref: '#/components/schemas/UTMParams' }
+        campaign_audience_limit: { $ref: '#/components/schemas/CampaignAudienceLimit' }
 
     CampaignPatchV5Request:
       description: |
@@ -221,6 +224,7 @@ components:
         conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
         control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
         utm_params: { $ref: '#/components/schemas/UTMParams' }
+        campaign_audience_limit: { $ref: '#/components/schemas/CampaignAudienceLimit' }
 
     PublishCampaignRequest:
       title: Publish Campaign Patch
@@ -1720,6 +1724,18 @@ components:
             Time window (in hours) during which the send_limit_value is enforced.
             
             Applicable for location-triggered campaigns.
+        queuing_enabled: 
+          type: boolean
+          description: |
+            Whether queuing is enabled for this campaign. When `true`, messages that cannot be delivered immediately are queued for later delivery within the `queue_duration` window.
+            
+            This is a flag-gated feature. Contact your MoEngage account team to enable it for your workspace.
+        queue_duration: 
+          type: integer
+          description: |
+            Duration in hours during which queued messages will be attempted for delivery. Must be greater than 0 when `queuing_enabled` is `true`.
+            
+            This is a flag-gated feature. Contact your MoEngage account team to enable it for your workspace.
 
     EmailDeliveryControls:
       type: object
@@ -1930,20 +1946,31 @@ components:
 
     CampaignAudienceLimit:
       type: object
-      description: Configuration for limiting campaign audience.
+      description: Configuration for capping the number of users a campaign can reach (max-send). This is a flag-gated feature; contact your MoEngage account team to enable it for your workspace.
       properties:
-        limit: 
-          type: integer
+        is_campaign_audience_limit_enabled: 
+          type: boolean
           description: |
-            The maximum number of times an audience can be included or targeted within the campaign.
-        metrics: 
+            Whether the campaign audience limit is active. Set to `true` to enforce the cap; `false` to disable.
+            
+            When disabling (`false`), `metric`, `frequency`, and `limit` must not be provided.
+        metric: 
           type: string
           description: |
-            The type of measurement being tracked (e.g., impressions, clicks, conversions).
+            The type of send event counted toward the limit.
+          enum: [SENT]
+          example: "SENT"
         frequency: 
           type: string
           description: |
-            How often the limit and metrics are applied (e.g., daily, weekly, monthly).
+            The window over which the limit is applied.
+          enum: [TOTAL]
+          example: "TOTAL"
+        limit: 
+          type: integer
+          description: |
+            The maximum number of users who can receive this campaign. Must be greater than 0 when `is_campaign_audience_limit_enabled` is `true`.
+          example: 100000
 
     CampaignDetailsResponse:
       type: object
