@@ -3,13 +3,13 @@ info:
   title: MoEngage Campaigns Draft API 
   version: '2025-11-20'
   description: |
-    The MoEngage Campaigns Draft API  allows you to author campaigns iteratively. 
-    You can 
-    - Create a campaign as a draft.
-    - Patch components one at a time.
-    - Validate, test, and publish your draft campaign.
+    The MoEngage Campaigns Draft API allows you to:
 
-    **Campaign Versioning (CC-7864)** is opt-in per workspace. When it is enabled, publishing changes to a campaign that is already live creates a new campaign document with an incremented `version_number`. The `campaign_id` in API responses is the canonical identifier that links every version of the same logical campaign; each version has its own raw `id` (ObjectId).
+    - Create Push or Email campaigns as drafts
+    - Patch individual components as you refine the setup
+    - Validate configuration, send tests, and publish when you are ready
+
+    **Campaign versioning** is optional per workspace. When it is enabled, publishing updates to an already-live campaign creates a new document with an incremented `version_number`. The `campaign_id` in responses is the stable identifier across versions; each version has its own raw `id` (ObjectId).
   contact:
     name: MoEngage Developer Team
     email: support@moengage.com
@@ -21,7 +21,7 @@ servers:
     variables:
       dc:
         default: '01'
-        description: 'The ‘dc’ in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number and replace the value of ‘dc’ in the URL by referring to the DC and API endpoint mapping [here](/api/introduction#data-centers). Your MoEngage Data Center (DC) can be 01, 02, 03, 04, 05, 06, or 101.'
+        description: 'Data center (DC) segment in the hostname. Replace `dc` with your workspace DC (01–06 or 101). See [Data centers](/api/introduction#data-centers).'
 
 security:
   - BasicAuth: []
@@ -47,9 +47,7 @@ components:
       in: header
       required: true
       description: |
-        Tenant identifier injected by the IAM gateway. The service uses it to resolve the workspace `db_name`. When the gateway is in front, the gateway sets this header from the authenticated session; callers bypassing the gateway (for example, direct staging tests) must set it themselves to the app key.
-
-        In the MoEngage dashboard you can find the workspace value at **Settings** > **Account** > **APIs** > **Workspace ID (earlier app id)**.
+        Workspace tenant ID. The gateway usually sets this from the authenticated session; if you call the service directly, set it to the workspace (App) ID from **Settings** > **Account** > **APIs** > **Workspace ID**.
       schema:
         type: string
       example: "YOUR_WORKSPACE_ID"
@@ -58,7 +56,7 @@ components:
       in: header
       required: true
       description: |
-        Echoed in `response_id`. Either this header or `request_id` in the body must be supplied; if both are present they must match.
+        Correlates with `response_id`. Supply this header or `request_id` in the body; if both are set, they must match.
       schema:
         type: string
     Idempotency-Key:
@@ -66,7 +64,7 @@ components:
       in: header
       required: false
       description: |
-        Required on every `POST`/`PATCH` except `/v5/campaigns/{campaign_id}/validate`. Must be a UUID v4. Replays with the same key return the original response.
+        UUID v4. Required on all `POST` and `PATCH` requests except `POST /v5/campaigns/{campaign_id}/validate`. Repeating the same key returns the same response body.
       schema:
         type: string
         format: uuid
@@ -75,7 +73,7 @@ components:
       in: header
       required: true
       description: |
-        Required on every `POST`/`PATCH` except `/v5/campaigns/{campaign_id}/validate`. Must be a UUID v4. Replays with the same key return the original response.
+        UUID v4. Required on all `POST` and `PATCH` requests except `POST /v5/campaigns/{campaign_id}/validate`. Repeating the same key returns the same response body.
       schema:
         type: string
         format: uuid
@@ -249,11 +247,11 @@ components:
           type: string
           enum: [STOP, PAUSE, RESUME]
           description: |
-            The action to perform on the campaign(s).
-            
-            - **STOP**: Stop a scheduled One-time campaign (cannot be used for Periodic campaigns). After a One-time campaign moves to Active state, it cannot be stopped.
-            - **PAUSE**: Pause a running Periodic or Event-triggered campaign.
-            - **RESUME**: Resume a paused Periodic or Event-triggered campaign.
+            Lifecycle action for an already published or scheduled campaign.
+
+            - **STOP** — Stop a scheduled one-time campaign. Not valid for periodic campaigns. Not accepted once the one-time campaign is Active.
+            - **PAUSE** — Pause a running periodic or event-triggered campaign.
+            - **RESUME** — Resume a paused periodic or event-triggered campaign.
 
     SearchV5Request:
       type: object
@@ -290,11 +288,11 @@ components:
           items: 
             type: string
             enum: [DRAFT, ACTIVE, SCHEDULED, PAUSED, SENT, STOPPED, ARCHIVED] 
-          description: Filter campaigns by status.
+          description: Include campaigns in any of these statuses.
         version_number: 
           type: integer
           description: |
-            Filter by campaign version. Only applies when Campaign Versioning (CC-7864) is enabled for your workspace. Omit to include all versions.
+            Filter by campaign version. Only applies when campaign versioning is enabled for your workspace. Omit to include all versions.
 
     MetaV5Request:
       type: object
@@ -334,7 +332,7 @@ components:
           items: 
             type: string
             enum: [DRAFT, SCHEDULED, ACTIVE, PAUSED, SENT, STOPPED, RETIRED, ARCHIVED] 
-          description: Filter campaigns by status.
+          description: Include campaigns in any of these statuses.
 
     TestV5Request:
       oneOf:
@@ -370,7 +368,7 @@ components:
 
     TestCampaignMetaV5:
       type: object
-      description: Metadata for specifying test recipients.
+      description: Test audience and delivery options.
       required: [identifier, identifier_values]
       properties:
         identifier: 
@@ -664,7 +662,7 @@ components:
 
     PushCampaignContent:
       type: object
-      description: Contains the content and variations for the Push campaign.
+      description: Push message content, locales, and A/B variations.
       properties:
         locales: 
           type: array
@@ -682,7 +680,7 @@ components:
 
     EmailCampaignContent:
       type: object
-      description: Contains the content and variations for the Email campaign.
+      description: Email content, locales, and A/B variations.
       properties:
         locales: 
           type: array
@@ -1962,7 +1960,7 @@ components:
         version_number: 
           type: integer
           description: |
-            Monotonic version index for this campaign document when Campaign Versioning (CC-7864) is enabled. Publishing edits to a previously published campaign creates a new document with a higher `version_number`. `campaign_id` is the canonical identifier shared across versions; `id` is unique per document.
+            Monotonic version index for this campaign document when campaign versioning is enabled. Publishing edits to a previously published campaign creates a new document with a higher `version_number`. `campaign_id` is the canonical identifier shared across versions; `id` is unique per document.
         status: 
           type: string
           enum: [DRAFT, ACTIVE, SCHEDULED, PAUSED, SENT, STOPPED, ARCHIVED]
@@ -2067,7 +2065,7 @@ components:
         version_number: 
           type: integer
           description: |
-            Monotonic version index for this campaign document when Campaign Versioning (CC-7864) is enabled. `campaign_id` is the canonical identifier across versions.
+            Monotonic version index for this campaign document when campaign versioning is enabled. `campaign_id` is the canonical identifier across versions.
         channel: 
           type: string
           enum: [EMAIL, PUSH, SMS, WHATSAPP, FACEBOOK, 'GOOGLE ADS', CONNECTORS]
@@ -2381,7 +2379,7 @@ paths:
       operationId: get_single_campaign_v5
       summary: Get Campaign
       description: |
-        This API returns a single campaign in v5 deparsed form with its current status. Read-only; scope checks are not applied on this route for this release.
+        Use this API to fetch one campaign in v5 form, including its current status (for example **DRAFT** or **ACTIVE**). Use the response to review configuration, drive UI or integrations, or decide what to patch next.
       tags: [Get Campaign Details Draft]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
@@ -2538,7 +2536,7 @@ paths:
       operationId: validate_draft_campaign_v5
       summary: Validate Campaign Draft
       description: |
-        This API runs the full publish-time validation chain (`DRAFT_PUBLISH`) without mutating the draft. It always returns HTTP `200` with `valid: true`, or `valid: false` and an `errors` array. An idempotency key is not required for this route.
+        Use this API to check whether a draft would pass publish-time validation (`DRAFT_PUBLISH`) without changing the draft. The response is always HTTP `200` with either `valid: true` or `valid: false` and an `errors` array. You do not need an idempotency key on this route.
       tags: [Create Campaigns Draft]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
@@ -2647,7 +2645,7 @@ paths:
       operationId: search_campaigns_v5
       summary: Search Campaign Draft
       description: |
-        This API returns deparsed campaign bodies for matches. Drafts appear in results only when `campaign_fields.status` includes `DRAFT`; without that filter, drafts are excluded for v1 backwards-compatibility. When Campaign Versioning (CC-7864) is enabled for your workspace, responses include `version_number`, and you can filter by it; each published revision is a separate document linked by the canonical `campaign_id`.
+        Use this API to search your workspace and retrieve full v5 campaign payloads for each match, with pagination and filters (channel, status, tags, name, IDs, dates, and more). Drafts are included only when you add **DRAFT** to `campaign_fields.status`; otherwise draft rows are omitted for compatibility with older search behavior. When campaign versioning is enabled for your workspace, responses can include `version_number`, and you can filter by it—each published revision is a separate document linked by the same canonical `campaign_id`.
       x-mint:
         content: |
           #### Search Capabilities
@@ -2705,7 +2703,7 @@ paths:
       operationId: get_campaign_meta_v5
       summary: Get Campaign Meta
       description: |
-        This API performs a lightweight metadata lookup. `rejection_comment` is surfaced only when the campaign's current status is **DRAFT** after a rejection. For scheduled campaigns, reachability may be included as documented in the schema.
+        Use this API to fetch lightweight metadata for one or more campaigns without loading full bodies. After a rejection, `rejection_comment` may appear while the campaign remains in **DRAFT**. For scheduled campaigns, reachability fields may be populated as described in the schema.
       x-mint:
         content: |
           #### Supported Channels
@@ -2773,7 +2771,7 @@ paths:
       operationId: test_campaign_v5
       summary: Test Campaign
       description: |
-        This API sends a test Push or Email to specific users or identifiers. **Inline** mode: pass `channel`, `campaign_content`, and for **EMAIL** also `connector`; nothing is persisted. **Draft** mode: pass `draft_id` to load content from a saved **DRAFT**; the server may fan out one test send per platform, locale, and variation unless you pin `test_campaign_meta.platform`, `locale_name`, or `variation`.
+        Use this API to send a test Push or Email to specific users or identifiers before going live. **Inline** mode: send `channel`, `campaign_content`, and for **EMAIL** also `connector`; nothing is stored. **Draft** mode: send `draft_id` to load content from a saved **DRAFT**; the server may send one test per platform, locale, and variation unless you narrow the send with `test_campaign_meta.platform`, `locale_name`, or `variation`.
       x-mint:
         content: |
           #### Rate Limits
