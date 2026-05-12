@@ -1,12 +1,12 @@
 ---
-title: "Campaigns Draft API Overview"
-description: "Use the MoEngage Campaigns Draft API to create, update, test, and manage Push and Email draft campaigns programmatically."
+title: "Campaigns API Overview"
+description: "Use the MoEngage Campaigns API to create, update, test, and manage Push and Email campaigns programmatically."
 icon: "file-magnifying-glass"
 ---
 
-> Use the MoEngage Campaigns Draft API to iteratively author, patch, validate, test, and publish your Push and Email campaigns programmatically.
+> Use the MoEngage Campaigns API to iteratively author, update, validate, test, and publish your Push and Email campaigns programmatically.
 
-The Campaigns Draft API (V5) empowers you to build campaigns step-by-step rather than requiring a massive, complete payload in a single request. By creating a base draft, you can systematically patch in audience segments, trigger conditions, and rich content. Once the draft is fully assembled, you can validate its structure, test the delivery, and confidently publish it to your live audience.
+The Campaigns API (V5) empowers you to build campaigns step-by-step rather than requiring a massive, complete payload in a single request. By creating a campaign in draft state, you can systematically patch in audience segments, trigger conditions, and rich content. Once the campaign is fully assembled, you can validate its structure, test the delivery, and confidently publish it to your live audience.
 
 Additionally, you must include the `X-MOE-Tenant-ID` header (your Workspace ID) and an `Idempotency-Key` (UUID v4) on all POST and PATCH requests to ensure safe retries.
 
@@ -18,26 +18,26 @@ For UI-focused behavior and version history in the dashboard, see [Campaign vers
 
 ## Endpoints
 
-The Campaigns Draft API consists of the following endpoints to manage your campaign lifecycle:
+The Campaigns API consists of the following endpoints to manage your campaign lifecycle:
 
-* [Create Campaign Draft](/api/create-campaigns-draft/create-campaign-draft): Initializes a new Push or Email campaign in a `DRAFT` state using minimal required fields.
-* [Get Campaign](/api/get-campaign-details-draft/get-campaign): Retrieves a single campaign in its full deparsed form, displaying its current state and configuration.
-* [Patch Campaign Draft](/api/update-campaigns-draft/patch-campaign-draft): Updates specific components of an existing draft or triggers the formal `PUBLISH` action to launch the campaign.
-* [Validate Campaign Draft](/api/create-campaigns-draft/validate-campaign-draft): Safely runs a full publish-time validation check without modifying the draft or changing its state.
-* [Update Campaign Status](/api/update-campaigns-draft/update-campaign-status): Applies lifecycle transitions (STOP, PAUSE, RESUME) to campaigns that have already been published.
-* [Search Campaign Drafts](/api/get-campaign-details-draft/search-campaign-draft): Searches for campaigns using granular filters, with the ability to explicitly include or exclude drafts.
-* [Get Campaign Meta](/api/get-campaign-details-draft/get-campaign-meta): Fetches lightweight metadata, including daily cached reachability estimates for scheduled campaigns.
-* [Test Campaign](/api/test-campaigns-draft/test-campaign): Sends a test push or email using an inline payload or by referencing a saved draft ID.
+* [Create Campaign](/api/create-campaigns/create-campaign): Initializes a new Push or Email campaign in a `DRAFT` state using minimal required fields.
+* [Get Campaign](/api/get-campaign-details/get-campaign): Retrieves a single campaign in its full deparsed form, displaying its current state and configuration.
+* [Update Campaign](/api/update-campaigns/update-campaign): Updates specific components of an existing draft or triggers the formal `PUBLISH` action to launch the campaign.
+* [Validate Campaign](/api/create-campaigns/validate-campaign): Safely runs a full publish-time validation check without modifying the draft or changing its state.
+* [Update Campaign Status](/api/update-campaigns/update-campaign-status): Applies lifecycle transitions (STOP, PAUSE, RESUME) to campaigns that have already been published.
+* [Search Campaigns](/api/get-campaign-details/search-campaigns): Searches for campaigns using granular filters, with the ability to explicitly include or exclude campaigns in draft state.
+* [Get Campaign Meta](/api/get-campaign-details/get-campaign-meta): Fetches lightweight metadata, including daily cached reachability estimates for scheduled campaigns.
+* [Test Campaign](/api/test-campaigns/test-campaign): Sends a test push or email using an inline payload or by referencing a saved draft ID.
 
 ## FAQs
 
-### Create Campaign Draft
+### Create Campaign
 
 <AccordionGroup>
-  <Accordion title="What fields are required to create a campaign draft?">
-    Three fields are required at creation time: `channel` (PUSH or EMAIL), `campaign_delivery_type`, and `created_by` (the email of the user creating the campaign). All other components — content, audience, scheduling, delivery controls — are optional and can be added later using the Patch Campaign Draft endpoint.
+  <Accordion title="What fields are required to create a campaign?">
+    Three fields are required at creation time: `channel` (PUSH or EMAIL), `campaign_delivery_type`, and `created_by` (the email of the user creating the campaign). All other components — content, audience, scheduling, delivery controls — are optional and can be added later using the Update Campaign endpoint.
   </Accordion>
-  <Accordion title="Can I include full campaign content when creating a draft, or must I build it progressively?">
+  <Accordion title="Can I include full campaign content when creating a campaign, or must I build it progressively?">
     Both approaches are supported. You can submit a minimal request with only the required fields and patch in the remaining components later, or you can include all sections in a single Create request. Any components included at creation time must meet the `DRAFT_CREATE` validation standards.
   </Accordion>
   <Accordion title="How does the request_id prevent duplicate campaign creation?">
@@ -65,7 +65,7 @@ The Campaigns Draft API consists of the following endpoints to manage your campa
   </Accordion>
 </AccordionGroup>
 
-### Patch Campaign Draft
+### Update Campaign
 
 <AccordionGroup>
   <Accordion title="Can I update campaign components and publish in the same request?">
@@ -77,22 +77,22 @@ The Campaigns Draft API consists of the following endpoints to manage your campa
   <Accordion title="How long does it take for updated content to reach users in Event-triggered campaigns?">
     Updated content for Event-triggered campaigns is cached and can take up to 30 minutes to propagate to users.
   </Accordion>
-  <Accordion title="Do I need to send the full campaign payload when patching?">
+  <Accordion title="Do I need to send the full campaign payload when updating?">
     No. Send only the components you want to update. However, if you are updating a field within a nested object, you must send the complete parent object. For example, to update the title of a push notification, include the full `campaign_content` object in the request body.
   </Accordion>
-  <Accordion title="What API scopes are required to patch or publish a campaign?">
-    Component-level patching requires the `campaigns:create_manage` scope. Publishing a draft (sending `{ "status": "PUBLISH" }`) requires the `campaigns:create_manage_publish` scope.
+  <Accordion title="What API scopes are required to update or publish a campaign?">
+    Component-level updates require the `campaigns:create_manage` scope. Publishing a campaign (sending `{ "status": "PUBLISH" }`) requires the `campaigns:create_manage_publish` scope.
   </Accordion>
 </AccordionGroup>
 
-### Validate Campaign Draft
+### Validate Campaign
 
 <AccordionGroup>
-  <Accordion title="Does calling validate change the draft's state or content?">
-    No. The validate endpoint performs a read-only publish-time validation check (`DRAFT_PUBLISH`) without modifying the draft or changing its status.
+  <Accordion title="Does calling validate change the campaign's state or content?">
+    No. The validate endpoint performs a read-only publish-time validation check (`DRAFT_PUBLISH`) without modifying the campaign or changing its status.
   </Accordion>
-  <Accordion title="What HTTP status code does this endpoint return if the draft is invalid?">
-    The endpoint always returns HTTP `200`. Whether the draft is valid or not is indicated in the response body through the `valid` field (`true` or `false`) and an `errors` array that lists any validation failures.
+  <Accordion title="What HTTP status code does this endpoint return if the campaign is invalid?">
+    The endpoint always returns HTTP `200`. Whether the campaign is valid or not is indicated in the response body through the `valid` field (`true` or `false`) and an `errors` array that lists any validation failures.
   </Accordion>
   <Accordion title="Is an idempotency key required for this endpoint?">
     No. Unlike other POST and PATCH endpoints, the validate endpoint does not require an `Idempotency-Key` header.
@@ -105,8 +105,8 @@ The Campaigns Draft API consists of the following endpoints to manage your campa
   <Accordion title="What status transitions does this endpoint support?">
     The endpoint supports three actions: `STOP` (from `ACTIVE`, `SCHEDULED`, `PAUSED`, or `SENDING`), `PAUSE` (from `ACTIVE`, `SCHEDULED`, or `SENDING`), and `RESUME` (from `PAUSED`).
   </Accordion>
-  <Accordion title="Can I use this endpoint to publish a draft campaign?">
-    No. This endpoint only applies lifecycle transitions to campaigns that are already published. To publish a draft, use `PATCH /v5/campaigns/{campaign_id}` with the body `{ "status": "PUBLISH" }`.
+  <Accordion title="Can I use this endpoint to publish a campaign?">
+    No. This endpoint only applies lifecycle transitions to campaigns that are already published. To publish a campaign, use `PATCH /v5/campaigns/{campaign_id}` with the body `{ "status": "PUBLISH" }`.
   </Accordion>
   <Accordion title="Can I stop a Periodic or Event-triggered campaign?">
     Periodic and Event-triggered campaigns support `PAUSE` and `RESUME`. The `STOP` action applies to scheduled One-time campaigns. Once a One-time campaign transitions to `ACTIVE` (sending state), it cannot be stopped.
@@ -116,11 +116,11 @@ The Campaigns Draft API consists of the following endpoints to manage your campa
   </Accordion>
 </AccordionGroup>
 
-### Search Campaign Drafts
+### Search Campaigns
 
 <AccordionGroup>
-  <Accordion title="Are draft campaigns included in search results by default?">
-    No. Draft campaigns are excluded from results unless you explicitly include `DRAFT` in the `campaign_fields.status` array. This preserves backward compatibility with existing integrations that do not expect draft rows in results.
+  <Accordion title="Are campaigns in draft state included in search results by default?">
+    No. Campaigns in `DRAFT` state are excluded from results unless you explicitly include `DRAFT` in the `campaign_fields.status` array. This preserves backward compatibility with existing integrations that do not expect draft rows in results.
   </Accordion>
   <Accordion title="What is the maximum number of campaigns returned per page?">
     The maximum is 15 campaigns per page. Use the `limit` and `page` parameters to paginate through results.
@@ -146,15 +146,15 @@ The Campaigns Draft API consists of the following endpoints to manage your campa
     The endpoint supports Email, Push, SMS, WhatsApp, Facebook, Google Ads, and Connector-based campaigns.
   </Accordion>
   <Accordion title="Where does the rejection_comment field appear?">
-    If a campaign draft has been reviewed and rejected, the `rejection_comment` field appears in the meta response while the campaign remains in `DRAFT` status.
+    If a campaign has been reviewed and rejected, the `rejection_comment` field appears in the meta response while the campaign remains in `DRAFT` status.
   </Accordion>
 </AccordionGroup>
 
 ### Test Campaign
 
 <AccordionGroup>
-  <Accordion title="Can I send a test without first saving a draft?">
-    Yes. Use inline mode by including `channel` and `campaign_content` directly in the test request. The content is not stored on the server. For Email inline tests, also include the `connector` object. To test using a saved draft, use draft mode and pass the `draft_id` instead.
+  <Accordion title="Can I send a test without first saving a campaign?">
+    Yes. Use inline mode by including `channel` and `campaign_content` directly in the test request. The content is not stored on the server. For Email inline tests, also include the `connector` object. To test using a saved campaign, use draft mode and pass the `draft_id` instead.
   </Accordion>
   <Accordion title="What is the maximum number of recipients for a test send?">
     You can send a test to a maximum of 10 users at a time using the `identifier_values` array.
@@ -169,4 +169,4 @@ The Campaigns Draft API consists of the following endpoints to manage your campa
 
 ## Postman Collections
 
-We have made it easy for you to test the APIs in your own environment. Click [here] to view and download the Postman collection for the Campaigns Draft API.
+We have made it easy for you to test the APIs in your own environment. Click [here] to view and download the Postman collection for the Campaigns API.
