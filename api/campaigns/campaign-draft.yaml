@@ -8,6 +8,8 @@ info:
     - Create a campaign as a draft.
     - Patch components one at a time.
     - Validate, test, and publish your draft campaign.
+
+    **Campaign Versioning (CC-7864)** is opt-in per workspace. When it is enabled, publishing changes to a campaign that is already live creates a new campaign document with an incremented `version_number`. The `campaign_id` in API responses is the canonical identifier that links every version of the same logical campaign; each version has its own raw `id` (ObjectId).
   contact:
     name: MoEngage Developer Team
     email: support@moengage.com
@@ -291,7 +293,8 @@ components:
           description: Filter campaigns by status.
         version_number: 
           type: integer
-          description: "Filter by CC-7864 version number"
+          description: |
+            Filter by campaign version. Only applies when Campaign Versioning (CC-7864) is enabled for your workspace. Omit to include all versions.
 
     MetaV5Request:
       type: object
@@ -1958,7 +1961,8 @@ components:
           example: "camp_abc123xyz"
         version_number: 
           type: integer
-          description: "CC-7864 version number of the draft"
+          description: |
+            Monotonic version index for this campaign document when Campaign Versioning (CC-7864) is enabled. Publishing edits to a previously published campaign creates a new document with a higher `version_number`. `campaign_id` is the canonical identifier shared across versions; `id` is unique per document.
         status: 
           type: string
           enum: [DRAFT, ACTIVE, SCHEDULED, PAUSED, SENT, STOPPED, ARCHIVED]
@@ -2062,7 +2066,8 @@ components:
           example: "camp_abc123xyz"
         version_number: 
           type: integer
-          description: "CC-7864 version number of the draft"
+          description: |
+            Monotonic version index for this campaign document when Campaign Versioning (CC-7864) is enabled. `campaign_id` is the canonical identifier across versions.
         channel: 
           type: string
           enum: [EMAIL, PUSH, SMS, WHATSAPP, FACEBOOK, 'GOOGLE ADS', CONNECTORS]
@@ -2642,7 +2647,7 @@ paths:
       operationId: search_campaigns_v5
       summary: Search Campaign Draft
       description: |
-        This API returns deparsed campaign bodies for matches. Drafts appear in results only when `campaign_fields.status` includes `DRAFT`; without that filter, drafts are excluded for v1 backwards-compatibility. Responses include CC-7864 `version_number` where applicable.
+        This API returns deparsed campaign bodies for matches. Drafts appear in results only when `campaign_fields.status` includes `DRAFT`; without that filter, drafts are excluded for v1 backwards-compatibility. When Campaign Versioning (CC-7864) is enabled for your workspace, responses include `version_number`, and you can filter by it; each published revision is a separate document linked by the canonical `campaign_id`.
       x-mint:
         content: |
           #### Search Capabilities
