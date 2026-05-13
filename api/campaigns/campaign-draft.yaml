@@ -2490,19 +2490,31 @@ paths:
         content: |
           The request body determines which flow runs.
 
-          <Tabs>
-            <Tab title="Update draft campaign">
+          <CardGroup cols={2}>
+            <Card title="Update draft campaign" icon="pen-to-square">
               Send a `PATCH` request without a `status` key in the body.
 
               The API merges each submitted component into the existing draft, then validates the full merged state (`DRAFT_PATCH`). After all individual components pass validation, cross-component checks run on the combined result.
 
+              ```json
+              {
+                "request_id": "<optional>",
+                "campaign_content": {
+                  "title": "Summer Sale",
+                  "message": "Up to 50% off today only."
+                }
+              }
+              ```
+
               <Note>
               Only the fields you include in the request body are updated. Fields you omit retain their current values.
               </Note>
-            </Tab>
+            </Card>
 
-            <Tab title="Publish campaign">
-              Send a `PATCH` request with only the `status` field set to `PUBLISH`:
+            <Card title="Publish campaign" icon="paper-plane">
+              Send a `PATCH` request with only the `status` field set to `PUBLISH`.
+
+              The API validates the fully merged draft state (`DRAFT_PUBLISH`) and, if all checks pass, transitions the campaign from `DRAFT` to `ACTIVE`.
 
               ```json
               {
@@ -2510,10 +2522,8 @@ paths:
                 "status": "PUBLISH"
               }
               ```
-
-              The API validates the fully merged draft state (`DRAFT_PUBLISH`) and, if all checks pass, transitions the campaign from `DRAFT` to `ACTIVE`.
-            </Tab>
-          </Tabs>
+            </Card>
+          </CardGroup>
 
           <Warning>
           You cannot combine `status` and component fields in the same request — doing so returns `400`. Only campaigns in `DRAFT` state can be updated or published; other states return `409`. `PUBLISH` is the only accepted `status` value in this release.
