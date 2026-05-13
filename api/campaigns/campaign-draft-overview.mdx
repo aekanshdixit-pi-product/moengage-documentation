@@ -4,11 +4,56 @@ description: "Use the MoEngage Campaigns API to create, update, test, and manage
 icon: "file-magnifying-glass"
 ---
 
-> Use the MoEngage Campaigns API to iteratively author, update, validate, test, and publish your Push and Email campaigns programmatically.
-
 The Campaigns API (V5) empowers you to build campaigns step-by-step rather than requiring a massive, complete payload in a single request. By creating a campaign in draft state, you can systematically patch in audience segments, trigger conditions, and rich content. Once the campaign is fully assembled, you can validate its structure, test the delivery, and confidently publish it to your live audience.
 
 Additionally, you must include the `X-MOE-Tenant-ID` header (your Workspace ID) and an `Idempotency-Key` (UUID v4) on all POST and PATCH requests to ensure safe retries.
+
+## Supported channels and delivery types
+
+<CardGroup cols={2}>
+  <Card title="Push" icon="bell">
+    - Android
+    - iOS
+    - Web
+  </Card>
+  <Card title="Email" icon="envelope">
+    - Android
+    - iOS
+    - Web
+  </Card>
+</CardGroup>
+
+**Supported delivery types:**
+- `ONE_TIME`
+- `PERIODIC`
+- `EVENT_TRIGGERED`
+- `BUSINESS_EVENT_TRIGGERED`
+- `DEVICE_TRIGGERED` (Push only)
+- `LOCATION_TRIGGERED` (Push only)
+- `BROADCAST_LIVE_ACTIVITY` (Push iOS only)
+
+## Campaign lifecycle
+
+<Steps>
+  <Step title="Create">
+    Start a draft with only the required fields: `channel`, `campaign_delivery_type`, and `created_by`. Add content, audience, and scheduling incrementally across subsequent update calls.
+  </Step>
+  <Step title="Update">
+    Patch individual components as you refine the setup. Each submitted component is validated in full before the draft is updated.
+  </Step>
+  <Step title="Validate">
+    Check whether the draft would pass publish-time validation without committing any changes.
+  </Step>
+  <Step title="Test">
+    Send a test message to specific users from either a saved draft or inline content before going live.
+  </Step>
+  <Step title="Publish">
+    Transition the draft to `ACTIVE` by sending `{ "status": "PUBLISH" }` in a `PATCH` request.
+  </Step>
+  <Step title="Manage">
+    Pause, resume, or stop a live campaign. Search your workspace and retrieve lightweight metadata across all campaigns.
+  </Step>
+</Steps>
 
 ## Campaign versioning
 
