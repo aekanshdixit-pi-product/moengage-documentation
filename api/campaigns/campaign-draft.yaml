@@ -2490,24 +2490,33 @@ paths:
         content: |
           The request body determines which flow runs.
 
-          **Update draft campaign**
-          - The body does not include a `status` key.
-          - Each submitted component is merged into the draft and validated in full (`DRAFT_PATCH`).
-          - Cross-component checks run on the merged state.
+          <Tabs>
+            <Tab title="Update draft campaign">
+              Send a `PATCH` request without a `status` key in the body.
 
-          **Publish**
-          - The body contains only `{ "request_id": "<optional>", "status": "PUBLISH" }`.
-          - The API runs `DRAFT_PUBLISH` on the merged state and transitions the campaign to **ACTIVE**.
+              The API merges each submitted component into the existing draft, then validates the full merged state (`DRAFT_PATCH`). After all individual components pass validation, cross-component checks run on the combined result.
 
-          **Important:**
-          - You cannot combine `status` and component fields in the same request. Doing so returns `400`.
-          - Only campaigns in **DRAFT** can be patched for edits or publish. Other states return `409`.
-          - `PUBLISH` is the only accepted `status` value in this release. Other values are reserved.
+              <Note>
+              Only the fields you include in the request body are updated. Fields you omit retain their current values.
+              </Note>
+            </Tab>
+
+            <Tab title="Publish campaign">
+              Send a `PATCH` request with only the `status` field set to `PUBLISH`:
+
+              ```json
+              {
+                "request_id": "<optional>",
+                "status": "PUBLISH"
+              }
+              ```
+
+              The API validates the fully merged draft state (`DRAFT_PUBLISH`) and, if all checks pass, transitions the campaign from `DRAFT` to `ACTIVE`.
+            </Tab>
+          </Tabs>
 
           <Warning>
-          **Publishing vs. Editing**
-          You cannot update components and transition status simultaneously. 
-          To publish, pass `{ "status": "PUBLISH" }`. Any inclusion of component fields alongside a status transition will throw a `400 Bad Request`.
+          You cannot combine `status` and component fields in the same request — doing so returns `400`. Only campaigns in `DRAFT` state can be updated or published; other states return `409`. `PUBLISH` is the only accepted `status` value in this release.
           </Warning>
 
           <Warning>
