@@ -3,13 +3,31 @@ info:
   title: MoEngage Campaigns API
   version: '2025-11-20'
   description: |
-    The MoEngage Campaigns API allows you to:
+    The Campaigns V5 API covers the full campaign lifecycle — from creating a draft and building it out incrementally, through validation and test sends, to publication and active campaign management.
 
-    - Create Push or Email campaigns
-    - Update individual components as you refine the setup
-    - Validate configuration, send tests, and publish when you are ready
+    **Supported channels:**
+    - Push (Android, iOS, Web)
+    - Email
 
-    **Campaign versioning** is optional per workspace. When it is enabled, publishing updates to an already-live campaign creates a new document with an incremented `version_number`. The `campaign_id` in responses is the stable identifier across versions; each version has its own raw `id` (ObjectId).
+    **Supported delivery types:**
+    - ONE_TIME
+    - PERIODIC
+    - EVENT_TRIGGERED
+    - BUSINESS_EVENT_TRIGGERED
+    - DEVICE_TRIGGERED (Push only)
+    - LOCATION_TRIGGERED (Push only)
+    - BROADCAST_LIVE_ACTIVITY (Push iOS only)
+
+    **Campaign lifecycle:**
+
+    1. **Create** — Start a draft with only the required fields (`channel`, `campaign_delivery_type`, `created_by`). Add content, audience, and scheduling incrementally across subsequent update calls.
+    2. **Update** — Patch individual components as you refine the setup. Each submitted component is validated in full before the draft is updated.
+    3. **Validate** — Check whether a draft would pass publish-time validation without committing any changes.
+    4. **Test** — Send a test message to specific users from either a saved draft or inline content before going live.
+    5. **Publish** — Transition the draft to **ACTIVE** by sending `{ "status": "PUBLISH" }` in a PATCH request.
+    6. **Manage** — Pause, resume, or stop a live campaign. Search your workspace and retrieve lightweight metadata across all campaigns.
+
+    **Campaign versioning** is optional per workspace. When enabled, publishing an update to a live campaign creates a new document with an incremented `version_number`. The `campaign_id` in responses is the stable identifier across versions; each version has its own raw `id` (ObjectId).
   contact:
     name: MoEngage Developer Team
     email: support@moengage.com
