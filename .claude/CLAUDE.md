@@ -77,7 +77,7 @@ Full rules live in `.cursor/rules/writing-rules.mdc` and `.cursor/rules/componen
 
 - Second-person voice ("you").
 - Active voice, direct language.
-- Sentence case for all headings and code block titles ("Getting started", not "Getting Started").
+- Title case for all headings and code block titles ("Getting Started", not "Getting started").
 - Prerequisites at the start of procedural content.
 - All code blocks need language tags.
 - All images need descriptive alt text.
