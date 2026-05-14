@@ -142,7 +142,7 @@ For the complete style guide, read `.cursor/rules/writing-rules.mdc`. The essent
 
 - Second-person voice ("you").
 - Active voice, direct language.
-- Sentence case for headings ("Getting started", not "Getting Started").
+- Title case for headings ("Getting Started", not "Getting started").
 - Lead with context when helpful — explain *what* before *how*.
 - Prerequisites at the start of procedural content.
 

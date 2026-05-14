@@ -214,8 +214,8 @@ Use `<Columns>` to arrange cards (or other content) in a grid. `cols` accepts 1-
 
 - Second-person voice ("you").
 - Active voice, direct language.
-- Sentence case for headings ("Getting started", not "Getting Started").
-- Sentence case for code block titles.
+- Title case for headings ("Getting Started", not "Getting started").
+- Title case for code block titles.
 - All code blocks must have language tags.
 - All images must have descriptive alt text.
 - No marketing language, filler phrases, or emoji.
