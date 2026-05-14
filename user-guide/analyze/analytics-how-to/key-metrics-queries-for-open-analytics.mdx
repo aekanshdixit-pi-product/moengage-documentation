@@ -1,0 +1,351 @@
+---
+title: "Key Metrics Queries for Open Analytics"
+description: "Ready-to-use SQL queries for key metrics like DAU, MAU, new users, and retention in MoEngage Open Analytics to replicate dashboard data."
+---
+
+MoEngage Open Analytics provides capabilities to directly access data from the MoEngage data warehouse. Using SQL queries any data which is present in MoEngage can be accessed.
+
+This document provides all queries for the key metrics provided in the MoEngage dashboard. These queries can be used to get all the data using Open Analytics.
+
+Know more about [dashboard Key Metrics here](/user-guide/analyze/dashboards/key-metrics-old-version). Know detail about [MoEngage Open Analytics here.](/user-guide/analyze/custom-analysis/open-analytics)
+
+## Daily Active Users
+
+To calculate daily active users, the table and attributes required are -
+
+- Event used - App/Site Opened. Table name for this event is - moe\_app\_opened\_828.
+- Attribute for Platform in App/Site Opened - os
+- Time Attribute in App/Site Opened - server\_time
+- Change **day** for the required date selection.
+
+### Query to get the _Daily Active Users_ count
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+DATE(server_time) AS Date,
+COUNT(DISTINCT(user_id)) AS Usercount
+FROM
+account_name.moe_app_opened_828
+WHERE
+day >= "2020-01-01"
+AND day <= "2020-01-31"
+GROUP BY
+1
+ORDER BY
+1
+```
+
+</CodeGroup>
+
+### Query to get the _Daily Active Users_ count for each platform
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+DATE(server_time) AS Date,
+os AS Platform,
+COUNT(DISTINCT(user_id)) AS Usercount
+FROM
+account_name.moe_app_opened_828
+WHERE
+day >= "2020-01-01"
+AND day <= "2020-01-31"
+GROUP BY
+1, 2
+ORDER BY
+1
+```
+
+</CodeGroup>
+
+## Monthly Active Users
+
+To calculate monthly active users, the table and attributes required are -
+
+- Event used - App/Site Opened. Table name for this event is - moe\_app\_opened\_828.
+- Attribute for Platform in App/Site Opened -
+- Time Attribute in App/Site Opened - server\_time
+- Change **day** for the required date selection.
+
+### Query to get the _Monthly Active Users_ count
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+FORMAT_DATE("%B, %Y", DATE(server_time)) AS Date,
+COUNT(DISTINCT(user_id)) AS Usercount
+FROM
+account_name.moe_app_opened_828
+WHERE
+day >= "2020-01-01"
+AND day <= "2020-12-31"
+GROUP BY
+1
+ORDER BY
+1
+```
+
+</CodeGroup>
+
+### Query to get the _Monthly Active Users_ count for each platform
+
+<CodeGroup>
+
+```text SQL wrap
+SELECT
+FORMAT_DATE("%B, %Y", DATE(server_time)) AS Date,
+os AS Platform,
+COUNT(DISTINCT(user_id)) AS Usercount
+FROM
+account_name.moe_app_opened_828
+WHERE
+day >= "2020-01-01"
+AND day <= "2020-12-31"
+GROUP BY
+1, 2
+ORDER BY
+1
+```
+
+</CodeGroup>
+
+## New Users
+
+To calculate daily new users, the table and attributes required are -
+
+- Table for all the latest user attributes (This table gets updated every day) - users\_base\_table
+- MoEngage defined ID for app/site users in usertable - user\_id
+- User Created Date in user table - datetime\_cr\_t\_469
+- Change _datetime\_cr\_t\_469_ for the required date selection
+
+### Query to get the daily _New Users_ count
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+DATE(datetime_cr_t_469) AS Date,
+COUNT(DISTINCT(user_id)) AS Usercount
+FROM
+account_name.users_base_table WHERE
+datetime_cr_t_469
+>= "2020-01-01"
+AND datetime_cr_t_469 <= "2020-01-31"
+GROUP BY
+1
+ORDER BY
+1
+```
+
+</CodeGroup>
+
+## Uninstalled Users
+
+To calculate daily uninstalled users table and attributes required are -
+
+User table checks the fine install status of the user.
+
+- Table for all the latest user attributes (This table gets updated everyday) - users\_base\_table
+- MoEngage defined ID for app/site users in usertabel - user\_id
+- Install Status - bool\_installed\_178
+
+Device uninstall event to get uninstall action and date time -
+
+- Event used - Device Uninstalled - device\_uninstall\_985
+- Attribute for Platform in Device Uninstalled - os
+- Time Attribute in App/Site Opened - server\_time
+- Change **day** for the required date selection.
+
+### Query to get the daily _Uninstalled Users_ count
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+DATE(server_time) AS Date,
+COUNT(DISTINCT(user_id)) AS Usercount
+FROM
+account_name.
+device_uninstall_985
+WHERE
+day >= "2019-09-26 00:00:00"
+AND day <= "2019-09-27 00:00:00"
+AND user_id IN (
+SELECT
+DISTINCT(user_id)
+FROM
+account_name.users_base_table
+WHERE
+bool_installed_178
+= "false" )
+GROUP BY
+1
+ORDER BY
+1
+```
+
+</CodeGroup>
+
+### Query to get the daily _Uninstalled Users_ count for each platform
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+DATE(server_time) AS Date,
+o
+s
+as Platform,
+COUNT(DISTINCT(user_id)) AS Usercount
+FROM
+account_name.
+device_uninstall_985
+WHERE
+day >= "2019-09-26 00:00:00"
+AND day <= "2019-09-27 00:00:00"
+AND user_id IN (
+SELECT
+DISTINCT(user_id)
+FROM
+account_name.user_base_table
+WHERE
+bool_installed_178
+= "false" )
+GROUP BY
+1, 2
+ORDER BY
+1
+```
+
+</CodeGroup>
+
+## New Web Push Subscribers
+
+To calculate daily active users, table and attributes required are -
+
+- Event used -Subscribed to Web Push. Table name -MOE\_USER\_SUBSCRIBED
+- Time Attribute in Subscribed to Web Push - server\_time
+- Change **day** for the required date selection.
+
+### Query to get the _New Web Push Subscribers_
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+DATE(server_time) AS Date,
+COUNT(DISTINCT(user_id)) AS Usercount
+FROM
+account_name.
+MOE_USER_SUBSCRIBED
+WHERE
+day >= "2020-01-01"
+AND day <= "2020-01-31"
+GROUP BY
+1
+ORDER BY
+1
+```
+
+</CodeGroup>
+
+## Aggregate Web Push Subscribers
+
+To calculate Aggregate Web Push Subscribers, table and attributes required are -
+
+- Table for all the latest user attributes (This table gets updated everyday) - user\_base\_table
+- MoEngage defined ID for app/site users in usertabel - user\_id
+- Web Subscription Status in usertable- bool\_moe\_sub\_w\_106
+
+### Query to get the _Aggregate Web Push Subscribers_
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+COUNT(user_id) AS TotalCount
+FROM
+account_name.user_base_table
+WHERE
+bool_moe_sub_w_106
+= "true"
+```
+
+</CodeGroup>
+
+## Conversion Goal & Revenue
+
+To calculate the total count of conversions and unique converted users, the table and attributes required are -
+
+- Event used - Goal Event specified in [App Settings.](https://app.moengage.com/v3/#/settings/app/general)
+- Attribute for Revenue - Revenue attribute specified in [App Settings.](https://app.moengage.com/v3/#/settings/app/general)
+- Attribute for Platform in Goal Event - os
+- Time Attribute in Goal Event - server\_time
+- Change **day** for the required date selection.
+
+### Query to get the daily _Conversion Count_
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+DATE(server_time) AS Date,
+COUNT(server_time) AS Conversioncount
+FROM
+account_name.goal_event
+WHERE
+day >= "2020-01-01"
+AND day <= "2020-01-31"
+GROUP BY
+1
+ORDER BY
+1
+```
+
+</CodeGroup>
+
+### Query to get the daily _Unique Converted Users_
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+DATE(server_time) AS Date,
+COUNT(DISTINCT(user_id)) AS Usercount
+FROM
+account_name.goal_event
+WHERE
+day >= "2020-01-01"
+AND day <= "2020-01-31"
+GROUP BY
+1
+ORDER BY
+1
+```
+
+</CodeGroup>
+
+### Query to get the daily _Revenue_
+
+<CodeGroup>
+
+```sql SQL wrap
+SELECT
+DATE(server_time) AS Date,
+SUM(revenue_attribute) AS Revenue
+FROM
+account_name.goal_event
+WHERE
+day >= "2020-01-01"
+AND day <= "2020-01-31"
+GROUP BY
+1
+ORDER BY
+1
+```
+
+</CodeGroup>

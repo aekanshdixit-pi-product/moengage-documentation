@@ -11,7 +11,7 @@ servers:
     variables:
       dc:
         default: '01'
-        description: 'Your MoEngage Data Center (DC) number. Refer to MoEngage docs for your correct DC.'
+        description: 'The ‘dc’ in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number and replace the value of ‘dc’ in the URL by referring to the DC and API endpoint mapping [here](/api/introduction#data-centers). Your MoEngage Data Center (DC) can be 01, 02, 03, 04, 05, 06, or 101.'
 tags:
   - name: GDPR
     description: Manage user data requests for GDPR and CCPA compliance.
@@ -26,7 +26,7 @@ paths:
       description: |
         GDPR or CCPA API ensures all the rights of users are created or updated for GDPR or CCPA compliance. You can erase the personal data of specific users as defined under GDPR using the Erase API.
         
-        For more details on compliance with MoEngage, refer to [GDPR-Implementation](https://help.moengage.com/hc/en-us/articles/360000878126-GDPR) and [CCPA-Implementation](https://help.moengage.com/hc/en-us/articles/360052917232-CCPA).
+        For more details on compliance with MoEngage, refer to [GDPR-Implementation](/user-guide/data/privacy/gdpr) and [CCPA-Implementation](/user-guide/data/privacy/ccpa).
         
 
       operationId: submitGdprRequest
@@ -39,48 +39,6 @@ paths:
           #### Rate Limit
           
           The maximum limit per request is **100 KB**. The maximum payload size is **128 KB**.
-          
-      # START: Updated x-codeSamples array with two entries
-      x-codeSamples:
-        - lang: curl
-          label: GDPR Erasure Request Example
-          source: |
-            curl --request POST \
-              --url 'https://api-0{X}.moengage.com/v1/opengdpr_requests/{appId}' \
-              --header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
-              --header 'Content-Type: application/json' \
-              --data '{
-                "request_type": "erasure",
-                "submitted_time": "2018-10-05T15:00:00Z",
-                "identities": [
-                  {
-                    "identity_type": "email",
-                    "identity_value": "johndoe@example.com"
-                  }
-                ],
-                "api_version": "1.0"
-              }'
-        - lang: curl
-          label: Customer Data Update Example
-          source: |
-            curl --location --request POST 'https://api-0X.moengage.com/v1/customer/{{appId}}?app_id={{appId}}' \
-            --header 'Content-Type: application/json' \
-            --header 'Authorization: Basic Base64_ENCODED_APPKEY_APIKEY' \
-            --data-raw '{
-                "type": "customer",
-                "customer_id": "123",
-                "attributes": {
-                  "name": "JohnDoe",
-                  "first_name": "John",
-                  "platforms": [
-                    {
-                      "platform": "iOS",
-                      "active": true
-                    }
-                  ]
-                }
-            }'
-      # END: Updated x-codeSamples array
           
       parameters:
         - name: appId
@@ -99,13 +57,16 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GdprRequest'
-            example:
-              request_type: erasure
-              submitted_time: '2018-10-05T15:00:00Z'
-              identities:
-                - identity_type: email
-                  identity_value: johndoe@example.com
-              api_version: '1.0'
+            examples:
+              GDPR Erasure Request:
+                summary: GDPR Erasure Request
+                value:
+                  request_type: "erasure"
+                  submitted_time: "2018-10-05T15:00:00Z"
+                  identities:
+                    - identity_type: "email"
+                      identity_value: "johndoe@example.com"
+                  api_version: "1.0"
       responses:
         '200':
           description: Success. This response is returned when the request is processed successfully. 
@@ -123,6 +84,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GdprError400Response'
+              examples:
+                MissingRequestType:
+                  summary: Missing request_type
+                  value:
+                    status: fail
+                    error:
+                      attribute: request_type
+                      message: request_type is not found in the payload
+                      type: MissingAttributeError
+                      request_id: zuMJjxAS
+                MissingIdentities:
+                  summary: Missing identities
+                  value:
+                    status: fail
+                    error:
+                      attribute: identities
+                      message: identities is not found in the payload
+                      type: MissingAttributeError
+                      request_id: OzqWFuri
         '401':
           description: Unauthorized. This response is returned when the request does not have valid authentication credentials.
           content:
@@ -135,6 +115,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GdprError403Response'
+              examples:
+                BlockedClient:
+                  summary: Account Blocked
+                  value:
+                    status: fail
+                    error:
+                      message: Your account is suspended. Please contact MoEngage team.
+                      type: BlockedClient
+                      request_id: ofHUEaEQ
+                AccountSuspended:
+                  summary: Account Suspended
+                  value:
+                    status: fail
+                    error:
+                      message: Your account is suspended. Please contact MoEngage team.
+                      type: Account Suspended
+                      request_id: gqJvCNYu
+                AccountTemporarilySuspended:
+                  summary: Account Temporarily Suspended
+                  value:
+                    status: fail
+                    error:
+                      message: Your account is temporarily suspended. Please contact MoEngage team.
+                      type: Account Temporarily Suspended
+                      request_id: ssSJjoyD
         '413':
           description: Payload Size Exceeded. This response is returned when the payload size exceeds 128 KB.
           content:
@@ -207,7 +212,7 @@ components:
           type: string
           description: 'This field denotes the key based on which the user has to be deleted.'
           enum:
-            - id
+            - ID
             - user_secondary_id
             - email
             - mobile

@@ -1,0 +1,92 @@
+---
+title: "Standardizing Web SDK APIs for Cross-Platform Consistency"
+description: "Learn how to migrate MoEngage Web SDK APIs from snake_case to camelCase. Ensure cross-platform consistency and avoid deprecation warnings with this transition guide."
+---
+
+<Note> 
+The SDK internal logic currently maps legacy names to new names to ensure backward compatibility. MoEngage recommends updating to the new syntax to maintain compatibility with future releases.
+</Note>
+
+## Global API mapping
+
+Use the standardized `camelCase` naming conventions for all new implementations. 
+
+### InitData Configurations
+
+<Note> 
+Old snake-cased `InitData` properties are now deprecated. Warning messages will be logged in the console if they are used.
+</Note>
+
+| Legacy Property (Deprecated) | Standardized Property (New) |
+| :--- | :--- |
+| `project_id` | `projectId` |
+| `app_id` | `appId` |
+| `bots_list` | `botsList` |
+| `disable_onsite` | `disableOnsite` |
+| `disable_web_push` | `disableWebPush` |
+
+### API Methods
+
+Update your integration script and internal calls to use the following standardized methods:
+
+| Legacy Method (Deprecated) | Standardized Method (New) |
+| :--- | :--- |
+| `track_event` | `trackEvent` |
+| `track_page_view` | `trackPageView` |
+| `handle_page_change` | `handlePageChange` |
+| `call_web_push` | `callWebPush` |
+| `on_cards_loaded` | `onCardsLoaded` |
+| `add_user_attribute` | `setUserAttribute()` |
+| `add_first_name` | `setFirstName()` |
+| `add_last_name` | `setLastName()` |
+| `add_email` | `setEmailId()` |
+| `add_mobile` | `setMobileNumber()` |
+| `add_user_name` | `setUserName()` |
+| `add_gender` | `setGender()` |
+| `add_birthday` | `setBirthDate()` |
+| `update_unique_user_id` | `updateUniqueUserId` |
+| `destroy_session` | `logoutUser` |
+| `moe_events` | `moeEvents` |
+
+<Note>
+Note: Existing camel-cased or single-word methods like `track`, `identifyUser`, and `getUserIdentities` remain unchanged.
+</Note>
+## Impacted platforms
+
+This transition affects all integrations that utilize the MoEngage Web SDK, including the following platforms and package managers:
+
+* Google Tag Manager (GTM)
+* Shopify
+* VTEX
+* NPM/CDN
+* Flutter Web
+
+## Integration scenarios
+
+The migration path depends on your MoEngage SDK integration type. Identify your scenario below to determine the necessary actions.
+
+### Fixed version
+**Critical:** New `camelCase` methods are not available in legacy SDK versions. Do not refactor code until you update the SDK version in the source code to **2.71.00 and above**.
+
+### New integrations
+Implement the SDK using `camelCase` methods. This ensures the integration is natively compatible with modern JavaScript standards and prevents console warnings.
+
+### CDN/NPM
+If the script tag pulls the latest version, the SDK automatically maps legacy calls to the new logic.
+
+<Note> 
+**Recommendation:** To maintain a clean development environment and avoid deprecation warnings in the browser console, refactor these calls to `camelCase`.
+</Note> 
+
+## Troubleshooting
+
+To verify your SDK methods or identify any lingering legacy code, you can enable debug logging to view deprecation warnings directly in your browser's console.
+
+1. **Enable SDK logging:** You must first call the following method to enable verbose logs for the MoEngage SDK. This must be executed before you can see the logs:
+
+   ```javascript
+   Moengage.setDebugLevel(2)
+   ```
+2. Check the console logs: Open your browser's developer tools and navigate to the Console tab. If any deprecated methods are still in use, the SDK outputs an error or warning message.
+
+Example: _["destroy_session" is deprecated. Please use "logoutUser" instead.]_

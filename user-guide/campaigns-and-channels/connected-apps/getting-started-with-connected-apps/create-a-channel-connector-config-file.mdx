@@ -1,0 +1,908 @@
+---
+title: "Create a Channel Connector Config File"
+description: "Learn how to create and structure a config file for MoEngage Connected Channel connectors, including basic info, input variables, and file format."
+---
+
+# Introduction
+
+A config (or config file) defines each connector in the Connected Channel. While adding a new Connector or making changes to the existing ones, you must upload the config file to ensure the Connector is configured correctly.
+
+## Sample files
+
+You can download these sample config files to get started:
+
+| File Type | Description |
+| --- | --- |
+| [Boilerplate Code](https://app-cdn.moengage.com/partners-integration-ui/app-marketplace-public/helpdoc/Channel-Config-Boilerplate.json) | Use this file to get started for building your Connector. |
+| [Full Config File](https://app-cdn.moengage.com/partners-integration-ui/app-marketplace-public/helpdoc/Full_Config_Example.json) | This file contains input types, requests, and responses. |
+
+# Config Sections
+
+A config file is divided into the following sections:
+
+| Section | Key | Details |
+| --- | --- | --- |
+| Basic Info | `basic_info` | It contains basic connector details such as name, description, and type. |
+| Input Variables | `input_variables` | It displays the input fields when you are using the connector. It allows you to set the following fields: <ul><li>**Data type**: This contains Integer (Int), String, Boolean, JSON, Dropdown, and so on.</li><li>**Visibility**: This field appears during the campaign creation or integration in the App marketplace.</li></ul> |
+| Authentication | `auth` | It is the Authentication mechanism for your app that includes no auth and basic auth. |
+| Request and Response | `modules` | It constructs the API call that MoEngage makes to the app during campaign execution and provides an outline of the interpretation of the API responses by MoEngage. |
+
+# File Format
+
+The following is the file format of the config file: kkk
+
+<CodeGroup>
+
+```json File Format wrap
+{
+"basic_info": {
+"name": "",
+"description": "",
+"type": "CHANNEL"
+},
+"input_variables": [{
+"visibility_scope": "",
+"key": "",
+"event_export_key": "",
+"name": "",
+"required": "",
+"type": "",
+"encrypt": "",
+"validations": [""]
+}],
+"auth": {
+"auth_type": "",
+"auth_info": "",
+"alias": ""
+},
+"modules": [{
+"name": "default",
+"type": "REQUEST_RESPONSE",
+"params": {
+"request": {
+"method": "",
+"headers": {"": ""},
+"url": "",
+"url_params": {"": ""},
+"body_type": "",
+"body": ""
+},
+"response": [{
+"body_type": "",
+"datetime_format": "",
+"evaluation_criteria": {},
+"actions": []
+}]
+}
+}]
+}
+```
+
+</CodeGroup>
+
+# Basic Info
+
+In this section, you must define the name of your Connector and the use case it aims to solve.
+
+| Key | Required | Type | Description |
+| --- | --- | --- | --- |
+| `name` | Yes | String | It is your Connector name. It is displayed when you create connections on the App marketplace.<br /><img src="/images/moengage_44b6e3.png" /> |
+| `description` | Yes | String | It is a one-line description of the use case solved by your connector. For example, using this Connector, you can send text messages to your Telegram users via the Telegram Bot. |
+| `type` | Yes | String | It is your Connected Apps App type. |
+
+# Input Variables
+
+Input variables enable the rendering of input fields on the App marketplace. They facilitate the collection of required information necessary to successfully connect MoEngage to your app and effectively execute campaigns through it.
+
+To define an Input Variable, you must add the following to your `input_variables` section:
+
+| Key | Required | Type | Valid Values | Description |
+| --- | --- | --- | --- | --- |
+| `visibility_scope` | Yes | String | <ul><li>`app_marketplace`</li><li>`campaign`</li></ul> | It is the location of your Input Variable or can be either of the following: <ul><li>App marketplace</li><li>Campaign Creation (Step 2)</li></ul> |
+| `key` | Yes | String | <ul><li>Only lowercase alphabets</li><li>No blank spaces</li><li>\_ (Underscore), -(hyphen)</li></ul> | It is used to access the value of the input variable in the subsequent steps. |
+| `event_export_key` | Yes | String | <ul><li>Only lowercase alphabets</li><li>No blank spaces</li><li>\_ (Underscore), - (hyphen)</li></ul> | The key is sent while exporting your Events from MoEngage to other third-party apps, such as Data Warehouses. |
+| `name` | Yes | String | Only alphanumeric \[0-9, a to z, A to Z\], and\_(Underscore),-(hyphen) and spaces | It is the label for your input variable. |
+| `required` | Yes | String | <ul><li>`true`</li><li>`false`</li></ul> | If the condition is true, this input is marked as mandatory on the UI. |
+| `type` | Yes | String | <ul><li>`text`</li><li>`number`</li><li>`bool`</li><li>`datetime`</li><li>`password`</li><li>`dropdown`</li><li>`radio`</li><li>`json`</li><li>`code`</li><li>`key_value`</li></ul> | It determines what to display on the UI based on the excepted values. |
+| `validations` | No | Object | Refer [here](/user-guide/campaigns-and-channels/connected-apps/getting-started-with-connected-apps/create-a-channel-connector-config-file#supported-input-types) for the validations. | Use it when you want to restrict the values. You can add regex rules to add frontend validations. |
+
+## Visibility Scope
+
+The Input Variables are collected in the following places:
+
+- App Marketplace
+- Campaign Creation Form (Step 2)
+
+### App MarketPlace
+
+Connections to your Channel App are added from the App marketplace, as shown below:
+
+![](/images/moengage_609f29.png)
+
+In the App marketplace, you must collect fields that serve as authentication requirements or are common to all campaigns. These fields must be independent of campaign information.
+
+For example, collecting the Telegram Bot ID in the App marketplace is recommended. This allows you to execute multiple campaigns using the same Telegram Bot. On the other hand, collecting Telegram Chat IDs in the App marketplace is not recommended, as they are campaign-dependent and must be changed for each end-user.
+
+<Info>
+  MoEngage displays the Connection name for each Connector in the App marketplace by default. This provides a visual identifier to distinguish the Connections.
+</Info>
+
+### Campaign Creation Form (Step 2)
+
+Connections to your Channel app are added from the campaign creation, as shown below:
+
+![](/images/moengage_74293c.png)
+
+## Supported Input Types
+
+<Info>
+  All input types are available in the App marketplace and the campaign creation form (Step 2).
+</Info>
+
+MoEngage currently supports the following input types:
+
+### Text
+
+This input type allows users to enter any basic text or string value. It is displayed on the UI as a simple single-line text box, making it useful for soliciting short, free-text input, such as usernames or email addresses.
+
+<img
+  src="/images/moengage_096731.png"
+  style={{ width:"33%" }}
+/>
+
+To add a Text, follow the structure:
+
+<CodeGroup>
+
+```json Structure wrap
+{
+  "visibility_scope": "{{campaign or app_marketplace}}",
+  "key": "{{key used in code}}",
+  "event_export_key": "{{key used for events}}",
+  "name": "display label",
+  "required": {{true or false}},
+  "type": "text",
+  "validations": [{{array of validation rules if any}}]
+}
+```
+
+</CodeGroup>
+
+### Number
+
+This input type is for numbers. It appears as a text box but only accepts numerical entries. Use it when collecting numeric values, such as age, ID, or quantity.
+
+<img
+  src="/images/moengage_85eb2f.png"
+  style={{ width:"49%" }}
+/>
+
+To add a Number, follow the structure:
+
+<CodeGroup>
+
+```json Structure wrap
+{
+    "visibility_scope": "<campaign or app_marketplace>",
+    "key": "<key used in code>",
+    "event_export_key": "<key used for events>",
+    "name": "<display label>",
+    "required": <true or false>,
+    "type": "number",
+    "validations": [<array of validation rules if any>]
+}
+```
+
+</CodeGroup>
+
+<Info>
+  You can use validations to restrict the lower and upper bounds of the numeric input if required.
+</Info>
+
+### Boolean
+
+This input type appears as a radio button and allows users to choose between two mandatory possibilities: **True** or **False**. It is used when you ask users to enable/disable a feature, agree/disagree, or make any binary choice.
+
+<img
+  src="/images/moengage_23f284.png"
+  style={{ width:"54%" }}
+/>
+
+To add a Boolean, follow the structure:
+
+<CodeGroup>
+
+```json Structure wrap
+{    "visibility_scope": "<campaign or app_marketplace>",
+    "key": "<key used in code>",
+    "event_export_key": "<key used for events>",
+    "name": "<display label>",
+    "required": <true or false>,
+    "type": "bool"
+}
+```
+
+</CodeGroup>
+
+### DateTime
+
+This input type is for date and time. It appears as a DateTime picker, allowing users to select a specific date and time. Use it when collecting data about a specific date or time, such as scheduling posts or reminders.
+
+<img
+  src="/images/moengage_7c75b5.png"
+  style={{ width:"56%" }}
+/>
+
+To add a DateTime, follow the structure:
+
+<CodeGroup>
+
+```json Structure wrap
+{
+    "visibility_scope": "<campaign or app_marketplace>",
+    "key": "<key used in code>",
+    "event_export_key": "<key used for events>",
+    "name": "<display label>",
+    "required": <true or false>,
+    "type": "datetime"
+}
+```
+
+</CodeGroup>
+
+### Password
+
+This input type is for password entry. It appears as a text box but masks user input for privacy. It must be used when requesting sensitive information from users, such as login addresses.
+
+<img
+  src="/images/moengage_ce0039.png"
+  style={{ width:"48%" }}
+/>
+
+To add a Password, follow the structure:
+
+<CodeGroup>
+
+```json Structure wrap
+{
+    "visibility_scope": "<campaign or app_marketplace>",
+    "key": "<key used in code>",
+    "event_export_key": "<key used for events>",
+    "name": "<display label>",
+    "required": <true or false>,
+    "type": "password",
+    "validations": [<array of validation rules if any>]
+}
+```
+
+</CodeGroup>
+
+### Drop-down List (Single and Multi-Select)
+
+This input type allows users to choose multiple options in multi-select mode. It is recommended when you have a predetermined set of options and prefer to restrict input without allowing free-text entry.
+
+<img
+  src="/images/moengage_9177a9.png"
+  style={{ width:"44%" }}
+/>
+
+To add a Drop-down List, follow the structure:
+
+<CodeGroup>
+
+```json Structure wrap
+{
+    "visibility_scope": "<campaign or app_marketplace>",
+    "key": "<key used in code>",
+    "event_export_key": "<key used for events>",
+    "name": "<display label>",
+    "required": <true or false>,
+    "type": "dropdown",    "allow_multiple": <true or false>, // If true, multiple options can be selected
+    "options": [
+        {
+            "label": "Option 1", // This value will be shown on the UI
+            "key": "key_1" // This will be the selected value passed
+        },
+        {
+            "label": "Option 2",
+            "key": "key_2"
+        },
+        {
+            "label": "Option 3",
+            "key": "key_3"
+        }
+    ]
+}
+```
+
+</CodeGroup>
+
+### Hash Maps
+
+This input type is used for key-value pair inputs. It appears as two interconnected input boxes for key and value. Use this when you require key-value data, such as settings or configurations.
+
+<img
+  src="/images/moengage_bfcb06.png"
+  alt="Hashmap.png"
+  style={{ width:"50%" }}
+/>
+
+To add a Hasmap, follow the structure:
+
+<CodeGroup>
+
+```json Structure wrap
+{
+  "visibility_scope": "{{campaign or app_marketplace}}",
+  "key": "{{key used in code}}",
+  "event_export_key": "{{key used for events}}",
+  "name": "display label",
+  "required": {{true or false}},
+  "type": "key_value"
+}
+```
+
+</CodeGroup>
+
+## Input Validations
+
+When defining input types that support validation, such as Text and Password, it is necessary to establish predetermined rules for validating the values entered by the user on the UI. You can add validations with the following key inside your input variables:
+
+<CodeGroup>
+
+```json Structure wrap
+"validations": [
+    {
+        "text": "Rule description",
+        "regex": "<regex expression>"
+    }
+]
+```
+
+</CodeGroup>
+
+Here is an example of a Full Name field which has three individual rules:
+
+<CodeGroup>
+
+```json Structure wrap
+"validations": [
+    {
+        "text": "Start the name with an alphabet",
+        "regex": "^[A-Za-z]"
+    },
+    {
+        "text": "Use only numbers, spaces, \"_\" or \"-\" with alphabets",
+        "regex": "^[a-zA-Z0-9-_ ]*$"
+    },
+    {
+        "text": "Use 3-25 characters",
+        "regex": "^[a-zA-Z0-9 -_]{3,25}$"
+    }
+]
+```
+
+</CodeGroup>
+
+Each of these rules is shown to the user on the UI to guide them toward valid input:
+
+<img
+  src="/images/moengage_371fff.png"
+  style={{ width:"39%" }}
+/>
+
+## Reference Input Variables
+
+After collecting values for your Input Variables from the user, you can use them in the following sections:
+
+- Authentication
+- Request and Response
+
+You can use the JINJA code to reference an input variable. This referencing mechanism is similar to personalization in MoEngage. For example, consider the following  Input Variables:
+
+- From the App marketplace:\
+  Username: String
+- From the Campaign Creation Form (Step 2):\
+  Mobile Number: String
+
+To reference these variables, use the following JINJA code:
+
+<CodeGroup>
+
+```text JINJA wrap
+{{AppMarketplaceForm["username"]}}
+{{CampaignCreationForm["mobile_number"]}}
+```
+
+</CodeGroup>
+
+These Input Variables capture the user's input, which can be used during authentication or included as part of the API request payload.
+
+# Authentication
+
+In this section, you can define the authentication required for your App. MoEngage enables sending requests to your App, and the Connected Channels support the following built-in authentication types:
+
+- No Auth
+- Basic Auth
+- API Key Auth
+- OAuth2
+
+| Key | Required | Type | Description |
+| --- | --- | --- | --- |
+| `auth_type` | Yes | String | It represents the type of authentication you want to use for the Connector. The valid options are <ul><li>`no_auth`</li><li>`basic_auth`</li><li>`oauth`</li></ul> |
+| `auth_info` | Yes | Object | It represents the authentication details, which depend on the type of authentication you selected. |
+| `alias` | Yes | String | NIL |
+
+## No Auth
+
+You can choose **No Auth** when your App does not need authentication or you have a custom implementation of standard authentication methods. If you select **No Auth**, MoEngage does not execute any pre-authentication operations on your requests.
+
+When using "No Auth," choose **No Auth** as the **app type.** If necessary, you can include custom URL parameters or headers for your API.
+
+<CodeGroup>
+
+```json Structure wrap
+"auth": {
+    "auth_type": "no_auth",
+    "auth_info": {},
+    "alias": "valid_alias"
+}
+```
+
+</CodeGroup>
+
+<Info>
+  You must pass an empty object in the `auth_info` key, as no additional information is required for this app type.
+</Info>
+
+## Basic Auth
+
+If your App supports Basic Auth, you can collect the username and password on the App marketplace and pass them as part of your Basic Auth Token for each request.
+
+To add Basic Auth, follow the structure:
+
+<CodeGroup>
+
+```json Structure
+"auth": {
+    "auth_type": "basic_auth",
+    "auth_info": {
+        "username": "{{AppMarketplaceForm[\"account_id\"]}}",
+        "password": "{{AppMarketplaceForm[\"account_key\"]}}"
+    },
+    "alias": "valid_alias"
+}
+```
+
+</CodeGroup>
+
+In the example above, we refer to the values entered by the user on the App Marketplace form. MoEngage generates a Base64-encoded Basic Auth token and includes it in each request's _Authorization_ header.
+
+For example, if the Account ID is _ABC123_ and the Account Key is _123XYZ_, you must pass the following header in each of our requests:
+
+`Authorization: Basic QUJDMTIzOjEyM1hZWg==`
+
+## OAuth2
+
+If your App uses the OAuth2 framework for authorization, you can configure MoEngage to handle the entire flow, including obtaining user consent and managing access and refresh tokens.
+
+<Info>
+  MoEngage supports the following OAuth2 grant types:
+
+  - Authorization Code
+  - Refresh Token
+</Info>
+
+### Special Authentication Variables
+
+MoEngage exposes a few special variables that can be referenced to support the OAuth2 mechanism within your App:
+
+| Name | JINJA Reference Code | Description |
+| --- | --- | --- |
+| Redirect URI | `{{AppMarketplaceForm[\"redirect\_uri\"]}}` | The Redirect URI is used to redirect the user from your app’s consent page. This is dynamically calculated based on your user’s data center. For up-to-date authorized MoEngage URLs, refer to the table below. |
+| State | `{{AppMarketplaceForm[\"state\"]}}` | An opaque, arbitrary alphanumeric string that MoEngage adds to the initial request. Your app must include this string when redirecting back to MoEngage. |
+| Authorization Code | `{{AppMarketplaceForm[\"auth\_code\"]}}` | This is the authorization code that your app receives after obtaining the user's consent. |
+| Access Token | `{{AppMarketplaceForm[\"MOE\_ACCESS\_TOKEN\_DEFAULT\"]}}` | This is the Access Token that MoEngage will send in subsequent calls to authorize the user. |
+| Refresh Token | `{{AppMarketplaceForm[\"refresh\_token\"]}}` | This is the Refresh Token used to renew the Access Token when it expires. |
+
+You can reference the above variables when setting up your OAuth2 calls and connector requests. .
+
+#### Redirect URI
+
+The Redirect URI will depend on which Data Center your app is added to:
+
+| Data Center | Redirect URI |
+| --- | --- |
+| DC-01 | [https://dashboard-01.moengage.com/v3/partner/oauth/callback](https://dashboard-01.moengage.com/v3/partner/oauth/callback) |
+| DC-02 | [https://dashboard-02.moengage.com/v3/partner/oauth/callback](https://dashboard-02.moengage.com/v3/partner/oauth/callback) |
+| DC-03 | [https://dashboard-03.moengage.com/v3/partner/oauth/callback](https://dashboard-03.moengage.com/v3/partner/oauth/callback) |
+| DC-04 | [https://dashboard-04.moengage.com/v3/partner/oauth/callback](https://dashboard-04.moengage.com/v3/partner/oauth/callback) |
+
+If you want to list your app in all the data centers, you must approve each of the Redirect URIs.
+
+### Set up OAuth for your App
+
+To add OAuth2, follow the structure:
+
+<CodeGroup>
+
+```json JSON wrap
+"auth": {
+    "auth_type": "oauth",
+    "auth_info": {
+        "authorization_mapping": {
+            "method": "GET",
+            "headers": {
+        	   "": ""
+},
+            "url": "",
+            "url_params": {
+                "response_type": "code",
+                "client_id": "{{AppMarketplaceForm[\"client_id\"]}}",
+                "redirect_uri": "{{AppMarketplaceForm[\"redirect_uri\"]}}",
+                "state": "{{AppMarketplaceForm[\"state\"]}}",
+                "scope": ""
+            },
+            "body_type": "JSON",
+            "auth_code_mapping": "code"
+        },
+        "access_token_mapping": {
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/x-www-form-urlencoded",
+        	   "": ""
+            },
+            "url": "",
+            "url_params": {
+          "": ""
+             },
+            "body_type": "FORM",
+            "body": "[{\"name\":\"grant_type\",\"value\":\"authorization_code\"},{\"name\":\"code\",\"value\":\"{{AppMarketplaceForm[\"auth_code\"]}}\"}, {\"name\":\"redirect_uri\",\"value\":\"{{AppMarketplaceForm[\"redirect_uri\"]}}\"}, {\"name\":\"client_id\",\"value\":\"{{AppMarketplaceForm[\"client_id\"]}}\"}, {\"name\":\"client_secret\",\"value\":\"{{AppMarketplaceForm[\"client_secret\"]}}\"}]",
+            "response_mapping": {
+                "access_token_mapping": "access_token",
+                "access_token_expiry_mapping": "expires_in"
+            },
+            "access_token_expiry_time": 3600 // time in seconds
+        },
+        "refresh_token_mapping": {
+            "method": "POST",
+            "headers": {
+                "Content-type": "application/x-www-form-urlencoded"
+            },
+            "url": "",
+            "url_params": {},
+            "body_type": "FORM",
+            "body": "[{\"name\":\"grant_type\",\"value\":\"refresh_token\"},{\"name\":\"refresh_token\",\"value\":\"{{AppMarketplaceForm[\"refresh_token\"]}}\"}, {\"name\":\"client_id\",\"value\":\"{{AppMarketplaceForm[\"client_id\"]}}\"}, {\"name\":\"client_secret\",\"value\":\"{{AppMarketplaceForm[\"client_secret\"]}}\"}]",
+            "response_mapping": {
+                "refresh_token_mapping": "refresh_token",
+                "refresh_token_expiry_mapping": null
+            },
+            "refresh_token_expiry_time": 36000 // time in seconds
+        },
+        "client_id": "{{AppMarketplaceForm[\"client_id\"]}}",
+        "client_secret": "{{AppMarketplaceForm[\"client_secret\"]}}",
+        "grant_type": [
+            "refresh_token",
+            "authorization_code"
+        ]
+    }
+}
+```
+
+</CodeGroup>
+
+The auth module for OAuth2 must have the following keys:
+
+| Key | Required | Type | Valid Values | Description |
+| --- | --- | --- | --- | --- |
+| `authorization_mapping` | Yes | Object | For more information, refer to the sections below for the Object mappings. | Define your app's authorization request for MoEngage to obtain the user's consent. |
+| `access_token_mapping` | Yes | Object | For more information, refer to the sections below for the Object mappings. | Define the Access Token Request format for your app to collect a valid access token to be used in subsequent calls to MoEngage. |
+| `refresh_token_mapping` | Yes | Object | For more information, refer to the sections below for the Object mappings. | Define the Refresh Token Request format for your app with MoEngage to obtain a new valid access token, which will be used for subsequent calls when the previous access token is nearing expiry or has already expired. |
+| `client_id` | Yes | String | This is the value of the Client ID. Input variable references are supported here. | The Client ID of your app. If this is the customer’s app, you can collect this value through the App Marketplace input variables. |
+| `client_secret` | Yes | String | This is the value of the Client Secret. Input variable references are supported here. | The Client Secret of your app. If this is the customer’s app, you can collect this value through the App Marketplace input variables. |
+| `grant_type` | Yes | Array of Strings | This is the list of Grant Types supported by the App: <ul><li>`authorization_code`</li><li>`refresh_token`</li></ul> | The grant types supported by your app. |
+
+To allow MoEngage to get consent and tokens from your application, configure the parameters for the following requests:
+
+- [Authorization Request](/user-guide/campaigns-and-channels/connected-apps/getting-started-with-connected-apps/create-a-channel-connector-config-file#authorization-request)
+- [Access Token Request](/user-guide/campaigns-and-channels/connected-apps/getting-started-with-connected-apps/create-a-channel-connector-config-file#access-token-request)
+- [Refresh Token Request](/user-guide/campaigns-and-channels/connected-apps/getting-started-with-connected-apps/create-a-channel-connector-config-file#refresh-token-request)
+
+#### Authorization Request
+
+| Key | Required | Type | Valid Values | Description |
+| --- | --- | --- | --- | --- |
+| method | Yes | String | <ul><li>GET</li><li>POST  <br />Usually, this is a GET request.</li></ul> | The HTTP method for the authorization request. |
+| headers | Yes | Object | `{ "header_name": "header_value" }` | You can include key-value pairs of custom headers you want to pass in your authorization request. Input variable references are supported here. |
+| url | Yes | String | Valid URLs. If JINJA is used, it should be correctly formed. | The consent URL where the user will be redirected to provide their consent. Input variable references are supported here. |
+| url\_params | Yes | Object | `{ "url_param": "param_value" }` | <ul><li>You can include key-value pairs of custom headers in your authorization request.</li><li>References to input variables are supported in this context.</li><li>If you don't have any custom URL parameters to add, you can simply use an empty object.</li></ul> |
+| body\_type | Yes | String | This should be JSON. | The body type of the authorization request. For GET requests, leave this as JSON. |
+| auth\_code\_mapping | Yes | String | The key from the identity provider's response. | The key that contains the authorization code in the URL parameters of the callback response from the authorization server.  <br />**Example 1:**<br />URL: `https://example-app.com/cb?code=AUTH_CODE_HERE&state=1234zyx` ”auth\_code\_mapping”: “code”  <br />**Example 2:**<br />URL: `https://example-app.com/cb?my_custom_auth_code=AUTH_CODE_HERE&state=1234zyx` ”auth\_code\_mapping”: “my\_custom\_auth\_code” |
+
+#### Access Token Request
+
+| Key | Required | Type | Valid Values | Description |
+| --- | --- | --- | --- | --- |
+| method | Yes | String | <ul><li>GET</li><li>POST  <br />Usually, this is a POST request.</li></ul> | The HTTP method for the access token request. |
+| headers | Yes | Object | `{ "header_name": "header_value" }` | <ul><li>You can include key-value pairs of custom headers you want to pass in your access token request. Input variable references are supported here.</li><li>If you do not have any custom headers to add, you can make this an empty object.</li></ul> |
+| url | Yes | String | <ul><li>Valid URLs.</li><li>If JINJA is used, it should be correctly formed.</li></ul> | The URL to fetch the access token. Input variable references are supported here. |
+| url\_params | Yes | Object | `{ "url_param": "param_value" }` | <ul><li>You can include key-value pairs of custom URL parameters that you want to pass in your access token request. Input variables' references are supported here.</li><li>If you do not have any custom URL parameters to add, you can make this an empty object.</li></ul> |
+| body\_type | Yes | String | FORM (application/x-www-form-urlencoded) JSON (application/json)  Usually, this should be FORM. | The body type of the access token request. |
+| body | Yes | String | A stringified JSON array for FORM type or a valid stringified JSON for JSON type.  A stringified JSON array of key-value pairs for the FORM type or a valid stringified JSON for the JSON type.  Example for FORM type:   Structure  `"[{\"name\":\"grant\_type\",\"value\":\"authorization\_code\"},{\"name\":\"code\",\"value\":\"{{AppMarketplaceForm[\"auth\_code\"]}}\"}, {\"name\":\"redirect\_uri\",\"value\":\"{{AppMarketplaceForm[\"redirect\_uri\"]}}\"}, {\"name\":\"client\_id\",\"value\":\"{{AppMarketplaceForm[\"client\_id\"]}}\"}, {\"name\":\"client\_secret\",\"value\":\"{{AppMarketplaceForm[\"client\_secret\"]}}\"}]"`  For the FORM type, you must pass an array of objects. Each object will have a name and a value key.  Example for JSON type:  Structure  `{ "grant_type": "authorization_code", "code": "{{AppMarketplaceForm[\"auth\_code\"]}}", "redirect\_uri": "{{AppMarketplaceForm[\"redirect\_uri\"]}}", "client\_id": "{{AppMarketplaceForm[\"client\_id\"]}}", "client\_secret": "{{AppMarketplaceForm[\"client\_secret\"]}}" }` | The body of the request to fetch the access token. Input variable references are supported here. |
+| response\_mapping | Yes | Object | An Object containing the following keys: `{"access_token_mapping": ""}{"access_token_expiry_mapping": ""}` | Defines how to map the keys in the API response to the access token and its expiry time.  Defines how to map the keys in the API response to the access token and its expiry time.  Example 1:  Response:  Structure  `{ "expires_in": 3600, "token_type": "Bearer", "refresh_token": "", "access_token": "" }`  Mappings:  Structure  `{ "code": 200, "message": "success", "data": { "access_token": "", "advertiser_ids": [], "scope": "", "refresh_token": "", "refresh_token_expires_in": 15778800 }, "request_id": "" }`  Example 2:  Response:  Structure  `{ "code": 200, "message": "success", "data": { "access_token": "", "advertiser_ids": [], "scope": "", "refresh_token": "", "refresh_token_expires_in": 15778800 }, "request_id": "" }`  Mappings:  Structure  `"response_mapping": { "access_token_mapping": "data.access_token", "access_token_expiry_mapping": null }, "access_token_expiry_time": 15778800` |
+| access\_token\_expiry\_time | Yes | Number | Time in seconds. | A default expiry time for the access token in seconds. This is used as a fallback if the API response does not provide an expiry time.  If you have provided a mapping for the access token expiry in the `response_mapping section`, you can leave this as:  `{"access_token_expiry_time": null}` |
+
+#### Refresh Token Request
+
+| Key | Required | Type | Valid Values | Description |
+| --- | --- | --- | --- | --- |
+| method | Yes | String | <ul><li>GET</li><li>POST  <br />Usually, this is a POST request.</li></ul> | The HTTP method for the refresh token request. |
+| headers | Yes | Object | `{ "header_name": "header_value" }` | <ul><li>You can include key-value pairs of custom headers you want to pass in your refresh token request. Input variable references are supported here.</li><li>If you do not have any custom headers to add, you can make this an empty object.</li></ul> |
+| url | Yes | String | Valid URLs. If JINJA is used, it should be correctly formed. | The URL to fetch the refresh token. Input variable references are supported here. |
+| url\_params | Yes | Object | `{ "url_param": "param_value" }` | <ul><li>You can include key-value pairs of custom URL parameters that you want to pass in your refresh token request. Input variables' references are supported here.</li><li>If you do not have any custom URL parameters to add, you can make this an empty object.</li></ul> |
+| body\_type | Yes | String | FORM (application/x-www-form-urlencoded) JSON (application/json)  Usually, this should be FORM. | The body type of the refresh token request. |
+| body | Yes | String | A stringified JSON array for the FORM type or a valid stringified JSON for the JSON type.  Example for the FORM type:    JSON  `{{AppMarketplaceForm[\"MOE\_ACCESS\_TOKEN\_DEFAULT\"]}}`  JSON  `"[{\"name\":\"grant\_type\",\"value\":\"refresh\_token\"},{\"name\":\"code\",\"value\":\"{{AppMarketplaceForm[\"auth\_code\"]}}\"}, {\"name\":\"redirect\_uri\",\"value\":\"{{AppMarketplaceForm[\"redirect\_uri\"]}}\"}, {\"name\":\"client\_id\",\"value\":\"{{AppMarketplaceForm[\"client\_id\"]}}\"}, {\"name\":\"client\_secret\",\"value\":\"{{AppMarketplaceForm[\"client\_secret\"]}}\"}]"`  For the FORM type, you need to pass an array of objects. Each object will have a name and a value key.  Example for JSON type:  JSON  `{ "grant\_type": "refresh\_token", "code": "{{AppMarketplaceForm[\"auth\_code\"]}}", "redirect\_uri": "{{AppMarketplaceForm[\"redirect\_uri\"]}}", "client\_id": "{{AppMarketplaceForm[\"client\_id\"]}}", "client\_secret": "{{AppMarketplaceForm[\"client\_secret\"]}}" }` | The body of the request to refresh the token. Input variable references are supported here. |
+| response\_mapping | Yes | Object | Object with keys: `{"refresh_token_mapping": ""}{"refresh_token_expiry_mapping": ""}` | Defines how to map the keys in the API response to the refresh token request and its expiry time. Example 1:  Response:  JSON  `{ "expires_in": 3600, "token_type": "Bearer", "refresh_token": "", "refresh_token_expires_in": 21600 "access_token": "" }`  Mappings:  JSON  `"response_mapping": { "refresh_token_mapping": "refresh_token", "refresh_token_expiry_mapping": "refresh_token_expires_in" }`  Example 2:  Response:  JSON  `{ "code": 200, "message": "success", "data": { "access_token": "", "advertiser_ids": [], "scope": "", "refresh_token": "", "refresh_token_expires_in": 15778800 }, "request_id": "" }`  Mappings:  JSON  `"response_mapping": { "refresh_token_mapping": "data.refresh_token", "refresh_token_expiry_mapping": "data.refresh_token_expires_in" }, "refresh_token_expiry_time": null` |
+| refresh\_token\_expiry\_time | No | Number | Time in seconds. | <ul><li>A default expiry time for the refresh token in seconds. This is used as a fallback if the API response does not provide an expiry time.</li><li>If you have provided a mapping for the refresh token expiry in the `response_mapping` section, you can leave this as:   `{"refresh_token_expiry_mapping": null}`</li></ul> |
+
+# Request and Response
+
+In this section, you must set up the API requests that MoEngage initiates for each campaign sent. After a request is made from MoEngage, you can set up how the Campaign Stats are calculated based on your API requests' responses.
+
+<Warning>
+  MoEngage does not support stats that might be asynchronous or driven by callbacks today.
+</Warning>
+
+## Campaign Requests
+
+MoEngage attempts to send API requests to your App each time a campaign is sent out.\
+For example, if a campaign is directed to 50 users, MoEngage makes 50 API requests for that campaign.
+
+<Warning>
+  - Frequency Capping or Do-Not-Disturb (DND)
+  - Throttling
+  - Bulk API requests
+  - Multiple API requests (Chained API requests)
+</Warning>
+
+To configure a response, add this to your config:
+
+<CodeGroup>
+
+```json Structure
+"modules": [
+  {
+      "name": "default",
+      "type": "REQUEST_RESPONSE",
+      "params": {
+          "request": {},
+          "response": []
+      }
+  }
+]
+```
+
+</CodeGroup>
+
+## Request Format
+
+The request format informs MoEngage about the request's payload.
+
+<CodeGroup>
+
+```json Structure wrap
+"request": {
+    "method": "<HTTP method: GET, POST etc>",
+    "headers": {
+        "<header_name>": "<header_value>"
+    },
+    "url": "<API endpoint url>",
+    "url_params": {
+        "<url_param_name>": "<url_param_value>"
+    },
+    "body_type": "<body type: JSON, form data etc>",
+    "body": "<body content>"
+}
+```
+
+</CodeGroup>
+
+| Key | Required | Type | Valid Options | Description |
+| --- | --- | --- | --- | --- |
+| `method` | Yes | String | <ul><li>`GET`</li><li>`POST`</li><li>`PUT`</li><li>`PATCH`</li><li>`DELETE`</li></ul> | The method defines the request's API. |
+| `headers` | Yes | Object | `{ "header_name": "header_value" }` | You can include key-value pairs of custom headers you want to pass in your API requests. Input variable references are supported here.  If you do not have any custom headers to add, you can make this an empty object. |
+| `url` | Yes | String | <ul><li>Valid URLs</li><li>If JINJA is used, it should be correctly formed</li></ul> | It is used to specify the complete endpoint of your API request.  Input variable references are supported here. |
+| `url_params` | Yes | Object | `{ "url_param": "param_value" }` | You can include key-value pairs of custom headers that you want to pass in your API requests.  Input variables' references are supported here.  If you do not have any custom URL parameters to add, you can make this an empty object. |
+| `body_type` | Yes | String | `JSON` | The payload format. |
+| `body` | Yes | String | NIL | It is the payload of your API request. Input variables' references are supported here. |
+
+## Response Handling
+
+After making an API request, you can inform MoEngage how to interpret the response. You can also add multiple responses to your request by covering all your responses, such as successes and failures.
+
+A response consists of two parts:
+
+- **Response conditions**: Based on the response provided by your API, you can add conditions to its Status Code, Header Values, or even the body payload. When these conditions are fulfilled, you can perform actions in MoEngage.
+- **Response actions**: Actions are operations performed by MoEngage.
+
+### Use Cases
+
+There are several use cases for response handling. The following are the types of tracking used for various use cases:
+
+- **Stats tracking**: This displays accurate Success and Failed stats for your campaigns.
+- **Event tracking:** These are trigger events that occur when certain conditions are fulfilled. They can help you to create other journeys for your users.
+
+### Add a Response
+
+To add a response, follow the structure:
+
+<CodeGroup>
+
+```json Structure wrap
+"response": [
+    {
+        "body_type": "<body type: JSON, STRING etc>",
+        "datetime_format": "<datetime format if required>",
+        "evaluation_criteria": {...} , // Specify your evaluation criteria for success or failure
+        "actions": [...] // Actions to be taken based on evaluation
+    }
+]
+```
+
+</CodeGroup>
+
+| Key | Required | Type | Valid Options | Description |
+| --- | --- | --- | --- | --- |
+| `body_type` | Yes | String | `JSON` | It specifies the format of the response. Currently, MoEngage supports only JSON responses. |
+| `datetime_format` | Yes | String | Valid datetime formats. | If your response returns at least one datetime value, it is recommended that you provide the format of the expected datetime value so that MoEngage can accurately parse it. |
+| `evaluation_criteria` | Yes | Object | Refer to the following sections for the evaluation criteria. | The evaluation criteria for the response are as follows: <ul><li>If the conditions are satisfied, MoEngage performs the specified actions.</li></ul> |
+| `actions` | Yes | Object | Refer to the following sections for the actions. | The actions must be performed when the response conditions are fulfilled. The list of supported actions is included below. |
+| `data_type` | Yes | String | For Status codes: double<br />For Headers: string  <br />For Body: <ul><li>double</li><li>string</li><li>bool</li><li>datetime</li><li>object   <br />Refer [here](https://www.moengage.com/docs/api/filter-segments/create-filter-segment) for a complete list of accepted values.</li></ul> | This defines the expected data type of the value. |
+
+### Response Conditions
+
+Here, you can include multiple conditions for each response, combining both AND and OR operators. If you have prior experience with MoEngage Segmentation, you can leverage that.
+
+The following is to add a new condition:
+
+<CodeGroup>
+
+```json Structure wrap
+"evaluation_criteria": {
+    "filters": [
+        {
+            "name": "response_code" or "response_body" or "response_headers",
+            "data_type": "<data_type>",
+            "operator": "<operator>",
+            "value": "<value>",
+            "negate": true/false,
+            "case_sensitive": true/false
+        }
+    ],
+    "filter_operator": "<operator>"
+}
+```
+
+</CodeGroup>
+
+Each condition is called a _Filter_ in MoEngage. The following conditions function similarly to our segmentation filters:
+
+| Key | Required | Type | Valid Options | Description |
+| --- | --- | --- | --- | --- |
+| `filter_operator` | Yes | String | <ul><li>and</li><li>or</li></ul> | This defines how filters must be applied. It is the logical relation between filters. |
+| `filters` | Yes | Array | An array of Filter objects | The specific conditions are defined using an array of filter objects. |
+| `name` | Yes | String | <ul><li>response\_code</li><li>response\_headers</li><li>response\_body</li></ul> | It defines which part of the response is to be checked.  For example, values can be "response\_code," "response\_body," and so on. |
+| `data_type` | Yes | String | For Status codes: double<br />For Headers: string<br />For Body: <ul><li>double</li><li>string</li><li>bool</li><li>datetime   <br />Refer [here](https://www.moengage.com/docs/api/filter-segments/create-filter-segment) for a complete list of accepted values.</li></ul> | This defines the expected data type of the value. |
+| `operator` | Yes | String | Refer [here](https://www.moengage.com/docs/api/filter-segments/create-filter-segment) for a complete list of accepted values. | It represents the operator to be used for comparison |
+| `value` | Required for all operators except 'exists' | <ul><li>String</li><li>Number</li><li>Boolean</li></ul> | NIL | It is a value to be used for comparison. |
+| `value1` | Required for operator 'between' | String Number Boolean | NIL | It is the second value to be used for comparison.  In the case of _between_, it works as follows:  value \<= attribute\_value \<= value1 |
+| `negate` | Optional | Boolean | <ul><li>true</li><li>false</li></ul> | This field is used to identify which current query is negative. The default value is false.  For example, email != 'test.moe.com'  In this example, the operator is 'is,' negate=true, and value='[test@moe.com](mailto:test@moe.com)' |
+| `case_sensitive` | Optional | Boolean | <ul><li>true</li><li>false</li></ul> | This field indicates whether the string is case-sensitive.  To add the case-sensitive condition, choose case\_sensitive=true. Then, the default value is false. |
+
+Below is an example of evaluation criteria to check if the API's Response Status Code is 200 and if it returns `{"ok": true}` in the payload:
+
+<CodeGroup>
+
+```json Structure wrap
+"evaluation_criteria": {
+  "filters": [
+      {
+          "name": "response_code",
+          "data_type": "double",
+          "operator": "is",
+          "value": 200,
+          "negate": false,
+          "case_sensitive": false
+      },
+      {
+          "name": "response_body",
+          "data_type": "object",
+          "filter_operator": "and",
+          "filters": [
+              {
+                  "name": "ok",
+                  "data_type": "bool",
+                  "operator": "is",
+                  "value": true,
+                  "negate": false,
+                  "case_sensitive": false
+              }
+          ]
+      }
+  ],
+  "filter_operator": "and"
+}
+```
+
+</CodeGroup>
+
+You are allowed to create conditions customized for your App. The accuracy of these conditions directly influences MoEngage's ability to trigger events and display statistics effectively.
+
+### Response Actions
+
+Here, you can have MoEngage perform actions based on the above-mentioned conditions. Currently, MoEngage supports the **Create Event** actions.
+
+#### **Create Event**
+
+These tracks use cases like Messages sent, Users synced, and so on. With this action, you can use MoEngage to trigger an event. Below is the structure to add an Event for your response:
+
+<CodeGroup>
+
+```json Structure wrap
+"actions": [
+    {
+        "type": "CREATE_EVENT",
+        "config": {
+            "event": {
+                "name": "Connected App Campaign Failed"
+            },
+            "attributes": [
+                {
+                    "key": "Attribute Name",
+                    "value": "Attribute Value"
+                }
+            ]
+        }
+    }
+]
+```
+
+</CodeGroup>
+
+To ensure accurate calculation of your Campaign Stats, specifically for Sent and Failed events, the following two events must be added as part of your Actions:
+
+- _Connected App Campaign Sent_
+- _Connected App Campaign Failed_
+
+| Key | Required | Type | Valid Options | Description |
+| --- | --- | --- | --- | --- |
+| `type` | Yes | String | CREATE\_EVENT | It represents the type of action you want to perform. |
+| `config` | Yes | Object | NIL | It represents the required details of the action that you must perform. |
+| `event` | Yes | Object | NIL | It is the event that triggered this action. |
+| `event.name` | Yes | String | NIL | It is the name of your event. |
+| `event.attributes` | Yes | Object-Array | NIL | An array of different key-value pairs of attributes as part of your event. |
+| ` event.attributes[].key` | Yes | String | NIL | It is the name of the event attribute. This can be a Display Name of the attribute. |
+| `event.attributes[].value` | Yes | String | NIL | It is the value of the event attribute. Input variables' references are supported here. |
+
+MoEngage also includes the following default standard event attributes to facilitate better tracking for users.
+
+| Attribute Name | Description |
+| --- | --- |
+| App name | It is the name of your Connected App. |
+| Integration type | It is the name of your Channel Connector. |
+| Campaign name | It represents the name of the campaign associated with this event. |
+| Campaign Id | It is the ID of the campaign associated with this event. |
+| Parent Campaign ID | It is tracked when a periodic campaign is run and represents the campaign ID of the parent periodic campaign. Child instances of this parent campaign are re-run on a recurring basis. |
+| Version Id | It represents the Version Name to which the journey campaign belongs and is tracked during campaign execution. |
+| Version Name | It represents the name of your campaign journey. |
+| Campaign Channel | The Campaign Channel is always Connected Apps. |
+| Readable Campaign Id | It provides a readable Campaign ID for easy identification. |
+| Campaign Type | It represents the type of campaign to which the message belongs. |
+| Delivery Type | It represents the Delivery type (one-time, periodic, and so on of the campaign. |
+| Campaign Tags | It represents the tags added to the campaign and is tracked in all campaign-related events. |
+| Parent Flow Id | It represents the flow ID of the parent journey campaign and is tracked during the campaign's execution. |
+| Parent Flow Name | It represents the flow name of the parent journey campaign and is tracked when the journey campaign is run. |
+
+# Upload the Config File
+
+After you are ready with your configuration file, refer [here](/user-guide/campaigns-and-channels/connected-apps/getting-started-with-connected-apps/create-an-app) to upload it to your Connected App on the App marketplace.

@@ -16,8 +16,7 @@ servers:
     variables:
       dc:
         default: "01"
-        description: |
-          Each customer is hosted on a different data center; you can find your data center number (value of X) by checking the [data center and API endpoint mapping page](https://help.moengage.com/hc/en-us/articles/360057030512-Data-Centers-in-MoEngage#01G5DQVXGT2KZMXTJPF77QPJ25).
+        description: "The ‘dc’ in the API Endpoint URL refers to the MoEngage Data Center (DC). MoEngage hosts each customer in a different DC. You can find your DC number and replace the value of ‘dc’ in the URL by referring to the DC and API endpoint mapping [here](/api/introduction#data-centers). Your MoEngage Data Center (DC) can be 01, 02, 03, 04, 05, 06, or 101."
 
 components:
   securitySchemes:
@@ -67,6 +66,8 @@ components:
 
     BasicDetails:
       type: object
+      description: |
+        This field contains the email content. This is where you define the email template being created.
       required:
         - email_content
         - subject
@@ -111,6 +112,8 @@ components:
 
     MetaInfo:
       type: object
+      description: |
+        This field contains information about the template being created, such as the name, version, and ID of the template and the creator's details.
       required:
         - template_id
         - template_name
@@ -505,19 +508,24 @@ paths:
               description: >-
                 **Note:**
 
+                - `page` and `entries` are mandatory effective November 15, 2025. All other fields are optional.
+
                 - You can send empty filters to fetch all the email templates.
 
                 - You can send only `template_ids` if you want specific older versions of the email template. In other cases, you will receive the latest version of the template.
 
                 - By default, the `is_default_template_of_group` flag is set to "true" for the default (parent) template and "false" for child templates.
-              
+              required:
+                - page
+                - entries
               properties:
                 page:
                   type: integer
                   description: This field contains the index of the pages to be returned in the search result.
                 entries:
                   type: integer
-                  description: This field contains the number of entries per page in the search result.
+                  description: This field contains the number of entries per page in the search result. Maximum value is 15.
+                  maximum: 15
                 template_name:
                   type: string
                   description: This field indicates the name of the template. When this value is specified, the template that matches the name specified in this field will be returned.

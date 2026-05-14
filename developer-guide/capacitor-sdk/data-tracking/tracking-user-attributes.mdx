@@ -40,6 +40,50 @@ MoECapacitorCore.logoutUser({ appId: "YOUR_WORKSPACE_ID"});
 
 In case the application is registering for push token it should pass the new push token to MoEngage SDK after user logout. For more information about passing push tokens, refer to [Push Configuration for Android SDK](/developer-guide/android-sdk/push/basic/push-configuration). 
 
+### Logout Callback Listener
+
+Clearing user data and resetting the SDK state is an asynchronous process natively on Android and iOS, you should wait for the SDK to complete the logout before navigating the user away or clearing your app's local state.
+
+You can listen for successful logout operations by registering a listener for the logoutCompleted event. This ensures you prevent cross-contamination of user data and safely handle UI navigation.
+
+<CodeGroup>
+
+```javascript TypeScript wrap
+import { MoECapacitorCore, MoELogoutCompleteData } from 'capacitor-moengage-core';
+
+MoECapacitorCore.addListener("logoutCompleted", (data: MoELogoutCompleteData) => {
+    console.log("Received callback 'MoELogoutComplete', data: " + JSON.stringify(data));
+    // Safe to navigate to login screen or clear local app state
+});
+```
+
+</CodeGroup>
+
+### Logout Callback Data
+
+<CodeGroup>
+
+```javascript TypeScript wrap
+/**
+ * Data returned when a logout operation is successfully completed.
+ */
+export interface MoELogoutCompleteData {
+  /**
+    * Account information
+   */
+    accountMeta: MoEAccountMeta;
+
+  /**
+   * Platform type
+   */
+    platform: MoEPlatform;
+}
+```
+
+</CodeGroup>
+
+
+
 ## Updating User Attribute Unique Id
 
 Use the method _setAlias()_ to update the user attribute unique id instead of _setUniqueId()_ with a different value. Using the method _setUniqueId()_ with a new value creates unintended users in MoEngage. 

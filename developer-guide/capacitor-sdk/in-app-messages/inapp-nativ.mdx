@@ -85,6 +85,8 @@ For the screen name and deep link redirection, your app code should redirect the
 
 # Self-Handled InApps
 
+## Single Self-Handled InApps
+
 Self-handled In Apps are messages which are delivered by the SDK but displaying it has to be handled by the App.\
 To get self-handled In-App call the below method.
 
@@ -109,6 +111,17 @@ MoECapacitorCore.addListener("inAppCampaignSelfHandled", (data: MoEInAppSelfHand
 ```
 
 </CodeGroup>
+
+## Multiple Self-Handled InApps
+
+To fetch multiple self-handled in-apps, call the `getSelfHandledInApps()` method. This returns a promise containing the `MoEInAppSelfHandledCampaignsData` object.
+
+```javascript TypeScript wrap
+import { MoECapacitorCore } from 'capacitor-moengage-core';
+MoECapacitorCore.getSelfHandledInApps({ appId: "YOUR_WORKSPACE_ID" }).then((data) => {
+    console.log("Self Handled InApps Data:", JSON.stringify(data));
+});
+```
 
 # Tracking Statistics
 
@@ -313,6 +326,7 @@ export declare enum MoEInAppActionType {
     NAVIGATION = "navigation",
     CUSTOM = "custom"
 }
+
 /**
  * In-App custom action data
  */
@@ -325,6 +339,17 @@ export interface MoEInAppCustomAction {
      * Key-Value Pair entered on the MoEngage Platform during campaign creation.
      */
     kvPair: Map<string, object>;
+}
+
+export interface MoEInAppSelfHandledCampaignsData {
+  /**
+   * Account information
+   */
+  accountMeta: MoEAccountMeta;
+  /**
+   * Array of self handled campaigns
+   */
+  campaigns: Array<MoEInAppSelfHandledCampaignData>;
 }
 
 /**
@@ -343,6 +368,10 @@ export interface MoEInAppSelfHandledCampaignData {
      * SelfHandled data
      */
     selfHandled: MoEInAppSelfHandledCampaign; 
+    /**
+     * Platform information
+     */
+    platform: MoEPlatform;
 }
 
 /**
@@ -362,10 +391,47 @@ export interface MoEInAppSelfHandledCampaign {
      * if the value is true campaign should be dismissed on back press.
      */
      isCancellable: boolean; 
+    /**
+     * Display rules for the campaign
+     */
+     displayRules: MoEInAppDisplayRules;
+}
+
+/**
+ * Display rules for self handled campaign 
+ */
+export interface MoEInAppDisplayRules {
+  /**
+   * Screen name where campaign should be displayed   
+   */
+  screenName: string;
+  /**
+   * List of contexts   
+   */
+  contexts: Array<string>;
+  /**
+   * List of screen names   
+   */
+  screenNames: Array<string>;
+}
+
+/**
+ * Data returned when a logout operation is successfully completed. 
+ */
+export interface MoELogoutCompleteData {
+  /**
+    * Account information   
+    */
+    accountMeta: MoEAccountMeta;
+  /**
+   * Platform type   
+   */
+    platform: MoEPlatform;
 }
 ```
 
 </CodeGroup>
+
 
 # Handling Orientation Change
 
