@@ -65,10 +65,12 @@ components:
       in: header
       required: true
       description: |
-        Workspace tenant ID. The gateway usually sets this from the authenticated session; if you call the service directly, set it to the workspace (App) ID from **Settings** > **Account** > **APIs** > **Workspace ID**.
+        Workspace tenant ID. Set this to the workspace (App) ID from **Settings** > **Account** > **APIs** > **Workspace ID**.
+
+        **V1 migration note:** In the V1 Campaigns API, the workspace ID was passed via the `MOE-APPKEY` request header. In V5, this header has been renamed to `X-MOE-Tenant-ID`. Requests that continue to use `MOE-APPKEY` will fail with an authentication error.
       schema:
         type: string
-      example: "YOUR_WORKSPACE_ID"
+      example: "{{workspace_id}}"
     X-MOE-Request-Id:
       name: X-MOE-Request-Id
       in: header
@@ -124,6 +126,12 @@ components:
                 properties:
                   target: { type: string }
                   message: { type: string }
+            request_id:
+              type: string
+              description: |
+                The `request_id` from the originating request. Use this to correlate a failed response back to the specific call that triggered it, particularly useful in high-volume or retry scenarios.
+
+                **V1 parity:** In V1, `request_id` appeared inside the `error` object. V5 preserves this field in the same location.
 
     # ==================== V5 Request Schemas ====================
     CampaignCreateV5Request:
@@ -147,7 +155,7 @@ components:
             A unique identifier for this campaign creation request.
             
             **Important:** After successful campaign creation, do not reuse this request_id for the next 1 hour. If campaign creation fails, you can immediately retry with the same request_id.
-          example: "push_req_12345"
+          example: "{{request_id}}"
         channel: 
           type: string
           enum: [PUSH]
@@ -187,7 +195,7 @@ components:
             A unique identifier for this campaign creation request.
             
             **Important:** After successful campaign creation, do not reuse this request_id for the next 1 day. If campaign creation fails, you can immediately retry with the same request_id.
-          example: "email_req_12345"
+          example: "{{request_id}}"
         channel: 
           type: string
           enum: [EMAIL]
@@ -2412,6 +2420,7 @@ components:
             error:
               code: VALIDATION_FAILED
               message: "One or more fields failed validation."
+              request_id: "req-push-001"
               details:
                 - target: "campaign_delivery_type"
                   message: "campaign_delivery_type value is required."
@@ -2495,6 +2504,86 @@ paths:
       summary: Create Campaign Draft
       description: |
         Use this API to create a new Push or Email campaign draft in MoEngage. You can include content, audience, and delivery settings at the time of creation, or add them later as you refine the draft.
+      x-codeSamples:
+        - lang: Shell
+          label: Push (cURL)
+          source: |
+            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
+              -H 'Authorization: Basic {{push_auth}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "PUSH",
+                "campaign_delivery_type": "ONE_TIME",
+                "created_by": "{{user_email}}",
+                "basic_details": {
+                  "name": "{{campaign_name}}",
+                  "team": "{{team_name}}",
+                  "platforms": ["ANDROID"]
+                },
+                "campaign_content": {
+                  "content": {
+                    "push": {
+                      "android": {
+                        "template_type": "BASIC",
+                        "basic_details": {
+                          "notification_channel": "{{notification_channel}}",
+                          "title": "{{title}}",
+                          "message": "{{message}}",
+                          "default_click_action": "DEEPLINKING",
+                          "default_click_action_value": "{{deep_link_url}}"
+                        }
+                      }
+                    }
+                  }
+                },
+                "scheduling_details": {
+                  "delivery_type": "ASAP"
+                }
+              }'
+        - lang: Shell
+          label: Email (cURL)
+          source: |
+            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
+              -H 'Authorization: Basic {{email_auth}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "EMAIL",
+                "campaign_delivery_type": "ONE_TIME",
+                "created_by": "{{user_email}}",
+                "basic_details": {
+                  "name": "{{campaign_name}}",
+                  "content_type": "PROMOTIONAL",
+                  "user_attribute_identifier": "Email (Standard)",
+                  "subscription_category": "{{subscription_category}}"
+                },
+                "connector": {
+                  "connector_type": "SENDGRID",
+                  "connector_name": "{{connector_name}}"
+                },
+                "campaign_content": {
+                  "content": {
+                    "email": {
+                      "subject": "{{email_subject}}",
+                      "sender_name": "{{sender_name}}",
+                      "preview_text": "{{preview_text}}",
+                      "from_address": "{{from_email}}",
+                      "reply_to_address": "{{reply_to_email}}",
+                      "html_content": "{{html_body}}"
+                    }
+                  }
+                },
+                "scheduling_details": {
+                  "delivery_type": "ASAP"
+                }
+              }'
       x-mint:
         content: |
           **Required fields:**
@@ -2503,6 +2592,10 @@ paths:
           - `created_by`
 
           All other components are optional, so you can build your campaign progressively. Any components included during creation must meet the `DRAFT_CREATE` validation standards.
+
+          **Placeholder convention:** All `{{placeholder}}` tokens in the cURL examples above must be replaced with your actual values before sending the request.
+
+          **Content structure:** The examples above use the flat `content.push` / `content.email` structure, which is correct for campaigns without locales or A/B test variations. For multi-locale or A/B test campaigns, the `campaign_content.content` field uses a nested `content[locale][variation_name]` structure — see the `campaign_content` schema for details and examples.
 
           #### Rate Limits
           | Rate Limit Name | Rate Limit |
@@ -2636,7 +2729,7 @@ paths:
 
               ```json
               {
-                "request_id": "<optional>",
+                "request_id": "{{request_id}}",
                 "campaign_content": {
                   "title": "Summer Sale",
                   "message": "Up to 50% off today only."
@@ -2656,7 +2749,7 @@ paths:
 
               ```json
               {
-                "request_id": "<optional>",
+                "request_id": "{{request_id}}",
                 "status": "PUBLISH"
               }
               ```
