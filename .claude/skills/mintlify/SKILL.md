@@ -181,7 +181,7 @@ response = requests.post('/api/v1/user/add',
 
 ```mdx
 <Columns cols={2}>
-  <Card title="Getting started" icon="rocket" href="/user-guide/getting-started">
+  <Card title="Getting Started" icon="rocket" href="/user-guide/getting-started">
     Set up MoEngage for your account.
   </Card>
   <Card title="Send your first campaign" icon="send" href="/user-guide/campaigns-and-channels">

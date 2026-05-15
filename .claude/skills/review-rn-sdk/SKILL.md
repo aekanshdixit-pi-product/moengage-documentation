@@ -44,7 +44,7 @@ React Native apps have three distinct layers. Know which one a page is targeting
 
 ### 1. Frontmatter
 
-- [ ] `title` is present and in sentence case ("Set up iOS notification extensions", not "Set Up iOS Notification Extensions").
+- [ ] `title` is present and in title case ("Set Up iOS Notification Extensions", not "Set up iOS notification extensions").
 - [ ] `description` is present and summarises the page's purpose in one sentence.
 - [ ] `keywords` is present when the page covers terms not already in `title` or `description`.
 
