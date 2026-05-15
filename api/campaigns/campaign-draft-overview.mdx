@@ -87,23 +87,20 @@ The Campaigns API consists of the following endpoints to manage your campaign li
   <Accordion title="What are the creation rate limits?">
     The API allows 5 create requests per second, 25 per minute, and 100 per hour. Separately, a campaign creation limit of 5 successful campaigns per minute, 25 per hour, and 100 per day applies. If 100 campaigns are successfully created within a day, subsequent requests are rejected regardless of the total number of API calls made.
   </Accordion>
-  <Accordion title="How do I personalize campaign content using user and event attributes?">
-    MoEngage supports template expressions in content fields such as `title`, `message`, `subject`, and `html_content`. Use the following syntax to reference dynamic values at delivery time:
+  <Accordion title="How do I personalize campaign content using user attributes?">
+    MoEngage supports template expressions in content fields such as `title`, `message`, `subject`, and `html_content`. Use the following syntax to reference a user attribute at delivery time:
 
-    | Data source | Syntax |
-    | :--- | :--- |
-    | User attribute | `{{UserAttribute['First Name']}}` |
-    | Event attribute | `{{EventAttribute['order_value']}}` |
-    | Content block | Insert by name via the dashboard template editor |
-    | Content API | Configure an endpoint under **Settings** > **Content API**; reference the response key in the template |
+    ```
+    {{UserAttribute['First Name']}}
+    ```
 
-    If an attribute value is absent for a recipient, the system uses the fallback value defined in the expression, or substitutes an empty string if no fallback is set.
+    MoEngage also supports personalization using event attributes, content blocks, and the Content API. Refer to the MoEngage personalization documentation for the full syntax and configuration details for each source.
   </Accordion>
   <Accordion title="How do campaigns created via the API appear in the MoEngage dashboard?">
-    Campaigns created via the API are visible in the MoEngage dashboard under **Campaigns**, alongside campaigns created through the UI. The value you pass in `created_by` is recorded as the campaign creator. Campaigns in `DRAFT` status appear in the drafts view and can be opened and edited from the dashboard or updated via subsequent API calls.
+    Campaigns created via the API are visible in the MoEngage dashboard under **Campaigns**, alongside campaigns created through the UI. Campaigns in `DRAFT` status can be updated via subsequent API calls.
   </Accordion>
   <Accordion title="Can I pass both custom_template_id and html_content in the same Email campaign request?">
-    No. `custom_template_id` and `html_content` are mutually exclusive in the Email campaign content payload. Submitting both fields in the same request returns a `400 Bad Request` validation error. Use `custom_template_id` to reference a saved template from the MoEngage Email Template library, or use `html_content` to supply raw HTML directly.
+    No. `custom_template_id` and `html_content` are mutually exclusive in the Email campaign content payload. Submitting both fields in the same request returns a validation error. Use `custom_template_id` to reference a saved template from the MoEngage Email Template library, or use `html_content` to supply raw HTML directly.
   </Accordion>
   <Accordion title="How do I target a custom segment when creating a campaign?">
     Pass the segment reference inside `segmentation_details.included_filters` using `filter_type: custom_segments`. You can find the segment ID and name in the MoEngage dashboard under **Segments**.
@@ -249,24 +246,12 @@ The Campaigns API consists of the following endpoints to manage your campaign li
 
 <AccordionGroup>
   <Accordion title="How do I find the template ID for a Push notification template?">
-    Use the Search Push Template API to list templates available in your workspace. The response includes a `template_id` for each template. Pass this value as `custom_template_id` in the `campaign_content` payload when creating or updating a Push campaign.
-
-    You can also look up template IDs in the MoEngage dashboard under **Content** > **Push Templates**.
+    Use the MoEngage Templates API to list Push templates available in your workspace. The response includes a `template_id` for each template. Pass this value as `custom_template_id` in the `campaign_content` payload when creating or updating a Push campaign.
   </Accordion>
   <Accordion title="How do I know which fields are required for a specific Push template type?">
-    Required fields vary by `template_type`. Set the `template_type` in the `basic_details` object of your campaign content, and the API validates the payload against that template's field requirements.
+    Required fields vary by `template_type`. Set the `template_type` in the `basic_details` object of your campaign content payload. The supported values for Android are `BASIC`, `STYLIZED_BASIC`, `SIMPLE_IMAGE_CAROUSEL`, `IMAGE_BANNER_WITH_TEXT`, `TIMER`, `TIMER_WITH_PROGRESS_BAR`, and `Custom`. For iOS, the supported values are `BASIC`, `STYLIZED_BASIC`, `SIMPLE_IMAGE_CAROUSEL`, and `Custom`.
 
-    Common requirements by template type:
-
-    | Template type | Required fields |
-    | :--- | :--- |
-    | `BASIC` | `title`, `message` |
-    | `BIG_PICTURE` | `title`, `message`, `image_url` |
-    | `IMAGE_BANNER_WITH_TEXT` | `title`, `message`, `banner_image_url` |
-    | `CAROUSEL` | `title`, at least two carousel items each with `image_url` and click action |
-    | `CUSTOM` | `custom_template_id` |
-
-    Refer to the `campaign_content` schema in the [Create Campaign](/api/v5/create-campaigns/create-campaign) reference for the complete list of required and optional fields per template type.
+    For the `Custom` template type, `custom_template_id` is required. For all other types, refer to the `campaign_content` schema in the [Create Campaign](/api/v5/create-campaigns/create-campaign) reference for the full list of required and optional fields per template type.
   </Accordion>
 </AccordionGroup>
 
