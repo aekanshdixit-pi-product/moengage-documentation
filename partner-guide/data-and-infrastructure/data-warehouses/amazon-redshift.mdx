@@ -1,5 +1,7 @@
 ---
 title: "Amazon Redshift"
+description: "Sync user attributes and events from Amazon Redshift directly to MoEngage on a recurring schedule to power campaigns and segmentation."
+keywords: ["Amazon Redshift", "data warehouse", "user sync", "event sync", "MoEngage integration", "AWS"]
 ---
 
 # Introduction
@@ -134,28 +136,15 @@ You need to create a new IAM Policy that will allow us to transfer data from S3 
              ]
          &#125;
 
-The value of `<bucket-arn>` will change based on your MoEngage Data Center Region:  
-**Data Center Region**
+The value of `<bucket-arn>` will change based on your MoEngage Data Center Region:
 
-| **&lt; bucket-arn&gt;** | **Resource Array** <br/>- |-
+| Data Center Region | `<bucket-arn>` | Resource Array |
+| --- | --- | --- |
+| DC-01 | `arn:aws:s3:::moe-warehouse-exports-us-east-1` | `"Resource": ["arn:aws:s3:::moe-warehouse-exports-us-east-1", "arn:aws:s3:::moe-warehouse-exports-us-east-1/*"]` |
+| DC-02 | `arn:aws:s3:::moe-warehouse-exports-eu-central-1` | `"Resource": ["arn:aws:s3:::moe-warehouse-exports-eu-central-1", "arn:aws:s3:::moe-warehouse-exports-eu-central-1/*"]` |
+| DC-03 | `arn:aws:s3:::moe-warehouse-exports-ap-south-1` | `"Resource": ["arn:aws:s3:::moe-warehouse-exports-ap-south-1", "arn:aws:s3:::moe-warehouse-exports-ap-south-1/*"]` |
+| DC-04 | `arn:aws:s3:::moe-warehouse-exports-us-east-2` | `"Resource": ["arn:aws:s3:::moe-warehouse-exports-us-east-2", "arn:aws:s3:::moe-warehouse-exports-us-east-2/*"]` |
 
-| --| |
-
----  
-DC-01
-
-| `arn:aws:s3:::moe-warehouse-exports-us-east-1` | `"Resource": ["arn:aws:s3:::moe-warehouse-exports-us-east-1", "arn:aws:s3:::moe-warehouse-exports-us-east-1/*"]` <br/>- DC-02 | 
-
-| `arn:aws:s3:::moe-warehouse-exports-eu-central-1` | |
-
- `"Resource": ["arn:aws:s3:::moe-warehouse-exports-eu-central-1", "arn:aws:s3:::moe-warehouse-exports-eu-central-1/*"]`  
-DC-03
-
-| `arn:aws:s3:::moe-warehouse-exports-ap-south-1` | `"Resource": ["arn:aws:s3:::moe-warehouse-exports-ap-south-1", "arn:aws:s3:::moe-warehouse-exports-ap-south-1/*"]` <br/>- DC-04 | 
-
-| `arn:aws:s3:::moe-warehouse-exports-us-east-2` | |
-
- `"Resource": ["arn:aws:s3:::moe-warehouse-exports-us-east-2", "arn:aws:s3:::moe-warehouse-exports-us-east-2/*"]`  
 Just replace the `<bucket-arn>` with the one corresponding to your MoEngage Data Center region.  
   
 ![jsonpolicy.png](/images/partner_12061504085652.png)  
@@ -212,38 +201,24 @@ From the Redshift Console, open your Redshift cluster.
 
 ![credentialsandevents.png](/images/partner_12091730203412.png)
 
-**Field**
+| Field | Description | Example |
+| --- | --- | --- |
+| Connection Name | Give this connection an identifiable name. | `My Redshift Instance 1` |
+| Host Name | On your AWS Console, navigate to your Redshift cluster. Under **General information**, the hostname is listed as your Redshift endpoint. Paste the part before the colon `:`. For example, if the Endpoint is `redshift-cluster-1.xxxxxxxzgxxx.us-east-1.redshift.amazonaws.com:5439/dev` then your Host Name will be `redshift-cluster-1.xxxxxxxzgxxx.us-east-1.redshift.amazonaws.com`. | Format should be `[name].[id].[region].redshift.amazonaws.com` |
+| Port | Enter your port number. On your AWS Console, navigate to your Redshift cluster. Under the **Properties** tab, find your port number and database name in the **Database configurations**. By default, the Redshift port number is 5439. | `5439` |
+| Database | The name of your Redshift database. | `moengage_exports` |
+| Username | Enter the username you want MoEngage to connect as. This can either be an existing user, or the one you created in Step 2. | — |
+| Password | Enter the password of the database user. | — |
+| IAM Role ARN | Enter the ARN of the IAM Role you created in Step 5. To find the ARN, on your AWS Console, go to IAM Console. In the side menu, under Access Management, click on **Roles**. Select the IAM Role you created in Step 5. Under the **Summary** section, you will find the ARN listed. Copy and paste it into the input field. | Format should be `arn:aws:iam::[aws-account-id]:role/[role-name]` |
+| Export into schema | MoEngage will create tables in the schema you provide. Unless specifically configured, the usual value for schema name is "public". | — |
+| Select events to export | Select which events you want to export to your Redshift cluster. | — |
 
-| **Description** | **Example** <br/>- |-
+![Redshift endpoint location](/images/partner_12091527172244.png)
 
-| --| |
+![Port and database configuration](/images/partner_12091625026324.png)
 
----  
-Connection Name
+![IAM Role ARN location](/images/partner_12091830424212.png)
 
-| Give this connection an identifiable name. | `My Redshift Instance 1` <br/>- Host Name | 
-
-| On your AWS Console, navigate to your Redshift cluster. Under "General information", the hostname is listed as your Redshift endpoint. Paste the part before the colon ":". For example, if the Endpoint is `redshift-cluster-1.xxxxxxxzgxxx.us-east-1.redshift.amazonaws.com:5439/dev` then your Host Name will be `redshift-cluster-1.xxxxxxxzgxxx.us-east-1.redshift.amazonaws.com` [![endpoint.png](/images/partner_12091527172244.png)](/images/partner_12091527172244.png) | |
-
-  Format should be  `[name].[id].[region].redshift.amazonaws.com`  
-Port
-
-|  Enter your port number. On your AWS Console, navigate to your Redshift cluster. Under the Properties tab, find your port number and database name in the "Database configurations". By default, the Redshift port number is 5439. [![portanddatabase.png](/images/partner_12091625026324.png)](/images/partner_12091625026324.png) |  `5439` <br/>- Database | 
-
-| `moengage_exports` <br/>- Username |  Enter the username you want MoEngage to connect as. This can either be an existing user, or the one you created in Step 2. | |
-
-   
-Password
-
-|  Enter the password of the database user. <br/>- IAM Role ARN |  Enter the ARN of the IAM Role you created in Step 5. To find the ARN, on your AWS Console, go to IAM Console. In the side menu, under Access Management, click on Roles. Select the IAM Role you created in Step 5. Under the Summary section, you will find the ARN listed. Copy and paste it into the input field. [![rolearn.png](/images/partner_12091830424212.png)](/images/partner_12091830424212.png) | |
-
-  Format should be  `arn:aws:iam::[aws-account-id]:role/[role-name]`  
-Export into schema
-
-|  MoEngage will create tables in the schema you provide. Unless specifically configured, the usual value for schema name is "public". <br/>- Select events to export |  Select which events you want to export to your Redshift cluster. | |
-
-   
-  
   5. Optionally, you can choose to test the connection. MoEngage will attempt to verify if the details you entered are correct. If there is an issue, an error will be shown that you can rectify.
   6. Once the test connection is successful, you can save the connection details and MoEngage will begin exporting events shortly to your Redshift cluster.
 
@@ -268,135 +243,44 @@ You can verify if data is correctly flowing in your warehouse by querying `moeng
 
 The final table definition will depend on the exact configurations of your exports.
 
-Field
+| Field | Type | NL |
+| --- | --- | --- |
+| `app_name` | character varying(256) | NN |
+| `event_name` | character varying(256) | NN |
+| `event_code` | character varying(256) | NN |
+| `event_uuid` | character varying(256) | NN |
+| `event_time` | bigint | NN |
+| `event_type` | character varying(256) | NN |
+| `event_source` | character varying(256) | NN |
+| `uid` | character varying(256) | NULL |
+| `user_attributes_moengage_user_id` | character varying(256) | NULL |
+| `device_attributes_moengage_device_id` | character varying(256) | NULL |
+| `push_id` | character varying(512) | NULL |
+| `email_address` | character varying(256) | NULL |
+| `mobile_number` | character varying(256) | NULL |
+| `event_attributes_app_version` | character varying(256) | NULL |
+| `event_attributes_sdk_version` | character varying(256) | NULL |
+| `event_attributes_platform` | character varying(256) | NULL |
+| `event_attributes_campaign_id` | character varying(256) | NULL |
+| `event_attributes_campaign_name` | character varying(256) | NULL |
+| `event_attributes_campaign_type` | character varying(256) | NULL |
+| `event_attributes_campaign_channel` | character varying(256) | NULL |
+| `event_attributes_readable_campaign_id` | character varying(256) | NULL |
+| `event_attributes_parent_campaign_id` | character varying(256) | NULL |
+| `event_attributes_parent_flow_id` | character varying(256) | NULL |
+| `event_attributes_parent_flow_name` | character varying(256) | NULL |
+| `event_attributes_variation_id` | character varying(256) | NULL |
+| `event_attributes_locale_id` | character varying(256) | NULL |
+| `event_attributes_locale_name` | character varying(256) | NULL |
+| `event_attributes_url` | character varying(256) | NULL |
+| `event_attributes_timestamp` | bigint | NULL |
+| `event_attributes_first_session` | boolean | NULL |
+| `event_attributes_logged_in_status` | character varying(256) | NULL |
+| `event_attributes` | super | NULL |
+| `user_attributes` | super | NULL |
+| `device_attributes` | super | NULL |
+| `created_at` | character varying(256) | NULL |
 
-| Type | NL <br/>- |-
-
-| --| |
-
----  
-app_name
-
-| character varying(256) | NN <br/>- event_name | 
-
-| character varying(256) | |
-
- NN  
-event_code
-
-| character varying(256) | NN <br/>- event_uuid | 
-
-| character varying(256) | |
-
- NN  
-event_time
-
-| bigint | NN <br/>- event_type | 
-
-| character varying(256) | |
-
- NN  
-event_source
-
-| character varying(256) | NN <br/>- uid | 
-
-| character varying(256) | |
-
- NULL  
-user_attributes_moengage_user_id
-
-| character varying(256) | NULL <br/>- device_attributes_moengage_device_id | 
-
-| character varying(256) | |
-
- NULL  
-push_id
-
-| character varying(512) | NULL <br/>- email_address | 
-
-| character varying(256) | |
-
- NULL  
-mobile_number
-
-| character varying(256) | NULL <br/>- event_attributes_app_version | 
-
-| character varying(256) | |
-
- NULL  
-event_attributes_sdk_version
-
-| character varying(256) | NULL <br/>- event_attributes_platform | 
-
-| character varying(256) | |
-
- NULL  
-event_attributes_campaign_id
-
-| character varying(256) | NULL <br/>- event_attributes_campaign_name | 
-
-| character varying(256) | |
-
- NULL  
-event_attributes_campaign_type
-
-| character varying(256) | NULL <br/>- event_attributes_campaign_channel | 
-
-| character varying(256) | |
-
- NULL  
-event_attributes_readable_campaign_id
-
-| character varying(256) | NULL <br/>- event_attributes_parent_campaign_id | 
-
-| character varying(256) | |
-
- NULL  
-event_attributes_parent_flow_id
-
-| character varying(256) | NULL <br/>- event_attributes_parent_flow_name | 
-
-| character varying(256) | |
-
- NULL  
-event_attributes_variation_id
-
-| character varying(256) | NULL <br/>- event_attributes_locale_id | 
-
-| character varying(256) | |
-
- NULL  
-event_attributes_locale_name
-
-| character varying(256) | NULL <br/>- event_attributes_url | 
-
-| character varying(256) | |
-
- NULL  
-event_attributes_timestamp
-
-| bigint | NULL <br/>- event_attributes_first_session | 
-
-| boolean | |
-
- NULL  
-event_attributes_logged_in_status
-
-| character varying(256) | NULL <br/>- event_attributes | 
-
-| super | |
-
- NULL  
-user_attributes
-
-| super | NULL <br/>- device_attributes | 
-
-| super | |
-
- NULL
-
-| created_at | character varying(256) | NULL  
-  
 # Export Frequency
 
 We will dump the data at hourly intervals.
