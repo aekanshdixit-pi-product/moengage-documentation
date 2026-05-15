@@ -369,71 +369,165 @@ components:
 
     TestV5Request:
       oneOf:
-        - $ref: '#/components/schemas/TestV5InlineRequest'
+        - $ref: '#/components/schemas/TestV5PushInlineRequest'
+        - $ref: '#/components/schemas/TestV5EmailInlineRequest'
         - $ref: '#/components/schemas/TestV5DraftIdRequest'
 
-    TestV5InlineRequest:
+    TestV5PushInlineRequest:
+      title: Push — Inline mode
       type: object
+      description: >-
+        Inline Push test. Supply `channel` and `campaign_content` directly — nothing is stored on the server.
+        Mutually exclusive with draft mode (`draft_id`).
       required: [channel, campaign_content, test_campaign_meta]
       properties:
-        request_id: 
+        request_id:
           type: string
-          description: A unique identifier for this test request.
-        channel: 
+          description: Optional unique identifier for this test request (UUID v4 recommended). Used for idempotency.
+          example: "{{request_id}}"
+        channel:
           type: string
-          description: The communication channel for this campaign.
-        basic_details: { type: object }
-        connector: { $ref: '#/components/schemas/Connector' }
-        campaign_content: { type: object }
-        test_campaign_meta: { $ref: '#/components/schemas/TestCampaignMetaV5' }
+          enum: [PUSH]
+          description: Must be `PUSH` for a Push inline test.
+        basic_details:
+          $ref: '#/components/schemas/PushBasicDetailsV5'
+        campaign_content:
+          $ref: '#/components/schemas/PushCampaignContent'
+        personalization_details:
+          $ref: '#/components/schemas/PersonalizationDetails'
+        test_campaign_meta:
+          $ref: '#/components/schemas/TestCampaignMetaV5'
+
+    TestV5EmailInlineRequest:
+      title: Email — Inline mode
+      type: object
+      description: >-
+        Inline Email test. Supply `channel`, `connector`, and `campaign_content` directly — nothing is stored on the server.
+        Mutually exclusive with draft mode (`draft_id`).
+      required: [channel, connector, campaign_content, test_campaign_meta]
+      properties:
+        request_id:
+          type: string
+          description: Optional unique identifier for this test request (UUID v4 recommended). Used for idempotency.
+          example: "{{request_id}}"
+        channel:
+          type: string
+          enum: [EMAIL]
+          description: Must be `EMAIL` for an Email inline test.
+        basic_details:
+          $ref: '#/components/schemas/EmailBasicDetailsV5'
+        connector:
+          $ref: '#/components/schemas/Connector'
+        campaign_content:
+          $ref: '#/components/schemas/EmailCampaignContent'
+        personalization_details:
+          $ref: '#/components/schemas/PersonalizationDetails'
+        test_campaign_meta:
+          $ref: '#/components/schemas/TestCampaignMetaV5'
 
     TestV5DraftIdRequest:
+      title: Draft mode
       type: object
+      description: >-
+        Draft mode test. Pass `draft_id` to load content from a saved DRAFT campaign — mutually exclusive with
+        inline mode fields (`channel`, `campaign_content`). By default the server sends one test per platform,
+        locale, and variation defined in the draft. Use `test_campaign_meta.platform`, `locale_name`, or
+        `variation` to narrow the send.
       required: [draft_id, test_campaign_meta]
       properties:
-        request_id: 
+        request_id:
           type: string
-          description: A unique identifier for this test request.
-        draft_id: 
+          description: Optional unique identifier for this test request (UUID v4 recommended). Used for idempotency.
+          example: "{{request_id}}"
+        draft_id:
           type: string
-          description: "Raw 24-char ObjectId to specify the draft being tested."
-        test_campaign_meta: { $ref: '#/components/schemas/TestCampaignMetaV5' }
+          description: >-
+            Raw 24-character ObjectId of the saved DRAFT campaign to test. Obtain this value from the `campaign_id`
+            returned when the draft was created. Mutually exclusive with `channel` and `campaign_content`.
+          example: "64a1b2c3d4e5f6a7b8c9d0e1"
+        personalization_details:
+          $ref: '#/components/schemas/PersonalizationDetails'
+        test_campaign_meta:
+          $ref: '#/components/schemas/TestCampaignMetaV5'
+
+    PersonalizationDetails:
+      type: object
+      description: >-
+        Overrides user and event attribute values used to render personalised content during the test send.
+        When supplied, these values replace what would normally be fetched from the stored user profile —
+        useful for testing personalised content without needing a matching user record in MoEngage.
+      properties:
+        user_attributes:
+          type: object
+          description: Key-value pairs of user attribute names and the override values to use for this test send.
+          example:
+            First Name: "Jane"
+            City: "New York"
+        event_attributes:
+          type: object
+          description: Key-value pairs of event attribute names and the override values to use for this test send.
+          example:
+            product_name: "Running Shoes"
+            price: 79.99
 
     TestCampaignMetaV5:
       type: object
       description: Test audience and delivery options.
       required: [identifier, identifier_values]
       properties:
-        identifier: 
+        identifier:
           type: string
+          enum:
+            - USER_ATTRIBUTE_UNIQUE_ID
+            - USER_ATTRIBUTE_USER_EMAIL
+            - USER_ATTRIBUTE_USER_MOBILE
+            - MOE_GAID
+            - ADVERTISING_IDENTIFIER
+            - PUSH_ID
+            - CUSTOM_SEGMENT
+            - EMAIL
+            - ID
+            - MOBILE_NUMBER
           description: |
-            The type of identifier used to target test users.
-            
-            - **USER_ATTRIBUTE_UNIQUE_ID**: Permanent internal user ID (e.g., USER_1138)
-            - **USER_ATTRIBUTE_USER_EMAIL**: User's email address (e.g., john.doe@example.com)
-            - **USER_ATTRIBUTE_USER_MOBILE**: User's mobile number (e.g., +14155550101)
-            - **MOE_GAID**: Google Advertising ID from Android device
-            - **ADVERTISING_IDENTIFIER**: Resettable advertising ID (GAID on Android, IDFA on iOS)
-            - **PUSH_ID**: Unique device token for push notifications
-            - **CUSTOM_SEGMENT**: User-defined segment for targeting
-            - **EMAIL**: Email address (content will not be personalized with user profile data)
-        identifier_values: 
+            The type of identifier used to target test recipients. Supported values vary by channel:
+
+            **Push campaigns:**
+            - `USER_ATTRIBUTE_UNIQUE_ID` — Permanent internal user ID (for example, `USER_1138`).
+            - `USER_ATTRIBUTE_USER_EMAIL` — User's email address (for example, `jane@example.com`).
+            - `USER_ATTRIBUTE_USER_MOBILE` — User's mobile number in E.164 format (for example, `+14155550101`).
+            - `MOE_GAID` — Google Advertising ID (Android devices).
+            - `ADVERTISING_IDENTIFIER` — Resettable advertising ID (GAID on Android, IDFA on iOS).
+            - `PUSH_ID` — Unique device push token.
+            - `CUSTOM_SEGMENT` — User-defined segment.
+
+            **Email campaigns:**
+            - `EMAIL` — Email address. Content will not be personalised with user profile data if no matching record exists in MoEngage.
+            - `ID` — MoEngage internal user ID.
+            - `MOBILE_NUMBER` — User's mobile number in E.164 format.
+            - `CUSTOM_SEGMENT` — User-defined segment.
+        identifier_values:
           type: array
           items: { type: string }
-          description: |
-            Array of identifier values to send the test campaign to.
-            
-            **Note:** Maximum 10 users at a time.
-        variation: 
+          description: Array of identifier values to send the test campaign to. Maximum 10 values per request.
+          example: ["{{identifier_value}}"]
+        variation:
           type: string
-          description: The variation name to use for the test campaign (when using A/B testing).
-        locale_name: 
+          description: >-
+            A/B variation name to target for this test send (for example, `variation_1`, `control`).
+            If omitted, the server sends one test per variation defined in the draft.
+          example: "{{variation_name}}"
+        locale_name:
           type: string
-          description: The locale name to use for the test campaign (when using multi-locale campaigns).
-        platform: 
+          description: >-
+            Locale name to target for this test send (for example, `en`, `fr`).
+            If omitted, the server sends one test per locale defined in the draft.
+          example: "{{locale_name}}"
+        platform:
           type: string
           enum: [ANDROID, IOS, WEB]
-          description: The platform to send the test to.
+          description: >-
+            Optional. Applies to draft mode only. Narrows the test send to a single platform.
+            If omitted, the server sends one test per platform defined in the draft.
 
     # ==================== Shared V5/V1 Components ====================
     PushBasicDetailsV5:
@@ -2410,16 +2504,35 @@ components:
     TestCampaignResultData:
       type: object
       description: |
-        Result of a test send. `data` maps keys (for example platform, locale, or variation identifiers) to per-send status objects. `message` summarizes the operation.
+        Result of a test send. `data` maps composite keys to per-send status objects. `message` summarizes the overall operation.
       properties:
         data:
           type: object
+          description: |
+            Each key is a composite string in the format `{PLATFORM}_{locale}_{variation}` identifying a single test send. For example:
+            - `ANDROID_default_variation_1` — Android platform, default locale, variation 1.
+            - `IOS_en_control` — iOS platform, English locale, control variation.
+
+            Key components:
+            - **PLATFORM** — One of `ANDROID`, `IOS`, or `WEB`.
+            - **locale** — The locale name (for example, `en`, `fr`). Defaults to `default` if no locale is configured on the campaign.
+            - **variation** — The variation name (for example, `variation_1`, `control`). Defaults to `variation_1` if no A/B test is configured.
+
+            When you specify `platform`, `locale_name`, or `variation` in `test_campaign_meta`, only the matching key appears in the response.
           additionalProperties:
             type: object
             properties:
-              status: { type: string }
+              status:
+                type: string
+                enum: [SENT, FAILED]
+                description: Delivery status for this platform-locale-variation combination.
+              failure_reason:
+                type: string
+                description: Present only when `status` is `FAILED`. Describes why the test send failed for this combination.
         message:
           type: string
+          description: Human-readable summary of the test send operation.
+          example: "Test campaign processed"
 
   responses:
     V5ValidationError:
@@ -3166,6 +3279,96 @@ paths:
       summary: Test Campaign
       description: |
         Use this API to send a test Push or Email to specific users or identifiers before going live.
+      x-codeSamples:
+        - lang: Shell
+          label: Push — Inline (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/test' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "PUSH",
+                "basic_details": {
+                  "name": "{{campaign_name}}",
+                  "platforms": ["ANDROID"]
+                },
+                "campaign_content": {
+                  "content": {
+                    "push": {
+                      "android": {
+                        "template_type": "BASIC",
+                        "basic_details": {
+                          "title": "{{title}}",
+                          "message": "{{message}}"
+                        }
+                      }
+                    }
+                  }
+                },
+                "test_campaign_meta": {
+                  "identifier": "USER_ATTRIBUTE_UNIQUE_ID",
+                  "identifier_values": ["{{identifier_value}}"]
+                }
+              }'
+        - lang: Shell
+          label: Email — Inline (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/test' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "EMAIL",
+                "basic_details": {
+                  "name": "{{campaign_name}}",
+                  "content_type": "PROMOTIONAL",
+                  "user_attribute_identifier": "Email (Standard)",
+                  "subscription_category": "{{subscription_category}}"
+                },
+                "connector": {
+                  "connector_type": "SENDGRID",
+                  "connector_name": "{{connector_name}}"
+                },
+                "campaign_content": {
+                  "content": {
+                    "email": {
+                      "subject": "{{email_subject}}",
+                      "sender_name": "{{sender_name}}",
+                      "from_address": "{{from_email}}",
+                      "html_content": "{{html_body}}"
+                    }
+                  }
+                },
+                "test_campaign_meta": {
+                  "identifier": "EMAIL",
+                  "identifier_values": ["{{recipient_email}}"]
+                }
+              }'
+        - lang: Shell
+          label: Push — Draft mode (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/test' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "draft_id": "{{campaign_id}}",
+                "test_campaign_meta": {
+                  "identifier": "USER_ATTRIBUTE_UNIQUE_ID",
+                  "identifier_values": ["{{identifier_value}}"],
+                  "platform": "ANDROID"
+                }
+              }'
       x-mint:
         content: |
           The endpoint supports two modes:
@@ -3186,7 +3389,7 @@ paths:
           | :--- | :--- |
           | Test campaign per second | The total number of test campaign requests per second per client allowed is 10. |
           | Test campaign per minute | The total number of test campaign requests per minute per client allowed is 100. |
-          | Test campaign per hour | The total number of test campaign requests per hour per client allowed is 6000. | 
+          | Test campaign per hour | The total number of test campaign requests per hour per client allowed is 6000. |
 
           <Note>
             **Notes**
@@ -3218,15 +3421,44 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/TestCampaignResultData' }
-              example:
-                response_id: "string"
-                type: "campaign"
-                data:
-                  data:
-                    ANDROID_default_variation_1:
-                      status: "SENT"
-                  message: "Test campaign processed"
+              examples:
+                push_sent:
+                  summary: Push test sent successfully
+                  value:
+                    response_id: "abc-701"
+                    type: "campaign"
+                    data:
+                      data:
+                        ANDROID_default_variation_1:
+                          status: "SENT"
+                      message: "Test campaign processed"
+                push_failed:
+                  summary: Push test with one failed send
+                  value:
+                    response_id: "abc-702"
+                    type: "campaign"
+                    data:
+                      data:
+                        ANDROID_default_variation_1:
+                          status: "FAILED"
+                          failure_reason: "Invalid push token"
+                      message: "Test campaign processed"
         '400':
           $ref: '#/components/responses/V5ValidationError'
+        '401':
+          $ref: '#/components/responses/V5Unauthorized'
         '409':
-          $ref: '#/components/responses/V5BadRequest'
+          description: >-
+            Conflict — the `Idempotency-Key` was already used with a different request body, or a test send
+            is already in progress for this key. Retry with a new `Idempotency-Key`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
+              example:
+                response_id: "abc-701"
+                error:
+                  code: BAD_REQUEST
+                  message: "Idempotency-Key reused with a different request body."
+                  details: []
+        '500':
+          $ref: '#/components/responses/V5InternalError'
