@@ -1,5 +1,7 @@
 ---
-title: "Outbound (User and Event forwarding)"
+title: "Outbound (User and Event Forwarding)"
+description: "Forward user attributes and events from mParticle CDP to MoEngage via server-to-server APIs for unified profiles and lifecycle campaigns."
+keywords: ["mParticle", "outbound", "user forwarding", "event forwarding", "CDP", "MoEngage integration"]
 ---
 
 # Introduction
@@ -84,64 +86,53 @@ Once activated, you would start seeing your users and events on MoEngage dashboa
 
 # Data mapping
 
-## Data mapping 
+## Data mapping
 
-mParticle data type
-
-| MoEngage data type  | Details <br/>- |-
-
-| --| |
-
----  
-Reserved user attributes
-
-| Standard MoEngage attributes  | The [reserved mParticle attributes](https://docs.mparticle.com/developers/sdk/web/users/#reserved-attributes) are mapped to the standard MoEngage attributes. <br/>- User identities  | 
-
-| Standard MoEngage attributes  | |
-
- The user identities in mParticle are mapped to the standard MoEngage attributes.   
-  
-  
-Other user attributes
-
-| Custom user attribute | Any user attributes passed to mParticle that fall outside of its reserved user attribute keys are logged in MoEngage as a custom attribute. <br/>- User attributes support string, numerical, boolean, date, arrays and even objects. <br/>- _Note that object support is not supported out of the box. Please reach out to your MoEngage CSM or our support team to get it enabled._ <br/>- Custom event | 
-
-| Custom event | |
-
- mParticle custom events are recognised by MoEngage as a custom event. Event attributes are forwarded as custom event attributes.  
-  
-Event attributes passed to MoEngage support string, numeric, boolean, and date objects.   
-  
-  
-Purchase commerce event
-
-| Custom event |  Purchase commerce events are mapped to custom events in MoEngage. <br/>- Action name of purchase event will be the event name. <br/>- All attributes specific to the purchase event are stored as event attributes. <br/>- The following actions are covered in the integration scope- <br/>- Add to cart <br/>- Remove from cart <br/>- Checkout <br/>- Checkout option <br/>- Click <br/>- View Detail <br/>- Purchase <br/>- Refund <br/>- Add to wishlist <br/>- Remove from wishlist <br/>- Other event attributes such as products, transaction details, total amount, etc are mapped to their respective attributes. <br/>- Refer to the Commerce Event mapping section below for more information. <br/>- Please get in touch with your Customer Support Manager to understand how to add support for these events. <br/>- Other commerce events  | 
-
-| Custom event  | |
-
-  Other commerce events are mapped to custom events in MoEngage.
-
-  * The `action` name of the commerce event will be the event name. 
-  * All attributes specific to these events are stored as event attributes.
-  * Refer to the Commerce Event mapping section below for more information.
-  * Please get in touch with your Customer Support Manager to understand how to add support for these events. 
-
-  
-Other mParticle events
-
-| Not supported  | Events like "session_start", "session_end", "custom_event", "screen_view", "error", "privacy_setting_change", "push_subscription", "application_state_transition", "push_message_receipt", "promotion_action", "impression", "attribution" are currently not supported. <br/>- User update related events (user_atttribute_change) | 
-
-| User attributes are updated  | |
-
-  Each request on mParticle is triggered by an event. When a user attribute is changed, such as updating an email address,
-
-  * If the change is tracked by SDKs, it is passed to MoEngage as "user_attribute_change" event. And MoEngage updates the user attributes on its side.
-  * If the user attributes are updated by a separate input feed (custom feed, partner feed, calculated attribute) on mParticle, these are not forwarded to any output such as MoEngage. 
-    * In such cases, the new value is only passed to an output like MoEngage in the next event triggered by the user. If there is no future action, the updated values are not passed to MoEngage. 
-    * It is generally recommended to create a separate “user attribute updated” event (dummy event) that only sends the specific user attribute(s) that have to been updated in MoEngage. 
+| mParticle data type | MoEngage data type | Details |
+| --- | --- | --- |
+| Reserved user attributes | Standard MoEngage attributes | The [reserved mParticle attributes](https://docs.mparticle.com/developers/sdk/web/users/#reserved-attributes) are mapped to the standard MoEngage attributes. |
+| User identities | Standard MoEngage attributes | The user identities in mParticle are mapped to the standard MoEngage attributes. |
+| Other user attributes | Custom user attribute | Any user attributes passed to mParticle that fall outside of its reserved user attribute keys are logged in MoEngage as a custom attribute. User attributes support string, numerical, boolean, date, arrays and even objects. *Note that object support is not supported out of the box. Please reach out to your MoEngage CSM or our support team to get it enabled.* |
+| Custom event | Custom event | mParticle custom events are recognised by MoEngage as a custom event. Event attributes are forwarded as custom event attributes. Event attributes passed to MoEngage support string, numeric, boolean, and date objects. |
+| Purchase commerce event | Custom event | Purchase commerce events are mapped to custom events in MoEngage.<ul><li>Action name of purchase event will be the event name.</li><li>All attributes specific to the purchase event are stored as event attributes.</li><li>The following actions are covered in the integration scope: Add to cart, Remove from cart, Checkout, Checkout option, Click, View Detail, Purchase, Refund, Add to wishlist, Remove from wishlist.</li><li>Other event attributes such as products, transaction details, total amount, etc are mapped to their respective attributes.</li><li>Refer to the Commerce Event mapping section below for more information.</li><li>Please get in touch with your Customer Support Manager to understand how to add support for these events.</li></ul> |
+| Other commerce events | Custom event | Other commerce events are mapped to custom events in MoEngage.<ul><li>The `action` name of the commerce event will be the event name.</li><li>All attributes specific to these events are stored as event attributes.</li><li>Refer to the Commerce Event mapping section below for more information.</li><li>Please get in touch with your Customer Support Manager to understand how to add support for these events.</li></ul> |
+| Other mParticle events | Not supported | Events like "session_start", "session_end", "custom_event", "screen_view", "error", "privacy_setting_change", "push_subscription", "application_state_transition", "push_message_receipt", "promotion_action", "impression", "attribution" are currently not supported. |
+| User update related events (user_attribute_change) | User attributes are updated | Each request on mParticle is triggered by an event. When a user attribute is changed, such as updating an email address:<ul><li>If the change is tracked by SDKs, it is passed to MoEngage as "user_attribute_change" event. And MoEngage updates the user attributes on its side.</li><li>If the user attributes are updated by a separate input feed (custom feed, partner feed, calculated attribute) on mParticle, these are not forwarded to any output such as MoEngage. In such cases, the new value is only passed to an output like MoEngage in the next event triggered by the user. If there is no future action, the updated values are not passed to MoEngage.</li><li>It is generally recommended to create a separate "user attribute updated" event (dummy event) that only sends the specific user attribute(s) that have been updated in MoEngage.</li></ul> |
 
   
   
+## Portfolio Support
+
+<Info>
+This feature allows you to route events from a single mParticle source to specific projects within your MoEngage workspace using attribute mapping.
+</Info>
+
+### Configuration Requirements
+
+To route events to specific projects, you must configure the following in your mParticle workspace:
+
+- **Map the project identifier**: When forwarding events to MoEngage, map your source property (for example, `brand_name` or `app_id`) to the MoEngage event attribute `moe_project_name`.
+- **Ensure an exact match**: The value in your source field must exactly match the project name configured in your MoEngage portfolio. Matching is case-sensitive.
+
+### Event Ingestion Rules
+
+MoEngage handles event ingestion based on the following logic:
+
+- **Successful routing**: If the value in `moe_project_name` matches a configured project name, MoEngage ingests the event at that specific project level.
+- **Fallback behavior**: If the `moe_project_name` attribute is missing, blank, or does not exactly match a configured project name, MoEngage ingests the event at the global portfolio level.  
+  **Note**: Data ingested at the portfolio level is not associated with any specific project. This data is unusable for project-specific analysis, segmentation, or campaign targeting.
+
+For more information, refer to [Portfolio](/user-guide/settings/account/portfolio/portfolio) and [Portfolio: Data Ingestion and Management](/user-guide/data/key-concepts/portfolio-data-ingestion-and-management#event-attributes-project-level).
+
+<Warning>
+**Limitations**
+
+Project-level routing for mParticle events is available. The following features are managed at the global portfolio level:
+
+- **User sync**: Not supported at the project level. Users are tracked at the global portfolio level by default during outbound user syncs.
+- **Cohort sync**: Not supported at the project level.
+</Warning>
+
 ## Commerce Events mapping
 
   * MoEngage does not support expanding of Commerce Events.
@@ -169,235 +160,62 @@ Product-based commerce events measure all interactions with a product that can l
 
 #### Common Event Attributes
 
-Commerce Event Field
-
-| MoEngage Event Attribute | Data Type | 
-
-| Required | Description <br/>- |-
-
-| --|---|-
-
-| --| |
-
----  
-`ProductAction.TransactionId`
-
-|  `TransactionId` |  string | 
-
-| No |  The ID associated with the given transaction. <br/>- `ProductAction.Products[]` |
-
-| `Products[]` |  object-array |
-
-| No | |
-
-  The list of products.  
-`ProductAction.Products[].Name`
-
-|  `Products[].Name` |  string | 
-
-| No |  The name associated with the given product. <br/>- `ProductAction.Products[].Category` |
-
-| `Products[].Category` |  string |
-
-| No | |
-
-  The category associated with the given product.  
-`ProductAction.Products[].Brand`
-
-|  `Products[].Brand` |  string | 
-
-| No |  The brand associated with the given product. <br/>- `ProductAction.Products[].TotalProductAmount` |
-
-| `Products[].TotalProductAmount` |  string |
-
-| No | |
-
-  The total amount associated with the given product for the given transaction.  
-`ProductAction.Products[].Attributes[“myProductAttribute”]`
-
-|  `Products[].Attributes[“myProductAttribute”]` |  string | 
-
-| No |  A custom attribute associated with the given product. <br/>- `ProductAction.Attributes[“myEventAttribute”]` |
-
-| `myEventAttribute` |  any |
-
-| No | |
-
-  Custom attributes of the event.  
+| Commerce Event Field | MoEngage Event Attribute | Data Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `ProductAction.TransactionId` | `TransactionId` | string | No | The ID associated with the given transaction. |
+| `ProductAction.Products[]` | `Products[]` | object-array | No | The list of products. |
+| `ProductAction.Products[].Name` | `Products[].Name` | string | No | The name associated with the given product. |
+| `ProductAction.Products[].Category` | `Products[].Category` | string | No | The category associated with the given product. |
+| `ProductAction.Products[].Brand` | `Products[].Brand` | string | No | The brand associated with the given product. |
+| `ProductAction.Products[].TotalProductAmount` | `Products[].TotalProductAmount` | string | No | The total amount associated with the given product for the given transaction. |
+| `ProductAction.Products[].Attributes["myProductAttribute"]` | `Products[].Attributes["myProductAttribute"]` | string | No | A custom attribute associated with the given product. |
+| `ProductAction.Attributes["myEventAttribute"]` | `myEventAttribute` | any | No | Custom attributes of the event. |
   
 #### Purchase Event
 
-Commerce Event Field
-
-| MoEngage Event Attribute | Data Type | 
-
-| Required | Description <br/>- |-
-
-| --|---|-
-
-| --| |
-
----  
-`CurrencyCode`
-
-|  `currency` |  string | 
-
-| No |  Currency Code. <br/>- `ProductAction.Products[]` |
-
-| `Products[]` |  object-array |
-
-| No | |
-
-  The list of products.  
-`ProductAction.Products[].Id`
-
-|  `Products[].Id` |  string | 
-
-| No |  The ID associated with the given product. <br/>- `ProductAction.Products[].Price` |
-
-| `Products[].Price` |  double |
-
-| No | |
-
-  The price associated with 1 unit of the given product.  
-`ProductAction.Products[].Quantity`
-
-|  `Products[].Quantity` |  int | 
-
-| No |  The quantity associated with the given product. <br/>- `ProductAction.TotalAmount` |
-
-| `Total Amount` |  string |
-
-| No | |
-
-  The total amount associated with the given transaction.  
-`ProductAction.ShippingAmount`
-
-|  `Shipping Amount` |  string | 
-
-| No |  The shipping amount associated with the given transaction. <br/>- `ProductAction.TaxAmount` |
-
-| `Tax Amount` |  string |
-
-| No | |
-
-  The tax amount associated with the given transaction.  
+| Commerce Event Field | MoEngage Event Attribute | Data Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `CurrencyCode` | `currency` | string | No | Currency Code. |
+| `ProductAction.Products[]` | `Products[]` | object-array | No | The list of products. |
+| `ProductAction.Products[].Id` | `Products[].Id` | string | No | The ID associated with the given product. |
+| `ProductAction.Products[].Price` | `Products[].Price` | double | No | The price associated with 1 unit of the given product. |
+| `ProductAction.Products[].Quantity` | `Products[].Quantity` | int | No | The quantity associated with the given product. |
+| `ProductAction.TotalAmount` | `Total Amount` | string | No | The total amount associated with the given transaction. |
+| `ProductAction.ShippingAmount` | `Shipping Amount` | string | No | The shipping amount associated with the given transaction. |
+| `ProductAction.TaxAmount` | `Tax Amount` | string | No | The tax amount associated with the given transaction. |
   
 #### Non-Purchase Events
 
-Commerce Event Field
+| Commerce Event Field | MoEngage Event Attribute | Data Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `ProductAction.Products[].Id` | `Products[].Id` | string | No | The ID associated with the given product. |
+| `ProductAction.Products[].Price` | `Products[].Price` | double | No | The price associated with 1 unit of the given product. |
+| `ProductAction.Products[].Quantity` | `Products[].Quantity` | int | No | The quantity associated with the given product. |
 
-| MoEngage Event Attribute | Data Type | 
+### Promotion-based
 
-| Required | Description <br/>- |-
-
-| --|---|-
-
-| --| |
-
----  
-`ProductAction.Products[].Id`
-
-|  `Products[].Id` |  string | 
-
-| No |  The ID associated with the given product. <br/>- `ProductAction.Products[].Price` |
-
-| `Products[].Price` |  double |
-
-| No | |
-
-  The price associated with 1 unit of the given product.  
-`ProductAction.Products[].Quantity`
-
-|  `Products[].Quantity` |  int | 
-
-| No |  The quantity associated with the given product. <br/>- ### Promotion-based <br/>- Commerce Event Field |
-
-| MoEngage Event Attribute | Data Type |
-
-| Required |  |
-| --- | --- |
-
-  The ID associated with the given promotion.  
-`PromotionAction.Promotions[].Name`
-
-|  `Promotions[].Name` |  string | 
-
-| No |  The name associated with the given promotion. <br/>- `PromotionAction.Promotions[].Creative` |
-
-| `Promotions[].Creative` |  string |
-
-| No | |
-
-  The creative is associated with the given promotion.  
-`PromotionAction.Promotions[].Position`
-
-|  `Promotions[].Position` |  string | 
-
-| No |  The position associated with the given promotion. <br/>- `PromotionAction.Attributes[“myEventAttribute”]` |
-
-| `myEventAttribute` |  any |
-
-| No | |
-
-  Custom attributes of the event.  
+| Commerce Event Field | MoEngage Event Attribute | Data Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `PromotionAction.Promotions[].Id` | `Promotions[].Id` | string | No | The ID associated with the given promotion. |
+| `PromotionAction.Promotions[].Name` | `Promotions[].Name` | string | No | The name associated with the given promotion. |
+| `PromotionAction.Promotions[].Creative` | `Promotions[].Creative` | string | No | The creative is associated with the given promotion. |
+| `PromotionAction.Promotions[].Position` | `Promotions[].Position` | string | No | The position associated with the given promotion. |
+| `PromotionAction.Attributes["myEventAttribute"]` | `myEventAttribute` | any | No | Custom attributes of the event. |
   
 ### Impression-based
 
-Commerce Event Field
-
-| MoEngage Event Attribute | Data Type | 
-
-| Required <br/>- |---|-
-
-| --| |
-
----  
-`ProductImpressions[].ProductImpressionList`
-
-|  `Impressions[]["product impression list"]` |  string | 
-
-| No <br/>- `ProductImpressions[].Products[].Id` |  `Products[].Id` |
-
-| string | |
-
-  No  
-`ProductImpressions[].Products[].Name`
-
-|  `Products[].Name` |  string | 
-
-| No <br/>- `ProductImpressions[].Products[].Category` |  `Products[].Category` |
-
-| string | |
-
-  No  
-`ProductImpressions[].Products[].Brand`
-
-|  `Products[].Brand` |  string | 
-
-| No <br/>- `ProductImpressions[].Products[].Price` |  `Products[].Price` |
-
-| string | |
-
-  No  
-`ProductImpressions[].Products[].Quantity`
-
-|  `Products[].Quantity` |  string | 
-
-| No <br/>- `ProductImpressions[].Products[].TotalProductAmount` |  `Products[].TotalProductAmount` |
-
-| string | |
-
-  No  
-`ProductImpressions[].Products[].Attributes["myProductAttribute"]`
-
-|  `Products[]["myProductAttribute"]` |  any | 
-
-| No <br/>- `ProductImpressions[].Attributes[“myEventAttribute”]` |  `myEventAttribute` |
-
-| any | |
-
-  No  
+| Commerce Event Field | MoEngage Event Attribute | Data Type | Required |
+| --- | --- | --- | --- |
+| `ProductImpressions[].ProductImpressionList` | `Impressions[]["product impression list"]` | string | No |
+| `ProductImpressions[].Products[].Id` | `Products[].Id` | string | No |
+| `ProductImpressions[].Products[].Name` | `Products[].Name` | string | No |
+| `ProductImpressions[].Products[].Category` | `Products[].Category` | string | No |
+| `ProductImpressions[].Products[].Brand` | `Products[].Brand` | string | No |
+| `ProductImpressions[].Products[].Price` | `Products[].Price` | string | No |
+| `ProductImpressions[].Products[].Quantity` | `Products[].Quantity` | string | No |
+| `ProductImpressions[].Products[].TotalProductAmount` | `Products[].TotalProductAmount` | string | No |
+| `ProductImpressions[].Products[].Attributes["myProductAttribute"]` | `Products[]["myProductAttribute"]` | any | No |
+| `ProductImpressions[].Attributes["myEventAttribute"]` | `myEventAttribute` | any | No |
   
 ## User identity mapping 
 
@@ -410,6 +228,14 @@ The following user identities are supported-
 
 
 By default, the integration works on Customer ID. If you want to use any other identity (from the above), please reach out to your MoEngage CSM or MoEngage support team. 
+
+# Rate Limits
+
+To maintain platform stability, MoEngage limits ingestion of mParticle data to a maximum of 500 requests per second (RPS) per workspace. If your workspace exceeds this limit, MoEngage returns an HTTP `429 (Too Many Requests)` status code.
+
+Refer to mParticle's default retry policy to understand how rate limiting affects your data flow. For more information, see the mParticle documentation.
+
+**Retry Exhaustion**: If mParticle exhausts all retry attempts for a batch of data, you must contact the mParticle Support Team to replay the failed requests.
 
 # Frequently Asked Questions
 
