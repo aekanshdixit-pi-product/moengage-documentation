@@ -2328,16 +2328,28 @@ components:
     V5ValidateResponse:
       type: object
       description: |
-        When `valid` is `true`, only `valid` is returned. When `valid` is `false`, `errors` lists field-level issues.
+        When `valid` is `true`, only `valid` is returned. When `valid` is `false`, `errors` lists one or more field-level issues found during publish-time validation (`DRAFT_PUBLISH`).
       properties:
-        valid: { type: boolean }
+        valid:
+          type: boolean
+          description: "`true` if the campaign passes all publish-time validation checks. `false` if one or more checks fail."
+          example: false
         errors:
           type: array
+          description: |
+            Present only when `valid` is `false`. Each item describes a single validation failure. Multiple errors can be returned, and more than one error can reference the same field.
           items:
             type: object
             properties:
-              field: { type: string }
-              issue: { type: string }
+              field:
+                type: string
+                description: |
+                  Dot-separated JSON path to the field that failed validation, relative to the campaign document root (for example, `campaign_content.content.push.android.basic_details.title` or `scheduling_details`).
+                example: "campaign_content.content.push.android.basic_details.title"
+              issue:
+                type: string
+                description: Human-readable description of the validation failure for this field. The value is free-form and may vary by channel, delivery type, and component.
+                example: "title is required"
 
     CampaignDraftCreatedData:
       type: object
@@ -2845,10 +2857,35 @@ paths:
       summary: Validate Campaign
       description: |
         Use this API to check whether a draft would pass publish-time validation (`DRAFT_PUBLISH`) without making any changes to the draft.
+      x-codeSamples:
+        - lang: Shell
+          label: Push (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}/validate' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}"
+              }'
+        - lang: Shell
+          label: Email (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}/validate' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}"
+              }'
       x-mint:
-        content: |
-          - The response is always HTTP `200`.
-          - The body returns either `valid: true` or `valid: false`, along with an `errors` array.
+        content: >
+          - The response is always HTTP `200`, regardless of whether the campaign is valid or not.
+
+          - Whether the campaign passes validation is indicated in the `valid` field (`true` or `false`), not by the HTTP status code.
+
           - You do not need an idempotency key for this endpoint.
       tags: [Create Campaigns]
       parameters:
@@ -2857,7 +2894,7 @@ paths:
         - name: campaign_id
           in: path
           required: true
-          description: Raw 24-char ObjectId.
+          description: Raw 24-char ObjectId of the campaign to validate.
           schema: { type: string }
       requestBody:
         required: true
@@ -2866,20 +2903,48 @@ paths:
             schema:
               type: object
               properties:
-                request_id: { type: string }
+                request_id:
+                  type: string
+                  description: >-
+                    Optional string (UUID v4 recommended) used to identify this validation call. Unlike other POST endpoints, this field is not required and does not enforce deduplication — the validate endpoint is read-only and safe to retry freely.
+                  example: "{{request_id}}"
       responses:
         '200':
-          description: Validation result
+          description: Validation result — always returned regardless of whether the campaign passes or fails validation.
           content:
             application/json:
-              schema: 
+              schema:
                 allOf:
                   - $ref: '#/components/schemas/V5SuccessEnvelope'
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/V5ValidateResponse' }
+              examples:
+                valid:
+                  summary: Campaign passes validation
+                  value:
+                    response_id: "abc-501"
+                    type: "campaign"
+                    data:
+                      valid: true
+                invalid:
+                  summary: Campaign fails validation
+                  value:
+                    response_id: "abc-501"
+                    type: "campaign"
+                    data:
+                      valid: false
+                      errors:
+                        - field: "campaign_content.content.push.android.basic_details.title"
+                          issue: "title is required"
+                        - field: "scheduling_details"
+                          issue: "scheduling_details is required for publish"
         '400':
           $ref: '#/components/responses/V5ValidationError'
+        '401':
+          $ref: '#/components/responses/V5Unauthorized'
+        '500':
+          $ref: '#/components/responses/V5InternalError'
 
   /v5/campaigns/{campaign_id}/status:
     patch:
