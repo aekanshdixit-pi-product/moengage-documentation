@@ -28,6 +28,8 @@ info:
     6. **Manage** — Pause, resume, or stop a live campaign. Search your workspace and retrieve lightweight metadata across all campaigns.
 
     **Campaign versioning** is optional per workspace. When enabled, publishing an update to a live campaign creates a new document with an incremented `version_number`. The `campaign_id` in responses is the stable identifier across versions; each version has its own raw `id` (ObjectId).
+
+    The V1 request header `MOE-APPKEY` (used to pass the Workspace ID) has been renamed to `X-MOE-Tenant-ID` in V5. Requests that continue to send `MOE-APPKEY` will receive authentication errors in V5. Replace `MOE-APPKEY` with `X-MOE-Tenant-ID` in all V5 requests.
   contact:
     name: MoEngage Developer Team
     email: support@moengage.com
@@ -67,7 +69,7 @@ components:
       description: |
         Workspace tenant ID. Set this to the workspace (App) ID from **Settings** > **Account** > **APIs** > **Workspace ID**.
 
-        **V1 migration note:** In the V1 Campaigns API, the workspace ID was passed via the `MOE-APPKEY` request header. In V5, this header has been renamed to `X-MOE-Tenant-ID`. Requests that continue to use `MOE-APPKEY` will fail with an authentication error.
+        In the V1 Campaigns API, the workspace ID was passed via the `MOE-APPKEY` request header. In V5, this header is `X-MOE-Tenant-ID`. Requests that continue to use `MOE-APPKEY` will fail with an authentication error.
       schema:
         type: string
       example: "{{workspace_id}}"
@@ -131,7 +133,7 @@ components:
               description: |
                 The `request_id` from the originating request. Use this to correlate a failed response back to the specific call that triggered it, particularly useful in high-volume or retry scenarios.
 
-                **V1 parity:** In V1, `request_id` appeared inside the `error` object. V5 exposes this field in the same location to maintain parity with V1.
+                In V1, `request_id` appeared inside the `error` object. V5 preserves this field in the same location.
 
     # ==================== V5 Request Schemas ====================
     CampaignCreateV5Request:
@@ -224,36 +226,113 @@ components:
     CampaignPatchV5Request:
       description: |
         Used for component-level edits OR to publish a campaign.
-        Note: You cannot pass component fields and `{ "status": "PUBLISH" }` in the same body.
+        You cannot pass component fields and `{ "status": "PUBLISH" }` in the same body.
       oneOf:
-        - $ref: '#/components/schemas/ComponentPatchRequest'
+        - $ref: '#/components/schemas/PushComponentPatchRequest'
+        - $ref: '#/components/schemas/EmailComponentPatchRequest'
         - $ref: '#/components/schemas/PublishCampaignRequest'
 
-    ComponentPatchRequest:
-      title: Update Draft Campaign
+    PushComponentPatchRequest:
+      title: Update Push Campaign Draft
       type: object
+      description: >-
+        Update one or more components of a Push campaign draft. Only fields you include are changed —
+        omitted fields retain their current values. When updating a nested field, include its complete
+        parent object.
       properties:
-        request_id: 
+        request_id:
           type: string
-          description: A unique identifier for this campaign update request.
-        channel: 
+          description: A unique identifier for this update request.
+          example: "{{request_id}}"
+        channel:
           type: string
-          enum: [PUSH, EMAIL]
-          description: The communication channel.
-        campaign_delivery_type: 
+          enum: [PUSH]
+          description: Must be `PUSH` for a Push update.
+        campaign_delivery_type:
           type: string
-          description: The delivery type of the campaign.
-        basic_details: { type: object }
-        trigger_condition: { type: object }
-        campaign_content: { type: object }
-        segmentation_details: { $ref: '#/components/schemas/SegmentationDetails' }
-        scheduling_details: { $ref: '#/components/schemas/SchedulingDetails' }
-        delivery_controls: { type: object }
-        advanced: { $ref: '#/components/schemas/AdvancedDetails' }
-        conversion_goal_details: { $ref: '#/components/schemas/ConversionGoalDetails' }
-        control_group_details: { $ref: '#/components/schemas/ControlGroupDetails' }
-        utm_params: { $ref: '#/components/schemas/UTMParams' }
-        campaign_audience_limit: { $ref: '#/components/schemas/CampaignAudienceLimit' }
+          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED, BROADCAST_LIVE_ACTIVITY]
+          description: The delivery type of the campaign being updated.
+        updated_by:
+          type: string
+          format: email
+          description: |
+            The email address of the user making this update, used for audit trail purposes.
+            If omitted, the update is attributed to the authenticated API credential.
+          example: "marketer@example.com"
+        basic_details:
+          $ref: '#/components/schemas/PushBasicDetailsV5'
+        trigger_condition:
+          $ref: '#/components/schemas/PushTriggerCondition'
+        campaign_content:
+          $ref: '#/components/schemas/PushCampaignContent'
+        segmentation_details:
+          $ref: '#/components/schemas/SegmentationDetails'
+        scheduling_details:
+          $ref: '#/components/schemas/SchedulingDetails'
+        delivery_controls:
+          $ref: '#/components/schemas/PushDeliveryControls'
+        advanced:
+          $ref: '#/components/schemas/AdvancedDetails'
+        conversion_goal_details:
+          $ref: '#/components/schemas/ConversionGoalDetails'
+        control_group_details:
+          $ref: '#/components/schemas/ControlGroupDetails'
+        utm_params:
+          $ref: '#/components/schemas/UTMParams'
+        campaign_audience_limit:
+          $ref: '#/components/schemas/CampaignAudienceLimit'
+
+    EmailComponentPatchRequest:
+      title: Update Email Campaign Draft
+      type: object
+      description: >-
+        Update one or more components of an Email campaign draft. Only fields you include are changed —
+        omitted fields retain their current values. When updating a nested field, include its complete
+        parent object.
+      properties:
+        request_id:
+          type: string
+          description: A unique identifier for this update request.
+          example: "{{request_id}}"
+        channel:
+          type: string
+          enum: [EMAIL]
+          description: Must be `EMAIL` for an Email update.
+        campaign_delivery_type:
+          type: string
+          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_TRIGGERED]
+          description: The delivery type of the campaign being updated.
+        updated_by:
+          type: string
+          format: email
+          description: |
+            The email address of the user making this update, used for audit trail purposes.
+            If omitted, the update is attributed to the authenticated API credential.
+          example: "marketer@example.com"
+        basic_details:
+          $ref: '#/components/schemas/EmailBasicDetailsV5'
+        connector:
+          $ref: '#/components/schemas/Connector'
+        trigger_condition:
+          $ref: '#/components/schemas/EmailTriggerCondition'
+        campaign_content:
+          $ref: '#/components/schemas/EmailCampaignContent'
+        segmentation_details:
+          $ref: '#/components/schemas/SegmentationDetails'
+        scheduling_details:
+          $ref: '#/components/schemas/SchedulingDetails'
+        delivery_controls:
+          $ref: '#/components/schemas/EmailDeliveryControls'
+        advanced:
+          $ref: '#/components/schemas/AdvancedDetails'
+        conversion_goal_details:
+          $ref: '#/components/schemas/ConversionGoalDetails'
+        control_group_details:
+          $ref: '#/components/schemas/ControlGroupDetails'
+        utm_params:
+          $ref: '#/components/schemas/UTMParams'
+        campaign_audience_limit:
+          $ref: '#/components/schemas/CampaignAudienceLimit'
 
     PublishCampaignRequest:
       title: Publish Campaign Patch
@@ -290,39 +369,132 @@ components:
       type: object
       required: [limit, page]
       properties:
-        request_id: 
+        request_id:
           type: string
-          description: A unique identifier for this search request.
+          description: |
+            An optional unique identifier for this search request (UUID v4 recommended).
+
+            In V1, `request_id` was required on every search call. In V5, it is optional.
+            Providing it is still recommended for traceability and debugging — MoEngage support
+            can use the value to locate the specific request in server logs.
+          example: "{{request_id}}"
         campaign_fields: { $ref: '#/components/schemas/CampaignSearchFieldsV5' }
-        limit: 
+        include_child_campaigns:
+          type: boolean
+          default: false
+          description: |
+            When `true`, includes child campaigns in results — periodic children and flow-node
+            campaigns. Child campaigns carry `parent_id` (for periodic children) and `flow_id` /
+            `flow_name` (for flow campaigns) in the response.
+
+            Defaults to `false`.
+        include_archive_campaigns:
+          type: boolean
+          default: false
+          description: |
+            When `true`, includes campaigns in `ARCHIVED` status in search results.
+            By default, archived campaigns are excluded even if `ARCHIVED` is not in
+            `campaign_fields.status`.
+
+            Defaults to `false`.
+        limit:
           type: integer
           description: |
-            The number of campaigns to display per page.
-            
-            **Maximum:** 15
+            The number of campaigns to return per page.
+
+            **Maximum:** 15. The response does not include a `total_count` field — to determine
+            the total number of results, keep paginating until a response returns fewer items
+            than `limit`.
           minimum: 1
           maximum: 15
           example: 10
-        page: 
+        page:
           type: integer
           description: |
-            The page number to retrieve.
-            
-            For example, if there are 200 campaigns and the limit is 10, there will be 20 pages.
+            The page number to retrieve (1-indexed).
+
+            For example, with 200 campaigns and a limit of 10, there are 20 pages.
           minimum: 1
           example: 1
           
     CampaignSearchFieldsV5:
       type: object
-      description: Filter criteria for searching campaigns.
+      description: |
+        Filter criteria for searching campaigns.
+
+        The following filter field names changed from V1 to V5:
+        - `id` (V1, string) is `ids` in V5 (array of strings). Pass a single-element array to replicate V1 single-ID filtering.
+        - `delivery_type` (V1) is `campaign_delivery_type` in V5.
+
+        All other V1 filter fields (`channels`, `created_by`, `created_date`, `name`, `status`, `tags`) use the same names in V5.
       properties:
-        status: 
+        ids:
           type: array
-          items: 
+          items:
             type: string
-            enum: [DRAFT, ACTIVE, SCHEDULED, PAUSED, SENT, STOPPED, ARCHIVED] 
-          description: Include campaigns in any of these statuses.
-        version_number: 
+          description: |
+            Filter by one or more campaign IDs.
+
+            In V1, this field was `id` (a single string). In V5, it is `ids` (an array). For single-campaign retrieval, `GET /v5/campaigns/{campaign_id}` is the preferred endpoint.
+          example: ["64a1b2c3d4e5f6a7b8c9d0e1"]
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [EMAIL, PUSH, SMS, WHATSAPP, FACEBOOK, 'GOOGLE ADS', CONNECTORS]
+          description: Include campaigns for any of these channels.
+          example: ["PUSH", "EMAIL"]
+        created_by:
+          type: array
+          items:
+            type: string
+            format: email
+          description: Include campaigns created by any of these users (email addresses).
+          example: ["marketer@example.com"]
+        created_date:
+          type: object
+          description: Filter campaigns by creation date range.
+          properties:
+            from_date:
+              type: string
+              format: date-time
+              description: Start of the creation date range (ISO 8601 format).
+              example: "2024-01-01T00:00:00"
+            to_date:
+              type: string
+              format: date-time
+              description: End of the creation date range (ISO 8601 format).
+              example: "2024-12-31T23:59:59"
+        campaign_delivery_type:
+          type: array
+          items:
+            type: string
+            enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED]
+          description: |
+            Include campaigns with any of these delivery types.
+
+            In V1, this field was `delivery_type`. In V5, it is `campaign_delivery_type`.
+          example: ["ONE_TIME", "PERIODIC"]
+        name:
+          type: string
+          description: Filter campaigns by name. Partial matches are supported.
+          example: "Summer Sale"
+        status:
+          type: array
+          items:
+            type: string
+            enum: [DRAFT, ACTIVE, SCHEDULED, PAUSED, SENT, STOPPED, ARCHIVED]
+          description: |
+            Include campaigns in any of these statuses.
+
+            Drafts are only returned when `DRAFT` is explicitly included here.
+        tags:
+          type: array
+          items:
+            type: string
+          description: Include campaigns that have any of these tags.
+          example: ["promotional", "seasonal"]
+        version_number:
           type: integer
           description: |
             Filter by campaign version. Only applies when campaign versioning is enabled for your workspace. Omit to include all versions.
@@ -331,10 +503,22 @@ components:
       type: object
       required: [limit, page]
       properties:
-        request_id: 
+        request_id:
           type: string
           description: A unique identifier for this metadata retrieval request.
+          example: "{{request_id}}"
         campaign_fields: { $ref: '#/components/schemas/CampaignMetaSearchFieldsV5' }
+        include_child_campaigns:
+          type: boolean
+          default: false
+          description: |
+            When `true`, returns child campaign metadata for periodic campaigns.
+            
+            Activates the following response fields on each campaign object:
+            - `total_child_campaigns` — number of child campaigns (present on the parent campaign).
+            - `parent_campaign_id` — the parent campaign's ID (present on each child campaign).
+            
+            Defaults to `false`.
         limit: 
           type: integer
           description: |
@@ -357,15 +541,58 @@ components:
       type: object
       description: Filter criteria for retrieving campaign metadata.
       properties:
-        id: 
+        id:
           type: string
-          description: The unique identifier for the campaign.
-        status: 
+          description: The unique identifier of the campaign to retrieve.
+          example: "{{campaign_id}}"
+        channels:
           type: array
-          items: 
+          items:
             type: string
-            enum: [DRAFT, SCHEDULED, ACTIVE, PAUSED, SENT, STOPPED, RETIRED, ARCHIVED] 
+            enum: [EMAIL, PUSH, SMS, WHATSAPP, FACEBOOK, 'GOOGLE ADS', CONNECTORS]
+          description: Include campaigns for any of these channels.
+          example: ["PUSH", "EMAIL"]
+        created_by:
+          type: array
+          items:
+            type: string
+            format: email
+          description: Include campaigns created by any of these users (email addresses).
+          example: ["user@example.com"]
+        created_date:
+          type: object
+          description: Filter campaigns by creation date range.
+          properties:
+            from_date:
+              type: string
+              format: date-time
+              description: Start of the creation date range (ISO 8601 format).
+              example: "2024-01-01T00:00:00"
+            to_date:
+              type: string
+              format: date-time
+              description: End of the creation date range (ISO 8601 format).
+              example: "2024-12-31T23:59:59"
+        delivery_type:
+          type: string
+          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED]
+          description: Filter campaigns by delivery type.
+        name:
+          type: string
+          description: Filter campaigns by name. Partial matches are supported.
+          example: "Summer Sale"
+        status:
+          type: array
+          items:
+            type: string
+            enum: [DRAFT, SCHEDULED, ACTIVE, PAUSED, SENT, STOPPED, RETIRED, ARCHIVED]
           description: Include campaigns in any of these statuses.
+        tags:
+          type: array
+          items:
+            type: string
+          description: Include campaigns that have any of these tags.
+          example: ["promotional", "seasonal"]
 
     TestV5Request:
       oneOf:
@@ -2136,36 +2363,60 @@ components:
 
     UTMParams:
       type: object
-      description: UTM parameters for tracking campaign performance.
+      description: |
+        UTM parameters for tracking campaign performance. The five standard keys (`utm_source`,
+        `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`) are explicitly defined.
+
+        **Custom UTM parameters:** You can pass up to 5 additional custom parameters as
+        separate keys directly inside the `utm_params` object. Use arbitrary key names prefixed
+        with `utm_` (for example, `utm_cust`, `utm_c1ust`).
+
+        ```json
+        {
+          "utm_source": "google",
+          "utm_medium": "email",
+          "utm_campaign": "summer_sale",
+          "utm_cust": "value1",
+          "utm_c1ust": "value2"
+        }
+        ```
       properties:
-        utm_source: 
+        utm_source:
           type: string
           description: |
-            The source of the traffic (e.g., YouTube, Instagram, Google).
-            
+            The source of the traffic (for example, YouTube, Instagram, Google).
+
             **Required** when using UTM parameters.
-          example: "google"
-        utm_medium: 
+          example: "{{utm_source}}"
+        utm_medium:
           type: string
           description: |
-            The channel type (e.g., Push, SMS, Email).
-            
+            The channel type (for example, Push, SMS, Email).
+
             **Required** when using UTM parameters.
-          example: "email"
-        utm_campaign: 
+          example: "{{utm_medium}}"
+        utm_campaign:
           type: string
-          description: The name of the campaign (e.g., Newyear, Bigbillionday).
-          example: "summer_sale"
-        utm_term: 
+          description: The name of the campaign (for example, Newyear, Bigbillionday).
+          example: "{{utm_campaign}}"
+        utm_term:
           type: string
-          description: Search terms for paid traffic (e.g., Mobile+sale).
-        utm_content: 
+          description: Search terms for paid traffic (for example, Mobile+sale).
+        utm_content:
           type: string
-          description: The content element that differentiates links (e.g., banner, video).
-        utm_custom: 
+          description: The content element that differentiates links (for example, banner, video).
+        utm_custom:
           type: string
           description: |
-            One or more custom UTM parameters appended to tracked links in this campaign. You can pass a maximum of 5 custom parameters.
+            A single custom UTM parameter value. For multiple custom parameters, pass them as
+            separate top-level keys inside the `utm_params` object using arbitrary `utm_`-prefixed
+            names (for example, `utm_cust`, `utm_c1ust`, `utm_c2ust`). A maximum of 5 custom
+            parameters is supported in total.
+      additionalProperties:
+        type: string
+        description: |
+          Arbitrary custom UTM parameters with `utm_`-prefixed key names (for example, `utm_cust`,
+          `utm_c1ust`). Up to 5 custom parameters are supported in total across all custom keys.
 
     Connector:
       type: object
@@ -2187,22 +2438,44 @@ components:
 
         **Supported channels:** Email, Push.
 
+        **Supported delivery types:**
+        - All delivery types support `frequency: TOTAL` (lifetime cap).
+        - `frequency: INSTANCE` (per-send cap) is supported only for **Periodic Push** campaigns.
+        - `campaign_audience_limit` is not supported for `BROADCAST_LIVE_ACTIVITY`.
+
         **Flag-gated feature:** This feature is not enabled by default for any workspace and requires
         explicit activation by your MoEngage account team. If you include `campaign_audience_limit` in
-        a request on a workspace where the flag has not been enabled, the API returns a `400` error and
-        does not create the campaign silently.
+        a request on a workspace where the flag has not been enabled, the API returns a `400` with the
+        following error body:
+
+        ```json
+        {
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "Campaign Audience Limit feature is not enabled for this db",
+            "target": "campaign_audience_limit",
+            "details": [
+              {
+                "target": "campaign_audience_limit",
+                "message": "Campaign Audience Limit feature is not enabled for this db"
+              }
+            ]
+          },
+          "response_id": "{{response_id}}"
+        }
+        ```
 
         When `is_campaign_audience_limit_enabled` is `true`, the fields `metric`, `frequency`, and
         `limit` are all required. When set to `false`, those three fields must not be provided.
       properties:
-        is_campaign_audience_limit_enabled: 
+        is_campaign_audience_limit_enabled:
           type: boolean
           description: |
             Whether the campaign audience limit is active. Set to `true` to enforce the cap; `false` to disable.
 
             When `true`, `metric`, `frequency`, and `limit` are all required.
             When `false`, `metric`, `frequency`, and `limit` must not be provided.
-        metric: 
+        metric:
           type: string
           description: |
             The type of send event counted toward the limit.
@@ -2210,37 +2483,54 @@ components:
             **Required** when `is_campaign_audience_limit_enabled` is `true`.
           enum: [SENT]
           example: "SENT"
-        frequency: 
+        frequency:
           type: string
           description: |
             The window over which the limit is applied.
 
             - `TOTAL` — applies the cap across the full lifetime of the campaign. Supported for all campaign types on both Email and Push.
-            - `INSTANCE` — applies the cap per campaign instance (for example, per periodic send). Applicable to Periodic Push campaigns.
+            - `INSTANCE` — applies the cap per campaign instance (for example, per periodic send). Applicable to Periodic Push campaigns only.
 
             **Required** when `is_campaign_audience_limit_enabled` is `true`.
           enum: [TOTAL, INSTANCE]
           example: "TOTAL"
-        limit: 
+        limit:
           type: integer
           minimum: 1
+          maximum: 9999999999
           description: |
-            The maximum number of users who can receive this campaign (or per instance, when `frequency` is `INSTANCE`). Must be greater than 0 when `is_campaign_audience_limit_enabled` is `true`.
+            The maximum number of users who can receive this campaign (or per instance, when
+            `frequency` is `INSTANCE`). Must be between 1 and 9,999,999,999.
 
             **Required** when `is_campaign_audience_limit_enabled` is `true`.
           example: 100000
 
     CampaignDetailsResponse:
       type: object
-      description: Detailed information about a campaign.
+      description: |
+        Detailed information about a campaign returned by GET `/v5/campaigns/{campaign_id}` and
+        POST `/v5/campaigns/search`.
+
+        In V1, the campaign identifier was returned as `campaign_id`. In V5, it is returned as `id`.
+        The legacy `campaign_id` field may also be present alongside `id` for backward compatibility,
+        but `id` is the canonical V5 identifier.
+
+        All other V1 response fields (`created_by`, `updated_by`, `created_at`, `updated_at`,
+        `sent_time`, `flow_id`, `flow_name`, `parent_id`, `connector`, `utm_params`,
+        `campaign_audience_limit`) are preserved in V5 under the same names.
       properties:
         id:
           type: string
-          description: Raw 24-character campaign ObjectId (v5 GET/search responses use `id`).
+          description: |
+            The unique document identifier for this campaign revision.
+
+            In V1, this field was `campaign_id`. In V5, it is `id`.
           example: "64a1b2c3d4e5f6a7b8c9d0e1"
-        campaign_id: 
+        campaign_id:
           type: string
-          description: The unique ID of the campaign.
+          description: |
+            The canonical campaign identifier shared across all versions of the campaign when
+            campaign versioning is enabled. In non-versioned workspaces, `campaign_id` equals `id`.
           example: "camp_abc123xyz"
         version_number: 
           type: integer
@@ -2295,25 +2585,35 @@ components:
             The campaign ID of the parent campaign.
             
             Only applicable for periodic child campaigns when `include_child_campaigns` is true.
-        basic_details: 
+        basic_details:
           type: object
           description: |
-            Basic details of the campaign.
-            
-            Structure varies by channel (Push/Email/SMS).
-        campaign_content: 
-          type: object
-          description: The campaign content including locales and variations.
-        trigger_condition: 
+            Basic campaign settings — name, tags, team, platform targets, and channel-specific
+            identifiers. Structure varies by channel:
+            - **Push:** See `PushBasicDetailsV5` schema (name, platforms, tags, team, geofences, etc.)
+            - **Email:** See `EmailBasicDetailsV5` schema (name, content_type, subscription_category, user_attribute_identifier, etc.)
+            - **SMS:** connector, sender name, and similar fields.
+        campaign_content:
           type: object
           description: |
-            Trigger condition details for event-triggered campaigns.
-            Structure varies by channel (Push supports INTELLIGENT_DELAY, Email does not).
+            The full campaign content payload including locales and A/B test variations.
+            Structure varies by channel:
+            - **Push:** See `PushCampaignContent` schema.
+            - **Email:** See `EmailCampaignContent` schema.
+        trigger_condition:
+          type: object
+          description: |
+            Trigger condition for event-triggered campaigns. Structure varies by channel:
+            - **Push:** See `PushTriggerCondition` schema (supports INTELLIGENT_DELAY).
+            - **Email:** See `EmailTriggerCondition` schema.
         segmentation_details: { $ref: '#/components/schemas/SegmentationDetails' }
         scheduling_details: { $ref: '#/components/schemas/SchedulingDetails' }
-        delivery_controls: 
+        delivery_controls:
           type: object
-          description: Delivery control settings for the campaign.
+          description: |
+            Delivery control settings. Structure varies by channel:
+            - **Push:** See `PushDeliveryControls` schema (bypass_dnd, campaign_throttle_rpm, ignore_frequency_capping, etc.)
+            - **Email:** See `EmailDeliveryControls` schema.
         advanced: 
           type: object
           description: Advanced campaign settings (for Push campaigns).
@@ -2341,7 +2641,14 @@ components:
 
     CampaignMetaResponseV5:
       type: object
-      description: Campaign metadata including basic information and reachability details.
+      description: |
+        Campaign metadata including basic information and reachability details.
+        
+        **V1 compatibility:** All field names are preserved from the V1 Get Campaign Meta response
+        (`campaign_id`, `campaign_name`, `campaign_status`, `campaign_delivery_type`, `campaign_team`,
+        `campaign_tags`, `campaign_start_time`). No field has been renamed in V5.
+        
+        V5 adds one new field: `version_number` (present only when campaign versioning is enabled).
       properties:
         campaign_id: 
           type: string
@@ -2404,19 +2711,28 @@ components:
         rejection_comment: { type: string }
         reachability_details:
           type: object
+          nullable: true
           description: |
             Reachability information for the campaign.
             
-            **Important:** Only populated for **scheduled** campaigns (one-time, business event-triggered, and event-triggered).
-            Reachability is calculated once daily and cached for 24 hours.
+            **Availability:** Only populated for **scheduled** campaigns of these delivery types:
+            - One-time scheduled campaigns
+            - Business event-triggered campaigns
+            - Event-triggered campaigns
+            
+            For all other campaign types (periodic, device-triggered, location-triggered, etc.), this field is `null`.
+            
+            Reachability is an estimated value calculated once daily and cached for 24 hours.
+            Multiple API calls within the same day return the cached value. The count may vary over
+            time as users install or uninstall the app, or change their subscription status.
           properties:
-            count: 
+            count:
               type: integer
               description: The estimated number of users the scheduled campaign will reach.
               example: 18182
-            last_updated_time: 
+            last_updated_time:
               type: string
-              description: The timestamp when reachability was last calculated.
+              description: The timestamp when reachability was last calculated (ISO 8601 format).
               example: "2024-11-27T09:05:42.661000"
 
     V5ValidateResponse:
@@ -2709,6 +3025,89 @@ paths:
                   "delivery_type": "ASAP"
                 }
               }'
+        - lang: Shell
+          label: Push — multi-locale A/B test (cURL)
+          source: |
+            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "PUSH",
+                "campaign_delivery_type": "ONE_TIME",
+                "created_by": "{{user_email}}",
+                "basic_details": {
+                  "name": "{{campaign_name}}",
+                  "platforms": ["ANDROID", "IOS"]
+                },
+                "campaign_content": {
+                  "locales": ["es-ES"],
+                  "variation_details": {
+                    "no_of_variations": 2,
+                    "distribution_type": "MANUAL",
+                    "variation_distribution": [
+                      { "variation_name": "variation_1", "percentage": 50 },
+                      { "variation_name": "variation_2", "percentage": 50 }
+                    ]
+                  },
+                  "content": {
+                    "default": {
+                      "variation_1": {
+                        "push": {
+                          "android": {
+                            "template_type": "BASIC",
+                            "basic_details": {
+                              "title": "{{title_variant_1}}",
+                              "message": "{{message_variant_1}}"
+                            }
+                          }
+                        }
+                      },
+                      "variation_2": {
+                        "push": {
+                          "android": {
+                            "template_type": "BASIC",
+                            "basic_details": {
+                              "title": "{{title_variant_2}}",
+                              "message": "{{message_variant_2}}"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "es-ES": {
+                      "variation_1": {
+                        "push": {
+                          "android": {
+                            "template_type": "BASIC",
+                            "basic_details": {
+                              "title": "{{title_es_variant_1}}",
+                              "message": "{{message_es_variant_1}}"
+                            }
+                          }
+                        }
+                      },
+                      "variation_2": {
+                        "push": {
+                          "android": {
+                            "template_type": "BASIC",
+                            "basic_details": {
+                              "title": "{{title_es_variant_2}}",
+                              "message": "{{message_es_variant_2}}"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "scheduling_details": {
+                  "delivery_type": "ASAP"
+                }
+              }'
       x-mint:
         content: |
           **Required fields:**
@@ -2717,6 +3116,16 @@ paths:
           - `created_by`
 
           All other components are optional, so you can build your campaign progressively. Any components included during creation must meet the `DRAFT_CREATE` validation standards.
+
+          **Content structure — flat vs locale-variation:**
+          The `campaign_content.content` object supports two structures:
+
+          - **Flat (no locales or A/B test):** Pass the channel object directly under `content` — for example, `content.push` or `content.email`. The curl examples below use this structure.
+          - **Locale-variation (multi-language or A/B test):** Wrap content by locale name, then by variation name — `content["default"]["variation_1"] = { push: {...} }`. See the `PushCampaignContent` and `EmailCampaignContent` schema descriptions for full examples.
+
+          <Warning>
+          If your V1 integration used locale-variation wrapping, you must continue using that structure in V5. The flat format is only valid when no locales or A/B variations are configured on the campaign.
+          </Warning>
 
           #### Rate Limits
           | Rate Limit Name | Rate Limit |
@@ -2783,13 +3192,53 @@ paths:
       operationId: get_single_campaign_v5
       summary: Get Campaign
       description: |
-        Use this API to fetch a single campaign in v5 form, including its current status (for example, **DRAFT** or **ACTIVE**).
+        Use this API to fetch a single campaign by its ID, including its full configuration and
+        current status.
+
+        In V1, a specific campaign was retrieved using `POST /v1/campaigns/search` with
+        `campaign_fields.id`. In V5, use this `GET` endpoint for single-campaign retrieval.
+        Use `POST /v5/campaigns/search` only when filtering across multiple campaigns.
+
+        **SMS campaigns:** SMS campaigns are returned by this endpoint. The response `channel`
+        field will be `SMS` and the `connector` / `sender_name` fields carry SMS-specific details.
+        Full SMS create/update support via V5 API is not yet available — SMS campaigns can be
+        retrieved but must be created and managed through the MoEngage dashboard or V1 APIs in
+        the interim.
       x-mint:
         content: |
           Use the response to:
-          - Review the campaign configuration.
+          - Review the full campaign configuration before patching.
           - Drive UI or third-party integrations.
-          - Decide which components to patch next.
+          - Confirm publish status before triggering downstream workflows.
+
+          #### Rate Limits
+
+          | Rate Limit Name | Rate Limit |
+          | :--- | :--- |
+          | Get campaign per second | The total number of get campaign requests per second per client allowed is 10. |
+          | Get campaign per minute | The total number of get campaign requests per minute per client allowed is 100. |
+          | Get campaign per hour | The total number of get campaign requests per hour per client allowed is 6000. |
+
+          <Note>
+            **Notes**
+            * Breaching the limits will reject the request.
+            * Per-hour limits use a rolling window of the last 1 hour.
+          </Note>
+      x-codeSamples:
+        - lang: Shell
+          label: Fetch a Push campaign (cURL)
+          source: |
+            curl -X GET 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}'
+        - lang: Shell
+          label: Fetch an Email campaign (cURL)
+          source: |
+            curl -X GET 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}'
       tags: [Get Campaign Details]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
@@ -2797,47 +3246,107 @@ paths:
         - name: campaign_id
           in: path
           required: true
-          description: Raw 24-char ObjectId
+          description: Raw 24-char ObjectId of the campaign to retrieve.
           schema: { type: string }
       responses:
         '200':
-          description: Successfully retrieved campaign details
+          description: Campaign details retrieved successfully.
           content:
             application/json:
-              schema: 
+              schema:
                 allOf:
                   - $ref: '#/components/schemas/V5SuccessEnvelope'
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/CampaignDetailsResponse' }
-              example:
-                response_id: "abc-100"
-                type: "campaign"
-                data:
-                  id: "64a1b2c3d4e5f6a7b8c9d0e1"
-                  status: "DRAFT"
-                  channel: "PUSH"
-                  campaign_delivery_type: "ONE_TIME"
-                  basic_details:
-                    name: "v5 PUSH draft"
-                    platforms: ["ANDROID"]
-                  campaign_content:
-                    content:
-                      push:
-                        android:
-                          template_type: "BASIC"
-                          basic_details:
-                            title: "Hello"
-                            message: "World"
+              examples:
+                active_push_campaign:
+                  summary: Active Push campaign (one-time, scheduled)
+                  value:
+                    response_id: "abc-100"
+                    type: "campaign"
+                    data:
+                      id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                      campaign_id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                      status: "SCHEDULED"
+                      channel: "PUSH"
+                      campaign_delivery_type: "ONE_TIME"
+                      created_by: "marketer@example.com"
+                      updated_by: "marketer@example.com"
+                      created_at: "2024-07-04 08:00:54.847000"
+                      updated_at: "2024-07-04 09:15:00.000000"
+                      basic_details:
+                        name: "Summer Sale Push"
+                        platforms: ["ANDROID", "IOS"]
+                        tags: ["promotional", "seasonal"]
+                        team: "Growth Team"
+                      campaign_content:
+                        content:
+                          push:
+                            android:
+                              template_type: "BASIC"
+                              basic_details:
+                                title: "Summer Sale — Up to 50% off"
+                                message: "Shop now before the sale ends."
+                      scheduling_details:
+                        delivery_type: "SCHEDULED"
+                        schedule_time: "2024-11-28T12:00:00"
+                      utm_params:
+                        utm_source: "{{utm_source}}"
+                        utm_medium: "push"
+                        utm_campaign: "{{utm_campaign}}"
+                active_email_campaign:
+                  summary: Active Email campaign (promotional)
+                  value:
+                    response_id: "abc-101"
+                    type: "campaign"
+                    data:
+                      id: "64a1b2c3d4e5f6a7b8c9d0e2"
+                      campaign_id: "64a1b2c3d4e5f6a7b8c9d0e2"
+                      status: "ACTIVE"
+                      channel: "EMAIL"
+                      campaign_delivery_type: "PERIODIC"
+                      created_by: "marketer@example.com"
+                      updated_by: "marketer@example.com"
+                      created_at: "2024-01-01 08:00:00.000000"
+                      updated_at: "2024-06-15 10:30:00.000000"
+                      basic_details:
+                        name: "Weekly Newsletter"
+                        content_type: "PROMOTIONAL"
+                        subscription_category: "newsletter"
+                        user_attribute_identifier: "Email (Standard)"
+                        tags: ["newsletter"]
+                        team: "Retention Team"
+                      connector:
+                        connector_type: "SENDGRID"
+                        connector_name: "SendgridPrimary"
+                      campaign_content:
+                        content:
+                          email:
+                            subject: "Your weekly digest is here"
+                            sender_name: "MoEngage Team"
+                            from_address: "hello@example.com"
+                      utm_params:
+                        utm_source: "{{utm_source}}"
+                        utm_medium: "email"
+                        utm_campaign: "{{utm_campaign}}"
+                      campaign_audience_limit:
+                        enabled: false
         '400':
           $ref: '#/components/responses/V5ValidationError'
         '401':
           $ref: '#/components/responses/V5Unauthorized'
+        '500':
+          $ref: '#/components/responses/V5InternalError'
     patch:
       operationId: patch_draft_campaign_v5
       summary: Update Campaign
       description: |
         Use this API to either edit individual components of a draft or publish a draft.
+
+        `PATCH /v1/campaigns/{campaign_id}` returned `204 No Content` with no response body. V5
+        returns `200 OK` with a JSON body containing `response_id`, `type`, and `data.id`.
+        Integrations that assert a `204` status code must be updated to expect `200`.
       x-mint:
         content: |
           The request body determines which flow runs.
@@ -2851,22 +3360,19 @@ paths:
               ```json
               {
                 "request_id": "{{request_id}}",
-                "campaign_content": {
-                  "title": "Summer Sale",
-                  "message": "Up to 50% off today only."
-                }
+                "campaign_content": { }
               }
               ```
 
               <Note>
-              Only the fields you include in the request body are updated. Fields you omit retain their current values.
+              Only the fields you include in the request body are updated. Fields you omit retain their current values. For the full field reference per delivery type, see the [Create Campaign API](/api/campaigns/create-campaign).
               </Note>
             </Tab>
 
             <Tab title="Publish campaign">
-              Send a `PATCH` request with only the `status` field set to `PUBLISH`.
+              Send a `PATCH` request with **only** the `status` field set to `PUBLISH` — no other fields.
 
-              The API validates the fully merged draft state (`DRAFT_PUBLISH`) and, if all checks pass, transitions the campaign from `DRAFT` to `ACTIVE`.
+              The API validates the fully merged draft state (`DRAFT_PUBLISH`) and, if all checks pass, transitions the campaign from `DRAFT` to `ACTIVE` (or `SCHEDULED` for future-dated campaigns).
 
               ```json
               {
@@ -2878,41 +3384,103 @@ paths:
           </Tabs>
 
           <Warning>
-          You cannot combine `status` and component fields in the same request — doing so returns `400`. Only campaigns in `DRAFT` state can be updated or published; other states return `409`. `PUBLISH` is the only accepted `status` value in this release.
+          **Mutual exclusivity:** You cannot combine `status: PUBLISH` and component fields in the same request body — doing so returns `400`. Send either a component update or a publish request, never both.
           </Warning>
 
           <Warning>
-          **Update Restrictions**
-         
-          You cannot update campaigns when in **Stopped** or **Archived** state.
+          **Update restrictions by campaign state**
 
-          For **Scheduled Campaigns**
-          - You can edit all fields **except scheduling type** for One-Time campaigns.
-          - You can edit all fields **except scheduling type** for Periodic/Event-Triggered campaigns if no instance has been sent yet.
-         
-          For **Active Campaigns**, you cannot edit the following fields:
-          - Trigger Condition
-          - Segmentation Details
-          - Conversion Goal Details
-          - Scheduling Type
-          - Scheduling Start Date
+          | Campaign state | What you can edit |
+          | :--- | :--- |
+          | **DRAFT** | All fields |
+          | **SCHEDULED** (One-time, no instance sent) | All fields except scheduling type |
+          | **SCHEDULED** (Periodic / Event-triggered, no instance sent) | All fields except scheduling type |
+          | **ACTIVE** | All fields except: Trigger Condition, Segmentation Details, Conversion Goal Details, Scheduling Type, Scheduling Start Date |
+          | **STOPPED** or **ARCHIVED** | No updates allowed |
 
-          For **Event-Triggered campaigns**, updated content is cached and takes up to 30 minutes to take effect.
+          For **Event-triggered campaigns**, updated content is cached and takes up to 30 minutes to take effect.
           </Warning>
-          
+
           #### Rate Limits
           | Rate Limit Name | Rate Limit |
           | :--- | :--- |
           | Update campaign per second | The total number of update campaign requests per second per client allowed is 10. |
           | Update campaign per minute | The total number of update campaign requests per minute per client allowed is 100. |
           | Update campaign per hour | The total number of update campaign requests per hour per client allowed is 6000. |
-          
+
           <Note>
            **Notes**
            * Breaching the limits will reject the request.
            * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
           </Note>
       tags: [Update Campaigns]
+      x-codeSamples:
+        - lang: Shell
+          label: Push — Update campaign_content (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "PUSH",
+                "campaign_delivery_type": "{{campaign_delivery_type}}",
+                "updated_by": "{{updater_email}}",
+                "campaign_content": {
+                  "content": {
+                    "push": {
+                      "android": {
+                        "template_type": "BASIC",
+                        "basic_details": {
+                          "title": "{{notification_title}}",
+                          "message": "{{notification_message}}"
+                        }
+                      }
+                    }
+                  }
+                }
+              }'
+        - lang: Shell
+          label: Email — Update campaign_content (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "EMAIL",
+                "campaign_delivery_type": "{{campaign_delivery_type}}",
+                "updated_by": "{{updater_email}}",
+                "campaign_content": {
+                  "content": {
+                    "email": {
+                      "subject": "{{email_subject}}",
+                      "sender_name": "{{sender_name}}",
+                      "from_address": "{{from_email}}",
+                      "html_content": "{{html_body}}"
+                    }
+                  }
+                }
+              }'
+        - lang: Shell
+          label: Publish campaign (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "status": "PUBLISH"
+              }'
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -2921,7 +3489,7 @@ paths:
           required: true
           description: |
             The unique ID of the campaign to update.
-            
+
             You can fetch the campaign ID using the [Get Campaign Details API](/api/get-campaign-details/search-campaigns) by filtering with campaign name, channel, or other criteria.
           schema: { type: string }
         - $ref: '#/components/parameters/Idempotency-Key-Required'
@@ -2939,7 +3507,11 @@ paths:
             schema: { $ref: '#/components/schemas/CampaignPatchV5Request' }
       responses:
         '200':
-          description: Draft campaign updated successfully, or campaign published (`status` `PUBLISH`).
+          description: |
+            Draft updated successfully, or campaign published.
+
+            **Note:** V1 returned `204 No Content` for successful updates. V5 returns `200 OK` with a
+            response body. Update any integration that checks for `204` to expect `200` instead.
           content:
             application/json:
               schema:
@@ -2948,21 +3520,68 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/CampaignPatchAcceptedData' }
-              example:
-                response_id: "abc-301"
-                type: "campaign"
-                data:
-                  id: "64a1b2c3d4e5f6a7b8c9d0e1"
+              examples:
+                component_updated:
+                  summary: Component update accepted
+                  value:
+                    response_id: "abc-301"
+                    type: "campaign"
+                    data:
+                      id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                published:
+                  summary: Campaign published
+                  value:
+                    response_id: "abc-302"
+                    type: "campaign"
+                    data:
+                      id: "64a1b2c3d4e5f6a7b8c9d0e1"
         '400':
           $ref: '#/components/responses/V5ValidationError'
         '401':
           $ref: '#/components/responses/V5Unauthorized'
         '403':
-          $ref: '#/components/responses/V5Forbidden'
+          description: |
+            The caller does not have the required permission to update this campaign.
+            This occurs when the API credential's scope does not include campaign update or publish rights,
+            or when the caller attempts to publish a campaign owned by a different team with restricted access.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
+              example:
+                response_id: "abc-403"
+                error:
+                  code: FORBIDDEN
+                  message: "Caller does not have permission to update this campaign."
+                  details: []
         '409':
-          $ref: '#/components/responses/V5BadRequest'
+          description: |
+            The campaign is not in a state that allows updates or publishing.
+            This occurs when the campaign is not in `DRAFT` state — for example, it is `ACTIVE`, `PAUSED`,
+            or `STOPPED`. Only `DRAFT` campaigns can be updated or published via this endpoint.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
+              example:
+                response_id: "abc-409"
+                error:
+                  code: BAD_REQUEST
+                  message: "Campaign is not in DRAFT state and cannot be patched."
+                  details: []
         '429':
-          $ref: '#/components/responses/V5RateLimited'
+          description: |
+            The per-app rate limit for this endpoint has been exceeded. Retry after the window
+            indicated in the `Retry-After` response header (in seconds).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
+              example:
+                response_id: "abc-429"
+                error:
+                  code: RATE_LIMITED
+                  message: "Rate limit exceeded. Retry after 60 seconds."
+                  details: []
+        '500':
+          $ref: '#/components/responses/V5InternalError'
 
   /v5/campaigns/{campaign_id}/validate:
     post:
@@ -3065,24 +3684,25 @@ paths:
       summary: Update Campaign Status
       description: |
         Use this API to apply a state transition on a campaign that has already been published.
+
+        `POST /v1/campaigns/status` accepted a `campaign_ids` array of up to 10 IDs per request.
+        In V5, the campaign ID is a path parameter and only one campaign can be transitioned per
+        request. To perform bulk status changes, call this endpoint once per campaign ID.
       x-mint:
         content: |
-          **Allowed actions:**
-          - **STOP** — from `ACTIVE`, `SCHEDULED`, `PAUSED`, or `SENDING`.
-          - **PAUSE** — from `ACTIVE`, `SCHEDULED`, or `SENDING`.
-          - **RESUME** — from `PAUSED`.
+          #### Action reference
 
-          **Note:** `PUBLISH` is not accepted on this endpoint. To publish a draft, use `PATCH /v5/campaigns/{campaign_id}` with the body `{ "status": "PUBLISH" }`.
+          The following table maps each action to its supported delivery types and valid source states.
+
+          | Action | Supported delivery types | Valid source states |
+          | :--- | :--- | :--- |
+          | **STOP** | One-time (Email and Push) | `SCHEDULED`, `ACTIVE`, `PAUSED`, `SENDING` |
+          | **PAUSE** | Periodic and Event-triggered (Email); Periodic, Event-triggered, Device-triggered, Location-triggered (Push) | `ACTIVE`, `SCHEDULED`, `SENDING` |
+          | **RESUME** | Same delivery types as PAUSE | `PAUSED` |
 
           <Note>
-            Currently, you can use this API to change the status of Email and Push campaigns. You can update the following statuses of the campaigns:
-              - Stop a scheduled One-time campaign (Email and Push)
-              - Pause and resume a running Periodic or Event-triggered Email campaign.
-              - Pause and resume the following running Push campaigns:
-                - Periodic
-                - Event-triggered
-                - Device-triggered
-                - Location-triggered
+          `STOP` cannot be used on Periodic campaigns. `PAUSE` and `RESUME` cannot be used on One-time campaigns.
+          `PUBLISH` is not accepted on this endpoint — to publish a draft, use `PATCH /v5/campaigns/{campaign_id}` with `{ "status": "PUBLISH" }`.
           </Note>
 
           #### Rate Limits
@@ -3093,11 +3713,51 @@ paths:
           | change campaign status per minute | The total number of change campaign status requests per minute per client allowed is 100. |
           | change campaign status per hour | The total number of change campaign status requests per hour per client allowed is 6000. |
 
-            <Note>
-              **Notes**
-              * Breaching the limits will reject the request.
-              * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
-            </Note>
+          <Note>
+            **Notes**
+            * Breaching the limits will reject the request.
+            * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
+          </Note>
+      x-codeSamples:
+        - lang: Shell
+          label: Stop a campaign (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}/status' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "action": "STOP"
+              }'
+        - lang: Shell
+          label: Pause a campaign (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}/status' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "action": "PAUSE"
+              }'
+        - lang: Shell
+          label: Resume a campaign (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}/status' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "action": "RESUME"
+              }'
       tags: [Update Campaigns]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
@@ -3105,7 +3765,7 @@ paths:
         - name: campaign_id
           in: path
           required: true
-          description: Raw 24-char ObjectId.
+          description: Raw 24-char ObjectId of the published campaign to transition.
           schema: { type: string }
         - $ref: '#/components/parameters/Idempotency-Key-Required'
       requestBody:
@@ -3116,7 +3776,7 @@ paths:
             schema: { $ref: '#/components/schemas/CampaignStatusV5Request' }
       responses:
         '200':
-          description: Transition accepted
+          description: Transition accepted.
           content:
             application/json:
               schema:
@@ -3133,44 +3793,162 @@ paths:
                   action: "STOP"
         '400':
           $ref: '#/components/responses/V5ValidationError'
+        '401':
+          $ref: '#/components/responses/V5Unauthorized'
         '422':
-          $ref: '#/components/responses/V5UnprocessableEntity'
+          description: |
+            The action is not valid for the campaign's current state or delivery type. Common causes:
+            - Attempting `STOP` on a Periodic campaign.
+            - Attempting `PAUSE` or `RESUME` on a One-time campaign.
+            - Attempting `RESUME` on a campaign that is not in `PAUSED` state.
+            - Attempting `PAUSE` on a campaign that is not in `ACTIVE`, `SCHEDULED`, or `SENDING` state.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
+              example:
+                response_id: "abc-422"
+                error:
+                  code: UNPROCESSABLE_ENTITY
+                  message: "Action STOP is not valid for a PERIODIC campaign."
+                  details: []
+        '500':
+          $ref: '#/components/responses/V5InternalError'
 
   /v5/campaigns/search:
     post:
       operationId: search_campaigns_v5
       summary: Search Campaigns
       description: |
-        Use this API to search your workspace and retrieve the full v5 campaign payload for each match. Results support pagination and filtering by channel, status, tags, name, IDs, dates, and more.
+        Use this API to search your workspace and retrieve the full V5 campaign payload for each
+        match. Results support pagination and filtering by channel, status, tags, name, IDs,
+        dates, delivery type, and creator.
+
+        In V1, `POST /v1/campaigns/search` served both single-ID retrieval and multi-campaign
+        filtering in one endpoint. In V5, these are separate:
+        - Single-campaign retrieval: `GET /v5/campaigns/{campaign_id}`
+        - Multi-campaign search and filtering: `POST /v5/campaigns/search` (this endpoint)
+
+        Two `campaign_fields` filter keys were renamed from V1 to V5. See the `campaign_fields`
+        schema for details.
+
+        **SMS campaigns:** SMS campaigns are returned in search results when `channels: ["SMS"]`
+        is passed. The `channel` field in each result will be `SMS`. Full SMS campaign create and
+        update support via V5 is not yet available.
+
+        **Child campaign executions (V1 executions API):** V1 had a dedicated
+        `POST /v1/campaigns/{parent_id}/executions` API for retrieving execution history of
+        Periodic and Business Event-triggered campaigns (child IDs, sent times, statuses). V5
+        does not yet have a direct equivalent endpoint. As an interim workaround, use
+        `POST /v5/campaigns/search` with `include_child_campaigns: true` to retrieve child
+        campaigns linked to a parent ID — filter by `parent_id` in the results to reconstruct
+        execution history.
       x-mint:
         content: |
           **Draft behavior:**
-          - Drafts are included only when you add **DRAFT** to `campaign_fields.status`.
-          - Otherwise, draft rows are omitted to remain compatible with older search behavior.
+          Drafts are included only when `DRAFT` is explicitly added to `campaign_fields.status`.
+          Otherwise, draft rows are omitted.
 
           **Versioning behavior:**
-          - When campaign versioning is enabled for your workspace, responses can include `version_number`, and you can filter by it.
-          - Each published revision is a separate document linked by the same canonical `campaign_id`.
+          When campaign versioning is enabled, responses include `version_number` and you can
+          filter by it. Each published revision is a separate document linked by the same
+          canonical `campaign_id`.
 
-          #### Search Capabilities
-          - Filter by channel, delivery type, status, tags, name, ID, created by, created date
-          - Include child campaigns (flow nodes, periodic children)
-          - Include archived campaigns
-          - Paginated results (max 15 per page)
-         
-           #### Rate Limits
+          **Pagination:**
+          Results are paginated up to 15 per page. The response does not include a `total_count`
+          field. To determine the total number of pages, keep paginating until a page returns
+          fewer results than `limit`.
+
+          #### Rate Limits
 
           | Rate Limit Name | Rate Limit |
           | :--- | :--- |
           | Search campaign per second | The total number of search campaign requests per second per client allowed is 10. |
           | Search campaign per minute | The total number of search campaign requests per minute per client allowed is 100. |
-          | Search campaign per hour | The total number of search campaign requests per hour per client allowed is 6000. | 
+          | Search campaign per hour | The total number of search campaign requests per hour per client allowed is 6000. |
 
           <Note>
             **Notes**
             * Breaching the limits will reject the request.
             * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
           </Note>
+      x-codeSamples:
+        - lang: Shell
+          label: Filter by channel and status (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/search' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "limit": 15,
+                "page": 1,
+                "campaign_fields": {
+                  "channels": ["EMAIL", "PUSH"],
+                  "status": ["ACTIVE", "SCHEDULED"]
+                }
+              }'
+        - lang: Shell
+          label: Filter by delivery type and date range (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/search' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "limit": 15,
+                "page": 1,
+                "campaign_fields": {
+                  "campaign_delivery_type": ["ONE_TIME"],
+                  "created_date": {
+                    "from_date": "{{from_date}}",
+                    "to_date": "{{to_date}}"
+                  }
+                }
+              }'
+        - lang: Shell
+          label: Filter by campaign name and creator (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/search' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "limit": 15,
+                "page": 1,
+                "campaign_fields": {
+                  "name": "{{campaign_name_partial}}",
+                  "created_by": ["{{creator_email}}"],
+                  "tags": ["{{tag_name}}"]
+                }
+              }'
+        - lang: Shell
+          label: Filter by campaign IDs with child campaigns (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/search' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "limit": 15,
+                "page": 1,
+                "campaign_fields": {
+                  "ids": ["{{campaign_id}}"]
+                },
+                "include_child_campaigns": true,
+                "include_archive_campaigns": false
+              }'
       tags: [Get Campaign Details]
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
@@ -3185,7 +3963,7 @@ paths:
             schema: { $ref: '#/components/schemas/SearchV5Request' }
       responses:
         '200':
-          description: Campaigns matching the filter
+          description: Campaigns matching the filter criteria.
           content:
             application/json:
               schema:
@@ -3194,13 +3972,57 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/CampaignSearchResponseData' }
-              example:
-                response_id: "string"
-                type: "campaign"
-                data:
-                  campaigns: []
+              examples:
+                push_results:
+                  summary: Push campaign results
+                  value:
+                    response_id: "resp-search-001"
+                    type: "campaign"
+                    data:
+                      campaigns:
+                        - id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                          campaign_id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                          status: "ACTIVE"
+                          channel: "PUSH"
+                          campaign_delivery_type: "PERIODIC"
+                          created_by: "marketer@example.com"
+                          created_at: "2024-01-01 08:00:00.000000"
+                          updated_at: "2024-06-01 10:00:00.000000"
+                          basic_details:
+                            name: "Weekly Engagement Push"
+                            platforms: ["ANDROID", "IOS"]
+                            tags: ["engagement"]
+                            team: "Growth Team"
+                email_results:
+                  summary: Email campaign results
+                  value:
+                    response_id: "resp-search-002"
+                    type: "campaign"
+                    data:
+                      campaigns:
+                        - id: "64a1b2c3d4e5f6a7b8c9d0e2"
+                          campaign_id: "64a1b2c3d4e5f6a7b8c9d0e2"
+                          status: "SCHEDULED"
+                          channel: "EMAIL"
+                          campaign_delivery_type: "ONE_TIME"
+                          created_by: "marketer@example.com"
+                          created_at: "2024-07-04 08:00:54.847000"
+                          updated_at: "2024-07-04 09:15:00.000000"
+                          basic_details:
+                            name: "Summer Sale Email"
+                            content_type: "PROMOTIONAL"
+                            subscription_category: "promotions"
+                            user_attribute_identifier: "Email (Standard)"
+                            tags: ["promotional", "seasonal"]
+                          connector:
+                            connector_type: "SENDGRID"
+                            connector_name: "SendgridPrimary"
         '400':
           $ref: '#/components/responses/V5ValidationError'
+        '401':
+          $ref: '#/components/responses/V5Unauthorized'
+        '500':
+          $ref: '#/components/responses/V5InternalError'
 
   /v5/campaigns/meta:
     post:
@@ -3243,6 +4065,67 @@ paths:
               * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
               </Note>
       tags: [Get Campaign Details]
+      x-codeSamples:
+        - lang: Shell
+          label: Filter by ID and status (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/meta' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "limit": 15,
+                "page": 1,
+                "campaign_fields": {
+                  "id": "{{campaign_id}}",
+                  "status": ["SCHEDULED", "ACTIVE", "PAUSED", "DRAFT"]
+                }
+              }'
+        - lang: Shell
+          label: Filter by channel and date range (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/meta' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "limit": 15,
+                "page": 1,
+                "campaign_fields": {
+                  "channels": ["PUSH", "EMAIL"],
+                  "created_date": {
+                    "from_date": "2024-01-01T00:00:00",
+                    "to_date": "2024-12-31T23:59:59"
+                  }
+                }
+              }'
+        - lang: Shell
+          label: Filter by delivery type and creator (cURL)
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns/meta' \
+              -H 'Authorization: Basic {{Authorization_Key}}' \
+              -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
+              -H 'X-MOE-Request-Id: {{Request_Id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "limit": 15,
+                "page": 1,
+                "campaign_fields": {
+                  "delivery_type": "ONE_TIME",
+                  "created_by": ["{{creator_email}}"],
+                  "name": "{{campaign_name_partial}}",
+                  "tags": ["promotional"]
+                },
+                "include_child_campaigns": false
+              }'
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -3265,13 +4148,98 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/CampaignMetaListResponseData' }
-              example:
-                response_id: "string"
-                type: "campaign"
-                data:
-                  campaigns: []
+              examples:
+                scheduled_push_with_reachability:
+                  summary: Scheduled Push campaign with reachability details
+                  value:
+                    response_id: "resp-meta-001"
+                    type: "campaign"
+                    data:
+                      campaigns:
+                        - campaign_id: "64a1b2c3d4e5f6a7b8c9d0e1"
+                          channel: "PUSH"
+                          platform: ["ANDROID", "IOS"]
+                          created_by: "marketer@example.com"
+                          campaign_delivery_type: "ONE_TIME"
+                          campaign_name: "Summer Sale Campaign"
+                          campaign_team: "Growth Team"
+                          campaign_tags: ["promotional", "seasonal"]
+                          campaign_status: "SCHEDULED"
+                          campaign_start_time: "2024-11-28T12:18:00"
+                          reachability_details:
+                            count: 18182
+                            last_updated_time: "2024-11-27T09:05:42.661000"
+                periodic_with_child_campaigns:
+                  summary: Periodic campaign with child campaign counts
+                  value:
+                    response_id: "resp-meta-002"
+                    type: "campaign"
+                    data:
+                      campaigns:
+                        - campaign_id: "64a1b2c3d4e5f6a7b8c9d0e2"
+                          channel: "EMAIL"
+                          platform: []
+                          created_by: "marketer@example.com"
+                          campaign_delivery_type: "PERIODIC"
+                          campaign_name: "Weekly Newsletter"
+                          campaign_team: "Retention Team"
+                          campaign_tags: ["newsletter"]
+                          campaign_status: "ACTIVE"
+                          campaign_start_time: "2024-01-01T08:00:00"
+                          total_child_campaigns: 12
+                          reachability_details: null
         '400':
-          $ref: '#/components/responses/V5ValidationError'
+          description: Request failed schema or field validation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
+              examples:
+                missing_request_id:
+                  summary: Missing request_id
+                  value:
+                    response_id: "resp-meta-400-a"
+                    error:
+                      code: VALIDATION_FAILED
+                      message: "One or more fields failed validation."
+                      request_id: ""
+                      details:
+                        - target: "request_id"
+                          message: "request_id is required."
+                missing_limit:
+                  summary: Missing limit
+                  value:
+                    response_id: "resp-meta-400-b"
+                    error:
+                      code: VALIDATION_FAILED
+                      message: "One or more fields failed validation."
+                      request_id: "{{request_id}}"
+                      details:
+                        - target: "limit"
+                          message: "limit is required."
+                missing_page:
+                  summary: Missing page
+                  value:
+                    response_id: "resp-meta-400-c"
+                    error:
+                      code: VALIDATION_FAILED
+                      message: "One or more fields failed validation."
+                      request_id: "{{request_id}}"
+                      details:
+                        - target: "page"
+                          message: "page is required."
+                feature_not_enabled:
+                  summary: Feature not enabled for workspace
+                  value:
+                    response_id: "resp-meta-400-d"
+                    error:
+                      code: VALIDATION_FAILED
+                      message: "Campaign metadata API is not enabled for this workspace."
+                      request_id: "{{request_id}}"
+                      details: []
+        '401':
+          $ref: '#/components/responses/V5Unauthorized'
+        '500':
+          $ref: '#/components/responses/V5InternalError'
 
   /v5/campaigns/test:
     post:
