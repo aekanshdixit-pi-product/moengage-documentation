@@ -1,4 +1,80 @@
 ---
-title: 'Dynamic Template Selector'
+title: "Dynamic Template Selector"
 ---
 
+# Overview
+
+MoEngage Inform supports **Dynamic Template Selector** via **Rule-Based Templates**. Instead of creating multiple distinct alerts for variations of the same transactional trigger, you can create a single alert that dynamically serves the correct template variant. The message template variation is selected in real time based on user or API attributes, rather than standard random percentage splits or optimization rules.
+
+# Use Case
+
+When dealing with complex transactional notifications (such as billing or transaction status updates), the optimal message context relies heavily on individual data variables. For example, a "Bill Ready" notification may have multiple variations:
+
+- **Variation A:** For users with Auto-Pay enabled (e.g., _"Your bill is ready and will be automatically deducted on the 2nd."_)
+- **Variation B:** For users with Auto-Pay disabled (e.g., _"Your bill is ready. Please make a payment manually by the 2nd."_)
+- **Variation C:** For users with Auto-Pay enabled but whose bill exceeds their set limits (e.g., _"Your bill exceeds your auto-pay threshold. Action required."_)
+
+Without this feature, you would have to create and manage up to 30 distinct alerts to cover every permutation. Rule-Based Templates allow you to manage a single alert that conditionally routes the recipient to the correct localized or contextualized message template variant.
+
+# Configure Dynamic Template Selector
+
+To configure dynamic template selector, perform the following steps:
+
+1. Create a Rule Set
+2. Create an Alert with Rule Set
+3. Define Variant Templates & Content
+
+## Create a Rule Set
+
+Before applying dynamic selection to your alerts, you must build the conditional criteria inside a **Rule Set**.
+
+1. Navigate to **Settings** \> **Inform** from the bottom sidebar menu.
+2. Select the **Rule-based Templates** tab (adjacent to _General Settings_).
+3. Click the **\+ New rule set** button.
+
+### Configure Rule Set Details
+
+- **Rule set name\*:** Enter a clear, descriptive identifier for the overarching transaction category (e.g., `Bill_Ready_Notification_Flow`).
+- **Rule set description:** Add an optional summary detailing the conditions managed within this set (max 250 characters).
+
+### Define Rules
+
+Within the **Rule definition** section, configure one or more individual rules using evaluation attributes:
+
+1. **Rule Name\*:** Enter an unique identifier for this option (e.g., `Autopay_Enabled` or `Limit_Exceeded`).
+2. **Conditional Selection ("If" criteria):** \* Select **API Attribute** (highly recommended for real-time transactional variables) or **User Attribute** from the dropdown menu.
+   - Define the criteria (e.g., Attribute Name: `autopay_status`, Operator: `Is`, Value: `true`).
+   - _Note: This component behaves exactly like MoEngage Segmentation filters. Enter names manually if they do not appear in pre-populated dropdowns._
+3. **Add Multiple Rules:** Click **Add rule** to append further logical evaluations to sequence other variations in priority order.
+
+### Set Fallback Action
+
+The **Fallback rule** acts as a catch-all safety parameter if incoming runtime data fails to match any of your explicitly defined conditional rules above.
+
+- **Option 1: Use default rule:** Serves a standard fallback variation template so the user still receives an update.
+- **Option 2: Don't use any rule:** Drops the notification attempt entirely if no conditions match.
+
+Click **Save** to commit the new template logic framework.
+
+## Configure an Alert with Rule Sets
+
+Once your Rule Set is saved, you can link it directly to your target transactional workflows.
+
+1. Navigate to **Inform** \> **Create Alert**.
+2. On **Step 1 (Configuration)**, locate the messaging structure options and toggle on **Use rule set**.
+3. Select your previously configured Rule Set from the dropdown option list.
+
+> ⚠️ **Important UI Update:** The **DND (Do Not Disturb)** suppression settings have moved. You will now configure channel-specific DND options directly inside **Step 1** instead of Step 2. Ensure your delivery window tolerances are designated here before continuing.
+
+4. Click **Next**.
+
+## Define Variant Templates & Content
+
+On **Step 2 (Content Generation)**, MoEngage Inform dynamically creates layout blocks for every rule configured inside your designated Rule Set.
+
+1. You will see explicit, toggleable tabs mapped directly to your custom rules (e.g., `Rule 1`, `Rule 2`, etc.).
+2. Select a rule tab to craft its distinct text, deep links, or template parameters.
+3. Ensure you create corresponding localized variants for both **SMS** and **Email** tabs nested within each rule category.
+4. Proceed to complete the workflow and click **Publish**.
+
+Upon publication, MoEngage will output a unified payload string handling the conditional variations seamlessly
