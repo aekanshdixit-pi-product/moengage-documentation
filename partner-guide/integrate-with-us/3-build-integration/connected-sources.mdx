@@ -14,3 +14,185 @@ Connect any external system using three simple steps:
 ### **Webhook POST**
 
 Your system sends JSON payload to MoEngage endpoint
+
+### **Transform**
+
+Mapper extracts and validates data
+
+### **Import**
+
+Data flows into events & profiles
+
+## **Key Capabilities**
+
+**Real-Time Events**
+
+Stream user actions as they happen
+
+**Profile Sync**
+
+Update user attributes automatically
+
+**Bulk Processing**
+
+Handle batches in single call
+
+**Flexible Mapping**
+
+Transform complex JSON structures
+
+**Date Merging**
+
+Combine separate date/time fields
+
+**Dynamic Attrs**
+
+Auto-import custom fields
+
+## **Use Cases**
+
+ 
+
+📝 **Lead Capture**
+
+Stream form submissions from Unbounce, Typeform, HubSpot for instant follow-ups
+
+💳 **Payment Events**
+
+Track subscriptions from Stripe, Chargebee (created, failed, expiring)
+
+🎫 **Support Tickets**
+
+Monitor Zendesk/Intercom interactions for satisfaction tracking
+
+🛒 **E-commerce**
+
+Capture orders, carts, views from custom platforms
+
+🛠️ **Custom Apps**
+
+Send events from proprietary systems without native SDKs
+
+## **🚀 Build Your Integrationlink**
+
+Follow these five steps to go from sample payload to live data flowing into MoEngage.
+
+**1 Prepare**
+
+Prerequisites & Payloads
+
+**2 Create**
+
+Build Your Mapper
+
+**3 Submit**
+
+Send to MoEngage
+
+**4 Configure**
+
+Add Webhook URL
+
+**5 Test**
+
+Verify Data Flow
+
+### **Prepare: Prerequisites & Sample Payloads**
+
+Before building your mapper, make sure you have everything ready.
+
+<Info>
+  **You will need:**
+
+  - Webhook capability in your system (HTTP POST)
+  - Authentication support (Basic Auth or custom headers)
+  - Valid JSON webhook payloads
+  - 2-3 sample payloads from your system
+  - MoEngage credentials (Workspace ID, Data API Key from Settings → APIs)
+</Info>
+
+<Note>
+  **⚡ Rate Limits**
+
+  **Recommended maximum:** 200 requests/second
+
+  For higher throughput, contact your Solutions Engineering team with: expected volume, use case description, peak/average patterns, and data center location.
+</Note>
+
+<Note>
+  **💡 Validate early:** Paste your sample payloads into [JSONLint](https://jsonlint.com/) to confirm they are valid JSON before proceeding.
+</Note>
+
+### **Create: Build Your Mapper Configuration**
+
+The mapper is a JSON configuration that tells MoEngage how to transform your incoming webhook data into events or user profiles. This is the core of your integration.
+
+### **📋 Choose Your Mapping Type**
+
+**Two sync types available:**
+
+- `mapping_type: "events"` - Track events AND create/update user profiles
+- `mapping_type: "users"` - Create/Update user profiles ONLY (no events)
+
+<Tabs>
+  <Tab title="Events Mapper">
+    ```text
+    {
+      "partner_name": "integration_name",
+      "mapping_type": "events",
+      "mappings": {
+        "customer_id": "$.user_id",
+        "event_name": "$.event_type",
+        "user_time": "$.timestamp",
+        "platform": "web",
+        "app_version": "1.0.0",
+        "attr": {
+          "custom_field": "$.field_name"
+        },
+        "user_attributes": {
+          "u_em": "$.email"
+        }
+      },
+      "batching": false,
+      "payload_validations": {}
+    }
+    ```
+  </Tab>
+  <Tab title="Users Mapper">
+    ```text
+    {
+      "partner_name": "integration_name",
+      "mapping_type": "users",
+      "mappings": {
+        "customer_id": "$.user_id",
+        "user_attributes": {
+          "u_em": "$.email",
+          "u_fn": "$.first_name",
+          "u_ln": "$.last_name"
+        }
+      },
+      "batching": false,
+      "payload_validations": {}
+    }
+    ```
+  </Tab>
+</Tabs>
+
+| **Field** | **For "events"** | **For "users"** |
+| --- | --- | --- |
+| **customer\_id** | **Required** - Unique user identifier | **Required** - Unique user identifier |
+| **event\_name** | **Required** - Event name | _Not used_ |
+| **user\_time** | **Required** - Event timestamp | _Not used_ |
+| **platform** | **Required** - "web", "android", "ios", "api" | _Not used_ |
+| **app\_version** | **Required** - Static version string | _Not used_ |
+| **user\_attributes** | **Optional** - Update user profile | **Optional** - Update user profile |
+| **attr** | **Optional** - Event attributes | _Not used_ |
+
+### **📍 JSONPath Quick Reference**
+
+Use JSONPath expressions to map fields from your payload to MoEngage fields. Here's how to read them:
+
+| **Payload** | **JSONPath** | **Result** |
+| --- | --- | --- |
+|  |  |  |
+|  |  |  |
