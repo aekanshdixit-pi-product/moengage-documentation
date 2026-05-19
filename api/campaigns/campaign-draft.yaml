@@ -7190,26 +7190,34 @@ paths:
       operationId: search_campaigns_v5
       summary: Search Campaigns
       description: |
-        Searches campaigns in the workspace and returns the full V5 campaign payload for each
-        match. Results support pagination and filtering by channel, status, tags, name, IDs,
-        dates, delivery type, and creator.
+        Returns the full V5 campaign payload for all campaigns that match the specified filters.
+        Supports pagination and filtering by channel, status, tags, name, IDs, dates, delivery
+        type, and creator.
 
-        In V1, `POST /v1/campaigns/search` served both single-ID retrieval and multi-campaign
-        filtering in one endpoint. In V5, these are separate:
-        - Single-campaign retrieval: `GET /v5/campaigns/{campaign_id}`
-        - Multi-campaign search and filtering: `POST /v5/campaigns/search` (this endpoint)
+        **Migration notes from V1**
 
-        Two `campaign_fields` filter keys were renamed from V1 to V5. See the `campaign_fields`
-        schema for details.
+        In V1, `POST /v1/campaigns/search` handled both single-campaign retrieval and
+        multi-campaign filtering through a single endpoint. V5 separates these into two
+        distinct endpoints:
 
-        **SMS campaigns:** SMS campaigns are returned in search results when `channels: ["SMS"]`
-        is passed. The `channel` field in each result will be `SMS`. Full SMS campaign create and
-        update support via V5 is not supported.
+        - Single-campaign retrieval by ID: `GET /v5/campaigns/{campaign_id}`
+        - Search and filtering across multiple campaigns: `POST /v5/campaigns/search`
 
-        **Child campaign executions:** Use `POST /v5/campaigns/{parent_campaign_id}/executions`
-        to retrieve the execution history of Periodic and Business Event-triggered campaigns
-        (child IDs, sent times, statuses, and total instance count). This is the V5 equivalent
-        of the V1 `POST /v1/campaigns/{parent_id}/executions` endpoint.
+        Two filter keys under `campaign_fields` were renamed between V1 and V5. Refer to
+        the `campaign_fields` schema for the updated key names.
+
+        **SMS campaigns**
+
+        SMS campaigns are included in search results when `"SMS"` is passed in the `channels`
+        array. The `channel` field in each matching result returns `SMS`. Full SMS campaign
+        creation and update operations are not supported in V5.
+
+        **Child campaign executions**
+
+        To retrieve the execution history of Periodic and Business Event-triggered campaigns,
+        including child campaign IDs, sent times, statuses, and total instance count, use
+        `POST /v5/campaigns/{parent_campaign_id}/executions`. This endpoint is the V5
+        equivalent of `POST /v1/campaigns/{parent_id}/executions`.
       x-mint:
         content: |
           **Draft behavior:**
@@ -7246,13 +7254,8 @@ paths:
             curl -X POST 'https://api-0X.moengage.com/v5/campaigns/search' \
               -H 'Authorization: Basic {{Authorization_Key}}' \
               -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
-              -H 'X-MOE-Request-Id: {{Request_Id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
               -H 'Content-Type: application/json' \
               -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
                 "campaign_fields": {
                   "channels": ["EMAIL", "PUSH"],
                   "status": ["ACTIVE", "SCHEDULED"]
@@ -7264,13 +7267,8 @@ paths:
             curl -X POST 'https://api-0X.moengage.com/v5/campaigns/search' \
               -H 'Authorization: Basic {{Authorization_Key}}' \
               -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
-              -H 'X-MOE-Request-Id: {{Request_Id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
               -H 'Content-Type: application/json' \
               -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
                 "campaign_fields": {
                   "campaign_delivery_type": ["ONE_TIME"],
                   "created_date": {
@@ -7280,18 +7278,13 @@ paths:
                 }
               }'
         - lang: Shell
-          label: Filter by campaign name and creator (cURL)
+          label: Filter by name, tags, and creator (cURL)
           source: |
             curl -X POST 'https://api-0X.moengage.com/v5/campaigns/search' \
               -H 'Authorization: Basic {{Authorization_Key}}' \
               -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
-              -H 'X-MOE-Request-Id: {{Request_Id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
               -H 'Content-Type: application/json' \
               -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
                 "campaign_fields": {
                   "name": "{{campaign_name_partial}}",
                   "created_by": ["{{creator_email}}"],
@@ -7299,23 +7292,17 @@ paths:
                 }
               }'
         - lang: Shell
-          label: Filter by campaign IDs with child campaigns (cURL)
+          label: Filter by IDs and include child campaigns (cURL)
           source: |
             curl -X POST 'https://api-0X.moengage.com/v5/campaigns/search' \
               -H 'Authorization: Basic {{Authorization_Key}}' \
               -H 'X-MOE-Tenant-ID: {{Workspace_ID}}' \
-              -H 'X-MOE-Request-Id: {{Request_Id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
               -H 'Content-Type: application/json' \
               -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
                 "campaign_fields": {
                   "ids": ["{{campaign_id}}"]
                 },
-                "include_child_campaigns": true,
-                "include_archive_campaigns": false
+                "include_child_campaigns": true
               }'
       tags: [Get Campaign Details]
       parameters:
