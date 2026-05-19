@@ -3,7 +3,7 @@ info:
   title: MoEngage Campaigns API
   version: '2025-11-20'
   description: |
-    The Campaigns V5 API covers the full campaign lifecycle — from creating a draft and building it out incrementally, through validation and test sends, to publication and active campaign management.
+    The Campaigns V5 API manages the full campaign lifecycle — draft creation, incremental updates, validation, test sends, publication, and post-publish management.
 
     **Supported channels:**
     - Push (Android, iOS, Web)
@@ -57,7 +57,7 @@ components:
         - **Username**: Use your MoEngage workspace ID (also known as the App ID). You can find it in the MoEngage dashboard at **Settings** > **Account** > **APIs** > **Workspace ID (earlier app id)**.
         - **Password**: On your MoEngage workspace, navigate to **Settings** → **Account** → **API keys** and click **Create new key**. The tab lists every API surface (Data, Segmentation, Push, Email, Campaigns, Templates, and more) and exposes per-resource actions. For Campaigns, ensure the **View**, **Create & Manage**, and **Create, Manage & Publish** checkboxes are selected.
 
-        For more information on authentication and getting your credentials, refer [here](https://www.moengage.com/docs/api/introduction#getting-your-credentials).
+        For more information on authentication and getting your credentials, refer to [Getting your credentials](https://www.moengage.com/docs/api/introduction#getting-your-credentials).
 
         Send the value in the `Authorization` header as `Basic` followed by Base64-encoding of `appkey:apisecret` (workspace ID and API key).
   
@@ -187,7 +187,7 @@ components:
         channel: 
           type: string
           enum: [PUSH]
-          description: The communication channel for this campaign.
+          description: The campaign channel. One of `PUSH` or `EMAIL`.
         campaign_delivery_type: 
           type: string
           enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED]
@@ -537,7 +537,7 @@ components:
         channel: 
           type: string
           enum: [EMAIL]
-          description: The communication channel for this campaign.
+          description: The campaign channel. One of `PUSH` or `EMAIL`.
         campaign_delivery_type: 
           type: string
           enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED]
@@ -838,7 +838,7 @@ components:
           description: Must be `PUSH` for a Push update.
         campaign_delivery_type:
           type: string
-          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED, BROADCAST_LIVE_ACTIVITY]
+          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED, BROADCAST_LIVE_ACTIVITY]
           description: The delivery type of the campaign being updated.
         updated_by:
           type: string
@@ -911,7 +911,7 @@ components:
           description: Must be `EMAIL` for an Email update.
         campaign_delivery_type:
           type: string
-          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_TRIGGERED]
+          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED]
           description: The delivery type of the campaign being updated.
         updated_by:
           type: string
@@ -976,7 +976,7 @@ components:
 
     CampaignStatusV5Request:
       type: object
-      description: You can request to change the status of one or more campaigns.
+      description: Changes the status of a single published campaign. One campaign ID per request.
       required: [action]
       properties:
         request_id: 
@@ -1204,7 +1204,7 @@ components:
           type: array
           items:
             type: string
-            enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED]
+            enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED]
           description: |
             Include campaigns with any of these delivery types.
 
@@ -1218,7 +1218,7 @@ components:
           type: array
           items:
             type: string
-            enum: [DRAFT, ACTIVE, SCHEDULED, PAUSED, SENT, STOPPED, ARCHIVED]
+            enum: [DRAFT, ACTIVE, SCHEDULED, PAUSED, SENT, SENDING, STOPPED, ARCHIVED, RETIRED]
           description: |
             Include campaigns in any of these statuses.
 
@@ -1389,7 +1389,7 @@ components:
               example: "2024-12-31T23:59:59"
         delivery_type:
           type: string
-          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED]
+          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED]
           description: |
             Filter campaigns by delivery type.
 
@@ -1420,7 +1420,7 @@ components:
           type: array
           items:
             type: string
-            enum: [DRAFT, SCHEDULED, ACTIVE, PAUSED, SENT, STOPPED, RETIRED, ARCHIVED]
+            enum: [DRAFT, SCHEDULED, ACTIVE, PAUSED, SENT, SENDING, STOPPED, RETIRED, ARCHIVED]
           description: Include campaigns in any of these statuses.
         tags:
           type: array
@@ -1786,7 +1786,7 @@ components:
     # ==================== Shared V5/V1 Components ====================
     PushBasicDetailsV5:
       type: object
-      description: Contains the basic information about the Push campaign.
+      description: Identifying metadata for the Push campaign — name, team, tags, and platform targeting.
       properties:
         name: 
           type: string
@@ -1830,7 +1830,7 @@ components:
         
     EmailBasicDetailsV5:
       type: object
-      description: Contains the basic information about the Email campaign.
+      description: Identifying metadata for the Email campaign — name, team, tags, and subscription category.
       properties:
         name: 
           type: string
@@ -3277,7 +3277,7 @@ components:
 
     AndroidAdvanced:
       type: object
-      description: Advanced configuration options for Android push notifications.
+      description: Platform-level advanced settings for push delivery — TTL, priority, badge count, and similar controls.
       properties:
         coupon_code: 
           type: string
@@ -3366,7 +3366,7 @@ components:
 
     KeyValuePair:
       type: object
-      description: A key-value pair for custom data.
+      description: A custom key-value pair attached to the push payload.
       properties:
         key: 
           type: string
@@ -3614,7 +3614,7 @@ components:
 
     IOSAdvanced:
       type: object
-      description: Advanced configuration options for iOS push notifications.
+      description: Platform-level advanced settings for push delivery — TTL, priority, badge count, and similar controls.
       properties:
         coupon_code: 
           type: string
@@ -3779,7 +3779,7 @@ components:
     WebAdvanced:
       type: object
       description: |
-        Advanced configuration options for Web push notifications.
+        Platform-level advanced settings for push delivery — TTL, priority, badge count, and similar controls.
 
         **Custom notification icon (ICON_URL):**
 
@@ -4708,7 +4708,7 @@ components:
       description: |
         Best Time to Send (BTS) configuration.
         
-        BTS provides a prescriptive time slot to send a campaign to increase the chance of user interaction.
+        BTS selects an optimal send time per user based on historical engagement patterns.
       properties:
         send_in_bts: 
           type: boolean
@@ -5486,7 +5486,7 @@ components:
             Monotonic version index for this campaign document when campaign versioning is enabled. Publishing edits to a previously published campaign creates a new document with a higher `version_number`. `campaign_id` is the canonical identifier shared across versions; `id` is unique per document.
         status: 
           type: string
-          enum: [DRAFT, ACTIVE, SCHEDULED, PAUSED, SENT, STOPPED, ARCHIVED]
+          enum: [DRAFT, ACTIVE, SCHEDULED, PAUSED, SENT, SENDING, STOPPED, ARCHIVED, RETIRED]
           description: The current status of the campaign.
         channel: 
           type: string
@@ -5622,7 +5622,7 @@ components:
           description: The email ID of the user who created the campaign.
         campaign_delivery_type: 
           type: string
-          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED, BROADCAST_LIVE_ACTIVITY]
+          enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED, BROADCAST_LIVE_ACTIVITY]
           description: The delivery type of the campaign.
         campaign_name: 
           type: string
@@ -5637,7 +5637,7 @@ components:
           description: Tags associated with the campaign.
         campaign_status: 
           type: string
-          enum: [DRAFT, SCHEDULED, ACTIVE, PAUSED, SENT, STOPPED, RETIRED, ARCHIVED]
+          enum: [DRAFT, SCHEDULED, ACTIVE, PAUSED, SENT, SENDING, STOPPED, RETIRED, ARCHIVED]
           description: The current status of the campaign.
         campaign_start_time: 
           type: string
@@ -5907,7 +5907,7 @@ paths:
       operationId: create_draft_campaign_v5
       summary: Create Campaign Draft
       description: |
-        Use this API to create a new Push or Email campaign draft in MoEngage. You can include content, audience, and delivery settings at the time of creation, or add them later as you refine the draft.
+        Creates a Push or Email campaign draft. You can include content, audience, and delivery settings at the time of creation, or add them later as you refine the draft.
       x-codeSamples:
         - lang: Shell
           label: Push — One-Time (cURL)
@@ -6544,8 +6544,7 @@ paths:
       operationId: get_single_campaign_v5
       summary: Get Campaign
       description: |
-        Use this API to fetch a single campaign by its ID, including its full configuration and
-        current status.
+        Returns the full configuration and current status of a single campaign by its ID.
 
         In V1, a specific campaign was retrieved using `POST /v1/campaigns/search` with
         `campaign_fields.id`. In V5, use this `GET` endpoint for single-campaign retrieval.
@@ -6557,11 +6556,6 @@ paths:
         the interim.
       x-mint:
         content: |
-          Use the response to:
-          - Review the full campaign configuration before patching.
-          - Drive UI or third-party integrations.
-          - Confirm publish status before triggering downstream workflows.
-
           #### Rate Limits
 
           | Rate Limit Name | Rate Limit |
@@ -6693,7 +6687,7 @@ paths:
       operationId: patch_draft_campaign_v5
       summary: Update Campaign
       description: |
-        Use this API to either edit individual components of a draft or publish a draft.
+        Updates individual components of a campaign draft, or transitions a draft to ACTIVE by setting `status: PUBLISH`.
 
         `PATCH /v1/campaigns/{campaign_id}` returned `204 No Content` with no response body. V5
         returns `200 OK` with a JSON body containing `response_id`, `type`, and `data.id`.
@@ -6939,7 +6933,7 @@ paths:
       operationId: validate_draft_campaign_v5
       summary: Validate Campaign
       description: |
-        Use this API to check whether a draft would pass publish-time validation (`DRAFT_PUBLISH`) without making any changes to the draft.
+        Validates whether a draft would pass publish-time checks (`DRAFT_PUBLISH`) without making any changes to the draft.
       x-codeSamples:
         - lang: Shell
           label: Push (cURL)
@@ -7034,7 +7028,7 @@ paths:
       operationId: change_campaign_status_v5
       summary: Update Campaign Status
       description: |
-        Use this API to apply a state transition on a campaign that has already been published.
+        Applies a state transition to a published campaign.
 
         `POST /v1/campaigns/status` accepted a `campaign_ids` array of up to 10 IDs per request.
         In V5, the campaign ID is a path parameter and only one campaign can be transitioned per
@@ -7170,7 +7164,7 @@ paths:
       operationId: search_campaigns_v5
       summary: Search Campaigns
       description: |
-        Use this API to search your workspace and retrieve the full V5 campaign payload for each
+        Searches campaigns in the workspace and returns the full V5 campaign payload for each
         match. Results support pagination and filtering by channel, status, tags, name, IDs,
         dates, delivery type, and creator.
 
@@ -7186,13 +7180,10 @@ paths:
         is passed. The `channel` field in each result will be `SMS`. Full SMS campaign create and
         update support via V5 is not supported.
 
-        **Child campaign executions (V1 executions API):** V1 had a dedicated
-        `POST /v1/campaigns/{parent_id}/executions` API for retrieving execution history of
-        Periodic and Business Event-triggered campaigns (child IDs, sent times, statuses). V5
-        does not yet have a direct equivalent endpoint. As an interim workaround, use
-        `POST /v5/campaigns/search` with `include_child_campaigns: true` to retrieve child
-        campaigns linked to a parent ID — filter by `parent_id` in the results to reconstruct
-        execution history.
+        **Child campaign executions:** Use `POST /v5/campaigns/{parent_campaign_id}/executions`
+        to retrieve the execution history of Periodic and Business Event-triggered campaigns
+        (child IDs, sent times, statuses, and total instance count). This is the V5 equivalent
+        of the V1 `POST /v1/campaigns/{parent_id}/executions` endpoint.
       x-mint:
         content: |
           **Draft behavior:**
@@ -7380,7 +7371,7 @@ paths:
       operationId: get_campaign_meta_v5
       summary: Get Campaign Meta
       description: |
-        Use this API to fetch lightweight metadata for one or more campaigns without loading their full bodies.
+        Returns lightweight metadata for one or more campaigns without loading their full configuration.
       x-mint:
         content: |
           - After a rejection, the `rejection_comment` field may appear while the campaign remains in **DRAFT**.
@@ -7597,7 +7588,7 @@ paths:
       operationId: test_campaign_v5
       summary: Test Campaign
       description: |
-        Use this API to send a test Push or Email to specific users or identifiers before going live.
+        Sends a test Push or Email message to specific users or device identifiers before publishing the campaign.
       x-codeSamples:
         - lang: Shell
           label: Push — Inline (cURL)
@@ -7795,22 +7786,11 @@ paths:
 
         **Personalization sources:** User attributes, event attributes, custom templates, content blocks, content APIs, product sets
 
-        <Warning>
-        **Not yet available in V5.** This endpoint does not currently exist in the V5 API. Use the V1 equivalent in the interim:
-
-        `POST /core-services/v1/personalization/preview`
-
-        A V5 equivalent is planned. Until it is available, integrate against the V1 endpoint to validate Jinja expressions, conditional blocks, and dynamic content before going live.
-        </Warning>
       x-mint:
         content: |
-          #### Why this endpoint matters
+          #### V1 equivalent
 
-          This is a critical pre-launch validation tool. Teams building campaign automation use it to verify that Jinja expressions, conditional blocks, and dynamic content resolve correctly for a specific user before the campaign goes live. Without it, the only way to verify personalisation in V5 is to send an actual test message via [Test Campaign](/api/campaigns/test-campaign).
-
-          #### V1 request reference
-
-          Until a V5 equivalent is published, use the V1 endpoint:
+          The V1 equivalent endpoint for reference:
 
           ```shell
           curl -X POST 'https://api-{dc}.moengage.com/core-services/v1/personalization/preview' \
@@ -7962,24 +7942,11 @@ paths:
 
         **Supported channels:** Push, Email
 
-        <Warning>
-        **Not yet available in V5.** This endpoint does not currently exist in the V5 API. Use the V1 equivalent in the interim:
-
-        `POST /core-services/v1/campaigns/{parent_campaign_id}/executions`
-
-        A V5 equivalent is planned. Until it is available, use the V1 endpoint to retrieve execution history for recurring campaigns.
-
-        Note: `POST /v5/campaigns/search` supports `include_child_campaigns` as a filter, but it is not a substitute for a dedicated executions history API — it does not return per-execution send times or statuses.
-        </Warning>
       x-mint:
         content: |
-          #### Why this endpoint matters
+          #### V1 equivalent
 
-          Developers building reporting dashboards, audit tools, or reconciliation systems for recurring campaigns need this data. Without it, there is no way in V5 to see how many times a Periodic campaign has run or to retrieve child campaign IDs for further querying (for example, fetching stats per execution).
-
-          #### V1 request reference
-
-          Until a V5 equivalent is published, use the V1 endpoint:
+          The V1 equivalent endpoint for reference:
 
           ```shell
           curl -X POST 'https://api-{dc}.moengage.com/core-services/v1/campaigns/{{parent_campaign_id}}/executions' \
@@ -8104,22 +8071,11 @@ paths:
 
         **Note:** The GCG must already be initialised using the **Upload Users** option in the MoEngage dashboard. The **Random allocation** option is not supported by this API.
 
-        <Warning>
-        **Not yet available in V5.** This endpoint does not currently exist in the V5 API. Use the V1 equivalent in the interim:
-
-        `PUT /core-services/v1/global-control-group/users`
-
-        A V5 equivalent is planned. Until it is available, use the V1 endpoint for all programmatic GCG membership management.
-        </Warning>
       x-mint:
         content: |
-          #### Why this endpoint matters
+          #### V1 equivalent
 
-          The Global Control Group is a core experimentation feature — teams use it to exclude a baseline set of users from all campaigns in order to measure true campaign impact. The only way to manage GCG membership programmatically is through this API. Without it in V5, teams with automated GCG management workflows have no V5 path.
-
-          #### V1 request reference
-
-          Until a V5 equivalent is published, use the V1 endpoint:
+          The V1 equivalent endpoint for reference:
 
           ```shell
           curl -X PUT 'https://api-{dc}.moengage.com/core-services/v1/global-control-group/users' \
