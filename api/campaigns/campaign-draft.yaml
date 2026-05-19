@@ -7781,3 +7781,429 @@ paths:
                   details: []
         '500':
           $ref: '#/components/responses/V5InternalError'
+
+  /v5/personalization/preview:
+    post:
+      operationId: preview_personalized_content_v5
+      summary: Personalized Preview
+      description: |
+        Returns a fully resolved preview of personalised campaign content for a specific user — all user attributes, event attributes, content blocks, content APIs, product sets, and custom templates are rendered exactly as they would appear to that user at send time.
+
+        No message is sent. This endpoint is a read-only inspection tool.
+
+        **Supported channels:** Push, Email, SMS
+
+        **Personalization sources:** User attributes, event attributes, custom templates, content blocks, content APIs, product sets
+
+        <Warning>
+        **Not yet available in V5.** This endpoint does not currently exist in the V5 API. Use the V1 equivalent in the interim:
+
+        `POST /core-services/v1/personalization/preview`
+
+        A V5 equivalent is planned. Until it is available, integrate against the V1 endpoint to validate Jinja expressions, conditional blocks, and dynamic content before going live.
+        </Warning>
+      x-mint:
+        content: |
+          #### Why this endpoint matters
+
+          This is a critical pre-launch validation tool. Teams building campaign automation use it to verify that Jinja expressions, conditional blocks, and dynamic content resolve correctly for a specific user before the campaign goes live. Without it, the only way to verify personalisation in V5 is to send an actual test message via [Test Campaign](/api/campaigns/test-campaign).
+
+          #### V1 request reference
+
+          Until a V5 equivalent is published, use the V1 endpoint:
+
+          ```shell
+          curl -X POST 'https://api-{dc}.moengage.com/core-services/v1/personalization/preview' \
+            -H 'Authorization: Basic {{auth_token}}' \
+            -H 'MOE-APPKEY: {{workspace_id}}' \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "request_id": "{{request_id}}",
+              "channel": "PUSH",
+              "user_identification": {
+                "type": "USER_ATTRIBUTE_UNIQUE_ID",
+                "value": "{{user_id}}"
+              },
+              "campaign_content": {
+                "content": {
+                  "push": {
+                    "android": {
+                      "template_type": "BASIC",
+                      "basic_details": {
+                        "title": "Hello, {{ user.first_name }}!",
+                        "message": "{{ user.last_order_item }} is waiting for you."
+                      }
+                    }
+                  }
+                }
+              }
+            }'
+          ```
+
+          #### Rate Limits
+
+          | Rate Limit Name | Rate Limit |
+          | :--- | :--- |
+          | Personalized preview per minute | 10,000 requests per minute |
+
+      tags: [Personalized Preview]
+      parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+      requestBody:
+        description: >-
+          Personalization preview request. Supply the target user identification and the campaign content to resolve.
+          All Jinja expressions and dynamic sources are evaluated against the specified user's profile.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [request_id, channel, user_identification, campaign_content]
+              properties:
+                request_id:
+                  type: string
+                  description: Unique identifier for this request. Correlates with `response_id`.
+                channel:
+                  type: string
+                  enum: [PUSH, EMAIL, SMS]
+                  description: Channel of the content to preview.
+                user_identification:
+                  type: object
+                  description: Identifies the target user whose attributes are used to resolve personalisation.
+                  required: [type, value]
+                  properties:
+                    type:
+                      type: string
+                      enum: [USER_ATTRIBUTE_UNIQUE_ID, EMAIL, MOE_GAID, PUSH_ID]
+                      description: Identifier type.
+                    value:
+                      type: string
+                      description: Value of the identifier.
+                event_attributes:
+                  type: object
+                  description: >-
+                    Optional map of event attribute key-value pairs to inject into personalisation resolution.
+                    Useful for previewing event-triggered campaigns where the triggering event carries attributes.
+                  additionalProperties:
+                    type: string
+                campaign_content:
+                  type: object
+                  description: >-
+                    The campaign content to resolve. Follows the same `campaign_content` structure as the
+                    Create Campaign request. Only the content sent here is evaluated — no saved draft is loaded.
+            example:
+              request_id: "preview-001"
+              channel: "PUSH"
+              user_identification:
+                type: "USER_ATTRIBUTE_UNIQUE_ID"
+                value: "user_abc123"
+              event_attributes:
+                product_name: "Running Shoes"
+                product_price: "4999"
+              campaign_content:
+                content:
+                  push:
+                    android:
+                      template_type: "BASIC"
+                      basic_details:
+                        title: "Hello, {{ user.first_name }}!"
+                        message: "{{ event.product_name }} is waiting for you."
+      responses:
+        '200':
+          description: Preview resolved successfully. Returns the fully rendered content for the specified user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response_id:
+                    type: string
+                  type:
+                    type: string
+                    example: "personalization"
+                  data:
+                    type: object
+                    properties:
+                      personalized_content:
+                        type: object
+                        description: >-
+                          The resolved campaign content with all Jinja expressions, user attributes,
+                          event attributes, and dynamic sources substituted.
+              example:
+                response_id: "preview-001"
+                type: "personalization"
+                data:
+                  personalized_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "Hello, Jane!"
+                            message: "Running Shoes is waiting for you."
+        '400':
+          $ref: '#/components/responses/V5ValidationError'
+        '401':
+          $ref: '#/components/responses/V5Unauthorized'
+        '429':
+          $ref: '#/components/responses/V5RateLimited'
+        '500':
+          $ref: '#/components/responses/V5InternalError'
+
+  /v5/campaigns/{parent_campaign_id}/executions:
+    post:
+      operationId: get_child_campaigns_v5
+      summary: Get Child Campaigns
+      description: |
+        Retrieves the execution history of a Periodic or Business Event-triggered campaign. Each execution (child campaign) represents one run of the parent campaign and returns the child's ID, send time, status, and the total number of executions to date.
+
+        **Supported campaign types:** Periodic, Business Event-triggered
+
+        **Supported channels:** Push, Email
+
+        <Warning>
+        **Not yet available in V5.** This endpoint does not currently exist in the V5 API. Use the V1 equivalent in the interim:
+
+        `POST /core-services/v1/campaigns/{parent_campaign_id}/executions`
+
+        A V5 equivalent is planned. Until it is available, use the V1 endpoint to retrieve execution history for recurring campaigns.
+
+        Note: `POST /v5/campaigns/search` supports `include_child_campaigns` as a filter, but it is not a substitute for a dedicated executions history API — it does not return per-execution send times or statuses.
+        </Warning>
+      x-mint:
+        content: |
+          #### Why this endpoint matters
+
+          Developers building reporting dashboards, audit tools, or reconciliation systems for recurring campaigns need this data. Without it, there is no way in V5 to see how many times a Periodic campaign has run or to retrieve child campaign IDs for further querying (for example, fetching stats per execution).
+
+          #### V1 request reference
+
+          Until a V5 equivalent is published, use the V1 endpoint:
+
+          ```shell
+          curl -X POST 'https://api-{dc}.moengage.com/core-services/v1/campaigns/{{parent_campaign_id}}/executions' \
+            -H 'Authorization: Basic {{auth_token}}' \
+            -H 'MOE-APPKEY: {{workspace_id}}' \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "request_id": "{{request_id}}",
+              "limit": 15,
+              "page": 1
+            }'
+          ```
+
+          #### Rate Limits
+
+          | Rate Limit Name | Rate Limit |
+          | :--- | :--- |
+          | Get child campaigns per second | 10 requests per second per client |
+          | Get child campaigns per minute | 100 requests per minute per client |
+          | Get child campaigns per hour | 6,000 requests per hour per client |
+
+      tags: [Get Campaign Details]
+      parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+        - name: parent_campaign_id
+          in: path
+          required: true
+          description: The `campaign_id` of the parent Periodic or Business Event-triggered campaign.
+          schema:
+            type: string
+          example: "64a1b2c3d4e5f6a7b8c9d0e1"
+      requestBody:
+        description: Pagination parameters for the executions list.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [request_id]
+              properties:
+                request_id:
+                  type: string
+                  description: Unique identifier for this request. Correlates with `response_id`.
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 15
+                  default: 15
+                  description: Maximum number of child campaign records to return per page.
+                page:
+                  type: integer
+                  minimum: 1
+                  default: 1
+                  description: Page number for pagination (1-indexed).
+            example:
+              request_id: "exec-001"
+              limit: 15
+              page: 1
+      responses:
+        '200':
+          description: Execution history retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response_id:
+                    type: string
+                  type:
+                    type: string
+                    example: "campaign"
+                  data:
+                    type: object
+                    properties:
+                      total_instances:
+                        type: integer
+                        description: Total number of times the parent campaign has executed to date.
+                      executions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            campaign_id:
+                              type: string
+                              description: Unique ID of the child campaign execution.
+                            sent_time:
+                              type: string
+                              format: date-time
+                              description: ISO 8601 timestamp of when this execution was sent.
+                            status:
+                              type: string
+                              enum: [SENT, SENDING, FAILED]
+                              description: Status of this child campaign execution.
+              example:
+                response_id: "exec-001"
+                type: "campaign"
+                data:
+                  total_instances: 4
+                  executions:
+                    - campaign_id: "64b2c3d4e5f6a7b8c9d0e1f2"
+                      sent_time: "2024-11-25T08:00:00Z"
+                      status: "SENT"
+                    - campaign_id: "64b2c3d4e5f6a7b8c9d0e2f3"
+                      sent_time: "2024-11-18T08:00:00Z"
+                      status: "SENT"
+        '400':
+          $ref: '#/components/responses/V5ValidationError'
+        '401':
+          $ref: '#/components/responses/V5Unauthorized'
+        '500':
+          $ref: '#/components/responses/V5InternalError'
+
+  /v5/global-control-group/users:
+    put:
+      operationId: update_global_control_group_v5
+      summary: Update Global Control Group
+      description: |
+        Adds or removes users from the Global Control Group (GCG) in bulk via a CSV file. The CSV must contain a single `uid` column. Once submitted, MoEngage processes the file asynchronously and sends an email summary to the `updated_by` address with counts of successfully processed and failed users.
+
+        **File requirements:** Single `uid` column, under 300 MB, publicly accessible Amazon S3 URL
+
+        **Note:** The GCG must already be initialised using the **Upload Users** option in the MoEngage dashboard. The **Random allocation** option is not supported by this API.
+
+        <Warning>
+        **Not yet available in V5.** This endpoint does not currently exist in the V5 API. Use the V1 equivalent in the interim:
+
+        `PUT /core-services/v1/global-control-group/users`
+
+        A V5 equivalent is planned. Until it is available, use the V1 endpoint for all programmatic GCG membership management.
+        </Warning>
+      x-mint:
+        content: |
+          #### Why this endpoint matters
+
+          The Global Control Group is a core experimentation feature — teams use it to exclude a baseline set of users from all campaigns in order to measure true campaign impact. The only way to manage GCG membership programmatically is through this API. Without it in V5, teams with automated GCG management workflows have no V5 path.
+
+          #### V1 request reference
+
+          Until a V5 equivalent is published, use the V1 endpoint:
+
+          ```shell
+          curl -X PUT 'https://api-{dc}.moengage.com/core-services/v1/global-control-group/users' \
+            -H 'Authorization: Basic {{auth_token}}' \
+            -H 'MOE-APPKEY: {{workspace_id}}' \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "request_id": "{{request_id}}",
+              "file_url": "https://s3.amazonaws.com/{{bucket}}/gcg_users.csv",
+              "action_type": "add",
+              "updated_by": "{{user_email}}"
+            }'
+          ```
+
+          #### Rate Limits
+
+          | Rate Limit Name | Rate Limit |
+          | :--- | :--- |
+          | Update GCG per minute | 10 requests per minute |
+
+          <Note>
+          Each file-processing request must complete before the next one is submitted. Submitting a second request while the first is still processing returns `429`.
+          </Note>
+
+      tags: [Global Control Group]
+      parameters:
+        - $ref: '#/components/parameters/X-MOE-Tenant-ID'
+        - $ref: '#/components/parameters/X-MOE-Request-Id'
+      requestBody:
+        description: GCG update request specifying the CSV file location and the operation to perform.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [request_id, file_url, action_type, updated_by]
+              properties:
+                request_id:
+                  type: string
+                  description: Unique identifier for this request. Correlates with `response_id`.
+                file_url:
+                  type: string
+                  format: uri
+                  description: >-
+                    Publicly accessible URL of the CSV file containing user IDs. Currently only Amazon S3 URLs
+                    are supported. The file must have a single column named `uid` and be under 300 MB.
+                  example: "https://s3.amazonaws.com/my-bucket/gcg_users.csv"
+                action_type:
+                  type: string
+                  enum: [add, remove]
+                  description: Whether to add or remove the listed users from the Global Control Group.
+                updated_by:
+                  type: string
+                  format: email
+                  description: >-
+                    Email address of the user initiating the update. An email summary with processed
+                    and failed user counts is sent to this address once processing completes.
+                  example: "marketer@example.com"
+            example:
+              request_id: "gcg-001"
+              file_url: "https://s3.amazonaws.com/my-bucket/gcg_users.csv"
+              action_type: "add"
+              updated_by: "marketer@example.com"
+      responses:
+        '204':
+          description: >-
+            Request accepted. The CSV file will be processed asynchronously. An email summary is sent
+            to the `updated_by` address once processing completes. No response body is returned.
+        '400':
+          $ref: '#/components/responses/V5ValidationError'
+        '401':
+          $ref: '#/components/responses/V5Unauthorized'
+        '429':
+          description: >-
+            Rate limit exceeded or a previous file-processing request is still in progress. Wait for
+            the previous request to complete before submitting a new one.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/V5ErrorEnvelope' }
+              example:
+                response_id: "gcg-001"
+                error:
+                  code: TOO_MANY_REQUESTS
+                  message: "A file-processing request is already in progress. Wait for it to complete before submitting a new request."
+                  details: []
+        '500':
+          $ref: '#/components/responses/V5InternalError'
