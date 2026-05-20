@@ -4,7 +4,7 @@ description: "Use the MoEngage Campaigns API to create, update, test, and manage
 icon: "file-magnifying-glass"
 ---
 
-The Campaigns API (V5) empowers you to build campaigns step-by-step rather than requiring a massive, complete payload in a single request. By creating a campaign in draft state, you can systematically patch in audience segments, trigger conditions, and rich content. Once the campaign is fully assembled, you can validate its structure, test the delivery, and confidently publish it to your live audience.
+The Campaigns API (V5) lets you build campaigns incrementally rather than submitting a complete payload in a single request. Create a campaign in draft state, then add content, audience segments, trigger conditions, and scheduling across subsequent calls. Once the campaign is ready, validate its configuration, send test messages, and publish it.
 
 Additionally, you must include the `X-MOE-Tenant-ID` header (your Workspace ID) and an `Idempotency-Key` (UUID v4) on all POST and PATCH requests to ensure safe retries.
 
@@ -37,7 +37,7 @@ Additionally, you must include the `X-MOE-Tenant-ID` header (your Workspace ID) 
     Check whether the draft would pass publish-time validation without committing any changes. This step is optional but recommended before testing or publishing.
   </Step>
   <Step title="Test">
-    Send a test message to specific users from either a saved draft or inline content before going live.
+    Send a test message to specific users before going live. V5 supports two modes: **inline mode**, where you supply `channel` and `campaign_content` directly in the request without saving a draft, and **draft mode**, where you pass a `draft_id` to load content from a saved draft. Draft mode is new in V5.
   </Step>
   <Step title="Publish">
     Transition the draft to `ACTIVE` by sending `{ "status": "PUBLISH" }` in a `PATCH` request.
@@ -48,7 +48,10 @@ Additionally, you must include the `X-MOE-Tenant-ID` header (your Workspace ID) 
 </Steps>
 
 <Note>
-**Migrating from V1?** The V5 lifecycle differs from V1 in three important ways: (1) V5 introduces a `DRAFT` state — campaigns are created as drafts and must be explicitly published using `PATCH /v5/campaigns/{campaign_id}` with `{ "status": "PUBLISH" }`. In V1, campaigns were published immediately on creation. (2) The Validate step is new in V5 and has no V1 equivalent. (3) In V1, the `MOE-APPKEY` header carried the Workspace ID; in V5, this is replaced by `X-MOE-Tenant-ID`.
+If you are migrating from V1, here is what is new in V5:
+- **Draft state:** Campaigns now start as drafts, giving you full control over when to go live. Publish explicitly using `PATCH /v5/campaigns/{campaign_id}` with `{ "status": "PUBLISH" }`.
+- **Validate endpoint:** V5 adds a dedicated validate step to check your campaign before publishing. There is no equivalent in V1.
+- **Updated authentication header:** The `MOE-APPKEY` header is replaced by `X-MOE-Tenant-ID` for passing your Workspace ID.
 </Note>
 
 ## Campaign versioning
@@ -68,7 +71,7 @@ The Campaigns API consists of the following endpoints to manage your campaign li
 * [Update Campaign Status](/api/v5/update-campaigns/update-campaign-status): Applies lifecycle transitions (STOP, PAUSE, RESUME) to campaigns that have already been published.
 * [Search Campaigns](/api/v5/get-campaign-details/search-campaigns): Searches for campaigns using granular filters, with the ability to explicitly include or exclude campaigns in draft state.
 * [Get Campaign Meta](/api/v5/get-campaign-details/get-campaign-meta): Fetches lightweight metadata, including daily cached reachability estimates for scheduled campaigns.
-* [Test Campaign](/api/v5/test-campaigns/test-campaign): Sends a test push or email using an inline payload or by referencing a saved draft ID.
+* [Test Campaign](/api/v5/test-campaigns/test-campaign): Sends a test push or email to up to 10 users. Supports **inline mode** (pass `channel` and `campaign_content` directly) and **draft mode** (pass `draft_id` to load content from a saved draft). Draft mode is new in V5.
 * [Get Child Campaigns](/api/v5/get-campaign-details/get-child-campaigns): Retrieves the execution history of a Periodic or Business Event-triggered campaign, returning each child campaign's ID, send time, and status.
 * [Personalized Preview](/api/v5/test-campaigns/personalized-preview): Returns a resolved preview of personalized campaign content for a specific user without sending a message.
 * [Update Global Control Group](/api/v5/campaigns/update-global-control-group): Adds or removes users from the Global Control Group in bulk via a CSV file.
