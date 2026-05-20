@@ -198,7 +198,17 @@ The Campaigns API consists of the following endpoints to manage your campaign li
 
 <AccordionGroup>
   <Accordion title="What status transitions does this endpoint support?">
-    The endpoint supports three actions: `STOP` (from `ACTIVE`, `SCHEDULED`, `PAUSED`, or `SENDING`), `PAUSE` (from `ACTIVE`, `SCHEDULED`, or `SENDING`), and `RESUME` (from `PAUSED`).
+    The endpoint supports three actions. Each action applies only to specific delivery types and requires the campaign to be in a valid source state:
+
+    | Action | Supported delivery types | Valid source states |
+    | :--- | :--- | :--- |
+    | `STOP` | `ONE_TIME` | `ACTIVE`, `SCHEDULED`, `PAUSED`, `SENDING` |
+    | `PAUSE` | `PERIODIC`, `EVENT_TRIGGERED` | `ACTIVE`, `SCHEDULED`, `SENDING` |
+    | `RESUME` | `PERIODIC`, `EVENT_TRIGGERED` | `PAUSED` |
+
+    <Note>
+    For Push campaigns, `PAUSE` and `RESUME` also apply to `DEVICE_TRIGGERED` and `LOCATION_TRIGGERED` campaigns. These delivery types are not available for Email.
+    </Note>
   </Accordion>
   <Accordion title="Can I use this endpoint to publish a campaign?">
     No. This endpoint only applies lifecycle transitions to campaigns that are already published. To publish a campaign, use `PATCH /v5/campaigns/{campaign_id}` with the body `{ "status": "PUBLISH" }`.
