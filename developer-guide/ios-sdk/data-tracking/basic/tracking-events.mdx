@@ -95,8 +95,8 @@ MoEngageSDKAnalytics.sharedInstance.trackEvent("Event Name", withProperties: nil
 
 Event attributes have two layers of validation that apply across both `DEBUG` and release builds:
 
-- **Naming and format rules** — these always apply, regardless of build configuration.
-- **Type validation** — invalid attribute values cause a fatal exception in `DEBUG` builds and are silently dropped from the payload in release builds. The rest of the event is tracked.
+- **Naming and format rules** — these always apply, regardless of build configuration. Refer to [Naming and format rules](#naming-and-format-rules) below.
+- **Type validation** — invalid attribute values (unsupported types such as `null`, custom models, `NaN`, `Infinity`, empty collections, or `Date`/`MoEngageGeoLocation` nested inside an Array or Dictionary) cause a fatal exception in `DEBUG` builds and are silently dropped from the payload in release builds. The rest of the event is tracked. Refer to [Supported attribute value types](#supported-attribute-value-types) below.
 
 <Info>
   In the iOS SDK, `DEBUG` mode means the SDK was initialized using `initializeDefaultTestInstance(_:)` (TEST workspace) and the app is running attached to Xcode. This is different from a release build that has debug symbols enabled.
@@ -121,6 +121,26 @@ Common triggers for the `DEBUG` exception:
 - Passing invalid numbers like `NaN` or `Infinity`.
 - Passing empty Arrays or Dictionaries.
 - Nesting `Date` or `MoEngageGeoLocation` objects inside an Array or Dictionary. These must be passed directly as values.
+
+### Filtering unsupported attribute values
+
+If you are upgrading to a newer version of the iOS SDK and your app passes attribute values whose types are not validated at the call site, add a type-check guard before building the `MoEngageProperties` object. This prevents `DEBUG` crashes and ensures only valid data reaches the SDK in all builds.
+
+<CodeGroup>
+
+```swift Swift wrap
+[placeholder]
+```
+
+```objective-c Objective C wrap
+[placeholder]
+```
+
+</CodeGroup>
+
+<Note>
+  `Date` and `MoEngageGeoLocation` values must be passed using the dedicated `addDateAttribute`, `addDateEpochAttribute`, `addDateISOStringAttribute`, and `addLocationAttribute` methods — not through the dictionary-based `withAttributes:` initializer or `addAttribute:withName:`.
+</Note>
 
 # Manual Sync
 
