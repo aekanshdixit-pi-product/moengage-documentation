@@ -1,6 +1,6 @@
 ---
 title: "Campaigns Overview"
-description: "Use the MoEngage Campaigns API to create, update, test, and manage Push and Email campaigns programmatically."
+description: "Use the MoEngage Campaigns API to create, update, test, and manage campaigns programmatically. V5 supports campaign creation for Push and Email, with search, retrieval, and personalized preview available for SMS and other channels."
 icon: "file-magnifying-glass"
 ---
 
@@ -10,10 +10,18 @@ Additionally, you must include the `X-MOE-Tenant-ID` header (your Workspace ID) 
 
 ## Supported channels and delivery types
 
-**Supported channels:**
-- `EMAIL`
-- `PUSH` (Android, iOS, and Web platforms)
+Channel support varies by operation:
 
+| Operation | Supported channels |
+| :--- | :--- |
+| Create Campaign, Update Campaign, Validate Campaign | `EMAIL`, `PUSH` (Android, iOS, Web) |
+| Get Campaign, Search Campaigns, Get Campaign Meta | `EMAIL`, `PUSH`, `SMS`, `WHATSAPP`, `FACEBOOK`, `GOOGLE ADS`, `CONNECTORS` |
+| Test Campaign | `EMAIL`, `PUSH` |
+| Personalized Preview | `EMAIL`, `PUSH`, `SMS` |
+
+<Note>
+SMS campaign creation and update are not supported in V5. Use the MoEngage dashboard or the V1 API to create and manage SMS campaigns. Existing SMS campaigns can be retrieved, searched, and previewed via V5.
+</Note>
 
 **Supported delivery types:**
 - `ONE_TIME`
@@ -40,7 +48,7 @@ Additionally, you must include the `X-MOE-Tenant-ID` header (your Workspace ID) 
     Send a test message to specific users before going live. V5 supports two modes: **inline mode**, where you supply `channel` and `campaign_content` directly in the request without saving a draft, and **draft mode**, where you pass a `draft_id` to load content from a saved draft. Draft mode is new in V5.
   </Step>
   <Step title="Publish">
-    Transition the draft to `ACTIVE` by sending `{ "status": "PUBLISH" }` in a `PATCH` request.
+    Transition the draft to `ACTIVE` by sending `{ "status": "PUBLISH" }` in a `PATCH /v5/campaigns/{campaign_id}` request. There is no separate publish endpoint — publishing is a status transition sent through the Update Campaign endpoint.
   </Step>
   <Step title="Manage">
     Pause, resume, or stop a live campaign. Search your workspace and retrieve lightweight metadata across all campaigns.
@@ -167,6 +175,9 @@ The Campaigns API consists of the following endpoints to manage your campaign li
   <Accordion title="What API scopes are required to update or publish a campaign?">
     Component-level updates require the `campaigns:create_manage` scope. Publishing a campaign (sending `{ "status": "PUBLISH" }`) requires the `campaigns:create_manage_publish` scope.
   </Accordion>
+  <Accordion title="Is there a separate publish endpoint?">
+    No. Publishing is a status transition sent through the Update Campaign endpoint. Send `{ "status": "PUBLISH" }` as the request body in a `PATCH /v5/campaigns/{campaign_id}` request. The Update Campaign Status endpoint (`POST /v5/campaigns/{campaign_id}/status`) is a different endpoint that handles post-publish transitions — STOP, PAUSE, and RESUME — and does not accept `PUBLISH`.
+  </Accordion>
 </AccordionGroup>
 
 ### Validate Campaign
@@ -193,7 +204,10 @@ The Campaigns API consists of the following endpoints to manage your campaign li
     No. This endpoint only applies lifecycle transitions to campaigns that are already published. To publish a campaign, use `PATCH /v5/campaigns/{campaign_id}` with the body `{ "status": "PUBLISH" }`.
   </Accordion>
   <Accordion title="Can I stop a Periodic or Event-triggered campaign?">
-    Periodic and Event-triggered campaigns support `PAUSE` and `RESUME`. The `STOP` action applies to scheduled One-time campaigns. Once a One-time campaign transitions to `ACTIVE` (sending state), it cannot be stopped.
+    `STOP` is not valid for Periodic or Event-triggered campaigns. Use `PAUSE` to temporarily halt a running Periodic or Event-triggered campaign and `RESUME` to restart it. Attempting to `STOP` a Periodic campaign returns a `422 Unprocessable Entity` error.
+  </Accordion>
+  <Accordion title="Can I stop a One-time campaign that is in SENDING state?">
+    Yes. `STOP` is valid for One-time campaigns in `SCHEDULED`, `ACTIVE`, `PAUSED`, and `SENDING` states. If the campaign is in `SENDING` state, the action halts any remaining sends. Messages already dispatched before the stop is processed are still delivered.
   </Accordion>
   <Accordion title="Which campaign types and channels does this endpoint support?">
     The endpoint supports Email and Push campaigns. For Push, it supports Periodic, Event-triggered, Device-triggered, and Location-triggered campaigns. For Email, it supports Periodic and Event-triggered campaigns. Both channels support stopping a Scheduled One-time campaign.
@@ -214,6 +228,18 @@ The Campaigns API consists of the following endpoints to manage your campaign li
   </Accordion>
   <Accordion title="How does campaign versioning affect search results?">
     When campaign versioning is enabled, each published revision appears as a separate document in search results, all sharing the same `campaign_id`. You can filter by `version_number` in the `campaign_fields` object to narrow results to a specific version.
+  </Accordion>
+  <Accordion title="How do I search for SMS campaigns?">
+    Include `"SMS"` in the `campaign_fields.channels` array. Matching results return `channel: SMS` and include SMS-specific fields — `connector` (connector type and name) and `sender_name` — in each campaign object. Note that SMS campaign creation and update are not supported in V5; this endpoint retrieves existing SMS campaigns only.
+  </Accordion>
+  <Accordion title="How do I retrieve campaigns that are part of a flow?">
+    Set `include_child_campaigns: true` in the request body. Flow-node campaigns are excluded from results by default. When this flag is enabled, flow-node campaigns appear in the results with `flow_id` and `flow_name` populated. Periodic child campaigns also appear with a `parent_id` field when this flag is set.
+  </Accordion>
+  <Accordion title="How do I include archived campaigns in search results?">
+    Set `include_archive_campaigns: true` in the request body. Archived campaigns are excluded by default, regardless of whether `ARCHIVED` is listed in `campaign_fields.status`. You must set this flag to `true` to include them.
+  </Accordion>
+  <Accordion title="Can I filter SMS campaigns by sender name?">
+    There is no `sender_name` filter in the search request. To find SMS campaigns from a specific sender, pass `"SMS"` in `campaign_fields.channels` to retrieve all SMS campaigns, then filter by the `sender_name` field returned in each result on the client side.
   </Accordion>
 </AccordionGroup>
 
@@ -264,6 +290,54 @@ The Campaigns API consists of the following endpoints to manage your campaign li
   </Accordion>
 </AccordionGroup>
 
+### SMS Campaigns
+
+<AccordionGroup>
+  <Accordion title="Can I create or update SMS campaigns using V5?">
+    No. SMS campaign creation and update are not supported in V5. You can retrieve existing SMS campaigns using Get Campaign and Search Campaigns, and preview SMS content using Personalized Preview. To create and manage SMS campaigns, use the MoEngage dashboard or the V1 API.
+  </Accordion>
+  <Accordion title="How do I identify the sender name for an SMS campaign?">
+    The `sender_name` field in the campaign response carries the sender name configured for the campaign. This field is only populated for SMS campaigns. There is no `sender_name` filter in the Search Campaigns request — to find campaigns for a specific sender, retrieve all SMS campaigns and filter by `sender_name` on the client side.
+  </Accordion>
+  <Accordion title="How do I retrieve the connector configuration for an SMS campaign?">
+    The `connector` object in the campaign response contains the `connector_type` and `connector_name` for the campaign. For SMS campaigns, these fields identify the SMS delivery provider configured in your workspace.
+  </Accordion>
+</AccordionGroup>
+
+### Personalized Preview
+
+<AccordionGroup>
+  <Accordion title="What channels does the Personalized Preview endpoint support?">
+    The endpoint supports `PUSH`, `EMAIL`, and `SMS`. Pass the target channel in the `channel` field of the request body.
+  </Accordion>
+  <Accordion title="Does this endpoint send a message to the user?">
+    No. The endpoint is read-only. It resolves all personalization expressions against the specified user's profile and returns the fully rendered content, but no message is delivered.
+  </Accordion>
+  <Accordion title="What personalization sources does this endpoint resolve?">
+    The endpoint resolves all standard MoEngage personalization sources: user attributes, event attributes, custom templates, content blocks, content APIs, and product sets. All Jinja expressions in the content are evaluated against the specified user's profile.
+  </Accordion>
+  <Accordion title="How do I preview content for an event-triggered campaign?">
+    Pass the triggering event's attribute key-value pairs in the `event_attributes` object. The endpoint injects these values at resolution time to simulate how the content would render for a specific event. For example:
+
+    ```json
+    {
+      "event_attributes": {
+        "product_name": "Running Shoes",
+        "product_price": "4999"
+      }
+    }
+    ```
+
+    In the content, reference these values using `{{ event.product_name }}`.
+  </Accordion>
+  <Accordion title="How do I preview content that uses a custom template?">
+    Pass `custom_template_id` in the `campaign_content` object, the same way you would in a Create Campaign request. The endpoint fetches and resolves the template, then returns the fully rendered output for the specified user.
+  </Accordion>
+  <Accordion title="Can I use a saved draft with the Personalized Preview endpoint?">
+    No. The Personalized Preview endpoint only accepts inline content passed in `campaign_content`. It does not load content from a saved draft. To send a test message from a saved draft, use the Test Campaign endpoint with `draft_id`.
+  </Accordion>
+</AccordionGroup>
+
 ## Postman Collections
 
-We have made it easy for you to test the APIs in your own environment. Click [here](https://www.postman.com/moengage-dev/workspace/api-docs/folder/3182294-c560e43e-4e5e-4d1c-a100-f5f5070780b1?action=share&creator=3182294&ctx=documentation) to view and download the Postman collection for the Campaigns API.
+We have made it easy for you to test the APIs in your own environment. Click [here]() to view and download the Postman collection for the Campaigns API.
