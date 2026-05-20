@@ -6054,6 +6054,10 @@ paths:
         content: |
           The request body determines which flow runs.
 
+          <Warning>
+          V1 (`PATCH /v1/campaigns/{campaign_id}`) returns `204 No Content` with no response body on success. V5 returns `200 OK` with a response body containing `response_id`, `type`, and `data.id`. Update any integration that asserts a `204` status code to expect `200`.
+          </Warning>
+
           <Tabs>
             <Tab title="Update draft campaign">
               Send a `PATCH` request without a `status` key in the body.
@@ -6087,19 +6091,19 @@ paths:
           </Tabs>
 
           <Warning>
-          **Mutual exclusivity:** You cannot combine `status: PUBLISH` and component fields in the same request body - doing so returns `400`. Send either a component update or a publish request, never both.
+          **Status and component fields are mutually exclusive:** You cannot combine `status: PUBLISH` with any other component fields in the same request body — doing so returns `400 Bad Request`. Send either a component update or a publish action, never both in a single request.
           </Warning>
 
           <Warning>
           **Update restrictions by campaign state**
 
-          | Campaign state | What you can edit |
-          | :--- | :--- |
-          | **DRAFT** | All fields |
-          | **SCHEDULED** (One-time, no instance sent) | All fields except scheduling type |
-          | **SCHEDULED** (Periodic / Event-triggered, no instance sent) | All fields except scheduling type |
-          | **ACTIVE** | All fields except: Trigger Condition, Segmentation Details, Conversion Goal Details, Scheduling Type, Scheduling Start Date |
-          | **STOPPED** or **ARCHIVED** | No updates allowed |
+          | Campaign state | Editable fields | Non-editable fields |
+          | :--- | :--- | :--- |
+          | **DRAFT** | All fields | — |
+          | **SCHEDULED** — One-time (no instance sent) | All fields | `scheduling_type` |
+          | **SCHEDULED** — Periodic or Event-triggered (no instance sent) | All fields | `scheduling_type` |
+          | **ACTIVE** | All fields except those listed as non-editable | `trigger_condition`, `segmentation_details`, `conversion_goal_details`, `scheduling_type`, `scheduling_start_date` |
+          | **STOPPED** or **ARCHIVED** | — | All fields (no updates allowed) |
 
           For **Event-triggered campaigns**, updated content is cached and takes up to 30 minutes to take effect.
           </Warning>
@@ -6116,6 +6120,7 @@ paths:
            * Breaching the limits will reject the request.
            * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
           </Note>
+
       tags: [Update Campaigns]
       x-codeSamples:
         - lang: Shell

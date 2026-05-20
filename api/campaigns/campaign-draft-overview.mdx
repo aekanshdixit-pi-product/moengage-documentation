@@ -178,6 +178,25 @@ The Campaigns API consists of the following endpoints to manage your campaign li
   <Accordion title="Is there a separate publish endpoint?">
     No. Publishing is a status transition sent through the Update Campaign endpoint. Send `{ "status": "PUBLISH" }` as the request body in a `PATCH /v5/campaigns/{campaign_id}` request. The Update Campaign Status endpoint (`POST /v5/campaigns/{campaign_id}/status`) is a different endpoint that handles post-publish transitions — STOP, PAUSE, and RESUME — and does not accept `PUBLISH`.
   </Accordion>
+  <Accordion title="Can I update the segmentation audience when the campaign is Active?">
+    No. The `segmentation_details` field cannot be updated for campaigns in `ACTIVE` state. To change the audience, stop the campaign and create a new one. See [Which fields cannot be edited once a campaign is Active?](#update-campaign) for the full list of non-editable fields by campaign state.
+  </Accordion>
+  <Accordion title="When does updated content reach users?">
+    It depends on the delivery type:
+
+    - **Event-triggered campaigns:** Updated content is cached and can take up to 30 minutes to propagate to users after a successful update.
+    - **Periodic campaigns:** The updated configuration applies from the next scheduled run.
+    - **One-time campaigns:** Changes apply to any messages that have not yet been dispatched at the time of the update.
+  </Accordion>
+  <Accordion title="How do I find the campaign ID to use in the update request?">
+    The `campaign_id` is returned in the `data.id` field of the Create Campaign response. You can also retrieve it using `GET /v5/campaigns/{campaign_id}` or by using the [Search Campaigns](/api/v5/get-campaign-details/search-campaigns) endpoint to look up campaigns by name, status, channel, or delivery type.
+  </Accordion>
+  <Accordion title="Can I change the template type in an Active Push campaign?">
+    Yes. The `template_type` field is part of `campaign_content`, which can be updated for campaigns in `ACTIVE` state. If you change the template type, include all required fields for the new template in the same request — each template type has different required fields.
+  </Accordion>
+  <Accordion title="Can I add or remove platforms in an Active Push campaign?">
+    Yes. The `platforms` field in `basic_details` is not restricted for `ACTIVE` campaigns. Adding a platform extends delivery to that platform for future sends; removing a platform stops delivery to it.
+  </Accordion>
 </AccordionGroup>
 
 ### Validate Campaign
