@@ -5922,6 +5922,10 @@ paths:
         the interim.
       x-mint:
         content: |
+          <Info>
+          The campaign identifier field has been renamed in V5. V1 returned it as `campaign_id`; V5 returns it as `id`. Update your integration to read `id` from the response instead of `campaign_id`.
+          </Info>
+
           #### Rate Limits
 
           | Rate Limit Name | Rate Limit |
@@ -6798,6 +6802,25 @@ paths:
         equivalent of `POST /v1/campaigns/{parent_id}/executions`.
       x-mint:
         content: |
+          <Warning>
+          Review these breaking changes before sending a V5 request.
+
+          **Request changes (filter fields renamed)**
+
+          | V1 field | V5 field | Change |
+          | :--- | :--- | :--- |
+          | `campaign_fields.id` (string) | `campaign_fields.ids` (array of strings) | Renamed and type changed. Pass a single-element array to replicate V1 single-ID filtering: `"ids": ["<campaign_id>"]`. |
+          | `campaign_fields.delivery_type` | `campaign_fields.campaign_delivery_type` | Renamed. Sending the V1 key returns zero results with no error. |
+
+          All other V1 filter fields (`channels`, `created_by`, `created_date`, `name`, `status`, `tags`) are unchanged.
+
+          **`request_id` is now optional.** In V1, `request_id` was required on every search call. In V5, it is optional. Providing it is still recommended for traceability, MoEngage support can use it to locate the specific request in server logs.
+
+          **Response changes**
+
+          The campaign identifier field was renamed. V1 returned it as `campaign_id`; V5 returns it as `id`.
+          </Warning>
+
           **Draft behavior:**
           Drafts are included only when `DRAFT` is explicitly added to `campaign_fields.status`.
           Otherwise, draft rows are omitted.
