@@ -1,7 +1,5 @@
 ---
 title: "Kafka"
-description: "Stream events from Kafka topics directly to MoEngage via Connected Sources for near real-time campaign triggers, user profile updates, and analytics."
-keywords: ["kafka", "apache kafka", "event streaming", "etl", "data pipeline", "moengage integration"]
 ---
 
 ## Introduction
@@ -51,8 +49,8 @@ Contact the MoEngage Support team to obtain a dedicated Kafka integration endpoi
 | `MOENGAGE_PARTNER_NAME` | Enter your MoEngage partner identifier. | -- |
 | `MOENGAGE_DATA_CENTER` | Enter your MoEngage Data Center number (for example, 01, 02, or 03). For more information, see [Data Centers in MoEngage](https://www.moengage.com/docs/user-guide/data/key-concepts/data-centers-in-moengage). | `02` |
 | `MOENGAGE_CONFIG_NAME` | Enter the unique `MOENGAGE_CONFIG_NAME` provided by the MoEngage team. | `15fc62d8-efbd-42c7-aad5-...` |
-| `MOENGAGE_APP_ID` | Your MoEngage workspace ID. To find your credentials: 1. In the MoEngage UI, navigate to **Settings** > **Account** > **APIs**. 2. Copy the ID under **Workspace ID** (earlier app id). | `7IYSTOK1CLO9A1XDO...` |
-| `MOENGAGE_API_SECRET` | The MoEngage Data API secret key. To find your credentials: 1. In the MoEngage UI, navigate to **Settings** > **Account** > **APIs**. 2. Copy the value under **Data** under **API keys**. | `pIfghD6guNHTvwgZz...` |
+| `MOENGAGE_APP_ID` | Your MoEngage workspace ID. To find your credentials: <ol><li>In the MoEngage UI, navigate to **Settings** \> **Account** \> **APIs**.</li><li>Copy the ID under **Workspace ID** (earlier app id).</li></ol> | `7IYSTOK1CLO9A1XDO...` |
+| `MOENGAGE_API_SECRET` | The MoEngage Data API secret key. To find your credentials: <ol><li>In the MoEngage UI, navigate to **Settings** \> **Account** \> **APIs**.</li><li>Copy the value under **Data** under **API keys**.</li></ol> | `pIfghD6guNHTvwgZz...` |
 
 ### Step 2: Set up the Kafka connector
 
@@ -94,7 +92,7 @@ MoEngage provides a standard JSON format for Kafka events. Ensure your Kafka mes
 | `first_name` | String | No | The user's first name. |
 | `last_name` | String | No | The user's last name. |
 | `updated_at` | String | Yes | The timestamp in epoch milliseconds (for example, `"1759752209000"`). |
-| `user_attributes` | Object | No | Additional user profile attributes (for example, city, subscription_tier, and custom fields). |
+| `user_attributes` | Object | No | Additional user profile attributes (for example, city, subscription\_tier, and custom fields). |
 | `event_attributes` | Object | Yes | Event-specific data. The `event_name` field is mandatory. |
 | `event_attributes.event_name` | String | Yes | The name of the event (for example, `Purchase Completed`, `Page Viewed`). |
 
@@ -119,9 +117,9 @@ python --version
 
 | Package | Version | Purpose |
 | --- | --- | --- |
-| `confluent-kafka` | 2.3.0+ | The Kafka consumer client. |
-| `requests` | 2.31.0+ | The HTTP client for the MoEngage API. |
-| `python-dotenv` | 1.0.0+ | An environment variable management. |
+| `confluent-kafka` | 2.3.0\+ | The Kafka consumer client. |
+| `requests` | 2.31.0\+ | The HTTP client for the MoEngage API. |
+| `python-dotenv` | 1.0.0\+ | An environment variable management. |
 
 **Configure environment**
 
@@ -169,7 +167,7 @@ LOG_LEVEL=INFO
 
 Create a file named `kafka_consumer.py`. This script consumes messages from Kafka and posts them to the MoEngage API.
 
-```python kafka_consumer.py
+```python kafka_consumer.py wrap
 #!/usr/bin/env python3
 """
 Kafka to MoEngage Consumer
@@ -283,10 +281,10 @@ python3 kafka_consumer.py
 
 #### 3.2. Verify data in the MoEngage UI
 
-1. In the MoEngage UI, navigate to **Settings** > **Data Management** > **Events**.
+1. In the MoEngage UI, navigate to **Settings** \> **Data Management** \> **Events**.
 2. Search for your event names (from `event_attributes.event_name`).
 3. Check the **Users** section to confirm profiles are created/updated.
-4. Navigate to **Segment** > **Search Users**.
+4. Navigate to **Segment** \> **Search Users**.
 5. Search for the customer using **Customer ID**, **Email address**, or **Phone number**.
 6. Verify that events appear with correct attributes and timestamps in the **User Profile**.
 
@@ -320,7 +318,7 @@ Choose a deployment method based on your infrastructure. MoEngage supports the f
     [Unit]
     Description=Kafka to MoEngage Consumer
     After=network.target
-
+    
     [Service]
     Type=simple
     User=kafka_user
@@ -331,7 +329,7 @@ Choose a deployment method based on your infrastructure. MoEngage supports the f
     RestartSec=10
     StandardOutput=journal
     StandardError=journal
-
+    
     [Install]
     WantedBy=multi-user.target
     ```
@@ -353,10 +351,10 @@ Choose a deployment method based on your infrastructure. MoEngage supports the f
     ```bash
     # Check status
     sudo systemctl status kafka-moengage.service
-
+    
     # View logs
     sudo journalctl -u kafka-moengage.service -f
-
+    
     # Restart service
     sudo systemctl restart kafka-moengage.service
     ```
@@ -400,18 +398,25 @@ Choose a deployment method based on your infrastructure. MoEngage supports the f
     ```bash
     # Build image
     docker build -t kafka-moengage:latest .
-
-    # Run container
-    docker run -d \
-      --name kafka-moengage \
-      --env-file .env \
-      --restart unless-stopped \
-      kafka-moengage:latest
-
-    # View logs
+     
+    Run container
+     
+    docker run -d
+     
+    --name kafka-moengage
+     
+    --env-file .env
+     
+    --restart unless-stopped
+     
+    kafka-moengage:latest
+     
+    View logs
+     
     docker logs -f kafka-moengage
-
-    # Stop container
+     
+    Stop container
+     
     docker stop kafka-moengage
     ```
 
@@ -450,13 +455,13 @@ Choose a deployment method based on your infrastructure. MoEngage supports the f
     ```bash
     # Start service
     docker-compose up -d
-
+    
     # View logs
     docker-compose logs -f
-
+    
     # Stop service
     docker-compose down
-
+    
     # Restart service
     docker-compose restart
     ```
@@ -475,11 +480,15 @@ Choose a deployment method based on your infrastructure. MoEngage supports the f
     Securely store your sensitive MoEngage and Kafka credentials by creating a Kubernetes Secret object with the following:
 
     ```bash
-    kubectl create secret generic kafka-moengage \
-      --from-literal=MOENGAGE_APP_ID=your_app_id \
-      --from-literal=MOENGAGE_API_SECRET=your_secret \
-      --from-literal=KAFKA_API_KEY=your_kafka_key \
-      --from-literal=KAFKA_API_SECRET=your_kafka_secret
+    kubectl create secret generic kafka-moengage
+     
+    --from-literal=MOENGAGE_APP_ID=your_app_id
+     
+    --from-literal=MOENGAGE_API_SECRET=your_secret
+     
+    --from-literal=KAFKA_API_KEY=your_kafka_key
+     
+    --from-literal=KAFKA_API_SECRET=your_kafka_secret	
     ```
 
     **2. Create deployment.yaml**
@@ -543,13 +552,13 @@ Choose a deployment method based on your infrastructure. MoEngage supports the f
     ```bash
     # Deploy
     kubectl apply -f deployment.yaml
-
+    
     # View pods
     kubectl get pods
-
+    
     # View logs
     kubectl logs -f deployment/kafka-moengage-consumer
-
+    
     # Scale replicas
     kubectl scale deployment kafka-moengage-consumer --replicas=4
     ```
@@ -580,7 +589,7 @@ Refer to Apache Kafka default retry policy to understand how rate limiting affec
 | Events not appearing in MoEngage | These are missing required fields or wrong configName. | Check console logs for API response. Ensure all required fields are present. Verify `MOENGAGE_CONFIG_NAME` matches the credentials provided by MoEngage. |
 | Consumer lag increasing | These processes are slower than the ingestion rate. | Scale horizontally by adding more consumer instances. Each instance will process different partitions. |
 | JSON Decode Error | This is non-JSON data in the Kafka topic. | Verify Kafka topic contains valid JSON messages. Check for binary data or malformed JSON. |
-| Module Not Found Error | This is a Python dependency that is not installed. | Run `pip install -r requirements.txt`. Verify Python version is 3.7+. |
+| Module Not Found Error | This is a Python dependency that is not installed. | Run `pip install -r requirements.txt`. Verify Python version is 3.7\+. |
 
 ### Additional resources
 
