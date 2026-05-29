@@ -1,10 +1,8 @@
 ---
 title: "Microsoft Dynamics 365 Sales"
-description: "Push real-time sales data from Microsoft Dynamics 365 Sales to MoEngage using Power Automate to trigger contextual, lifecycle-driven campaigns."
-keywords: ["microsoft dynamics 365", "d365 sales", "crm integration", "power automate", "sales sync", "lead sync"]
 ---
 
-[Microsoft Dynamics 365 Sales](https://www.microsoft.com/en-us/dynamics-365/products/sales) is an enterprise CRM solution that manages customer relationships through contacts, leads, opportunities, and activities. This integration uses *Power Automate* to automatically push real-time sales data from Microsoft Dynamics 365 (D365) Sales to the MoEngage platform.
+[Microsoft Dynamics 365 Sales](https://www.microsoft.com/en-us/dynamics-365/products/sales) is an enterprise CRM solution that manages customer relationships through contacts, leads, opportunities, and activities. This integration uses _Power Automate_ to automatically push real-time sales data from Microsoft Dynamics 365 (D365) Sales to the MoEngage platform.
 
 This automatic data synchronization helps marketing and support teams trigger highly contextual and personalized engagement campaigns based on sales activities and the customer lifecycle.
 
@@ -22,7 +20,7 @@ The integration of D365 Sales and MoEngage enables enhanced alignment between ma
 Integrating Microsoft Dynamics 365 with MoEngage helps you solve the following use cases:
 
 - **Lead-to-engagement**: When a new Lead is created in D365, the complete lead data is automatically pushed to MoEngage, allowing you to instantly trigger a personalized welcome campaign and enroll the lead in relevant nurturing sequences based on their source or score.
-- **Contact synchronization**: When Opportunity stages change (for example, from *Qualify* to *Propose*), push updates to MoEngage to send targeted content, deal status notifications, or win/loss analysis.
+- **Contact synchronization**: When Opportunity stages change (for example, from _Qualify_ to _Propose_), push updates to MoEngage to send targeted content, deal status notifications, or win/loss analysis.
 - **Sales activity events**: When Calls, Meetings, or Tasks are logged, capture these as behavioral events in MoEngage for engagement attribution.
 - **CSAT and re-engagement**: When Opportunities are closed or deals are won, trigger satisfaction surveys or customer onboarding campaigns.
 
@@ -43,9 +41,9 @@ The following table outlines the data synchronization type for each D365 Sales m
 ## Integration
 
 <Info>
-**Prerequisites**
+  **Prerequisites**
 
-Admin access to your Power Automate and D365 Sales environment.
+  Admin access to your Power Automate and D365 Sales environment.
 </Info>
 
 ### Step 1: Get your MoEngage endpoint
@@ -55,84 +53,79 @@ To get a dedicated endpoint for your integration, contact the MoEngage Support t
 ### Step 2: Create a Power Automate flow
 
 <Steps>
-<Step title="Open Power Automate">
-Go to [Power Automate](https://www.microsoft.com/en-us/power-platform/products/power-automate).
-</Step>
+  <Step title="Open Power Automate">
+    Go to [Power Automate](https://www.microsoft.com/en-us/power-platform/products/power-automate).
+  </Step>
+  <Step title="Create an automated cloud flow">
+    Click **Create** \> **Automated Cloud Flow**.
+  </Step>
+  <Step title="Name your flow">
+    Provide a flow name. For example, `D365 - Sync Contact to MoEngage`.
+  </Step>
+  <Step title="Select the trigger">
+    Select the trigger _When a row is added, modified, or deleted_ (Dataverse).
+  </Step>
+  <Step title="Configure trigger details">
+    Configure the following trigger details:
 
-<Step title="Create an automated cloud flow">
-Click **Create** > **Automated Cloud Flow**.
-</Step>
+    - **Table**: Select the entity you want to sync (for example, Contact, Lead, Opportunity).
+    - **Scope**: Select **Organization**.
+    - **Trigger on**: Select **Added** or **Modified**.
 
-<Step title="Name your flow">
-Provide a flow name. For example, `D365 - Sync Contact to MoEngage`.
-</Step>
-
-<Step title="Select the trigger">
-Select the trigger *When a row is added, modified, or deleted* (Dataverse).
-</Step>
-
-<Step title="Configure trigger details">
-Configure the following trigger details:
-
-- **Table**: Select the entity you want to sync (for example, Contact, Lead, Opportunity).
-- **Scope**: Select **Organization**.
-- **Trigger on**: Select **Added** or **Modified**.
-
-<Frame>
-<img src="/images/partner_42988363210388.png" alt="Power Automate trigger configuration screen with Table, Scope, and Trigger on fields" />
-</Frame>
-</Step>
+    <Frame>
+      ![Power Automate trigger configuration screen with Table, Scope, and Trigger on fields](/images/partner_42988363210388.png)
+    </Frame>
+  </Step>
 </Steps>
 
 ### Step 3: Configure the HTTP webhook action
 
 <Steps>
-<Step title="Add a new HTTP step">
-Click **New Step** > **HTTP**.
-</Step>
+  <Step title="Add a new HTTP step">
+    Click **New Step** \> **HTTP**.
+  </Step>
+  <Step title="Provide the HTTP request details">
+    Configure the HTTP webhook with the following values.
 
-<Step title="Provide the HTTP request details">
-Configure the HTTP webhook with the following values.
+    | HTTP webhook section | Description |
+    | --- | --- |
+    | **Method** | `POST` |
+    | **URL** | Enter the dedicated webhook URL provided by MoEngage in the following format: `https://api-0X.moengage.com/v1/partner/d365-sales/{events/users}/?configName={config_name}` |
+    | **Custom Headers** | See the headers configuration below. |
 
-| HTTP webhook section | Description |
-| --- | --- |
-| **Method** | `POST` |
-| **URL** | Enter the dedicated webhook URL provided by MoEngage in the following format: `https://api-0X.moengage.com/v1/partner/d365-sales/{events/users}/?configName={config_name}` |
-| **Custom Headers** | See the headers configuration below. |
+    **Custom headers**
 
-**Custom headers**
+    | Header | Value |
+    | --- | --- |
+    | `Content-Type` | `application/json` |
+    | `Authorization` | `Basic [Base64(Workspace_ID:API_Key)]` |
+    | `Body` | One of the sample payloads provided in [Step 4](#step-4-add-the-request-body-payload). |
 
-| Header | Value |
-| --- | --- |
-| `Content-Type` | `application/json` |
-| `Authorization` | `Basic [Base64(Workspace_ID:API_Key)]` |
-| `Body` | One of the sample payloads provided in [Step 4](#step-4-add-the-request-body-payload). |
+    To generate your **Authorization** token:
 
-To generate your **Authorization** token:
+    1. Use a [Basic Auth Header Generator tool](https://www.debugbear.com/basic-auth-header-generator).
+    2. Enter your **Workspace ID** as the username and your **Data API Key** as the password.
 
-1. Use a [Basic Auth Header Generator tool](https://www.debugbear.com/basic-auth-header-generator).
-2. Enter your **Workspace ID** as the username and your **Data API Key** as the password.
+    To find your credentials:
 
-To find your credentials:
+    1. On the MoEngage UI, navigate to **Settings** \> **Account** \> **APIs**.
+    2. Copy the ID under **Workspace ID** (earlier called _App ID_).
+    3. Copy the **Data** key under **API keys**.
 
-1. On the MoEngage UI, navigate to **Settings** > **Account** > **APIs**.
-2. Copy the ID under **Workspace ID** (earlier called *App ID*).
-3. Copy the **Data** key under **API keys**.
+    Your Basic Authentication Token is the Base64-encoded combination of **Workspace ID** and **Data**:
 
-Your Basic Authentication Token is the Base64-encoded combination of **Workspace ID** and **Data**:
+    ```text
+    Authorization: Basic {base64_encoded_credentials}
+    ```
 
-```text
-Authorization: Basic {base64_encoded_credentials}
-```
-
-<Warning>
-Ensure the token is copied completely without extra spaces.
-</Warning>
-</Step>
+    <Warning>
+      Ensure the token is copied completely without extra spaces.
+    </Warning>
+  </Step>
 </Steps>
 
 <Frame>
-<img src="/images/partner_42988331640724.png" alt="Power Automate HTTP webhook action configured with method, URL, and custom headers" />
+  ![Power Automate HTTP webhook action configured with method, URL, and custom headers](/images/partner_42988331640724.png)
 </Frame>
 
 ### Step 4: Add the request body payload
@@ -143,6 +136,7 @@ To add the request body payload:
 2. Replace placeholder values (for example, `@{triggerBody()?['firstname']}`) with the corresponding dynamic content fields from the D365 trigger.
 
 <CodeGroup>
+
 ```json Contacts and Leads (User Sync)
 {
   "customer_id": "@{triggerBody()?['contactid']}",
@@ -201,12 +195,13 @@ To add the request body payload:
   }
 }
 ```
+
 </CodeGroup>
 
 <Info>
-- For each activity type, set the `event_name` to the activity name or a custom value.
-- Add additional custom event fields under `event_attributes`.
-- Add additional custom user fields under `user_attributes`.
+  - For each activity type, set the `event_name` to the `{{activity name}}` or a custom value.
+  - Add additional custom event fields under `event_attributes`.
+  - Add additional custom user fields under `user_attributes`.
 </Info>
 
 #### Required fields
@@ -234,29 +229,26 @@ To add the request body payload:
 ### Step 5: Test the integration
 
 <Steps>
-<Step title="Trigger the flow">
-In Power Automate, click **Test** and then manually trigger a cloud flow.
-</Step>
+  <Step title="Trigger the flow">
+    In Power Automate, click **Test** and then manually trigger a cloud flow.
+  </Step>
+  <Step title="Create or update a test record in D365 Sales">
+    For example, create a new Contact in D365 Sales.
+  </Step>
+  <Step title="Monitor the flow execution">
+    Watch the flow execution in Power Automate for a successful HTTP `200` or `201` response.
+  </Step>
+  <Step title="Verify in MoEngage">
+    Verify in the MoEngage UI that the test data has synced correctly within 1–5 minutes.
 
-<Step title="Create or update a test record in D365 Sales">
-For example, create a new Contact in D365 Sales.
-</Step>
+    <Frame>
+      ![MoEngage UI showing a synced D365 contact with the expected attributes](/images/partner_42993491240724.png)
+    </Frame>
 
-<Step title="Monitor the flow execution">
-Watch the flow execution in Power Automate for a successful HTTP `200` or `201` response.
-</Step>
-
-<Step title="Verify in MoEngage">
-Verify in the MoEngage UI that the test data has synced correctly within 1–5 minutes.
-
-<Frame>
-<img src="/images/partner_42993491240724.png" alt="MoEngage UI showing a synced D365 contact with the expected attributes" />
-</Frame>
-
-<Check>
-The test record appears in MoEngage with all mapped attributes populated.
-</Check>
-</Step>
+    <Check>
+      The test record appears in MoEngage with all mapped attributes populated.
+    </Check>
+  </Step>
 </Steps>
 
 ## Rate limits
@@ -266,5 +258,5 @@ To maintain platform stability, MoEngage limits ingestion of Microsoft Dynamics 
 Refer to the Microsoft Dynamics 365 Sales default retry policy to understand how rate limiting affects your data flow.
 
 <Warning>
-**Retry exhaustion**: If Microsoft Dynamics 365 Sales exhausts all retry attempts for a batch of data, you must contact the Microsoft Support Team to replay the failed requests.
+  **Retry exhaustion**: If Microsoft Dynamics 365 Sales exhausts all retry attempts for a batch of data, you must contact the Microsoft Support Team to replay the failed requests.
 </Warning>
