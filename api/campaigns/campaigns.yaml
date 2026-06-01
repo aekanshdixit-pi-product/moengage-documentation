@@ -1394,16 +1394,17 @@ components:
         send_only_double_opt_in_users:
           type: boolean
           description: |
-            When `true`, the campaign is sent only to users who have completed double opt-in. When `false` or omitted, the campaign sends to all eligible users.
+            Whether to send the campaign only to users who have completed double opt-in.
+
+            When `false` or omitted, the campaign sends to all eligible users.
           default: false
           example: true
         deduplication_attribute:
           type: string
           description: |
-            Controls brand deduplication for the campaign.
+            The user attribute used for brand deduplication.
 
-            - Pass `""` (empty string) or omit the field to treat the campaign as single-brand.
-            - For multi-brand deduplication, pass the backend attribute name that stores the brand identifier (for example, `u_em`).
+            Pass `""` (empty string) or omit the field to treat the campaign as single-brand. For multi-brand deduplication, pass the backend attribute name that stores the brand identifier (for example, `u_em`).
 
             Always use the backend attribute name (for example, `u_em`), not the display label (for example, `Email (Standard)`).
           default: ""
@@ -2629,7 +2630,10 @@ components:
       properties:
         send_email_if_personalization_fails:
           type: boolean
-          description: Whether to send the email if personalization of any Gmail Annotation field fails.
+          description: |
+            Whether to send the email if personalization of any Gmail annotation field fails.
+
+            **Required** when `gmail_annotations` is present.
           example: true
         sender_logo:
           type: string
@@ -2637,18 +2641,33 @@ components:
             The sender logo shown in the Gmail annotation.
 
             Accepts a valid HTTPS URL or a MoEngage personalization token.
+
+            **Required** when `gmail_annotations` is present.
           example: "https://example.com/logo.png"
         sender_logo_type:
           type: string
           enum:
             - image_url
             - uploaded_image
-          description: The source type of the sender logo.
+          description: |
+            The source type of the sender logo.
+
+            **Required** when `sender_logo` is provided.
           example: "image_url"
         deal_card:
-          $ref: '#/components/schemas/GmailAnnotationsDealCard'
+          description: |
+            The Deal Card annotation.
+
+            **Optional.** Use either `deal_card` or `product_carousel` — not both.
+          allOf:
+            - $ref: '#/components/schemas/GmailAnnotationsDealCard'
         product_carousel:
-          $ref: '#/components/schemas/GmailAnnotationsProductCarousel'
+          description: |
+            The Product Carousel annotation.
+
+            **Optional.** Use either `product_carousel` or `deal_card` — not both.
+          allOf:
+            - $ref: '#/components/schemas/GmailAnnotationsProductCarousel'
 
     GmailAnnotationsDealCard:
       type: object
@@ -2662,11 +2681,17 @@ components:
       properties:
         description:
           type: string
-          description: Short deal description shown in the Gmail annotation.
+          description: |
+            Short deal description shown in the Gmail annotation.
+
+            **Required** when `deal_card` is present.
           example: "Get 20% off on all orders above $50"
         discount_code:
           type: string
-          description: Promo or discount code displayed with the deal.
+          description: |
+            Promo or discount code displayed with the deal.
+
+            **Required** when `deal_card` is present.
           example: "SAVE20"
         availability_starts:
           type: string
@@ -2679,6 +2704,8 @@ components:
             - Negative offset: `YYYY-MM-DDTHH:mm:ss-HH:MM` (for example, `2026-06-01T00:00:00-07:00` for US Pacific PDT).
 
             **Common offsets:** IST `+05:30`, SGT `+08:00`, GST `+04:00`, CET `+01:00` or `+02:00` (DST), EST `-05:00`, EDT `-04:00`, PST `-08:00`, PDT `-07:00`, UTC `Z` or `+00:00`.
+
+            **Required** when `deal_card` is present.
           example: "2026-06-01T00:00:00Z"
         availability_ends:
           type: string
@@ -2686,6 +2713,8 @@ components:
             ISO 8601 datetime indicating when the deal expires. Same format as `availability_starts`.
 
             Must be at least 1 hour after `availability_starts`.
+
+            **Required** when `deal_card` is present.
           example: "2026-06-30T23:59:59Z"
 
     GmailAnnotationsProductCarousel:
@@ -2707,10 +2736,22 @@ components:
 
             - `MANUAL`: Specify products directly in the request using `manual_data`.
             - `PRODUCT_SET`: Pull products dynamically from a MoEngage Catalog product set using `product_set_data`. Requires the Product Sets feature to be enabled for your workspace.
+
+            **Required** when `product_carousel` is present.
         manual_data:
-          $ref: '#/components/schemas/GmailAnnotationsProductCarouselManualData'
+          description: |
+            Products specified directly in the request.
+
+            **Required** when `product_carousel.type` is `MANUAL`.
+          allOf:
+            - $ref: '#/components/schemas/GmailAnnotationsProductCarouselManualData'
         product_set_data:
-          $ref: '#/components/schemas/GmailAnnotationsProductCarouselProductSetData'
+          description: |
+            Reference to a MoEngage Catalog product set.
+
+            **Required** when `product_carousel.type` is `PRODUCT_SET`.
+          allOf:
+            - $ref: '#/components/schemas/GmailAnnotationsProductCarouselProductSetData'
 
     GmailAnnotationsProductCarouselManualData:
       type: object
@@ -2724,18 +2765,24 @@ components:
       properties:
         currency:
           type: string
-          description: ISO 4217 currency code applied to all products in the carousel.
+          description: |
+            ISO 4217 currency code applied to all products in the carousel.
+
+            **Required** when `manual_data` is present.
           example: "USD"
         products:
           type: array
-          description: List of products to display in the carousel. Minimum 2 products required.
+          description: |
+            List of products to display in the carousel.
+
+            **Required** when `manual_data` is present. Minimum 2 products.
           minItems: 2
           items:
             $ref: '#/components/schemas/GmailAnnotationsProductCarouselManualProduct'
 
     GmailAnnotationsProductCarouselManualProduct:
       type: object
-      description: A single product entry in a manual product carousel.
+      description: A single product entry in a manual product carousel. All fields below are required for each product.
       required:
         - id
         - headline
@@ -2747,19 +2794,31 @@ components:
       properties:
         id:
           type: string
-          description: Unique product identifier.
+          description: |
+            Unique product identifier.
+
+            **Required** for each product.
           example: "prod-001"
         headline:
           type: string
-          description: Product name shown in the annotation.
+          description: |
+            Product name shown in the annotation.
+
+            **Required** for each product.
           example: "Wireless Headphones"
         original_price:
           type: string
-          description: Original price of the product as a numeric string.
+          description: |
+            Original price of the product as a numeric string.
+
+            **Required** for each product.
           example: "199.99"
         discount_value:
           type: string
-          description: Discount amount as a numeric string. Interpreted as a percentage or absolute value depending on `discount_type`.
+          description: |
+            Discount amount as a numeric string. Interpreted as a percentage or absolute value depending on `discount_type`.
+
+            **Required** for each product.
           example: "30"
         discount_type:
           type: string
@@ -2771,14 +2830,22 @@ components:
 
             - `PERCENT`: `discount_value` is a percentage.
             - `VALUE`: `discount_value` is an absolute amount in `currency`.
+
+            **Required** for each product.
           example: "PERCENT"
         promo_url:
           type: string
-          description: Product landing page URL. Must be a valid HTTPS URL.
+          description: |
+            Product landing page URL. Must be a valid HTTPS URL.
+
+            **Required** for each product.
           example: "https://example.com/products/prod-001"
         product_image:
           type: string
-          description: Product image URL. Must be a valid HTTPS URL. Cannot be empty.
+          description: |
+            Product image URL. Must be a valid HTTPS URL. Cannot be empty.
+
+            **Required** for each product.
           example: "https://example.com/images/prod-001.png"
 
     GmailAnnotationsProductCarouselProductSetData:
@@ -2796,23 +2863,38 @@ components:
       properties:
         product_set:
           type: string
-          description: Product set ID from MoEngage Catalog. Must be valid and exist in your workspace.
+          description: |
+            Product set ID from MoEngage Catalog. Must be valid and exist in your workspace.
+
+            **Required** when `product_set_data` is present.
           example: "product_set_12345"
         image_url:
           type: string
-          description: Fallback image URL if a product set image is unavailable.
+          description: |
+            Fallback image URL if a product set image is unavailable.
+
+            **Required** when `product_set_data` is present.
           example: "https://example.com/images/fallback.png"
         headline:
           type: string
-          description: Label shown for the product carousel.
+          description: |
+            Label shown for the product carousel.
+
+            **Required** when `product_set_data` is present.
           example: "Recommended For You"
         promo_url:
           type: string
-          description: Destination URL when the user clicks the annotation.
+          description: |
+            Destination URL when the user clicks the annotation.
+
+            **Required** when `product_set_data` is present.
           example: "https://example.com/shop"
         product_count:
           type: integer
-          description: Number of products to display.
+          description: |
+            Number of products to display.
+
+            **Required** when `product_set_data` is present. Minimum 2, maximum 9.
           minimum: 2
           maximum: 9
           example: 3
