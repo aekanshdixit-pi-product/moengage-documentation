@@ -34,51 +34,61 @@ dependencies {
 
 </CodeGroup>
 
-Replace the `<bomVersion>` with the relevant version number. For more information on BOM versions, refer to the [Android SDK release notes](https://www.moengage.com/docs/developer-guide/release-notes/android-sdk/2026-1).
+Replace `<bomVersion>` with the latest version number. To find the latest BOM version, refer to the [maven-central badge](https://central.sonatype.com/artifact/com.moengage/android-bom) above or check the [Android SDK release notes](/developer-guide/release-notes/android-sdk).
 
 ## Add MoEngage Modules
 
-Once the BOM is configured, include the specific MoEngage modules required for the application.\
-**Note:** Version numbers are not required for these dependencies; the BOM automatically manages them.
+Once the BOM is configured, include the specific MoEngage modules required for the application. Version numbers are not required for these dependencies; the BOM manages them.
+
+<Info>
+  **Required core module** — Always include `com.moengage:moe-android-sdk`. It is not pulled in transitively by the BOM and is needed for core SDK initialization and data tracking.
+</Info>
 
 <CodeGroup>
 
 ```kotlin build.gradle.kts (Kotlin) wrap
 dependencies {
     // -------------------------------------------------
+    // REQUIRED CORE MODULE
+    // -------------------------------------------------
+
+    // Core SDK - Required for initialization and data tracking
+    implementation("com.moengage:moe-android-sdk")
+
+    // -------------------------------------------------
     // OPTIONAL MODULES (Add based on required features)
     // -------------------------------------------------
 
     // Cards Core - Required if using Cards Core APIs directly
     implementation("com.moengage:cards-core")
-    
+
     // Cards UI - Required for Cards (feed) UI
     implementation("com.moengage:cards-ui")
-    
+
     // Geofence - Required for Geofence-based campaigns
     implementation("com.moengage:geofence")
-    
-     // HMS Push Kit - Required for Huawei Push Notifications
+
+    // HMS Push Kit - Required for Huawei Push Notifications
     implementation("com.moengage:hms-pushkit")
-    
-     // InApp - Required for In-App Messaging
+
+    // InApp - Required for In-App Messaging
     implementation("com.moengage:inapp")
-    
-     // Inbox Core - Required if using Inbox Core APIs directly
+
+    // Inbox Core - Required if using Inbox Core APIs directly
     implementation("com.moengage:inbox-core")
-    
-     // Inbox UI - Required for Notification Center (Inbox) UI
+
+    // Inbox UI - Required for Notification Center (Inbox) UI
     implementation("com.moengage:inbox-ui")
-    
-     // Push Amp - Required for Push Amplification
+
+    // Push Amp - Required for Push Amplification
     implementation("com.moengage:push-amp")
-    
+
     // Real Time Trigger - Required for device-triggered campaigns
     implementation("com.moengage:realtime-trigger")
-    
-    // Rich Notification - Required for Push Templates 
+
+    // Rich Notification - Required for Push Templates
     implementation("com.moengage:rich-notification")
-    
+
     // Security - Required for Security features, for example; storage encryption
     implementation("com.moengage:security")
 }
@@ -108,7 +118,13 @@ implementation("androidx.lifecycle:lifecycle-process:2.8.7")
 
 </CodeGroup>
 
-The MoEngage SDK depends on the **lifecycle-process** library for a few key features to work and the latest version of **lifecycle-process** depends on the **androidx.startup:startup-runtime** library. Hence do not remove the **InitializationProvider** component from the manifest. When adding other Initializers using the **startup-runtime** ensure the Initializer for **lifecycle-process** library is also added. Refer to the [documentation](https://developer.android.com/jetpack/androidx/releases/lifecycle#2.4.0) to know how to add the Initializer.
+The MoEngage SDK depends on the **lifecycle-process** library, and the latest version of **lifecycle-process** depends on the **androidx.startup:startup-runtime** library. The `InitializationProvider` is a `ContentProvider` declared by `startup-runtime` in the merged manifest; it lets `lifecycle-process` initialize automatically at app start so the SDK can observe the application lifecycle.
+
+<Warning>
+  Do not remove `InitializationProvider` from the merged manifest. If it is removed (for example, with a `tools:node="remove"` rule), the SDK can't track foreground or background transitions, which breaks session tracking and several push and in-app features.
+</Warning>
+
+If you add other Initializers using `startup-runtime`, make sure the Initializer for the `lifecycle-process` library is also added. Refer to the [App Startup documentation](https://developer.android.com/jetpack/androidx/releases/lifecycle#2.4.0).
 
 ## Impact of using BOM
 
@@ -117,5 +133,9 @@ Using the BOM does not increase the application size. It functions strictly as a
 ## Why use BOM?
 
 - **Simplified Versioning:** Eliminates the need to manage individual artifact versions. Updating the BOM version updates the entire integration.
-- **Compatibility:** The BOM ensures that all integrated modules work efficiently together, preventing runtime crashes caused by mismatched library versions.
+- **Compatibility:** The BOM ensures that all integrated modules work together, preventing runtime crashes caused by mismatched library versions.
 - **Cleaner Configuration:** Maintains a clean `build.gradle` file with a single source of truth for the SDK version.
+
+## Next Step
+
+Continue to [SDK Initialization](/developer-guide/android-sdk/sdk-integration/basic-integration/sdk-initialization) to initialize the SDK in your Application class.

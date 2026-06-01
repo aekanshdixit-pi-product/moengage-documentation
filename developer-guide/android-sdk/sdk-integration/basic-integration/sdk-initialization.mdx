@@ -5,13 +5,15 @@ description: "Initialize the MoEngage Android SDK in your Application class usin
 
 import ExcludeMoEngageStorageFileAndroidStart from '/snippets/ExcludeMoEngageStorageFile_Android_Start.mdx';
 
-# SDK Configuration
+# SDK Initialization
 
-Get the Workspace ID from the Settings Page of the dashboard **Dashboard** --\> **Settings** --\> **App** --\> **General** on the MoEngage dashboard and initialize the MoEngage SDK in the Application class `onCreate()`.
+Get the Workspace ID from the Settings page on the MoEngage dashboard at **Settings** --\> **App** --\> **General**, then initialize the MoEngage SDK in your Application class `onCreate()`.
 
 <Info>
-  **Note** Initialize the SDK on the main thread inside `onCreate()` and not create a worker thread and initialize the SDK on that thread.
+  **Note** Initialize the SDK on the main thread inside `onCreate()`. Do not create a worker thread and initialize the SDK on that thread.
 </Info>
+
+Replace `Your_Workspace_ID` with the Workspace ID from your dashboard and replace `DATA_CENTER_1` with the [data center](/developer-guide/android-sdk/sdk-integration/basic-integration/data-center) that matches your dashboard host.
 
 <CodeGroup>
 
@@ -19,18 +21,17 @@ Get the Workspace ID from the Settings Page of the dashboard **Dashboard** --\> 
 import com.moengage.core.DataCenter
 import com.moengage.core.MoEngage
 
-val moEngage = MoEngage.Builder(this, "YOUR_Workspace_ID", DataCenter.DATA_CENTER_X)
+val moEngage = MoEngage.Builder(this, "Your_Workspace_ID", DataCenter.DATA_CENTER_1)
                      .build()
-//replace X with your data center number
 MoEngage.initialiseDefaultInstance(moEngage)
 ```
 
 ```java Java
 import com.moengage.core.DataCenter;
 import com.moengage.core.MoEngage;
-           
-MoEngage moEngage = new MoEngage.Builder(this, "YOUR_Workspace_ID", DataCenter.DATA_CENTER_X)
-                     .build(); 
+
+MoEngage moEngage = new MoEngage.Builder(this, "Your_Workspace_ID", DataCenter.DATA_CENTER_1)
+                     .build();
 MoEngage.initialiseDefaultInstance(moEngage);
 ```
 
@@ -38,46 +39,47 @@ MoEngage.initialiseDefaultInstance(moEngage);
 
 ## Portfolio (Optional)
 
-In your MoEngage account, if your [portfolio](https://www.moengage.com/docs/user-guide/settings/account/portfolio/portfolio) is configured with multiple projects, use the methods as shown below.
+If your MoEngage account is configured with multiple projects in a [portfolio](https://www.moengage.com/docs/user-guide/settings/account/portfolio/portfolio), use the methods shown below.
 
 <CodeGroup>
 
 ```kotlin Kotlin wrap
-val moEngage = MoEngage.Builder(this, "YOUR_Workspace_ID", DataCenter.DATA_CENTER_X)
+import com.moengage.core.DataCenter
+import com.moengage.core.MoEngage
+import com.moengage.core.config.ProjectConfig
+
+val moEngage = MoEngage.Builder(this, "Your_Workspace_ID", DataCenter.DATA_CENTER_1)
               .configureProject(ProjectConfig("<YOUR ProjectID>"))
               .build()
 MoEngage.initialiseDefaultInstance(moEngage)
 ```
 
 ```java Java wrap
-MoEngage moEngage = new MoEngage.Builder(this, "YOUR_Workspace_ID", DataCenter.DATA_CENTER_X)
-                     .configureProject(new ProjectConfig("<YOUR ProjectID>"));
-                     .build(); 
+import com.moengage.core.DataCenter;
+import com.moengage.core.MoEngage;
+import com.moengage.core.config.ProjectConfig;
+
+MoEngage moEngage = new MoEngage.Builder(this, "Your_Workspace_ID", DataCenter.DATA_CENTER_1)
+                     .configureProject(new ProjectConfig("<YOUR ProjectID>"))
+                     .build();
 MoEngage.initialiseDefaultInstance(moEngage);
 ```
 
 </CodeGroup>
 
-Following details of the different data centers you need to set based on the dashboard hosts:
-
-| Data Center | Dashboard host |
-| :-- | :-- |
-| `DataCenter.DATA_CENTER_1` | dashboard-01.moengage.com |
-| `DataCenter.DATA_CENTER_2` | dashboard-02.moengage.com |
-| `DataCenter.DATA_CENTER_3` | dashboard-03.moengage.com |
-| `DataCenter.DATA_CENTER_4` | dashboard-04.moengage.com |
-| `DataCenter.DATA_CENTER_5` | dashboard-05.moengage.com |
-| `DataCenter.DATA_CENTER_6` | dashboard-06.moengage.com |
-
 For more information about the detailed list of possible configurations, refer to the [API reference](https://moengage.github.io/android-api-reference/core/com.moengage.core/-mo-engage/-builder/index.html).
 
 <Warning>
-  **Critical** All the configurations are added to the builder before initialization. If you are calling initialize at multiple places, ensure that all the required flags and configurations are set each time you initialize to maintain consistency in behavior.
+  **Critical** All configurations must be added to the builder before initialization. If you call initialize at multiple places, ensure that all required flags and configurations are set each time you initialize to maintain consistency in behavior.
 </Warning>
 
 # Data Flow
 
-SDK detects the build type of the installed application and the basis that it decides whether data should be sent to the Test/Live Environment of the MoEngage Platform.
+The SDK detects the build type of the installed application and uses it to decide whether data should be sent to the test or live environment of the MoEngage platform.
 
-- UnSigned/Debug Build — Data flows to Test environment
-- Signed/Live Build — Data flows to Live environment.
+- Unsigned/Debug build — Data flows to the test environment.
+- Signed/Live build — Data flows to the live environment.
+
+## Next Step
+
+After initialization, [exclude the MoEngage storage file from auto-backup](/developer-guide/android-sdk/sdk-integration/basic-integration/exclude-mo-engage-storage-file-from-auto-backup) before moving on to push, in-app, or data tracking setup.
