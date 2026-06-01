@@ -632,20 +632,246 @@ paths:
           <Note>
           This API endpoint does not currently support Team-level scoping. All segments generated using this call will be assigned to the Default Team automatically.
           </Note>
-          
+
           #### Generate Request from Dashboard
-          
-          To simplify the request generation, MoEngage has added an option in the dashboard where you can specify filters as per your requirement and generate the payload.
-          
-          1. Login to the MoEngage dashboard.
+
+          To simplify payload generation, MoEngage provides a tool in the dashboard where you can configure filters and export the payload.
+
+          1. Log in to the MoEngage dashboard.
           2. Click **Test & Debug** at the lower left in the side panel.
           3. Click **Segment Payload**.
-          4. Specify the name for your segment payload and provide the required filters.
-          5. Click **Generate payload** button.
-          
+          4. Specify the segment name and configure the required filters.
+          5. Click **Generate Payload**.
+
           #### Rate Limit
 
-          The rate limit is 50 request/minute, 200 requests/hour, and 1000 requests/day.
+          The rate limit is 50 requests/minute, 200 requests/hour, and 1000 requests/day.
+
+          ---
+
+          ## Payload Reference
+
+          ### Top-Level Structure
+
+          Every segment request is a tree of filters under `included_filters` and an optional `excluded_filters` root.
+
+          ```json
+          {
+            "name": "my-segment",
+            "included_filters": {
+              "filter_operator": "and",
+              "filters": []
+            },
+            "excluded_filters": {
+              "filter_operator": "and",
+              "filters": []
+            }
+          }
+          ```
+
+          `filter_operator` at every level accepts `"and"` or `"or"`. Groups can nest to arbitrary depth using `nested_filters`.
+
+          **Special "All Users" payload** — targets your entire user base:
+
+          ```json
+          {
+            "name": "all-users-segment",
+            "included_filters": {
+              "filter_operator": "and",
+              "filters": [
+                { "filter_type": "custom_segments", "name": "All Users", "id": "moe_all_users" }
+              ]
+            }
+          }
+          ```
+
+          ---
+
+          ### Filter Types
+
+          | `filter_type` | Purpose |
+          |---|---|
+          | `user_attributes` | Filter by a user profile attribute |
+          | `actions` | Filter by an event the user has or has not performed |
+          | `psychographic_event` | Filter by affinity/behavioral patterns over an event |
+          | `custom_segments` | Reference a saved segment by ID |
+          | `nested_filters` | AND/OR group container for combining other filters |
+
+          ---
+
+          ### User Property Filter (`filter_type: "user_attributes"`)
+
+          #### Required Fields
+
+          | Field | Type | Notes |
+          |---|---|---|
+          | `filter_type` | string | Always `"user_attributes"` |
+          | `name` | string | Attribute name, for example `last_purchase_date` |
+          | `data_type` | string | See data type table below |
+          | `category` | string | Attribute group; defaults to `"default"` |
+          | `operator` | string | Allowed set varies by `data_type`; omit for `geopoint`, `object`, `array_object` |
+          | `negate` | boolean | `true` inverts the filter; absent for `geopoint` |
+          | `value` | varies | Shape depends on operator; absent for `exists` and `today` |
+
+          #### Supported Data Types
+
+          | `data_type` | Allowed operators | Extra fields |
+          |---|---|---|
+          | `string` | `is`, `in`, `contains`, `containsInTheFollowing`, `startsWith`, `startsWithInTheFollowing`, `endsWith`, `endsWithInTheFollowing`, `exists` | `case_sensitive` |
+          | `double` / `number` | `is`, `in`, `lessThan`, `greaterThan`, `between`, `exists` | `value1` when `operator` is `between` |
+          | `bool` | `is`, `exists` | — |
+          | `datetime` | `on`, `between`, `before`, `after`, `inTheLast`, `inTheNext`, `today`, `is`, `exists` | `value_type`, `value1` for `between`, `extract_type` for date-part filters |
+          | `geopoint` | (implicit `around`) | `value` (latitude), `value1` (longitude), `radius`; no `operator` or `negate` |
+          | `array_string` | Same as `string` | `case_sensitive`, `array_filter_type` (`any_of` or `all_of`); removed when `negate: true` |
+          | `array_double` | Same as `double` | `array_filter_type` (`any_of` or `all_of`); `value1` for `between`; removed when `negate: true` |
+          | `object` | N/A | `filter_operator`, `filters[]` (recursive); no `operator`, `negate`, or `value` |
+          | `array_object` | N/A | `filter_operator`, `filters[]` (recursive); no `operator`, `negate`, or `value` |
+
+          **`value` shape by operator:**
+          - Scalar: `is`, `on`, `before`, `after`, `lessThan`, `greaterThan`, `startsWith`, `endsWith`, `contains`, `inTheLast`, `inTheNext`
+          - Array: `in`, `containsInTheFollowing`, `startsWithInTheFollowing`, `endsWithInTheFollowing`
+          - Absent: `exists`, `today`
+
+          **`exists` cleans up:** When `operator` is `exists`, `value`, `value1`, and `value_type` are removed from the payload.
+
+          #### Datetime `value_type` and `extract_type`
+
+          Set `value_type` to:
+          - `"absolute"` — `value` is an ISO 8601 date string, for example `"2024-01-15T00:00:00.000Z"`
+          - `"relative_past"` — `value` is an integer number of days/hours ago
+          - `"relative_future"` — `value` is an integer count into the future (used with `inTheNext`)
+
+          Set `extract_type` to filter on a specific part of the date:
+          - `"time_of_the_day"` — hour (0–23)
+          - `"day_of_the_week"` — weekday (0–6)
+          - `"day_of_the_month"` — day (1–31)
+          - `"month_of_the_year"` — month (1–12)
+          - `"date_month_of_the_year"` — MM-DD combination
+
+          #### Cross-Attribute Comparison (Dynamic Values)
+
+          To compare an attribute against another attribute rather than a literal, set `is_dynamic_value: true` and use the template format in `value`:
+
+          ```json
+          {
+            "name": "order_value",
+            "data_type": "double",
+            "filter_type": "user_attributes",
+            "operator": "greaterThan",
+            "negate": false,
+            "value": "{{MoeUserAttribute['lifetime_value']}}",
+            "is_dynamic_value": true
+          }
+          ```
+
+          For `datetime` with a dynamic value, `value_type` is forced to `"absolute"`.
+
+          ---
+
+          ### User Behavior Filter (`filter_type: "actions"`)
+
+          #### Required Fields
+
+          | Field | Type | Notes |
+          |---|---|---|
+          | `filter_type` | string | Always `"actions"` |
+          | `action_name` | string | The internal event name |
+          | `project_name` | string | Optional; required only in multi-app workspaces |
+          | `executed` | boolean | `true` = has performed; `false` = has NOT performed |
+          | `execution` | object | Frequency condition |
+          | `primary_time_range` | object | Time window for the event |
+          | `attributes` | object | Event attribute sub-filters; always include, even when empty |
+
+          #### Execution (Frequency)
+
+          | `execution.type` | Meaning | `count` required |
+          |---|---|---|
+          | `atleast` | At least N times (default for `executed: true`) | Yes |
+          | `exactly` | Exactly N times | Yes |
+          | `atmost` | At most N times | Yes |
+          | `firstTime` | For the first time only | No — omit `count` |
+          | `lastTime` | For the last time only | No — omit `count` |
+
+          When `executed: false`, `execution` is `{ "type": "exactly", "count": 0 }`.
+
+          #### Primary Time Range
+
+          | `type` | `value` shape | Needs `value1` |
+          |---|---|---|
+          | `inTheLast` | Integer count of `period_unit` | No |
+          | `between` | Start (ISO date or integer days) | Yes (end value) |
+          | `on` | ISO date or relative offset (0 = today, 1 = yesterday) | No |
+          | `before` | ISO 8601 date | No |
+          | `after` | ISO 8601 date | No |
+          | `inThisWeek` / `inLastWeek` / `inThisMonth` / `inLastMonth` | N/A | No |
+
+          Absolute date formatting: `value` → `YYYY-MM-DDT00:00:00.000Z`; `value1` → `YYYY-MM-DDT23:59:59.999Z`.
+
+          #### Event Attribute Sub-Filters
+
+          Use the `attributes` block to narrow which event occurrences count — for example, a `purchase` event where `product_category` is `"electronics"`. Inner filters follow the same shape as User Property filters, with `category` set to `"event_property"`.
+
+          #### Aggregation (sum / avg / min / max)
+
+          Add `aggregation_attributes` to compare an aggregate of a numeric event attribute against a threshold. Only valid when `executed: true`, `execution.type` is not `firstTime` or `lastTime`, and `primary_time_range.type` is not `before` or `after`.
+
+          ```json
+          "aggregation_attributes": {
+            "filter_operator": "and",
+            "filters": [
+              {
+                "attribute_name": "revenue",
+                "data_type": "double",
+                "aggregation_type": "sum",
+                "operator": ">",
+                "comparator": "greater_than",
+                "value": 1000,
+                "negate": false,
+                "is_dynamic_value": false
+              }
+            ]
+          }
+          ```
+
+          ---
+
+          ### User Affinity Filter (`filter_type: "psychographic_event"`)
+
+          Targets users based on behavioral affinity over an event. `primary_time_range` and `psychographic_attributes` are required.
+
+          | `operator_type` | Extra field | Meaning |
+          |---|---|---|
+          | `predominant` | — | User most frequently exhibits this affinity |
+          | `minimum` | `percent_of_times` (1–100) | Affinity is present at least N% of the time |
+          | `top` | `percent_of_users` (1–100) | User is in the top N% by this affinity metric |
+          | `bottom` | `percent_of_users` (1–100) | User is in the bottom N% by this affinity metric |
+
+          ---
+
+          ### Custom Segment Filter (`filter_type: "custom_segments"`)
+
+          References a saved segment by ID. The backend resolves the segment by `id`; `name` is a display label only.
+
+          ```json
+          { "filter_type": "custom_segments", "id": "5c93982f573bb92004975a36", "name": "High-value customers" }
+          ```
+
+          ---
+
+          ### Nested Filters (`filter_type: "nested_filters"`)
+
+          Use `nested_filters` inside `included_filters` or `excluded_filters` to create complex boolean logic (for example, `(A AND B) OR (C AND D)`). Groups can nest to arbitrary depth.
+
+          ```json
+          {
+            "filter_type": "nested_filters",
+            "filter_operator": "or",
+            "filters": [
+              { "filter_type": "user_attributes", ... },
+              { "filter_type": "actions", ... }
+            ]
+          }
+          ```
       parameters:
         - $ref: '#/components/parameters/AppKeyHeader'
       requestBody:
@@ -655,18 +881,445 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FilterSegmentRequestV3'
-            example:
-              name: "segment_example_name"
-              included_filters:
-                filter_operator: "and"
-                filters:
-                  - filter_type: "user_attributes"
-                    name: "Name"
-                    data_type: "string"
-                    operator: "in"
-                    value: ["Chandan", "Kumar"]
-                    negate: false
-                    case_sensitive: false
+            examples:
+              user_property_string:
+                summary: "User Property — String equals"
+                value:
+                  name: "active-users-segment"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "status"
+                        data_type: "string"
+                        category: "Lifecycle"
+                        operator: "is"
+                        negate: false
+                        case_sensitive: false
+                        value: "active"
+              user_property_string_multi:
+                summary: "User Property — String in list"
+                value:
+                  name: "multi-status-segment"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "status"
+                        data_type: "string"
+                        category: "Lifecycle"
+                        operator: "in"
+                        negate: false
+                        case_sensitive: false
+                        value: ["active", "pending", "trial"]
+              user_property_double_between:
+                summary: "User Property — Number between"
+                value:
+                  name: "age-18-65-segment"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "age"
+                        data_type: "double"
+                        category: "Demographics"
+                        operator: "between"
+                        negate: false
+                        value: 18
+                        value1: 65
+              user_property_datetime_relative:
+                summary: "User Property — Datetime in the last N days"
+                value:
+                  name: "recent-purchasers-segment"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "last_purchase_date"
+                        data_type: "datetime"
+                        category: "Lifecycle"
+                        operator: "inTheLast"
+                        negate: false
+                        value_type: "relative_past"
+                        value: 30
+              user_property_datetime_absolute:
+                summary: "User Property — Datetime on an absolute date"
+                value:
+                  name: "signup-jan-2024-segment"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "signup_date"
+                        data_type: "datetime"
+                        category: "Acquisition"
+                        operator: "on"
+                        negate: false
+                        value_type: "absolute"
+                        value: "2024-01-15T00:00:00.000Z"
+              user_property_bool:
+                summary: "User Property — Boolean"
+                value:
+                  name: "premium-users-segment"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "is_premium"
+                        data_type: "bool"
+                        category: "Subscription"
+                        operator: "is"
+                        negate: false
+                        value: true
+              user_property_geopoint:
+                summary: "User Property — Geopoint proximity"
+                value:
+                  name: "users-near-nyc"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "home_location"
+                        data_type: "geopoint"
+                        category: "Location"
+                        value: 40.7128
+                        value1: -74.0060
+                        radius: 10
+              user_property_array_string:
+                summary: "User Property — Array of strings (any_of)"
+                value:
+                  name: "vip-or-premium-segment"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "tags"
+                        data_type: "array_string"
+                        category: "Custom"
+                        operator: "in"
+                        negate: false
+                        case_sensitive: false
+                        array_filter_type: "any_of"
+                        value: ["vip", "premium"]
+              user_property_object:
+                summary: "User Property — Nested object"
+                value:
+                  name: "users-with-nyc-address"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "address"
+                        data_type: "object"
+                        filter_operator: "and"
+                        filters:
+                          - name: "city"
+                            data_type: "string"
+                            category: "Location"
+                            operator: "is"
+                            negate: false
+                            case_sensitive: false
+                            value: "New York"
+              user_property_array_object:
+                summary: "User Property — Array of objects (purchases)"
+                value:
+                  name: "high-value-electronics-buyers"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "purchases"
+                        data_type: "array_object"
+                        filter_operator: "and"
+                        filters:
+                          - name: "product_category"
+                            data_type: "string"
+                            category: "default"
+                            operator: "in"
+                            negate: false
+                            case_sensitive: false
+                            value: ["electronics", "computers"]
+                          - name: "amount"
+                            data_type: "double"
+                            category: "default"
+                            operator: "greaterThan"
+                            negate: false
+                            value: 100
+              behavior_executed:
+                summary: "User Behavior — Has executed at least once"
+                value:
+                  name: "app-openers-30d"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "actions"
+                        action_name: "app_opened"
+                        executed: true
+                        execution:
+                          type: "atleast"
+                          count: 1
+                        primary_time_range:
+                          type: "inTheLast"
+                          value: 30
+                          value_type: "relative_past"
+                          period_unit: "days"
+                        attributes:
+                          filter_operator: "and"
+                          filters: []
+              behavior_not_executed:
+                summary: "User Behavior — Has NOT executed"
+                value:
+                  name: "lapsed-purchasers-7d"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "actions"
+                        action_name: "purchase"
+                        executed: false
+                        execution:
+                          type: "exactly"
+                          count: 0
+                        primary_time_range:
+                          type: "inTheLast"
+                          value: 7
+                          value_type: "relative_past"
+                          period_unit: "days"
+                        attributes:
+                          filter_operator: "and"
+                          filters: []
+              behavior_with_attribute:
+                summary: "User Behavior — Executed with event attribute filter"
+                value:
+                  name: "electronics-viewers-14d"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "actions"
+                        action_name: "viewed_product"
+                        executed: true
+                        execution:
+                          type: "atleast"
+                          count: 2
+                        primary_time_range:
+                          type: "inTheLast"
+                          value: 14
+                          value_type: "relative_past"
+                          period_unit: "days"
+                        attributes:
+                          filter_operator: "and"
+                          filters:
+                            - name: "product_category"
+                              data_type: "string"
+                              category: "event_property"
+                              operator: "is"
+                              negate: false
+                              case_sensitive: false
+                              value: "Electronics"
+              behavior_first_time:
+                summary: "User Behavior — First time executed"
+                value:
+                  name: "new-signups-90d"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "actions"
+                        action_name: "sign_up"
+                        executed: true
+                        execution:
+                          type: "firstTime"
+                        primary_time_range:
+                          type: "inTheLast"
+                          value: 90
+                          value_type: "relative_past"
+                          period_unit: "days"
+                        attributes:
+                          filter_operator: "and"
+                          filters: []
+              behavior_aggregation:
+                summary: "User Behavior — Aggregation (sum revenue > 1000)"
+                value:
+                  name: "high-revenue-purchasers-30d"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "actions"
+                        action_name: "purchase"
+                        executed: true
+                        execution:
+                          type: "atleast"
+                          count: 1
+                        primary_time_range:
+                          type: "inTheLast"
+                          value: 30
+                          value_type: "relative_past"
+                          period_unit: "days"
+                        attributes:
+                          filter_operator: "and"
+                          filters: []
+                        aggregation_attributes:
+                          filter_operator: "and"
+                          filters:
+                            - attribute_name: "revenue"
+                              data_type: "double"
+                              aggregation_type: "sum"
+                              operator: ">"
+                              comparator: "greater_than"
+                              value: 1000
+                              negate: false
+                              is_dynamic_value: false
+              behavior_between_absolute:
+                summary: "User Behavior — Between absolute dates"
+                value:
+                  name: "jan-2024-event-attendees"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "actions"
+                        action_name: "event_attended"
+                        executed: true
+                        execution:
+                          type: "atleast"
+                          count: 1
+                        primary_time_range:
+                          type: "between"
+                          value: "2024-01-01T00:00:00.000Z"
+                          value1: "2024-01-31T23:59:59.999Z"
+                          value_type: "absolute"
+                          period_unit: "days"
+                        attributes:
+                          filter_operator: "and"
+                          filters: []
+              affinity_predominant:
+                summary: "User Affinity — Predominantly purchases Electronics"
+                value:
+                  name: "electronics-affinity-segment"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "psychographic_event"
+                        action_name: "purchase"
+                        executed: true
+                        execution:
+                          type: "atleast"
+                          count: 1
+                        operator_type: "predominant"
+                        psychographic_attributes:
+                          filter_operator: "and"
+                          filters:
+                            - name: "product_category"
+                              data_type: "string"
+                              category: "event_property"
+                              operator: "is"
+                              negate: false
+                              case_sensitive: false
+                              value: "Electronics"
+                        attributes:
+                          filter_operator: "and"
+                          filters: []
+                        primary_time_range:
+                          type: "inTheLast"
+                          value: 90
+                          value_type: "relative_past"
+                          period_unit: "days"
+              affinity_top_percent:
+                summary: "User Affinity — Top 10% spenders"
+                value:
+                  name: "top-10-percent-spenders"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "psychographic_event"
+                        action_name: "purchase"
+                        executed: true
+                        execution:
+                          type: "atleast"
+                          count: 1
+                        operator_type: "top"
+                        percent_of_users: 10
+                        psychographic_attributes:
+                          filter_operator: "and"
+                          filters:
+                            - name: "product_category"
+                              data_type: "string"
+                              category: "event_property"
+                              operator: "exists"
+                              negate: false
+                              case_sensitive: false
+                        attributes:
+                          filter_operator: "and"
+                          filters: []
+                        primary_time_range:
+                          type: "inTheLast"
+                          value: 30
+                          value_type: "relative_past"
+                          period_unit: "days"
+              custom_segment_reference:
+                summary: "Custom Segment — Reference saved segment"
+                value:
+                  name: "combined-vip-premium"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "custom_segments"
+                        id: "5c93982f573bb92004975a36"
+                        name: "VIP Customers"
+              nested_filters_and_or:
+                summary: "Nested Filters — AND/OR combination with exclusion"
+                value:
+                  name: "active-buyers-us-uk-non-test"
+                  included_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "age"
+                        data_type: "double"
+                        category: "default"
+                        operator: "greaterThan"
+                        negate: false
+                        value: 18
+                      - filter_type: "nested_filters"
+                        filter_operator: "or"
+                        filters:
+                          - filter_type: "user_attributes"
+                            name: "country"
+                            data_type: "string"
+                            category: "Location"
+                            operator: "is"
+                            negate: false
+                            case_sensitive: false
+                            value: "US"
+                          - filter_type: "user_attributes"
+                            name: "country"
+                            data_type: "string"
+                            category: "Location"
+                            operator: "is"
+                            negate: false
+                            case_sensitive: false
+                            value: "UK"
+                      - filter_type: "actions"
+                        action_name: "purchase"
+                        executed: true
+                        execution:
+                          type: "atleast"
+                          count: 1
+                        primary_time_range:
+                          type: "inTheLast"
+                          value: 90
+                          value_type: "relative_past"
+                          period_unit: "days"
+                        attributes:
+                          filter_operator: "and"
+                          filters: []
+                  excluded_filters:
+                    filter_operator: "and"
+                    filters:
+                      - filter_type: "user_attributes"
+                        name: "is_test_user"
+                        data_type: "bool"
+                        category: "default"
+                        operator: "is"
+                        negate: false
+                        value: true
       responses:
         '201':
           $ref: '#/components/responses/201_SegmentCreatedV3'
@@ -913,44 +1566,100 @@ components:
         - filter_operator
         - filters
     FilterV3:
-      description: A single filter criterion, which can be user attribute-based or action-based.
+      description: |
+        A single filter criterion. The `filter_type` field selects the filter kind:
+        - `user_attributes` — filter by a user profile attribute
+        - `actions` — filter by an event the user has or has not performed
+        - `psychographic_event` — filter by affinity/behavioral patterns over an event
+        - `custom_segments` — reference a saved segment by ID
+        - `nested_filters` — AND/OR group container for combining other filters
       oneOf:
         - $ref: '#/components/schemas/AttributeFilterV3'
         - $ref: '#/components/schemas/ActionFilterV3'
+        - $ref: '#/components/schemas/AffinityFilterV3'
+        - $ref: '#/components/schemas/CustomSegmentFilterV3'
+        - $ref: '#/components/schemas/NestedFiltersV3'
       discriminator:
         propertyName: filter_type
         mapping:
           user_attributes: '#/components/schemas/AttributeFilterV3'
           actions: '#/components/schemas/ActionFilterV3'
+          psychographic_event: '#/components/schemas/AffinityFilterV3'
+          custom_segments: '#/components/schemas/CustomSegmentFilterV3'
+          nested_filters: '#/components/schemas/NestedFiltersV3'
     AttributeFilterV3:
-      title: Attribute Filters
+      title: User Property Filter
       type: object
       description: |
-        A filter based on a user or event attribute.
-        
-        **Allowed Operators per Data Type:**
-        * **bool:** is, exists
-        * **double:** in, between, lessThan, greaterThan, exists
-        * **string:** in, contains, containsInTheFollowing, startWithInTheFollowing, endsWithInTheFollowing, exists, is
-        * **datetime:** inTheLast, on, between, before, after, inTheNext, exists, today
+        Filters users by a user profile attribute (`filter_type: "user_attributes"`).
+
+        The required fields and shape of `value` depend on `data_type`:
+
+        | `data_type` | Allowed `operator` values | Extra fields |
+        |---|---|---|
+        | `string` | `is`, `in`, `contains`, `containsInTheFollowing`, `startsWith`, `startsWithInTheFollowing`, `endsWith`, `endsWithInTheFollowing`, `exists` | `case_sensitive` |
+        | `double` / `number` | `is`, `in`, `lessThan`, `greaterThan`, `between`, `exists` | `value1` when `operator` is `between` |
+        | `bool` | `is`, `exists` | — |
+        | `datetime` | `on`, `between`, `before`, `after`, `inTheLast`, `inTheNext`, `today`, `is`, `exists` | `value_type`; `value1` for `between`; `extract_type` for date-part filters |
+        | `geopoint` | (implicit `around` — no `operator` or `negate` in payload) | `value` (latitude), `value1` (longitude), `radius` |
+        | `array_string` | Same as `string` | `case_sensitive`, `array_filter_type` (`any_of` or `all_of`); removed when `negate: true` |
+        | `array_double` | Same as `double` | `array_filter_type` (`any_of` or `all_of`); `value1` for `between`; removed when `negate: true` |
+        | `object` | N/A — uses `filter_operator` + `filters[]` | `filter_operator`, `filters` (no `operator`, `negate`, or `value`) |
+        | `array_object` | N/A — uses `filter_operator` + `filters[]` | `filter_operator`, `filters` (no `operator`, `negate`, or `value`) |
+
+        When `operator` is `exists`, omit `value`, `value1`, and `value_type`.
+
+        For cross-attribute comparison, set `is_dynamic_value: true` and use `"{{MoeUserAttribute['attribute_name']}}"` as `value`.
       properties:
         filter_type:
           type: string
-          description: Identifies the filter as attribute-based.
+          description: Must be `user_attributes` for a User Property filter.
           enum: [user_attributes]
         name:
           type: string
-          description: The name of the user attribute.
+          description: The internal name of the user attribute (for example, `last_purchase_date`).
         data_type:
           type: string
-          description: Data type of the attribute.
-          enum: [string, double, datetime, bool]
+          description: The data type of the attribute.
+          enum: [string, double, number, bool, datetime, geopoint, array_string, array_double, object, array_object]
+        category:
+          type: string
+          description: The attribute group. Resolved from the attribute list; defaults to `default`.
         operator:
           type: string
-          description: The comparison operator. Allowed values depend on `data_type`.
-          enum: [is, exists, in, between, lessThan, greaterThan, contains, containsInTheFollowing, startWithInTheFollowing, endsWithInTheFollowing, inTheLast, on, before, after, inTheNext, today]
+          description: |
+            The comparison operator. Allowed values depend on `data_type`. Omit for `geopoint`, `object`, and `array_object`.
+          enum:
+            - is
+            - in
+            - contains
+            - containsInTheFollowing
+            - startsWith
+            - startsWithInTheFollowing
+            - endsWith
+            - endsWithInTheFollowing
+            - exists
+            - lessThan
+            - greaterThan
+            - between
+            - on
+            - before
+            - after
+            - inTheLast
+            - inTheNext
+            - today
+        negate:
+          type: boolean
+          description: Set to `true` to invert the filter (NOT condition). Not applicable to `geopoint`.
+          default: false
         value:
-          description: The value to compare against. Type depends on `data_type` and `operator`. For 'in' operator, this should be an array.
+          description: |
+            The comparison value. Shape depends on `data_type` and `operator`:
+            - Scalar for `is`, `on`, `before`, `after`, `lessThan`, `greaterThan`, `startsWith`, `endsWith`, `contains`, `inTheLast`, `inTheNext`.
+            - Array for `in`, `containsInTheFollowing`, `startsWithInTheFollowing`, `endsWithInTheFollowing`.
+            - Latitude (number) for `geopoint`.
+            - Omit when `operator` is `exists` or `today`.
+            - For dynamic cross-attribute comparison: `"{{MoeUserAttribute['attr_name']}}"` with `is_dynamic_value: true`.
           oneOf:
             - type: string
             - type: number
@@ -961,26 +1670,79 @@ components:
                   - type: string
                   - type: number
         value1:
-          description: The second value, used only for the 'between' operator.
+          description: |
+            The second bound for range comparisons:
+            - Upper bound when `operator` is `between` (numeric and datetime types).
+            - Longitude for `geopoint`.
           oneOf:
             - type: string
             - type: number
-        negate:
-          type: boolean
-          description: If true, negates the filter condition.
-          default: false
         case_sensitive:
           type: boolean
-          description: If true, string comparisons are case-sensitive.
+          description: Applies to `string` and `array_string`. Set to `true` for case-sensitive matching.
+          default: false
+        value_type:
+          type: string
+          description: |
+            Applies to `datetime` only. Specifies whether `value` is an ISO 8601 date string (`absolute`)
+            or a relative offset (`relative_past` for past, `relative_future` for `inTheNext`).
+          enum: [absolute, relative_past, relative_future]
+        extract_type:
+          type: string
+          description: |
+            Applies to `datetime` only. Filters on a specific part of the date rather than the full timestamp.
+            - `default_option_date` — stored date as-is
+            - `time_of_the_day` — hour of day (0–23)
+            - `day_of_the_week` — weekday (0–6)
+            - `day_of_the_month` — day (1–31)
+            - `month_of_the_year` — month (1–12)
+            - `date_month_of_the_year` — MM-DD combination
+          enum:
+            - default_option_date
+            - time_of_the_day
+            - day_of_the_week
+            - day_of_the_month
+            - month_of_the_year
+            - date_month_of_the_year
+        radius:
+          type: number
+          description: Applies to `geopoint` only. The search radius in kilometers.
+        array_filter_type:
+          type: string
+          description: |
+            Applies to `array_string` and `array_double`. Determines whether the user's array attribute
+            must match any (`any_of`) or all (`all_of`) of the specified values.
+            This field is removed when `negate: true`.
+          enum: [any_of, all_of]
+        filter_operator:
+          type: string
+          description: Applies to `object` and `array_object`. The logical operator combining the child `filters`.
+          enum: [and, or]
+        filters:
+          type: array
+          description: |
+            Applies to `object` and `array_object`. Each element is an `AttributeFilterV3` scoped to
+            the child attributes of the parent object. Supports recursive nesting.
+
+            For `array_object`: a user matches if at least one element of their array passes all the
+            inner filters combined by `filter_operator`. The combinator scopes children within a single
+            array element, not across elements.
+          items:
+            $ref: '#/components/schemas/AttributeFilterV3'
+        is_dynamic_value:
+          type: boolean
+          description: |
+            Set to `true` when `value` references another user attribute rather than a literal.
+            The `value` must use the format `"{{MoeUserAttribute['attribute_name']}}"`.
+            For `datetime` with a dynamic value, `value_type` is forced to `absolute`.
           default: false
       required:
         - filter_type
         - name
         - data_type
-        - operator
     ActionAttributeFilterGroupV3:
       type: object
-      description: A logical grouping of attribute filters for action-based filtering.
+      description: A logical grouping of attribute filters applied to an event's own attributes.
       properties:
         filter_operator:
           type: string
@@ -988,78 +1750,348 @@ components:
           enum: [and, or]
         filters:
           type: array
-          description: Array of attribute filters to apply to the event's attributes.
+          description: |
+            Attribute filters scoped to the event's properties. Each uses `category` set to `event_property`.
           items:
             $ref: '#/components/schemas/AttributeFilterV3'
       required:
         - filter_operator
         - filters
-    ActionFilterV3:
-      title: Action-based Filters
+    AggregationAttributeFilterV3:
+      title: Aggregation Condition
       type: object
-      description: A filter based on a user action (event).
+      description: |
+        A single condition in the `aggregation_attributes` block of a User Behavior filter.
+        Computes an aggregate (sum, avg, min, max) of a numeric event attribute and compares it to a threshold.
+
+        Only available when:
+        - `executed: true`
+        - `primary_time_range.type` is not `before` or `after` (unbounded windows are blocked)
+        - `execution.type` is not `firstTime` or `lastTime`
+        - The attribute has `data_type: double` or `number`
+      properties:
+        attribute_name:
+          type: string
+          description: The name of the numeric event attribute to aggregate.
+        data_type:
+          type: string
+          enum: [double, number]
+          description: The data type of the aggregated attribute.
+        aggregation_type:
+          type: string
+          enum: [sum, avg, min, max]
+          description: The aggregation function to apply across the user's matching event occurrences.
+        operator:
+          type: string
+          enum: [">", "<", ">=", "<=", "==", "!="]
+          description: The comparison operator symbol. Must match `comparator`.
+        comparator:
+          type: string
+          enum: [greater_than, less_than, greater_than_or_equal, less_than_or_equal, equals, not_equal]
+          description: Human-readable form of `operator`.
+        value:
+          type: number
+          description: The numeric threshold to compare the aggregated result against.
+        value1:
+          type: number
+          nullable: true
+          description: Used for range comparisons. Set to `null` when not applicable.
+        negate:
+          type: boolean
+          description: Set to `true` to invert the comparison.
+          default: false
+        is_dynamic_value:
+          type: boolean
+          description: |
+            Set to `true` when `value` references another attribute via `"{{MoeUserAttribute['attr_name']}}"`.
+          default: false
+        base_time_range:
+          type: object
+          description: |
+            Optional sub-window that restricts which event occurrences contribute to the aggregate.
+            Must be a window within the parent `primary_time_range`, and must not exceed the
+            backend-supplied aggregation window ceiling.
+      required:
+        - attribute_name
+        - data_type
+        - aggregation_type
+        - operator
+        - comparator
+        - value
+    ActionFilterV3:
+      title: User Behavior Filter
+      type: object
+      description: |
+        Filters users based on whether they have or have not performed a specific event (`filter_type: "actions"`).
+
+        Supports frequency conditions (`execution`), a time window (`primary_time_range`),
+        event attribute sub-filters (`attributes`), and optional numeric aggregation (`aggregation_attributes`).
+
+        Always include `attributes` even when empty: `{ "filter_operator": "and", "filters": [] }`.
+
+        **Executed vs not-executed:**
+        - `executed: true` → default `execution: { type: "atleast", count: 1 }`
+        - `executed: false` → auto-set `execution: { type: "exactly", count: 0 }`; aggregation disabled
+
+        UI tense labels ("Has Executed", "Does Execute", "Executes") are display-only and do not affect the payload.
       properties:
         filter_type:
           type: string
-          description: Identifies the filter as action-based.
+          description: Must be `actions` for a User Behavior filter.
           enum: [actions]
         action_name:
           type: string
-          description: The internal name of the event/action.
-        attributes:
-          $ref: '#/components/schemas/ActionAttributeFilterGroupV3'
-          description: Additional filters to apply to the event's attributes.
+          description: The internal name of the event to filter on.
+        project_name:
+          type: string
+          description: Optional. Required only in multi-app workspaces to scope the event to a specific app.
         executed:
           type: boolean
-          description: Whether the action should have been performed (true) or not (false).
+          description: Set to `true` to match users who performed the event; `false` to match users who did not.
         execution:
           type: object
-          description: Specifies how many times the event must have been performed.
+          description: |
+            The frequency condition for the event.
+
+            | `type` | Meaning | `count` required |
+            |---|---|---|
+            | `atleast` | At least N times (default when `executed: true`) | Yes (> 0) |
+            | `exactly` | Exactly N times | Yes (> 0) |
+            | `atmost` | At most N times | Yes (> 0) |
+            | `firstTime` | For the first time only | No — omit `count`; aggregation disabled |
+            | `lastTime` | For the last time only | No — omit `count`; aggregation disabled |
           properties:
             type:
               type: string
-              description: The type of comparison for the execution count.
               enum: [atleast, exactly, atmost, firstTime, lastTime]
             count:
               type: integer
               format: int32
-              description: The number of times the event must have been performed.
+              description: Required for `atleast`, `exactly`, and `atmost`. Must be greater than 0.
           required:
             - type
-            - count
         primary_time_range:
           type: object
-          description: The time range during which the event should have been performed.
+          description: |
+            The time window during which the event must have been performed.
+
+            | `type` | `value` shape | Needs `value1` | Notes |
+            |---|---|---|---|
+            | `inTheLast` | Integer count of `period_unit` | No | `value_type: relative_past` |
+            | `between` | Start value (integer days or ISO date) | Yes (end value) | Both absolute and relative supported |
+            | `on` | ISO date or relative day offset (0 = today, 1 = yesterday) | No | Both supported |
+            | `before` | ISO 8601 date | No | `value_type: absolute` |
+            | `after` | ISO 8601 date | No | `value_type: absolute` |
+            | `today` | (legacy — auto-migrated to `on` with `value: 0`) | No | |
+            | `yesterday` | (legacy — auto-migrated to `on` with `value: 1`) | No | |
+            | `inThisWeek` / `inLastWeek` / `inThisMonth` / `inLastMonth` | N/A | No | Calendar-aligned windows |
+
+            Absolute date formatting: `value` → `YYYY-MM-DDT00:00:00.000Z`; `value1` → `YYYY-MM-DDT23:59:59.999Z`.
+            Relative values must satisfy `0 < value ≤ retention` (workspace setting).
           properties:
             type:
               type: string
-              description: The type of time range comparison.
-              enum: [on, inTheLast, before, after, between]
+              enum: [inTheLast, between, on, before, after, today, yesterday, inThisWeek, inLastWeek, inThisMonth, inLastMonth]
             value_type:
               type: string
-              description: Whether the time range is absolute (specific datetime) or relative (last N days/weeks/months).
+              description: Whether `value` is an ISO 8601 date (`absolute`) or an integer offset (`relative_past`).
               enum: [absolute, relative_past]
             value:
-              type: string
-              description: Integer (as string) for relative_past, or ISO 8601 Datetime (e.g., 2022-12-21T00:00:00.000Z) for absolute.
+              description: Integer for relative ranges (`inTheLast`), or ISO 8601 date string for absolute ranges.
             value1:
-              type: string
-              description: The end datetime for the 'between' operator (ISO 8601).
+              description: End bound for `between`. ISO 8601 date or integer day count.
             period_unit:
               type: string
-              description: The unit of time for relative time ranges.
-              enum: [days, weeks, months]
+              description: The unit of time for `inTheLast`.
+              enum: [hours, days, weeks, months]
           required:
             - type
             - value_type
-            - value
-            - period_unit
+        attributes:
+          $ref: '#/components/schemas/ActionAttributeFilterGroupV3'
+          description: |
+            Sub-filters on the event's own attributes — for example, `purchase` where `product_category` is `Electronics`.
+            Always include this key even when empty: `{ "filter_operator": "and", "filters": [] }`.
+        aggregation_attributes:
+          type: object
+          description: |
+            Optional aggregation block. Present only when using aggregation mode (sum/avg/min/max over a numeric event attribute).
+            See `AggregationAttributeFilterV3` for constraints.
+          properties:
+            filter_operator:
+              type: string
+              enum: [and, or]
+            filters:
+              type: array
+              items:
+                $ref: '#/components/schemas/AggregationAttributeFilterV3'
+          required:
+            - filter_operator
+            - filters
       required:
         - filter_type
         - action_name
         - executed
         - execution
         - primary_time_range
+        - attributes
+    AffinityFilterV3:
+      title: User Affinity Filter
+      type: object
+      description: |
+        Filters users by affinity or psychographic patterns over an event (`filter_type: "psychographic_event"`).
+
+        Use this to target users whose behavior leans toward a particular pattern — for example, users who most
+        frequently purchase in a specific category (`predominant`), or users in the top 10% by spending (`top`).
+
+        `primary_time_range` is required (unlike User Behavior filters, where it can be omitted).
+        `psychographic_attributes` is required and must contain at least one filter defining what the affinity is about.
+
+        **Affinity operator types:**
+        | `operator_type` | Extra field | Meaning |
+        |---|---|---|
+        | `predominant` | — | User most frequently exhibits this affinity |
+        | `minimum` | `percent_of_times` | User exhibits this affinity at least N% of the time |
+        | `top` | `percent_of_users` | User is in the top N% by this affinity metric |
+        | `bottom` | `percent_of_users` | User is in the bottom N% by this affinity metric |
+      properties:
+        filter_type:
+          type: string
+          enum: [psychographic_event]
+          description: Must be `psychographic_event` for a User Affinity filter.
+        action_name:
+          type: string
+          description: The internal name of the event to evaluate affinity on.
+        executed:
+          type: boolean
+          description: Whether the user has performed the event.
+          default: true
+        execution:
+          type: object
+          description: The frequency condition for the event.
+          properties:
+            type:
+              type: string
+              enum: [atleast, exactly, atmost, firstTime, lastTime]
+            count:
+              type: integer
+              description: Required for `atleast`, `exactly`, and `atmost`. Omit for `firstTime` and `lastTime`.
+          required:
+            - type
+        operator_type:
+          type: string
+          description: The affinity matching mode.
+          enum: [predominant, minimum, top, bottom]
+        percent_of_times:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Required when `operator_type` is `minimum`. The minimum percentage of the time the affinity must be present.
+        percent_of_users:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Required when `operator_type` is `top` or `bottom`. The percentile threshold.
+        psychographic_attributes:
+          type: object
+          description: |
+            Defines what the affinity is about (for example, `product_category is "Electronics"`).
+            At least one attribute filter is required.
+          properties:
+            filter_operator:
+              type: string
+              enum: [and, or]
+            filters:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttributeFilterV3'
+          required:
+            - filter_operator
+            - filters
+        attributes:
+          $ref: '#/components/schemas/ActionAttributeFilterGroupV3'
+          description: Optional additional event-attribute filters to narrow which event occurrences count toward the affinity.
+        primary_time_range:
+          type: object
+          description: The time window over which affinity is evaluated. Required for affinity filters. Uses the same shape as `ActionFilterV3.primary_time_range`.
+          properties:
+            type:
+              type: string
+              enum: [inTheLast, between, on, before, after, today, yesterday, inThisWeek, inLastWeek, inThisMonth, inLastMonth]
+            value:
+              description: Integer count of `period_unit` for `inTheLast`, or ISO 8601 date for absolute types.
+            value1:
+              description: End bound for `between`.
+            value_type:
+              type: string
+              enum: [absolute, relative_past]
+            period_unit:
+              type: string
+              enum: [hours, days, weeks, months]
+          required:
+            - type
+            - value_type
+      required:
+        - filter_type
+        - action_name
+        - executed
+        - execution
+        - operator_type
+        - psychographic_attributes
+        - primary_time_range
+    CustomSegmentFilterV3:
+      title: Custom Segment Filter
+      type: object
+      description: |
+        References a saved MoEngage segment by ID (`filter_type: "custom_segments"`).
+
+        Use this to include users who already belong to an existing segment — for example, a file segment,
+        a previously created filter segment, or an analytics filter.
+
+        **Special value:** Set `id` to `"moe_all_users"` and `name` to `"All Users"` to target your entire user base.
+
+        Custom-file segments may be in a `pending` state while uploads are processing.
+      properties:
+        filter_type:
+          type: string
+          enum: [custom_segments]
+          description: Must be `custom_segments` for a Custom Segment filter.
+        id:
+          type: string
+          description: The unique ID of the saved segment. Required.
+        name:
+          type: string
+          description: Display label for the segment. The backend resolves the segment by `id`.
+      required:
+        - filter_type
+        - id
+    NestedFiltersV3:
+      title: Nested Filters (AND/OR Group)
+      type: object
+      description: |
+        A logical group container (`filter_type: "nested_filters"`) used to combine other filters with
+        an `and` or `or` operator. Place a `nested_filters` block inside `included_filters` or `excluded_filters`
+        to build complex boolean logic such as `(A AND B) OR (C AND D)`.
+
+        Groups can nest to arbitrary depth. Every container at every level has its own `filter_operator` and `filters[]`.
+      properties:
+        filter_type:
+          type: string
+          enum: [nested_filters]
+          description: Must be `nested_filters` for a logical group container.
+        filter_operator:
+          type: string
+          enum: [and, or]
+          description: The logical operator combining the filters in this group.
+        filters:
+          type: array
+          description: The filters within this group. Each can be any filter type, including another `nested_filters` group.
+          items:
+            $ref: '#/components/schemas/FilterV3'
+      required:
+        - filter_type
+        - filter_operator
+        - filters
     FilterSegmentRequestV3:
       type: object
       description: Request schema for creating a filter-based segment.
@@ -1068,7 +2100,13 @@ components:
           type: string
           description: A unique name for the segment.
         included_filters:
-          description: The filtering criteria used for segmentation. Users satisfying this set of filters will be part of the segment.
+          description: |
+            The filter criteria for users to include in the segment. Users matching these filters are added to the segment.
+          $ref: '#/components/schemas/FilterGroupV3'
+        excluded_filters:
+          description: |
+            Optional. The filter criteria for users to exclude. Users matching these filters are removed from the
+            included set even if they satisfy `included_filters`.
           $ref: '#/components/schemas/FilterGroupV3'
       required:
         - name
@@ -1081,12 +2119,17 @@ components:
           type: string
           description: A new unique name for the segment.
         included_filters:
-          description: The updated filtering criteria for the segment. Users satisfying this set of filters will be part of the segment.
+          description: The updated filter criteria for inclusion. Users matching these filters will be part of the segment.
+          $ref: '#/components/schemas/FilterGroupV3'
+        excluded_filters:
+          description: |
+            Optional. The updated filter criteria for exclusion. Users matching these filters are removed from the
+            included set even if they satisfy `included_filters`.
           $ref: '#/components/schemas/FilterGroupV3'
         updated_by:
           type: string
           format: email
-          description: Email of the user performing the update (e.g., admin@companyemail.com).
+          description: Email of the user performing the update (for example, admin@companyemail.com).
       required:
         - included_filters
     FilterSegmentDataV3:
