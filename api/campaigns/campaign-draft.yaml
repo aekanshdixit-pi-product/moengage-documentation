@@ -152,25 +152,12 @@ components:
       description: |
         Request body for creating a Push campaign draft via `POST /v5/campaigns`.
 
-        Only `channel`, `campaign_delivery_type`, and `created_by` are required. You can include
-        optional components (`basic_details`, `campaign_content`, `segmentation_details`, and so on)
-        in the same request, or add them later with `PATCH /v5/campaigns/{campaign_id}`.
+        Only `channel`, `campaign_delivery_type`, and `created_by` are required. Optional components (`basic_details`, `campaign_content`, `segmentation_details`, and so on) can be included in the same request, or added later via `PATCH /v5/campaigns/{campaign_id}`.
 
-        <details>
-        <summary>Minimal draft (required fields only)</summary>
 
-        ```json
-        {
-          "channel": "PUSH",
-          "campaign_delivery_type": "ONE_TIME",
-          "created_by": "{{user_email}}"
-        }
-        ```
-
-        </details>
-
-        See `campaign_delivery_type` below for full examples per delivery type, and the linked
-        component schemas for scheduling, segmentation, content, and trigger configuration.
+        For full examples per delivery type, refer to `campaign_delivery_type` below. For the component-level schemas with conditional rules per template type, platform, and delivery type, refer to:
+        - [Configure campaign content for Push and Email campaigns](/api/campaigns/campaign-content-reference) — `basic_details` and `campaign_content`.
+        - [Configure audience, scheduling, and delivery for Push and Email campaigns](/api/campaigns/audience-scheduling-delivery-reference) — `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, `advanced`, and `geofences`.
       required: [channel, campaign_delivery_type, created_by]
       properties:
         request_id: 
@@ -216,22 +203,12 @@ components:
       description: |
         Request body for creating an Email campaign draft via `POST /v5/campaigns`.
 
-        Only `channel`, `campaign_delivery_type`, and `created_by` are required. Include
-        `connector` and `campaign_content` when you are ready to define send configuration and
-        message content.
+        Only `channel`, `campaign_delivery_type`, and `created_by` are required. `connector` and `campaign_content` are added when the send configuration and message content are ready.
 
-        <details>
-        <summary>Minimal draft (required fields only)</summary>
 
-        ```json
-        {
-          "channel": "EMAIL",
-          "campaign_delivery_type": "ONE_TIME",
-          "created_by": "{{user_email}}"
-        }
-        ```
-
-        </details>
+        For the component-level schemas with conditional rules:
+        - [Configure campaign content for Push and Email campaigns](/api/campaigns/campaign-content-reference) — `basic_details`, `campaign_content` (`html_content` and `custom_template_id`), `variation_details`, and `connector`.
+        - [Configure audience, scheduling, and delivery for Push and Email campaigns](/api/campaigns/audience-scheduling-delivery-reference) — `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, and `campaign_audience_limit`.
       required: [channel, campaign_delivery_type, created_by]
       properties:
         request_id: 
@@ -286,28 +263,6 @@ components:
         omitted fields retain their current values. When updating a nested field, include its complete
         parent object.
 
-        <details>
-        <summary>Update campaign content on an existing draft</summary>
-
-        ```json
-        {
-          "campaign_content": {
-            "content": {
-              "push": {
-                "android": {
-                  "template_type": "BASIC",
-                  "basic_details": {
-                    "title": "{{updated_title}}",
-                    "message": "{{updated_message}}"
-                  }
-                }
-              }
-            }
-          }
-        }
-        ```
-
-        </details>
       properties:
         request_id:
           type: string
@@ -359,23 +314,6 @@ components:
         omitted fields retain their current values. When updating a nested field, include its complete
         parent object.
 
-        <details>
-        <summary>Update email subject on an existing draft</summary>
-
-        ```json
-        {
-          "campaign_content": {
-            "content": {
-              "email": {
-                "subject": "{{updated_email_subject}}",
-                "html_content": "{{updated_html_body}}"
-              }
-            }
-          }
-        }
-        ```
-
-        </details>
       properties:
         request_id:
           type: string
@@ -435,16 +373,6 @@ components:
           description: |
             Trigger publish state transition.
 
-            <details>
-            <summary>Publish a draft campaign</summary>
-
-            ```json
-            {
-              "status": "PUBLISH"
-            }
-            ```
-
-            </details>
 
     CampaignStatusV5Request:
       type: object
@@ -468,36 +396,6 @@ components:
             | `PAUSE` | `PERIODIC`, `EVENT_TRIGGERED` | `ACTIVE`, `SCHEDULED`, `SENDING` |
             | `RESUME` | `PERIODIC`, `EVENT_TRIGGERED` | `PAUSED` |
 
-            <details>
-            <summary>STOP a scheduled one-time campaign</summary>
-
-            ```json
-            {
-              "action": "STOP"
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>PAUSE a periodic campaign</summary>
-
-            ```json
-            {
-              "action": "PAUSE"
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>RESUME a paused campaign</summary>
-
-            ```json
-            {
-              "action": "RESUME"
-            }
-            ```
-
-            </details>
 
     SearchV5Request:
       type: object
@@ -523,23 +421,6 @@ components:
 
             Defaults to `false`.
 
-            <details>
-            <summary>Search with child campaigns included</summary>
-
-            ```json
-            {
-              "limit": 15,
-              "page": 1,
-              "campaign_fields": {
-                "ids": [
-                  "{{parent_campaign_id}}"
-                ]
-              },
-              "include_child_campaigns": true
-            }
-            ```
-
-            </details>
         include_archive_campaigns:
           type: boolean
           default: false
@@ -550,23 +431,6 @@ components:
 
             Defaults to `false`.
 
-            <details>
-            <summary>Search including archived campaigns</summary>
-
-            ```json
-            {
-              "limit": 15,
-              "page": 1,
-              "campaign_fields": {
-                "status": [
-                  "ARCHIVED"
-                ]
-              },
-              "include_archive_campaigns": true
-            }
-            ```
-
-            </details>
         limit:
           type: integer
           description: |
@@ -607,22 +471,6 @@ components:
 
             In V1, this field was `id` (a single string). In V5, it is `ids` (an array). For single-campaign retrieval, `GET /v5/campaigns/{campaign_id}` is the preferred endpoint.
 
-            <details>
-            <summary>Filter by campaign ID</summary>
-
-            ```json
-            {
-              "limit": 15,
-              "page": 1,
-              "campaign_fields": {
-                "ids": [
-                  "{{campaign_id}}"
-                ]
-              }
-            }
-            ```
-
-            </details>
           example: ["64a1b2c3d4e5f6a7b8c9d0e1"]
         channels:
           type: array
@@ -676,22 +524,6 @@ components:
 
             Drafts are only returned when `DRAFT` is explicitly included here.
 
-            <details>
-            <summary>Include draft campaigns in search results</summary>
-
-            ```json
-            {
-              "limit": 15,
-              "page": 1,
-              "campaign_fields": {
-                "status": [
-                  "DRAFT"
-                ]
-              }
-            }
-            ```
-
-            </details>
         tags:
           type: array
           items:
@@ -703,23 +535,6 @@ components:
           description: |
             Filter by campaign version. Only applies when campaign versioning is enabled for your workspace. Omit to include all versions.
 
-            <details>
-            <summary>Filter by campaign version number</summary>
-
-            ```json
-            {
-              "limit": 15,
-              "page": 1,
-              "campaign_fields": {
-                "ids": [
-                  "{{campaign_id}}"
-                ],
-                "version_number": 2
-              }
-            }
-            ```
-
-            </details>
 
     MetaV5Request:
       type: object
@@ -768,20 +583,6 @@ components:
           description: |
             The unique identifier of the campaign to retrieve.
 
-            <details>
-            <summary>Retrieve metadata for a single campaign</summary>
-
-            ```json
-            {
-              "limit": 15,
-              "page": 1,
-              "campaign_fields": {
-                "id": "{{campaign_id}}"
-              }
-            }
-            ```
-
-            </details>
           example: "{{campaign_id}}"
         channels:
           type: array
@@ -791,22 +592,6 @@ components:
           description: |
             Include campaigns for any of these channels.
 
-            <details>
-            <summary>Meta - filter by channel</summary>
-
-            ```json
-            {
-              "limit": 15,
-              "page": 1,
-              "campaign_fields": {
-                "channels": [
-                  "PUSH"
-                ]
-              }
-            }
-            ```
-
-            </details>
           example: ["PUSH", "EMAIL"]
         created_by:
           type: array
@@ -835,21 +620,6 @@ components:
           description: |
             Filter campaigns by delivery type.
 
-            <details>
-            <summary>Meta - filter by delivery type</summary>
-
-            ```json
-            {
-              "limit": 15,
-              "page": 1,
-              "campaign_fields": {
-                "delivery_type": "PERIODIC"
-              },
-              "include_child_campaigns": true
-            }
-            ```
-
-            </details>
         name:
           type: string
           description: Filter campaigns by name. Partial matches are supported.
@@ -1297,72 +1067,6 @@ components:
           description: |
             **Note:** You must pass one of these keys as true for iOS.
 
-            <details>
-            <summary>Send to all eligible devices</summary>
-
-            ```json
-            {
-              "basic_details": {
-                "name": "{{campaign_name}}",
-                "platforms": [
-                  "IOS"
-                ],
-                "platform_specific_details": {
-                  "ios": {
-                    "send_to_all_eligible_device": true,
-                    "exclude_provisional_push_devices": false,
-                    "send_to_only_provisional_push_enabled_devices": false
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>Exclude provisional push devices</summary>
-
-            ```json
-            {
-              "basic_details": {
-                "name": "{{campaign_name}}",
-                "platforms": [
-                  "IOS"
-                ],
-                "platform_specific_details": {
-                  "ios": {
-                    "send_to_all_eligible_device": false,
-                    "exclude_provisional_push_devices": true,
-                    "send_to_only_provisional_push_enabled_devices": false
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>Provisional push-enabled devices only</summary>
-
-            ```json
-            {
-              "basic_details": {
-                "name": "{{campaign_name}}",
-                "platforms": [
-                  "IOS"
-                ],
-                "platform_specific_details": {
-                  "ios": {
-                    "send_to_all_eligible_device": false,
-                    "exclude_provisional_push_devices": false,
-                    "send_to_only_provisional_push_enabled_devices": true
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
           properties:
             send_to_all_eligible_device: 
               type: boolean
@@ -1378,60 +1082,11 @@ components:
       type: object
       description: |
         Geofence location details for location-triggered campaigns.
-        
+
         **Required** for LOCATION_TRIGGERED campaigns.
 
-        <details>
-        <summary>Geofence entry - send when user enters the area</summary>
+        For per-`triggered_at` runnable payloads (`ENTRY`, `EXIT`, `dwell`) and the casing distinction between `ENTRY`/`EXIT` (uppercase) and `dwell` (lowercase), refer to [Configure geofence targeting for location-triggered Push campaigns](/api/campaigns/audience-scheduling-delivery-reference#configure-geofence-targeting-for-location-triggered-push-campaigns).
 
-        ```json
-        {
-          "basic_details": {
-            "name": "{{campaign_name}}",
-            "platforms": [
-              "ANDROID",
-              "IOS"
-            ],
-            "geofences": {
-              "name": "{{geofence_name}}",
-              "latitude": "{{latitude}}",
-              "longitude": "{{longitude}}",
-              "radius": "{{radius_meters}}",
-              "response_time_value": "5",
-              "response_time_granularity": "MINUTES",
-              "triggered_at": "ENTRY"
-            }
-          }
-        }
-        ```
-
-        </details>
-        <details>
-        <summary>Geofence dwell - send after user remains inside the area</summary>
-
-        ```json
-        {
-          "basic_details": {
-            "name": "{{campaign_name}}",
-            "platforms": [
-              "ANDROID"
-            ],
-            "geofences": {
-              "name": "{{geofence_name}}",
-              "latitude": "{{latitude}}",
-              "longitude": "{{longitude}}",
-              "radius": "{{radius_meters}}",
-              "dwell_time_value": "10",
-              "dwell_time_granularity": "MINUTES",
-              "response_time_value": "0",
-              "response_time_granularity": "MINUTES",
-              "triggered_at": "dwell"
-            }
-          }
-        }
-        ```
-
-        </details>
       required: [name, latitude, longitude, radius, response_time_value, response_time_granularity, triggered_at]
       properties:
         name: 
@@ -1472,31 +1127,6 @@ components:
           description: |
             The user action that triggers the campaign (when user enters/exits the geofence).
 
-            <details>
-            <summary>EXIT - send when user leaves the geofence</summary>
-
-            ```json
-            {
-              "basic_details": {
-                "name": "{{campaign_name}}",
-                "platforms": [
-                  "ANDROID",
-                  "IOS"
-                ],
-                "geofences": {
-                  "name": "{{geofence_name}}",
-                  "latitude": "{{latitude}}",
-                  "longitude": "{{longitude}}",
-                  "radius": "{{radius_meters}}",
-                  "response_time_value": "5",
-                  "response_time_granularity": "MINUTES",
-                  "triggered_at": "EXIT"
-                }
-              }
-            }
-            ```
-
-            </details>
 
     PushTriggerCondition:
       type: object
@@ -1505,137 +1135,15 @@ components:
 
         **Required** for `EVENT_TRIGGERED`, `DEVICE_TRIGGERED`, and `LOCATION_TRIGGERED` Push campaigns.
 
-        <details>
-        <summary>DELAY</summary>
+        For per-delay-type runnable payloads (`ASAP`, `DELAY` with `AFTER`/`BEFORE`, `INTELLIGENT_DELAY`), filter primitives, and primary/secondary filter combinations, refer to [Configure trigger conditions for triggered campaigns](/api/campaigns/audience-scheduling-delivery-reference#configure-trigger-conditions-for-triggered-campaigns).
 
-        ```json
-        {
-          "trigger_condition": {
-            "included_filters": {
-              "filter_operator": "and",
-              "filters": [
-                {
-                  "filter_type": "actions",
-                  "action_name": "{{trigger_event_name}}",
-                  "execution": {
-                    "type": "atleast",
-                    "count": 1
-                  },
-                  "executed": true
-                }
-              ]
-            },
-            "trigger_delay_type": "DELAY",
-            "trigger_delay_value": 30,
-            "trigger_delay_granularity": "MINUTES",
-            "trigger_relation": "AFTER"
-          }
-        }
-        ```
-
-        </details>
-        <details>
-        <summary>ASAP</summary>
-
-        ```json
-        {
-          "trigger_condition": {
-            "included_filters": {
-              "filter_operator": "and",
-              "filters": [
-                {
-                  "filter_type": "actions",
-                  "action_name": "{{trigger_event_name}}",
-                  "execution": {
-                    "type": "atleast",
-                    "count": 1
-                  },
-                  "executed": true
-                }
-              ]
-            },
-            "trigger_delay_type": "ASAP"
-          }
-        }
-        ```
-
-        </details>
-        <details>
-        <summary>INTELLIGENT_DELAY</summary>
-
-        ```json
-        {
-          "trigger_condition": {
-            "included_filters": {
-              "filter_operator": "and",
-              "filters": [
-                {
-                  "filter_type": "actions",
-                  "action_name": "{{trigger_event_name}}",
-                  "execution": {
-                    "type": "atleast",
-                    "count": 1
-                  },
-                  "executed": true
-                }
-              ]
-            },
-            "trigger_delay_type": "INTELLIGENT_DELAY",
-            "intelligent_delay_optimization": {
-              "min_delay_value": 1,
-              "min_delay_granularity": "HOURS",
-              "max_delay_value": 24,
-              "max_delay_granularity": "HOURS"
-            }
-          }
-        }
-        ```
-
-        </details>
       properties:
         included_filters: { $ref: '#/components/schemas/FilterGroup' }
         secondary_included_filters:
           allOf:
             - $ref: '#/components/schemas/FilterGroup'
-          description: |
-            Additional filters that must also be satisfied for the trigger to fire.
-
-            ```json
-            {
-              "trigger_condition": {
-                "included_filters": {
-                  "filter_operator": "and",
-                  "filters": [
-                    {
-                      "filter_type": "actions",
-                      "action_name": "{{primary_event_name}}",
-                      "execution": {
-                        "type": "atleast",
-                        "count": 1
-                      },
-                      "executed": true
-                    }
-                  ]
-                },
-                "secondary_included_filters": {
-                  "filter_operator": "and",
-                  "filters": [
-                    {
-                      "filter_type": "actions",
-                      "action_name": "{{secondary_event_name}}",
-                      "execution": {
-                        "type": "atleast",
-                        "count": 1
-                      },
-                      "executed": true
-                    }
-                  ]
-                },
-                "trigger_delay_type": "ASAP"
-              }
-            }
-            ```
-        trigger_delay_type: 
+          description: Additional filters that must also be satisfied for the trigger to fire. For runnable examples, refer to [Primary and secondary trigger filters](/api/campaigns/audience-scheduling-delivery-reference#primary-and-secondary-trigger-filters).
+        trigger_delay_type:
           type: string
           enum: [DELAY, ASAP, INTELLIGENT_DELAY]
           description: |
@@ -1660,38 +1168,6 @@ components:
             
             **Required** when trigger_delay_type is DELAY.
 
-            <details>
-            <summary>BEFORE - send before a trigger attribute time</summary>
-
-            ```json
-            {
-              "trigger_condition": {
-                "included_filters": {
-                  "filter_operator": "and",
-                  "filters": [
-                    {
-                      "filter_type": "actions",
-                      "action_name": "{{trigger_event_name}}",
-                      "execution": {
-                        "type": "atleast",
-                        "count": 1
-                      },
-                      "executed": true
-                    }
-                  ]
-                },
-                "trigger_delay_type": "DELAY",
-                "trigger_delay_value": 2,
-                "trigger_delay_granularity": "HOURS",
-                "trigger_relation": "BEFORE",
-                "trigger_attr": {
-                  "name": "{{trigger_attribute_name}}"
-                }
-              }
-            }
-            ```
-
-            </details>
         trigger_attr: 
           type: object
           description: The attribute value of the trigger.
@@ -1721,104 +1197,17 @@ components:
       type: object
       description: |
         Trigger condition details for Email event-triggered campaigns.
-        
+
         **Required** for EVENT_TRIGGERED campaigns.
 
-        <details>
-        <summary>DELAY</summary>
+        For per-delay-type runnable payloads (`ASAP`, `DELAY` with `AFTER`/`BEFORE`), filter primitives, and primary/secondary filter combinations, refer to [Configure trigger conditions for triggered campaigns](/api/campaigns/audience-scheduling-delivery-reference#configure-trigger-conditions-for-triggered-campaigns).
 
-        ```json
-        {
-          "trigger_condition": {
-            "included_filters": {
-              "filter_operator": "and",
-              "filters": [
-                {
-                  "filter_type": "actions",
-                  "action_name": "{{trigger_event_name}}",
-                  "execution": {
-                    "type": "atleast",
-                    "count": 1
-                  },
-                  "executed": true
-                }
-              ]
-            },
-            "trigger_delay_type": "DELAY",
-            "trigger_delay_value": 1,
-            "trigger_delay_granularity": "DAYS",
-            "trigger_relation": "AFTER"
-          }
-        }
-        ```
-
-        </details>
-        <details>
-        <summary>ASAP</summary>
-
-        ```json
-        {
-          "trigger_condition": {
-            "included_filters": {
-              "filter_operator": "and",
-              "filters": [
-                {
-                  "filter_type": "actions",
-                  "action_name": "{{trigger_event_name}}",
-                  "execution": {
-                    "type": "atleast",
-                    "count": 1
-                  },
-                  "executed": true
-                }
-              ]
-            },
-            "trigger_delay_type": "ASAP"
-          }
-        }
-        ```
-
-        </details>
       properties:
         included_filters: { $ref: '#/components/schemas/FilterGroup' }
         secondary_included_filters:
           allOf:
             - $ref: '#/components/schemas/FilterGroup'
-          description: |
-            Additional filters that must also be satisfied for the Email trigger to fire.
-
-            ```json
-            {
-              "trigger_condition": {
-                "included_filters": {
-                  "filter_operator": "and",
-                  "filters": [
-                    {
-                      "filter_type": "actions",
-                      "action_name": "{{primary_event_name}}",
-                      "execution": {
-                        "type": "atleast",
-                        "count": 1
-                      },
-                      "executed": true
-                    }
-                  ]
-                },
-                "secondary_included_filters": {
-                  "filter_operator": "and",
-                  "filters": [
-                    {
-                      "filter_type": "user_attributes",
-                      "data_type": "string",
-                      "name": "{{attribute_name}}",
-                      "operator": "exists"
-                    }
-                  ]
-                },
-                "trigger_delay_type": "ASAP"
-              }
-            }
-            ```
+          description: Additional filters that must also be satisfied for the Email trigger to fire. For runnable examples, refer to [Primary and secondary trigger filters](/api/campaigns/audience-scheduling-delivery-reference#primary-and-secondary-trigger-filters).
         trigger_delay_type: 
           type: string
           enum: [DELAY, ASAP]
@@ -1844,38 +1233,6 @@ components:
             
             **Required** when trigger_delay_type is DELAY.
 
-            <details>
-            <summary>BEFORE - send before a trigger attribute time</summary>
-
-            ```json
-            {
-              "trigger_condition": {
-                "included_filters": {
-                  "filter_operator": "and",
-                  "filters": [
-                    {
-                      "filter_type": "actions",
-                      "action_name": "{{trigger_event_name}}",
-                      "execution": {
-                        "type": "atleast",
-                        "count": 1
-                      },
-                      "executed": true
-                    }
-                  ]
-                },
-                "trigger_delay_type": "DELAY",
-                "trigger_delay_value": 24,
-                "trigger_delay_granularity": "HOURS",
-                "trigger_relation": "BEFORE",
-                "trigger_attr": {
-                  "name": "{{trigger_attribute_name}}"
-                }
-              }
-            }
-            ```
-
-            </details>
         trigger_attr: 
           type: object
           description: The attribute value of the trigger.
@@ -1885,9 +1242,9 @@ components:
       description: |
         Push message content, locales, and A/B variations.
 
-        For full `POST /v5/campaigns` request examples that include `campaign_content`, see
-        `campaign_delivery_type` on `PushCampaignCreateV5Request`, `VariationDetails`, and the
-        Create Campaign Draft code samples.
+        For full `POST /v5/campaigns` request examples that include `campaign_content`, refer to `campaign_delivery_type` on `PushCampaignCreateV5Request`, `VariationDetails`, and the Create Campaign Draft code samples.
+
+        For per-template-type runnable payloads (Android `BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `IMAGE_BANNER_WITH_TEXT` / `TIMER` / `TIMER_WITH_PROGRESS_BAR` / `Custom`; iOS `BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `Custom`; Web `BASIC`), refer to [Configure campaign content for Push and Email campaigns](/api/campaigns/campaign-content-reference).
       properties:
         locales: 
           type: array
@@ -1899,56 +1256,12 @@ components:
         content:
           type: object
           description: |
-            The campaign message payload. The accepted structure depends on whether locales or A/B test variations are configured.
+            The campaign message payload. Two shapes are accepted:
 
-            **Without locales or variations** - pass a flat `push` object directly under `content`:
-            ```json
-            {
-              "push": {
-                "android": {
-                  "template_type": "BASIC",
-                  "basic_details": {
-                    "title": "Your order has shipped",
-                    "message": "Tap to track it.",
-                    "notification_channel": "general",
-                    "default_click_action": "DEEPLINKING",
-                    "default_click_action_value": "https://example.com"
-                  }
-                },
-                "ios": {
-                  "template_type": "BASIC",
-                  "basic_details": {
-                    "title": "Your order has shipped",
-                    "message": "Tap to track it.",
-                    "default_click_action": "DEEPLINKING",
-                    "default_click_action_value": "https://example.com"
-                  }
-                }
-              }
-            }
-            ```
+            - **Flat shape (no locales or variations)** — pass a flat `push` object directly under `content`.
+            - **Locale-keyed and variation-keyed shape** — key by locale name, then by variation name: `content[locale_name][variation_name] = { push: { ... } }`. The `"default"` locale key is always required and serves as the fallback. Additional locale keys must match values listed in `locales`.
 
-            **With locales and/or A/B test variations** - key content by locale name, then by variation name:
-
-            **Structure:** `content[locale_name][variation_name] = { push: { ... } }`
-
-            - The `"default"` key is always required and serves as the fallback for users not matched to a named locale.
-            - Additional locale keys must each match a value from the `locales` array (for example, `"en-US"`, `"es-ES"`).
-            - The variation key (for example, `"variation_1"`) corresponds to the count in `variation_details.no_of_variations`. When no A/B test is configured, use `"variation_1"` as the only key.
-
-            **Multi-locale, 2 variations (A/B test):**
-            ```json
-            {
-              "default": {
-                "variation_1": { "push": { "android": { "title": "Summer Sale", "message": "Shop now" }, "ios": { "title": "Summer Sale", "message": "Shop now" } } },
-                "variation_2": { "push": { "android": { "title": "Big Discounts", "message": "Save more" }, "ios": { "title": "Big Discounts", "message": "Save more" } } }
-              },
-              "es-ES": {
-                "variation_1": { "push": { "android": { "title": "Oferta de Verano", "message": "Compra ahora" }, "ios": { "title": "Oferta de Verano", "message": "Compra ahora" } } },
-                "variation_2": { "push": { "android": { "title": "Grandes Descuentos", "message": "Ahorra más" }, "ios": { "title": "Grandes Descuentos", "message": "Ahorra más" } } }
-              }
-            }
-            ```
+            For runnable payloads for both shapes, refer to [Content payload structure](/api/campaigns/campaign-content-reference#content-payload-structure).
           properties:
             push: { $ref: '#/components/schemas/PushContent' }
           additionalProperties:
@@ -1964,9 +1277,9 @@ components:
       description: |
         Email content, locales, and A/B variations.
 
-        For full `POST /v5/campaigns` request examples that include `campaign_content`, see
-        `campaign_delivery_type` on `EmailCampaignCreateV5Request`, `VariationDetails`, and the
-        Create Campaign Draft code samples.
+        For full `POST /v5/campaigns` request examples that include `campaign_content`, refer to `campaign_delivery_type` on `EmailCampaignCreateV5Request`, `VariationDetails`, and the Create Campaign Draft code samples.
+
+        For Email content variants — `html_content` versus `custom_template_id`, CC/BCC, attachments, and editor selection (`Froala Editor` versus `Ace Editor`) — refer to [Configure campaign content for Push and Email campaigns](/api/campaigns/campaign-content-reference).
       properties:
         locales: 
           type: array
@@ -1978,43 +1291,12 @@ components:
         content:
           type: object
           description: |
-            The campaign message payload. The accepted structure depends on whether locales or A/B test variations are configured.
+            The campaign message payload. Two shapes are accepted:
 
-            **Without locales or variations** - pass a flat `email` object directly under `content`:
-            ```json
-            {
-              "email": {
-                "subject": "Your order has shipped",
-                "sender_name": "Example Team",
-                "preview_text": "Track your delivery",
-                "from_address": "noreply@example.com",
-                "reply_to_address": "support@example.com",
-                "html_content": "<p>Hello {{first_name}}</p>"
-              }
-            }
-            ```
+            - **Flat shape (no locales or variations)** — pass a flat `email` object directly under `content`.
+            - **Locale-keyed and variation-keyed shape** — key by locale name, then by variation name: `content[locale_name][variation_name] = { email: { ... } }`. The `"default"` locale key is always required and serves as the fallback. Additional locale keys must match values listed in `locales`.
 
-            **With locales and/or A/B test variations** - key content by locale name, then by variation name:
-
-            **Structure:** `content[locale_name][variation_name] = { email: { ... } }`
-
-            - The `"default"` key is always required and serves as the fallback for users not matched to a named locale.
-            - Additional locale keys must each match a value from the `locales` array (for example, `"en-US"`, `"es-ES"`).
-            - The variation key (for example, `"variation_1"`) corresponds to the count in `variation_details.no_of_variations`. When no A/B test is configured, use `"variation_1"` as the only key.
-
-            **Multi-locale, 2 variations (A/B test):**
-            ```json
-            {
-              "default": {
-                "variation_1": { "email": { "subject": "Summer Sale", "html_content": "<p>Shop now</p>" } },
-                "variation_2": { "email": { "subject": "Big Discounts", "html_content": "<p>Save more</p>" } }
-              },
-              "es-ES": {
-                "variation_1": { "email": { "subject": "Oferta de Verano", "html_content": "<p>Compra ahora</p>" } },
-                "variation_2": { "email": { "subject": "Grandes Descuentos", "html_content": "<p>Ahorra más</p>" } }
-              }
-            }
-            ```
+            For runnable payloads for both shapes, refer to [Content payload structure](/api/campaigns/campaign-content-reference#content-payload-structure).
           properties:
             email: { $ref: '#/components/schemas/EmailContent' }
           additionalProperties:
@@ -2030,84 +1312,6 @@ components:
       description: |
         Configuration for A/B testing variations.
 
-        <details>
-        <summary>Manual distribution (50/50 split)</summary>
-
-        ```json
-        {
-          "campaign_content": {
-            "variation_details": {
-              "distribution_type": "MANUAL",
-              "no_of_variations": 2,
-              "manual_distribution_percentage": {
-                "variation_1": 50,
-                "variation_2": 50
-              }
-            },
-            "content": {
-              "default": {
-                "variation_1": {
-                  "push": {
-                    "android": {
-                      "template_type": "BASIC",
-                      "basic_details": {
-                        "title": "{{title_a}}",
-                        "message": "{{message_a}}"
-                      }
-                    }
-                  }
-                },
-                "variation_2": {
-                  "push": {
-                    "android": {
-                      "template_type": "BASIC",
-                      "basic_details": {
-                        "title": "{{title_b}}",
-                        "message": "{{message_b}}"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        ```
-
-        </details>
-        <details>
-        <summary>Sherpa-optimized distribution</summary>
-
-        ```json
-        {
-          "campaign_content": {
-            "variation_details": {
-              "distribution_type": "SHERPA",
-              "no_of_variations": 2,
-              "sherpa_campaign_duration": 24,
-              "sherpa_distribution_metric": "OPEN RATE"
-            },
-            "content": {
-              "default": {
-                "variation_1": {
-                  "email": {
-                    "subject": "{{subject_a}}",
-                    "html_content": "{{html_a}}"
-                  }
-                },
-                "variation_2": {
-                  "email": {
-                    "subject": "{{subject_b}}",
-                    "html_content": "{{html_b}}"
-                  }
-                }
-              }
-            }
-          }
-        }
-        ```
-
-        </details>
       properties:
         distribution_type: 
           type: string
@@ -2166,153 +1370,6 @@ components:
             
             **Note:** If you are passing a template ID, set template_type to "Custom" and use `custom_template_id`.
 
-            <details>
-            <summary>STYLIZED_BASIC</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "android": {
-                      "template_type": "STYLIZED_BASIC",
-                      "basic_details": {
-                        "title": "{{title}}",
-                        "message": "{{message}}",
-                        "background_color_code": "#FFFFFF",
-                        "image_url": "{{image_url}}"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>SIMPLE_IMAGE_CAROUSEL</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "android": {
-                      "template_type": "SIMPLE_IMAGE_CAROUSEL",
-                      "basic_details": {
-                        "title": "{{title}}",
-                        "message": "{{message}}",
-                        "image_scaling": "FIT_INSIDE_IMAGE_CONTAINER"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>IMAGE_BANNER_WITH_TEXT</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "android": {
-                      "template_type": "IMAGE_BANNER_WITH_TEXT",
-                      "basic_details": {
-                        "title": "{{title}}",
-                        "message": "{{message}}",
-                        "banner_image_url": "{{banner_image_url}}",
-                        "include_title_and_message": true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>TIMER</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "android": {
-                      "template_type": "TIMER",
-                      "basic_details": {
-                        "title": "{{title}}",
-                        "message": "{{message}}"
-                      },
-                      "timer": {
-                        "timer_ends_at": "DURATION",
-                        "personalized_value": false,
-                        "duration_hour": "2",
-                        "duration_minute": "0"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>TIMER_WITH_PROGRESS_BAR</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "android": {
-                      "template_type": "TIMER_WITH_PROGRESS_BAR",
-                      "basic_details": {
-                        "title": "{{title}}",
-                        "message": "{{message}}"
-                      },
-                      "timer": {
-                        "timer_ends_at": "DURATION",
-                        "personalized_value": false,
-                        "duration_hour": "1",
-                        "duration_minute": "30"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>Custom</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "android": {
-                      "template_type": "Custom",
-                      "custom_template_id": "{{custom_template_id}}",
-                      "custom_template_version": 1
-                    }
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
         custom_template_id: 
           type: string
           description: |
@@ -2656,73 +1713,6 @@ components:
           description: |
             The type of iOS push template.
 
-            <details>
-            <summary>STYLIZED_BASIC</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "ios": {
-                      "template_type": "STYLIZED_BASIC",
-                      "basic_details": {
-                        "title": "{{title}}",
-                        "message": "{{message}}",
-                        "background_color_code": "#a0a0a0",
-                        "image_url": "{{image_url}}"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>SIMPLE_IMAGE_CAROUSEL</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "ios": {
-                      "template_type": "SIMPLE_IMAGE_CAROUSEL",
-                      "basic_details": {
-                        "title": "{{title}}",
-                        "message": "{{message}}",
-                        "image_url": "{{image_url}}"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>Custom</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "ios": {
-                      "template_type": "Custom",
-                      "custom_template_id": "{{custom_template_id}}",
-                      "custom_template_version": 1
-                    }
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
         custom_template_id: 
           type: string
           description: |
@@ -2937,36 +1927,6 @@ components:
           description: |
             Action buttons for the notification.
 
-            <details>
-            <summary>Web push with action buttons</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "web": {
-                      "template_type": "BASIC",
-                      "basic_details": {
-                        "title": "{{title}}",
-                        "message": "{{message}}",
-                        "redirect_url": "{{redirect_url}}"
-                      },
-                      "buttons": [
-                        {
-                          "title": "{{button_label}}",
-                          "url": "{{button_url}}",
-                          "icon_url": "{{button_icon_url}}"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
         advanced: { $ref: '#/components/schemas/WebAdvanced' }
 
     WebBasicDetails:
@@ -3016,33 +1976,6 @@ components:
       description: |
         Platform-level advanced settings for push delivery - TTL, priority, badge count, and similar controls.
 
-        <details>
-        <summary>Custom notification icon (ICON_URL)</summary>
-
-        ```json
-        {
-          "campaign_content": {
-            "content": {
-              "push": {
-                "web": {
-                  "template_type": "BASIC",
-                  "basic_details": {
-                    "title": "{{title}}",
-                    "message": "{{message}}",
-                    "redirect_url": "{{redirect_url}}"
-                  },
-                  "advanced": {
-                    "icon_image_type": "ICON_URL",
-                    "icon_url": "{{icon_url}}"
-                  }
-                }
-              }
-            }
-          }
-        }
-        ```
-
-        </details>
       properties:
         icon_image_type: 
           type: string
@@ -3079,55 +2012,18 @@ components:
           format: email
           description: The reply-to email address.
           example: "support@example.com"
-        cc_ids: 
+        cc_ids:
           type: array
-          items: 
+          items:
             type: string
             format: email
-          description: |
-            Email addresses to CC.
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "email": {
-                    "subject": "{{email_subject}}",
-                    "from_address": "{{from_email}}",
-                    "html_content": "{{html_body}}",
-                    "cc_ids": [
-                      "{{cc_email_1}}",
-                      "{{cc_email_2}}"
-                    ]
-                  }
-                }
-              }
-            }
-            ```
-        bcc_ids: 
+          description: Email addresses to CC. For runnable examples, refer to [Email content variants](/api/campaigns/campaign-content-reference#email-content-variants).
+        bcc_ids:
           type: array
-          items: 
+          items:
             type: string
             format: email
-          description: |
-            Email addresses to BCC.
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "email": {
-                    "subject": "{{email_subject}}",
-                    "from_address": "{{from_email}}",
-                    "html_content": "{{html_body}}",
-                    "bcc_ids": [
-                      "{{bcc_email}}"
-                    ]
-                  }
-                }
-              }
-            }
-            ```
+          description: Email addresses to BCC. For runnable examples, refer to [Email content variants](/api/campaigns/campaign-content-reference#email-content-variants).
         html_content: 
           type: string
           description: |
@@ -3144,44 +2040,6 @@ components:
             - **Required** if you want to create the campaign using the `Ace Editor`.
             - **Optional** if you want to use the default `Froala Editor`.
 
-            <details>
-            <summary>Ace Editor</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "email": {
-                    "subject": "{{email_subject}}",
-                    "from_address": "{{from_email}}",
-                    "html_content": "{{html_body}}",
-                    "email_editor": "Ace Editor"
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>Froala Editor</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "email": {
-                    "subject": "{{email_subject}}",
-                    "from_address": "{{from_email}}",
-                    "html_content": "{{html_body}}",
-                    "email_editor": "Froala Editor"
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
           example: "Ace Editor"
         custom_template_id: 
           type: string
@@ -3195,23 +2053,6 @@ components:
             - preview_text
             - sender_name
 
-            <details>
-            <summary>Email with custom template ID</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "email": {
-                    "custom_template_id": "{{custom_template_id}}",
-                    "custom_template_version": 1
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
         custom_template_version: 
           type: integer
           description: The version of the custom template.
@@ -3228,118 +2069,15 @@ components:
           description: |
             Attachments to include in the email.
 
-            <details>
-            <summary>URL attachment</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "email": {
-                    "subject": "{{email_subject}}",
-                    "from_address": "{{from_email}}",
-                    "html_content": "{{html_body}}",
-                    "attachments": [
-                      {
-                        "file_type": "URL",
-                        "url": "{{attachment_url}}"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
-
-            <details>
-            <summary>Personalized attachment</summary>
-
-            ```json
-            {
-              "campaign_content": {
-                "content": {
-                  "email": {
-                    "subject": "{{email_subject}}",
-                    "from_address": "{{from_email}}",
-                    "html_content": "{{html_body}}",
-                    "attachments": [
-                      {
-                        "file_type": "PERSONALIZED_ATTACHMENT",
-                        "url": "{{personalized_attachment_url}}"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-            ```
-
-            </details>
 
     SegmentationDetails:
       type: object
       description: |
         Defines the target audience for the campaign.
 
-        <details>
-        <summary>All users</summary>
+        For included/excluded filter combinations, filter primitives (`user_attributes`, `actions`, `custom_segments`), and opt-out targeting, refer to [Define the campaign audience](/api/campaigns/audience-scheduling-delivery-reference#define-the-campaign-audience).
 
-        ```json
-        {
-          "segmentation_details": {
-            "is_all_user_campaign": true
-          }
-        }
-        ```
 
-        </details>
-
-        <details>
-        <summary>Custom segment</summary>
-
-        ```json
-        {
-          "segmentation_details": {
-            "included_filters": {
-              "filter_operator": "and",
-              "filters": [
-                {
-                  "filter_type": "custom_segments",
-                  "name": "{{custom_segment_name}}",
-                  "id": "{{custom_segment_id}}"
-                }
-              ]
-            }
-          }
-        }
-        ```
-
-        </details>
-
-        <details>
-        <summary>User attribute filter</summary>
-
-        ```json
-        {
-          "segmentation_details": {
-            "included_filters": {
-              "filter_operator": "and",
-              "filters": [
-                {
-                  "filter_type": "user_attributes",
-                  "data_type": "string",
-                  "name": "{{attribute_name}}",
-                  "operator": "exists"
-                }
-              ]
-            }
-          }
-        }
-        ```
-
-        </details>
       properties:
         included_filters: { $ref: '#/components/schemas/FilterGroup' }
         excluded_filters:
@@ -3348,54 +2086,12 @@ components:
           description: |
             Filters that exclude users from the campaign audience.
 
-            <details>
-            <summary>Exclude users in a custom segment</summary>
-
-            ```json
-            {
-              "segmentation_details": {
-                "included_filters": {
-                  "filter_operator": "and",
-                  "filters": [
-                    {
-                      "filter_type": "user_attributes",
-                      "data_type": "string",
-                      "name": "{{attribute_name}}",
-                      "operator": "exists"
-                    }
-                  ]
-                },
-                "excluded_filters": {
-                  "filter_operator": "and",
-                  "filters": [
-                    {
-                      "filter_type": "custom_segments",
-                      "name": "{{excluded_segment_name}}",
-                      "id": "{{excluded_segment_id}}"
-                    }
-                  ]
-                }
-              }
-            }
-            ```
-
-            </details>
         is_all_user_campaign: 
           type: boolean
           description: Whether to include all users in the campaign.
-        send_campaign_to_opt_out_users: 
+        send_campaign_to_opt_out_users:
           type: boolean
-          description: |
-            Whether to send the campaign to users who have opted out.
-
-            ```json
-            {
-              "segmentation_details": {
-                "is_all_user_campaign": true,
-                "send_campaign_to_opt_out_users": true
-              }
-            }
-            ```
+          description: Whether to send the campaign to users who have opted out. For runnable examples, refer to [Campaign audience](/api/campaigns/audience-scheduling-delivery-reference#campaign-audience).
 
     FilterGroup:
       type: object
@@ -3468,31 +2164,6 @@ components:
       description: |
         Filter based on user actions/events. Use inside `segmentation_details.included_filters.filters` or `trigger_condition.included_filters.filters`.
 
-        <details>
-        <summary>Segmentation - users who performed an event at least once</summary>
-
-        ```json
-        {
-          "segmentation_details": {
-            "included_filters": {
-              "filter_operator": "and",
-              "filters": [
-                {
-                  "filter_type": "actions",
-                  "action_name": "{{event_name}}",
-                  "execution": {
-                    "type": "atleast",
-                    "count": 1
-                  },
-                  "executed": true
-                }
-              ]
-            }
-          }
-        }
-        ```
-
-        </details>
       properties:
         filter_type: 
           type: string
@@ -3532,7 +2203,10 @@ components:
 
     SchedulingDetails:
       type: object
-      description: Defines when the campaign should be sent.
+      description: |
+        Defines when the campaign should be sent.
+
+        For per-delivery-type runnable payloads (`ASAP`, `AT_FIXED_TIME`, `SEND_IN_BTS`, `SEND_IN_USER_TIMEZONE`, and `PERIODIC` with `periodic_details`), refer to [Schedule campaign delivery](/api/campaigns/audience-scheduling-delivery-reference#schedule-campaign-delivery).
       properties:
         delivery_type: 
           type: string
@@ -3540,67 +2214,6 @@ components:
           description: |
             When to deliver the campaign.
 
-            <details>
-            <summary>ASAP - send as soon as the campaign is published</summary>
-
-            ```json
-            {
-              "scheduling_details": {
-                "delivery_type": "ASAP"
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>AT_FIXED_TIME - schedule for a specific date and time</summary>
-
-            ```json
-            {
-              "scheduling_details": {
-                "delivery_type": "AT_FIXED_TIME",
-                "start_time": "2024-06-21T12:59:00"
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>SEND_IN_BTS - Best Time to Send</summary>
-
-            ```json
-            {
-              "scheduling_details": {
-                "delivery_type": "SEND_IN_BTS",
-                "start_time": "{{start_time}}",
-                "bts_details": {
-                  "send_in_bts": true,
-                  "if_user_bts_is_not_available": "{{fallback_if_bts_unavailable}}",
-                  "if_user_bts_outside_time_window": "{{fallback_if_outside_window}}",
-                  "window_end_time": "{{bts_window_end_time}}"
-                }
-              }
-            }
-            ```
-
-            </details>
-            <details>
-            <summary>SEND_IN_USER_TIMEZONE - deliver in each user's local timezone</summary>
-
-            ```json
-            {
-              "scheduling_details": {
-                "delivery_type": "SEND_IN_USER_TIMEZONE",
-                "start_time": "{{start_time}}",
-                "user_timezone_details": {
-                  "send_in_user_timezone": true,
-                  "send_if_user_timezone_has_passed": false
-                }
-              }
-            }
-            ```
-
-            </details>
         start_time: 
           type: string
           format: date-time
@@ -3614,20 +2227,6 @@ components:
           description: |
             The expiry time for the campaign in ISO 8601 format.
 
-            <details>
-            <summary>Event-triggered campaign with start and expiry window</summary>
-
-            ```json
-            {
-              "scheduling_details": {
-                "delivery_type": "AT_FIXED_TIME",
-                "start_time": "2024-06-01T00:00:00",
-                "expiry_time": "2024-12-31T23:59:59"
-              }
-            }
-            ```
-
-            </details>
         periodic_details: { $ref: '#/components/schemas/PeriodicDetails' }
         bts_details: { $ref: '#/components/schemas/BTSDetails' }
         user_timezone_details: { $ref: '#/components/schemas/UserTimezoneDetails' }
@@ -3639,45 +2238,6 @@ components:
         
         **Required** for PERIODIC campaigns.
 
-        <details>
-        <summary>Daily periodic Push</summary>
-
-        ```json
-        {
-          "scheduling_details": {
-            "delivery_type": "AT_FIXED_TIME",
-            "start_time": "{{start_time}}",
-            "periodic_details": {
-              "sending_frequency": "DAILY",
-              "repeat_frequency": 1,
-              "no_of_occurences": 10
-            }
-          }
-        }
-        ```
-
-        </details>
-        <details>
-        <summary>Monthly periodic Email (specific dates)</summary>
-
-        ```json
-        {
-          "scheduling_details": {
-            "delivery_type": "AT_FIXED_TIME",
-            "start_time": "{{start_time}}",
-            "periodic_details": {
-              "sending_frequency": "MONTHLY",
-              "repeat_frequency": 1,
-              "repeat_on_date_of_month": [
-                1,
-                15
-              ]
-            }
-          }
-        }
-        ```
-
-        </details>
       properties:
         sending_frequency: 
           type: string
@@ -3704,26 +2264,6 @@ components:
           description: |
             The days of the week on which the campaign should repeat.
 
-            <details>
-            <summary>Weekly periodic Email</summary>
-
-            ```json
-            {
-              "scheduling_details": {
-                "delivery_type": "AT_FIXED_TIME",
-                "start_time": "{{start_time}}",
-                "periodic_details": {
-                  "sending_frequency": "WEEKLY",
-                  "repeat_frequency": 1,
-                  "repeat_on_days_of_week": [
-                    "FRIDAY"
-                  ]
-                }
-              }
-            }
-            ```
-
-            </details>
         repeat_on_days_of_week_for_month:
           type: array
           items:
@@ -3740,31 +2280,6 @@ components:
           description: |
             Configuration for repeating on specific weeks of the month.
 
-            <details>
-            <summary>Monthly - first Monday of each month</summary>
-
-            ```json
-            {
-              "scheduling_details": {
-                "delivery_type": "AT_FIXED_TIME",
-                "start_time": "{{start_time}}",
-                "periodic_details": {
-                  "sending_frequency": "MONTHLY",
-                  "repeat_frequency": 1,
-                  "repeat_on_days_of_week_for_month": [
-                    {
-                      "week_granularity": "FIRST",
-                      "repeat_on_days_of_week": [
-                        "MONDAY"
-                      ]
-                    }
-                  ]
-                }
-              }
-            }
-            ```
-
-            </details>
 
     BTSDetails:
       type: object
@@ -3803,20 +2318,6 @@ components:
       description: |
         Controls for Push campaign delivery behavior.
 
-        <details>
-        <summary>One-time campaign with throttle and frequency capping</summary>
-
-        ```json
-        {
-          "delivery_controls": {
-            "campaign_throttle_rpm": 50000,
-            "count_for_frequency_capping": true,
-            "ignore_frequency_capping": false
-          }
-        }
-        ```
-
-        </details>
       properties:
         bypass_dnd: 
           type: boolean
@@ -3891,19 +2392,6 @@ components:
             
             This is a flag-gated feature. Contact your MoEngage account team to enable it for your workspace.
 
-            <details>
-            <summary>Queuing enabled (flag-gated)</summary>
-
-            ```json
-            {
-              "delivery_controls": {
-                "queuing_enabled": true,
-                "queue_duration": 12
-              }
-            }
-            ```
-
-            </details>
         queue_duration: 
           type: integer
           description: |
@@ -3916,21 +2404,6 @@ components:
       description: |
         Controls for Email campaign delivery behavior.
 
-        <details>
-        <summary>Email throttle and frequency capping</summary>
-
-        ```json
-        {
-          "delivery_controls": {
-            "campaign_throttle_rpm": 2000,
-            "count_for_frequency_capping": true,
-            "ignore_frequency_capping": false,
-            "minimum_delay_between_two_notification_in_hour": 24
-          }
-        }
-        ```
-
-        </details>
       properties:
         bypass_dnd: 
           type: boolean
@@ -3954,41 +2427,6 @@ components:
       description: |
         Advanced campaign settings.
 
-        <details>
-        <summary>Notification expiration</summary>
-
-        ```json
-        {
-          "advanced": {
-            "expiration_settings": {
-              "expire_notification_after_value": 24,
-              "expire_notification_after_type": "HOUR",
-              "remove_from_inbox_after_value": 7,
-              "remove_from_inbox_after_type": "DAY"
-            }
-          }
-        }
-        ```
-
-        </details>
-        <details>
-        <summary>iOS APNS priority</summary>
-
-        ```json
-        {
-          "advanced": {
-            "platform_level_priority": {
-              "ios_specific_priority": {
-                "apns_priority": "10",
-                "interruption_level": "Time sensitive",
-                "relevance_score": 1
-              }
-            }
-          }
-        }
-        ```
-
-        </details>
       properties:
         expiration_settings:
           type: object
@@ -4037,56 +2475,7 @@ components:
       description: |
         Configuration for tracking campaign conversion goals.
 
-        <details>
-        <summary>Single conversion goal - example</summary>
 
-        ```json
-        {
-          "conversion_goal_details": {
-            "attribution_window_in_hours": 36,
-            "goals": [
-              {
-                "goal_name": "{{goal_name}}",
-                "goal_event_name": "{{goal_event_name}}",
-                "is_primary_goal": true,
-                "goal_event_attribute": {
-                  "name": "{{attribute_name}}",
-                  "condition": "is",
-                  "data_type": "STRING",
-                  "value": "{{attribute_value}}"
-                }
-              }
-            ]
-          }
-        }
-        ```
-
-        </details>
-
-        <details>
-        <summary>Multiple conversion goals - example</summary>
-
-        ```json
-        {
-          "conversion_goal_details": {
-            "attribution_window_in_hours": 72,
-            "goals": [
-              {
-                "goal_name": "{{primary_goal_name}}",
-                "goal_event_name": "{{primary_event_name}}",
-                "is_primary_goal": true
-              },
-              {
-                "goal_name": "{{secondary_goal_name}}",
-                "goal_event_name": "{{secondary_event_name}}",
-                "is_primary_goal": false
-              }
-            ]
-          }
-        }
-        ```
-
-        </details>
       properties:
         attribution_window_in_hours: 
           type: integer
@@ -4165,20 +2554,6 @@ components:
       description: |
         Configuration for control groups.
 
-        <details>
-        <summary>Campaign control group enabled</summary>
-
-        ```json
-        {
-          "control_group_details": {
-            "is_campaign_control_group_enabled": true,
-            "campaign_control_group_percentage": 10,
-            "is_global_control_group_enabled": false
-          }
-        }
-        ```
-
-        </details>
       properties:
         is_campaign_control_group_enabled: 
           type: boolean
@@ -4196,57 +2571,15 @@ components:
           description: |
             Whether the global control group is enabled.
 
-            <details>
-            <summary>Global control group enabled</summary>
-
-            ```json
-            {
-              "control_group_details": {
-                "is_campaign_control_group_enabled": false,
-                "is_global_control_group_enabled": true
-              }
-            }
-            ```
-
-            </details>
 
     UTMParams:
       type: object
       description: |
-        UTM parameters for tracking campaign performance. The five standard keys (`utm_source`,
-        `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`) are explicitly defined.
+        UTM parameters for tracking campaign performance. The five standard keys (`utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`) are explicitly defined.
 
-        **Custom UTM parameters:** You can pass up to 5 additional custom parameters as
-        separate keys directly inside the `utm_params` object. Use arbitrary key names prefixed
-        with `utm_` (for example, `utm_cust`, `utm_c1ust`).
+        **Custom UTM parameters:** Up to 5 additional custom parameters can be passed as separate keys directly inside the `utm_params` object, using arbitrary key names prefixed with `utm_` (for example, `utm_cust`, `utm_c1ust`).
 
-        ```json
-        {
-          "utm_source": "google",
-          "utm_medium": "email",
-          "utm_campaign": "summer_sale",
-          "utm_cust": "value1",
-          "utm_c1ust": "value2"
-        }
-        ```
-
-        <details>
-        <summary>Full request with standard and custom UTM parameters</summary>
-
-        ```json
-        {
-          "utm_params": {
-            "utm_source": "{{utm_source}}",
-            "utm_medium": "push",
-            "utm_campaign": "{{utm_campaign}}",
-            "utm_term": "{{utm_term}}",
-            "utm_content": "{{utm_content}}",
-            "utm_cust": "{{custom_utm_value}}"
-          }
-        }
-        ```
-
-        </details>
+        For runnable examples, refer to [UTM parameters](/api/campaigns/audience-scheduling-delivery-reference#utm-parameters).
       properties:
         utm_source:
           type: string
@@ -4292,14 +2625,7 @@ components:
 
         **Required** on Email create and inline test requests.
 
-        ```json
-        {
-          "connector": {
-            "connector_type": "{{connector_type}}",
-            "connector_name": "{{connector_name}}"
-          }
-        }
-        ```
+        For runnable examples, refer to [Email delivery connector](/api/campaigns/campaign-content-reference#email-delivery-connector).
       properties:
         connector_type: 
           type: string
@@ -4347,37 +2673,7 @@ components:
         When `is_campaign_audience_limit_enabled` is `true`, the fields `metric`, `frequency`, and
         `limit` are all required. When set to `false`, those three fields must not be provided.
 
-        <details>
-        <summary>Lifetime audience cap (TOTAL)</summary>
 
-        ```json
-        {
-          "campaign_audience_limit": {
-            "is_campaign_audience_limit_enabled": true,
-            "metric": "SENT",
-            "frequency": "TOTAL",
-            "limit": 100000
-          }
-        }
-        ```
-
-        </details>
-
-        <details>
-        <summary>Per-instance cap for periodic Push (INSTANCE)</summary>
-
-        ```json
-        {
-          "campaign_audience_limit": {
-            "is_campaign_audience_limit_enabled": true,
-            "metric": "SENT",
-            "frequency": "INSTANCE",
-            "limit": 50000
-          }
-        }
-        ```
-
-        </details>
       properties:
         is_campaign_audience_limit_enabled:
           type: boolean
@@ -4664,16 +2960,6 @@ components:
       description: |
         When `valid` is `true`, only `valid` is returned. When `valid` is `false`, `errors` lists one or more field-level issues found during publish-time validation (`DRAFT_PUBLISH`).
 
-        <details>
-        <summary>Validate a draft before publish</summary>
-
-        ```json
-        {
-          "request_id": "{{request_id}}"
-        }
-        ```
-
-        </details>
 
         Note: `Idempotency-Key` is not required for validate requests.
       properties:
@@ -4881,7 +3167,13 @@ paths:
       operationId: create_draft_campaign_v5
       summary: Create Campaign Draft
       description: |
-        Creates a Push or Email campaign draft. You can include content, audience, and delivery settings at the time of creation, or add them later as you refine the draft.
+        Creates a Push or Email campaign draft. Content, audience, and delivery settings can be included at the time of creation, or added later via `PATCH /v5/campaigns/{campaign_id}`.
+
+        Only `channel`, `campaign_delivery_type`, and `created_by` are required at creation. All other components — `basic_details`, `campaign_content`, `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, and `advanced` — are optional.
+
+        **Component reference pages:**
+        - For the full schema of `basic_details` and `campaign_content` per channel, platform, and template type (Android `BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `IMAGE_BANNER_WITH_TEXT` / `TIMER` / `TIMER_WITH_PROGRESS_BAR` / `Custom`; iOS `BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `Custom`; Web `BASIC`; Email `html_content` and `custom_template_id`), see [Configure campaign content for Push and Email campaigns](/api/campaigns/campaign-content-reference).
+        - For the full schema of `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, `advanced`, and `geofences`, see [Configure audience, scheduling, and delivery for Push and Email campaigns](/api/campaigns/audience-scheduling-delivery-reference).
       x-codeSamples:
         - lang: Shell
           label: Push - ONE_TIME
@@ -5373,477 +3665,6 @@ paths:
           If your V1 integration used locale-variation wrapping, you must continue using that structure in V5. The flat format is only valid when no locales or A/B variations are configured on the campaign.
           </Warning>
 
-          #### Sample Requests
-
-          <Tabs>
-            <Tab title="One-Time">
-              **Push**
-
-              ```shell
-              curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
-                -H 'Authorization: Basic {{auth_token}}' \
-                -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-                -H 'X-MOE-Request-Id: {{request_id}}' \
-                -H 'Idempotency-Key: {{idempotency_key}}' \
-                -H 'Content-Type: application/json' \
-                -d '{
-                  "request_id": "{{request_id}}",
-                  "channel": "PUSH",
-                  "campaign_delivery_type": "ONE_TIME",
-                  "created_by": "{{user_email}}",
-                  "basic_details": {
-                    "name": "{{campaign_name}}",
-                    "platforms": ["ANDROID"]
-                  },
-                  "campaign_content": {
-                    "content": {
-                      "push": {
-                        "android": {
-                          "template_type": "BASIC",
-                          "basic_details": {
-                            "title": "{{title}}",
-                            "message": "{{message}}"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "scheduling_details": {
-                    "delivery_type": "ASAP"
-                  }
-                }'
-              ```
-
-              **Email**
-
-              ```shell
-              curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
-                -H 'Authorization: Basic {{auth_token}}' \
-                -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-                -H 'X-MOE-Request-Id: {{request_id}}' \
-                -H 'Idempotency-Key: {{idempotency_key}}' \
-                -H 'Content-Type: application/json' \
-                -d '{
-                  "request_id": "{{request_id}}",
-                  "channel": "EMAIL",
-                  "campaign_delivery_type": "ONE_TIME",
-                  "created_by": "{{user_email}}",
-                  "basic_details": {
-                    "name": "{{campaign_name}}",
-                    "content_type": "PROMOTIONAL",
-                    "user_attribute_identifier": "Email (Standard)",
-                    "subscription_category": "{{subscription_category}}"
-                  },
-                  "connector": {
-                    "connector_type": "SENDGRID",
-                    "connector_name": "{{connector_name}}"
-                  },
-                  "campaign_content": {
-                    "content": {
-                      "email": {
-                        "subject": "{{email_subject}}",
-                        "sender_name": "{{sender_name}}",
-                        "from_address": "{{from_email}}",
-                        "html_content": "{{html_body}}"
-                      }
-                    }
-                  },
-                  "scheduling_details": {
-                    "delivery_type": "ASAP"
-                  }
-                }'
-              ```
-            </Tab>
-
-            <Tab title="Periodic">
-              **Push**
-
-              ```shell
-              curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
-                -H 'Authorization: Basic {{auth_token}}' \
-                -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-                -H 'X-MOE-Request-Id: {{request_id}}' \
-                -H 'Idempotency-Key: {{idempotency_key}}' \
-                -H 'Content-Type: application/json' \
-                -d '{
-                  "request_id": "{{request_id}}",
-                  "channel": "PUSH",
-                  "campaign_delivery_type": "PERIODIC",
-                  "created_by": "{{user_email}}",
-                  "basic_details": {
-                    "name": "{{campaign_name}}",
-                    "platforms": ["ANDROID", "IOS"]
-                  },
-                  "campaign_content": {
-                    "content": {
-                      "push": {
-                        "android": {
-                          "template_type": "BASIC",
-                          "basic_details": {
-                            "title": "{{title}}",
-                            "message": "{{message}}"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "scheduling_details": {
-                    "delivery_type": "AT_FIXED_TIME",
-                    "start_time": "{{start_time}}",
-                    "periodic_details": {
-                      "sending_frequency": "WEEKLY",
-                      "repeat_frequency": 1,
-                      "repeat_on_days_of_week": ["MONDAY"]
-                    }
-                  }
-                }'
-              ```
-
-              **Email**
-
-              ```shell
-              curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
-                -H 'Authorization: Basic {{auth_token}}' \
-                -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-                -H 'X-MOE-Request-Id: {{request_id}}' \
-                -H 'Idempotency-Key: {{idempotency_key}}' \
-                -H 'Content-Type: application/json' \
-                -d '{
-                  "request_id": "{{request_id}}",
-                  "channel": "EMAIL",
-                  "campaign_delivery_type": "PERIODIC",
-                  "created_by": "{{user_email}}",
-                  "basic_details": {
-                    "name": "{{campaign_name}}",
-                    "content_type": "PROMOTIONAL",
-                    "subscription_category": "{{subscription_category}}"
-                  },
-                  "connector": {
-                    "connector_type": "{{connector_type}}",
-                    "connector_name": "{{connector_name}}"
-                  },
-                  "campaign_content": {
-                    "content": {
-                      "email": {
-                        "subject": "{{email_subject}}",
-                        "sender_name": "{{sender_name}}",
-                        "from_address": "{{from_email}}",
-                        "html_content": "{{html_body}}"
-                      }
-                    }
-                  },
-                  "scheduling_details": {
-                    "delivery_type": "AT_FIXED_TIME",
-                    "start_time": "{{start_time}}",
-                    "periodic_details": {
-                      "sending_frequency": "WEEKLY",
-                      "repeat_frequency": 1,
-                      "repeat_on_days_of_week": ["TUESDAY"]
-                    }
-                  }
-                }'
-              ```
-            </Tab>
-
-            <Tab title="Event Triggered">
-              **Push**
-
-              ```shell
-              curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
-                -H 'Authorization: Basic {{auth_token}}' \
-                -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-                -H 'X-MOE-Request-Id: {{request_id}}' \
-                -H 'Idempotency-Key: {{idempotency_key}}' \
-                -H 'Content-Type: application/json' \
-                -d '{
-                  "request_id": "{{request_id}}",
-                  "channel": "PUSH",
-                  "campaign_delivery_type": "EVENT_TRIGGERED",
-                  "created_by": "{{user_email}}",
-                  "basic_details": {
-                    "name": "{{campaign_name}}",
-                    "platforms": ["ANDROID"]
-                  },
-                  "trigger_condition": {
-                    "included_filters": {
-                      "filter_operator": "and",
-                      "filters": [
-                        {
-                          "filter_type": "actions",
-                          "action_name": "{{trigger_event_name}}",
-                          "execution": { "type": "atleast", "count": 1 },
-                          "executed": true
-                        }
-                      ]
-                    },
-                    "trigger_delay_type": "DELAY",
-                    "trigger_delay_value": 1,
-                    "trigger_delay_granularity": "HOURS",
-                    "trigger_relation": "AFTER"
-                  },
-                  "campaign_content": {
-                    "content": {
-                      "push": {
-                        "android": {
-                          "template_type": "BASIC",
-                          "basic_details": {
-                            "title": "{{title}}",
-                            "message": "{{message}}"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "scheduling_details": {
-                    "delivery_type": "AT_FIXED_TIME",
-                    "start_time": "{{start_time}}",
-                    "expiry_time": "{{expiry_time}}"
-                  }
-                }'
-              ```
-
-              **Email**
-
-              ```shell
-              curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
-                -H 'Authorization: Basic {{auth_token}}' \
-                -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-                -H 'X-MOE-Request-Id: {{request_id}}' \
-                -H 'Idempotency-Key: {{idempotency_key}}' \
-                -H 'Content-Type: application/json' \
-                -d '{
-                  "request_id": "{{request_id}}",
-                  "channel": "EMAIL",
-                  "campaign_delivery_type": "EVENT_TRIGGERED",
-                  "created_by": "{{user_email}}",
-                  "basic_details": {
-                    "name": "{{campaign_name}}",
-                    "content_type": "TRANSACTIONAL"
-                  },
-                  "connector": {
-                    "connector_type": "{{connector_type}}",
-                    "connector_name": "{{connector_name}}"
-                  },
-                  "trigger_condition": {
-                    "included_filters": {
-                      "filter_operator": "and",
-                      "filters": [
-                        {
-                          "filter_type": "actions",
-                          "action_name": "{{trigger_event_name}}",
-                          "execution": { "type": "atleast", "count": 1 },
-                          "executed": true
-                        }
-                      ]
-                    },
-                    "trigger_delay_type": "ASAP"
-                  },
-                  "campaign_content": {
-                    "content": {
-                      "email": {
-                        "subject": "{{email_subject}}",
-                        "sender_name": "{{sender_name}}",
-                        "from_address": "{{from_email}}",
-                        "html_content": "{{html_body}}"
-                      }
-                    }
-                  },
-                  "scheduling_details": {
-                    "delivery_type": "AT_FIXED_TIME",
-                    "start_time": "{{start_time}}",
-                    "expiry_time": "{{expiry_time}}"
-                  }
-                }'
-              ```
-            </Tab>
-
-            <Tab title="Business Event Triggered">
-              **Push**
-
-              ```shell
-              curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
-                -H 'Authorization: Basic {{auth_token}}' \
-                -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-                -H 'X-MOE-Request-Id: {{request_id}}' \
-                -H 'Idempotency-Key: {{idempotency_key}}' \
-                -H 'Content-Type: application/json' \
-                -d '{
-                  "request_id": "{{request_id}}",
-                  "channel": "PUSH",
-                  "campaign_delivery_type": "BUSINESS_EVENT_TRIGGERED",
-                  "created_by": "{{user_email}}",
-                  "basic_details": {
-                    "name": "{{campaign_name}}",
-                    "business_event": "{{business_event_name}}",
-                    "platforms": ["ANDROID"]
-                  },
-                  "campaign_content": {
-                    "content": {
-                      "push": {
-                        "android": {
-                          "template_type": "BASIC",
-                          "basic_details": {
-                            "title": "{{title}}",
-                            "message": "{{message}}"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "scheduling_details": {
-                    "delivery_type": "AT_FIXED_TIME",
-                    "start_time": "{{start_time}}",
-                    "expiry_time": "{{expiry_time}}"
-                  }
-                }'
-              ```
-
-              **Email**
-
-              ```shell
-              curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
-                -H 'Authorization: Basic {{auth_token}}' \
-                -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-                -H 'X-MOE-Request-Id: {{request_id}}' \
-                -H 'Idempotency-Key: {{idempotency_key}}' \
-                -H 'Content-Type: application/json' \
-                -d '{
-                  "request_id": "{{request_id}}",
-                  "channel": "EMAIL",
-                  "campaign_delivery_type": "BUSINESS_EVENT_TRIGGERED",
-                  "created_by": "{{user_email}}",
-                  "basic_details": {
-                    "name": "{{campaign_name}}",
-                    "business_event": "{{business_event_name}}",
-                    "content_type": "TRANSACTIONAL"
-                  },
-                  "connector": {
-                    "connector_type": "{{connector_type}}",
-                    "connector_name": "{{connector_name}}"
-                  },
-                  "campaign_content": {
-                    "content": {
-                      "email": {
-                        "subject": "{{email_subject}}",
-                        "sender_name": "{{sender_name}}",
-                        "from_address": "{{from_email}}",
-                        "html_content": "{{html_body}}"
-                      }
-                    }
-                  },
-                  "scheduling_details": {
-                    "delivery_type": "AT_FIXED_TIME",
-                    "start_time": "{{start_time}}",
-                    "expiry_time": "{{expiry_time}}"
-                  }
-                }'
-              ```
-            </Tab>
-
-            <Tab title="Device Triggered">
-              Push only. Sends when a specified device-side event fires.
-
-              ```shell
-              curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
-                -H 'Authorization: Basic {{auth_token}}' \
-                -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-                -H 'X-MOE-Request-Id: {{request_id}}' \
-                -H 'Idempotency-Key: {{idempotency_key}}' \
-                -H 'Content-Type: application/json' \
-                -d '{
-                  "request_id": "{{request_id}}",
-                  "channel": "PUSH",
-                  "campaign_delivery_type": "DEVICE_TRIGGERED",
-                  "created_by": "{{user_email}}",
-                  "basic_details": {
-                    "name": "{{campaign_name}}",
-                    "platforms": ["ANDROID"]
-                  },
-                  "trigger_condition": {
-                    "included_filters": {
-                      "filter_operator": "and",
-                      "filters": [
-                        {
-                          "filter_type": "actions",
-                          "action_name": "{{device_trigger_event_name}}",
-                          "execution": { "type": "atleast", "count": 1 },
-                          "executed": true
-                        }
-                      ]
-                    },
-                    "trigger_delay_type": "ASAP"
-                  },
-                  "campaign_content": {
-                    "content": {
-                      "push": {
-                        "android": {
-                          "template_type": "BASIC",
-                          "basic_details": {
-                            "title": "{{title}}",
-                            "message": "{{message}}"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "delivery_controls": {
-                    "max_time_to_show_message_of_same_camapign": "{{max_display_hours}}",
-                    "expiry_time_of_sync_data_in_hour": "{{sync_expiry_hours}}",
-                    "send_message_in_offline_mode": true
-                  }
-                }'
-              ```
-            </Tab>
-
-            <Tab title="Location Triggered">
-              Push only. Sends when a user enters or exits a configured geofence.
-
-              ```shell
-              curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
-                -H 'Authorization: Basic {{auth_token}}' \
-                -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-                -H 'X-MOE-Request-Id: {{request_id}}' \
-                -H 'Idempotency-Key: {{idempotency_key}}' \
-                -H 'Content-Type: application/json' \
-                -d '{
-                  "request_id": "{{request_id}}",
-                  "channel": "PUSH",
-                  "campaign_delivery_type": "LOCATION_TRIGGERED",
-                  "created_by": "{{user_email}}",
-                  "basic_details": {
-                    "name": "{{campaign_name}}",
-                    "platforms": ["ANDROID", "IOS"],
-                    "geofences": {
-                      "name": "{{geofence_name}}",
-                      "latitude": "{{latitude}}",
-                      "longitude": "{{longitude}}",
-                      "radius": "{{radius_meters}}",
-                      "response_time_value": "5",
-                      "response_time_granularity": "MINUTES",
-                      "triggered_at": "ENTRY"
-                    }
-                  },
-                  "campaign_content": {
-                    "content": {
-                      "push": {
-                        "android": {
-                          "template_type": "BASIC",
-                          "basic_details": {
-                            "title": "{{title}}",
-                            "message": "{{message}}"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "delivery_controls": {
-                    "send_limit_value": "{{max_sends_per_user}}",
-                    "send_limit_granularity_in_hours": "{{send_limit_window_hours}}"
-                  }
-                }'
-              ```
-            </Tab>
-          </Tabs>
 
           #### Rate Limits
           | Rate Limit Name | Rate Limit |
