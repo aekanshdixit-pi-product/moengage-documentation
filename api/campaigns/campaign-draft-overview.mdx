@@ -48,7 +48,7 @@ SMS campaign creation and update are not supported in V5. Use the MoEngage dashb
     Send a test message to specific users before going live. V5 supports two modes: **inline mode**, where you supply `channel` and `campaign_content` directly in the request without saving a draft, and **draft mode**, where you pass a `draft_id` to load content from a saved draft. Draft mode is new in V5.
   </Step>
   <Step title="Publish">
-    Transition the draft to `ACTIVE` by sending `{ "status": "PUBLISH" }` in a `PATCH /v5/campaigns/{campaign_id}` request. There is no separate publish endpoint — publishing is a status transition sent through the Update Campaign endpoint.
+    Transition the draft to `ACTIVE` by sending `{ "status": "PUBLISH" }` in a `PATCH /v5/campaigns/{campaign_id}` request. There is no separate publish endpoint. Publishing is a status transition sent through the Update Campaign endpoint.
   </Step>
   <Step title="Manage">
     Pause, resume, or stop a live campaign. Search your workspace and retrieve lightweight metadata across all campaigns.
@@ -90,7 +90,7 @@ The Campaigns API consists of the following endpoints to manage your campaign li
 
 <AccordionGroup>
   <Accordion title="What fields are required to create a campaign?">
-    Three fields are required at creation time: `channel` (PUSH or EMAIL), `campaign_delivery_type`, and `created_by` (the email of the user creating the campaign). All other components — content, audience, scheduling, delivery controls — are optional and can be added later using the Update Campaign endpoint.
+    Three fields are required at creation time: `channel` (PUSH or EMAIL), `campaign_delivery_type`, and `created_by` (the email of the user creating the campaign). All other components, including content, audience, scheduling, and delivery controls, are optional and can be added later using the Update Campaign endpoint.
   </Accordion>
   <Accordion title="Can I include full campaign content when creating a campaign, or must I build it progressively?">
     Both approaches are supported. You can submit a minimal request with only the required fields and patch in the remaining components later, or you can include all sections in a single Create request. Any components included at creation time must meet the `DRAFT_CREATE` validation standards.
@@ -99,10 +99,16 @@ The Campaigns API consists of the following endpoints to manage your campaign li
     The `request_id` is an idempotency key scoped to campaign creation. For Push campaigns, the same `request_id` cannot be reused for one hour after a successful creation. For Email campaigns, the window is one day. If a creation attempt fails, you can retry immediately using the same `request_id`.
   </Accordion>
   <Accordion title="What delivery types are supported for Push and Email campaigns?">
-    Push campaigns support: `ONE_TIME`, `PERIODIC`, `EVENT_TRIGGERED`, `BUSINESS_EVENT_TRIGGERED`, `DEVICE_TRIGGERED`, `LOCATION_TRIGGERED`, and `BROADCAST_LIVE_ACTIVITY`. Email campaigns support: `ONE_TIME`, `PERIODIC`, `EVENT_TRIGGERED`, and `BUSINESS_EVENT_TRIGGERED`.
+    - **Push:** `ONE_TIME`, `PERIODIC`, `EVENT_TRIGGERED`, `BUSINESS_EVENT_TRIGGERED`, `DEVICE_TRIGGERED`, `LOCATION_TRIGGERED`, `BROADCAST_LIVE_ACTIVITY`
+    - **Email:** `ONE_TIME`, `PERIODIC`, `EVENT_TRIGGERED`, `BUSINESS_EVENT_TRIGGERED`
   </Accordion>
   <Accordion title="What are the creation rate limits?">
-    The API allows 5 create requests per second, 25 per minute, and 100 per hour. Separately, a campaign creation limit of 5 successful campaigns per minute, 25 per hour, and 100 per day applies. If 100 campaigns are successfully created within a day, subsequent requests are rejected regardless of the total number of API calls made.
+    The API enforces two sets of limits:
+
+    - **Request rate:** 5 per second, 25 per minute, 100 per hour.
+    - **Campaign creation:** 5 successful per minute, 25 per hour, 100 per day.
+
+    Once 100 campaigns are successfully created within a day, subsequent requests are rejected regardless of the total number of API calls made.
   </Accordion>
   <Accordion title="How do I personalize campaign content using user attributes?">
     MoEngage supports template expressions in content fields such as `title`, `message`, `subject`, and `html_content`. Use the following syntax to reference a user attribute at delivery time:
@@ -139,7 +145,7 @@ The Campaigns API consists of the following endpoints to manage your campaign li
     }
     ```
 
-    To exclude a segment, use the same structure under `excluded_filters`. You can combine multiple filter types — user attributes, actions, and custom segments — in the same `filters` array using the `filter_operator` (`and` / `or`).
+    To exclude a segment, use the same structure under `excluded_filters`. You can combine multiple filter types, such as user attributes, actions, and custom segments, in the same `filters` array using the `filter_operator` (`and` / `or`).
   </Accordion>
 </AccordionGroup>
 
@@ -164,7 +170,9 @@ The Campaigns API consists of the following endpoints to manage your campaign li
     No. Component updates and the publish action are mutually exclusive. To update components, send the fields you want to change without a `status` key. To publish, send only `{ "status": "PUBLISH" }`. Combining both in a single request returns a `400 Bad Request` error.
   </Accordion>
   <Accordion title="Which fields cannot be edited once a campaign is Active?">
-    For Active campaigns, you cannot edit the trigger condition, segmentation details, conversion goal details, scheduling type, or scheduling start date. For Scheduled campaigns, you can edit all fields except the scheduling type. Stopped and Archived campaigns cannot be updated at all.
+    - **Active:** You cannot edit `trigger_condition`, `segmentation_details`, `conversion_goal_details`, the scheduling type, or the scheduling start date.
+    - **Scheduled:** All fields can be edited except the scheduling type.
+    - **Stopped / Archived:** No fields can be updated.
   </Accordion>
   <Accordion title="How long does it take for updated content to reach users in Event-triggered campaigns?">
     Updated content for Event-triggered campaigns is cached and can take up to 30 minutes to propagate to users.
@@ -176,7 +184,7 @@ The Campaigns API consists of the following endpoints to manage your campaign li
     Component-level updates require the `campaigns:create_manage` scope. Publishing a campaign (sending `{ "status": "PUBLISH" }`) requires the `campaigns:create_manage_publish` scope.
   </Accordion>
   <Accordion title="Is there a separate publish endpoint?">
-    No. Publishing is a status transition sent through the Update Campaign endpoint. Send `{ "status": "PUBLISH" }` as the request body in a `PATCH /v5/campaigns/{campaign_id}` request. The Update Campaign Status endpoint (`POST /v5/campaigns/{campaign_id}/status`) is a different endpoint that handles post-publish transitions — STOP, PAUSE, and RESUME — and does not accept `PUBLISH`.
+    No. Publishing is a status transition sent through the Update Campaign endpoint. Send `{ "status": "PUBLISH" }` as the request body in a `PATCH /v5/campaigns/{campaign_id}` request. The Update Campaign Status endpoint (`POST /v5/campaigns/{campaign_id}/status`) is a different endpoint that handles post-publish transitions, STOP, PAUSE, and RESUME, and does not accept `PUBLISH`.
   </Accordion>
   <Accordion title="Can I update the segmentation audience when the campaign is Active?">
     No. The `segmentation_details` field cannot be updated for campaigns in `ACTIVE` state. To change the audience, stop the campaign and create a new one. See [Which fields cannot be edited once a campaign is Active?](#update-campaign) for the full list of non-editable fields by campaign state.
@@ -192,7 +200,7 @@ The Campaigns API consists of the following endpoints to manage your campaign li
     The `campaign_id` is returned in the `data.id` field of the Create Campaign response. You can also retrieve it using `GET /v5/campaigns/{campaign_id}` or by using the [Search Campaigns](/api/v5/get-campaign-details/search-campaigns) endpoint to look up campaigns by name, status, channel, or delivery type.
   </Accordion>
   <Accordion title="Can I change the template type in an Active Push campaign?">
-    Yes. The `template_type` field is part of `campaign_content`, which can be updated for campaigns in `ACTIVE` state. If you change the template type, include all required fields for the new template in the same request — each template type has different required fields.
+    Yes. The `template_type` field is part of `campaign_content`, which can be updated for campaigns in `ACTIVE` state. If you change the template type, include all required fields for the new template in the same request, as each template type has different required fields.
   </Accordion>
   <Accordion title="Can I add or remove platforms in an Active Push campaign?">
     Yes. The `platforms` field in `basic_details` is not restricted for `ACTIVE` campaigns. Adding a platform extends delivery to that platform for future sends; removing a platform stops delivery to it.
@@ -236,7 +244,9 @@ The Campaigns API consists of the following endpoints to manage your campaign li
     Yes. `STOP` is valid for One-time campaigns in `SCHEDULED`, `ACTIVE`, `PAUSED`, and `SENDING` states. If the campaign is in `SENDING` state, the action halts any remaining sends. Messages already dispatched before the stop is processed are still delivered.
   </Accordion>
   <Accordion title="Which campaign types and channels does this endpoint support?">
-    The endpoint supports Email and Push campaigns. For Push, it supports Periodic, Event-triggered, Device-triggered, and Location-triggered campaigns. For Email, it supports Periodic and Event-triggered campaigns. Both channels support stopping a Scheduled One-time campaign.
+    - **Push:** Periodic, Event-triggered, Device-triggered, and Location-triggered campaigns.
+    - **Email:** Periodic and Event-triggered campaigns.
+    - **Both channels:** Stopping a Scheduled One-time campaign.
   </Accordion>
 </AccordionGroup>
 
@@ -256,7 +266,7 @@ The Campaigns API consists of the following endpoints to manage your campaign li
     When campaign versioning is enabled, each published revision appears as a separate document in search results, all sharing the same `campaign_id`. You can filter by `version_number` in the `campaign_fields` object to narrow results to a specific version.
   </Accordion>
   <Accordion title="How do I search for SMS campaigns?">
-    Include `"SMS"` in the `campaign_fields.channels` array. Matching results return `channel: SMS` and include SMS-specific fields — `connector` (connector type and name) and `sender_name` — in each campaign object. Note that SMS campaign creation and update are not supported in V5; this endpoint retrieves existing SMS campaigns only.
+    Include `"SMS"` in the `campaign_fields.channels` array. Matching results return `channel: SMS` and include SMS-specific fields, `connector` (connector type and name) and `sender_name`, in each campaign object. Note that SMS campaign creation and update are not supported in V5; this endpoint retrieves existing SMS campaigns only.
   </Accordion>
   <Accordion title="How do I retrieve campaigns that are part of a flow?">
     Set `include_child_campaigns: true` in the request body. Flow-node campaigns are excluded from results by default. When this flag is enabled, flow-node campaigns appear in the results with `flow_id` and `flow_name` populated. Periodic child campaigns also appear with a `parent_id` field when this flag is set.
@@ -323,7 +333,7 @@ The Campaigns API consists of the following endpoints to manage your campaign li
     No. SMS campaign creation and update are not supported in V5. You can retrieve existing SMS campaigns using Get Campaign and Search Campaigns, and preview SMS content using Personalized Preview. To create and manage SMS campaigns, use the MoEngage dashboard or the V1 API.
   </Accordion>
   <Accordion title="How do I identify the sender name for an SMS campaign?">
-    The `sender_name` field in the campaign response carries the sender name configured for the campaign. This field is only populated for SMS campaigns. There is no `sender_name` filter in the Search Campaigns request — to find campaigns for a specific sender, retrieve all SMS campaigns and filter by `sender_name` on the client side.
+    The `sender_name` field in the campaign response carries the sender name configured for the campaign. This field is only populated for SMS campaigns. There is no `sender_name` filter in the Search Campaigns request. To find campaigns for a specific sender, retrieve all SMS campaigns and filter by `sender_name` on the client side.
   </Accordion>
   <Accordion title="How do I retrieve the connector configuration for an SMS campaign?">
     The `connector` object in the campaign response contains the `connector_type` and `connector_name` for the campaign. For SMS campaigns, these fields identify the SMS delivery provider configured in your workspace.
@@ -366,4 +376,4 @@ The Campaigns API consists of the following endpoints to manage your campaign li
 
 ## Postman Collections
 
-We have made it easy for you to test the APIs in your own environment. Click [here]() to view and download the Postman collection for the Campaigns API.
+We have made it easy for you to test the APIs in your own environment. Click [here](ADD_POSTMAN_URL) to view and download the Postman collection for the Campaigns API.

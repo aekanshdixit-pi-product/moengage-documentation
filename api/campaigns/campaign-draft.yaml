@@ -27,9 +27,13 @@ info:
     5. **Publish** - Transition the draft to **ACTIVE** by sending `{ "status": "PUBLISH" }` in a PATCH request.
     6. **Manage** - Pause, resume, or stop a live campaign. Search your workspace and retrieve lightweight metadata across all campaigns.
 
-    **Campaign versioning** is optional per workspace. When enabled, publishing an update to a live campaign creates a new document with an incremented `version_number`. The `campaign_id` in responses is the stable identifier across versions; each version has its own raw `id` (ObjectId).
+    **Campaign versioning** is optional per workspace:
+    - When enabled, publishing an update to a live campaign creates a new document with an incremented `version_number`.
+    - `campaign_id` is the stable identifier across all versions; each version has its own raw `id` (ObjectId).
 
-    The V1 request header `MOE-APPKEY` (used to pass the Workspace ID) has been renamed to `X-MOE-Tenant-ID` in V5. Requests that continue to send `MOE-APPKEY` will receive authentication errors in V5. Replace `MOE-APPKEY` with `X-MOE-Tenant-ID` in all V5 requests.
+    **Header change from V1 to V5:** The `MOE-APPKEY` request header has been renamed to `X-MOE-Tenant-ID`.
+    - Requests that continue to send `MOE-APPKEY` will receive authentication errors in V5.
+    - Replace `MOE-APPKEY` with `X-MOE-Tenant-ID` in all V5 requests.
   contact:
     name: MoEngage Developer Team
     email: support@moengage.com
@@ -69,7 +73,9 @@ components:
       description: |
         Workspace tenant ID. Set this to the workspace (App) ID from **Settings** > **Account** > **APIs** > **Workspace ID**.
 
-        In the V1 Campaigns API, the workspace ID was passed via the `MOE-APPKEY` request header. In V5, this header is `X-MOE-Tenant-ID`. Requests that continue to use `MOE-APPKEY` will fail with an authentication error.
+        In the V1 Campaigns API, the workspace ID was passed via the `MOE-APPKEY` request header. In V5, this header is renamed to `X-MOE-Tenant-ID`:
+        - Requests that continue to use `MOE-APPKEY` will fail with an authentication error.
+        - Replace `MOE-APPKEY` with `X-MOE-Tenant-ID` in all V5 requests.
       schema:
         type: string
       example: "{{workspace_id}}"
@@ -406,20 +412,19 @@ components:
           description: |
             An optional unique identifier for this search request (UUID v4 recommended).
 
-            In V1, `request_id` was required on every search call. In V5, it is optional.
-            Providing it is still recommended for traceability and debugging - MoEngage support
-            can use the value to locate the specific request in server logs.
+            - In V1, `request_id` was required on every search call. In V5, it is optional.
+            - Providing it is recommended for traceability and debugging. MoEngage support can use the value to locate the specific request in server logs.
           example: "{{request_id}}"
         campaign_fields: { $ref: '#/components/schemas/CampaignSearchFieldsV5' }
         include_child_campaigns:
           type: boolean
           default: false
           description: |
-            When `true`, includes child campaigns in results - periodic children and flow-node
-            campaigns. Child campaigns carry `parent_id` (for periodic children) and `flow_id` /
-            `flow_name` (for flow campaigns) in the response.
+            When `true`, includes child campaigns in results. Defaults to `false`.
 
-            Defaults to `false`.
+            Child campaign types included:
+            - **Periodic children:** Carry `parent_id` in the response.
+            - **Flow-node campaigns:** Carry `flow_id` and `flow_name` in the response.
 
         include_archive_campaigns:
           type: boolean
@@ -698,11 +703,12 @@ components:
     TestV5DraftIdRequest:
       title: Draft mode
       type: object
-      description: >-
-        Draft mode test. Pass `draft_id` to load content from a saved DRAFT campaign - mutually exclusive with
-        inline mode fields (`channel`, `campaign_content`). By default the server sends one test per platform,
-        locale, and variation defined in the draft. Use `test_campaign_meta.platform`, `locale_name`, or
-        `variation` to narrow the send.
+      description: |
+        Draft mode test. Pass `draft_id` to load content from a saved DRAFT campaign.
+
+        - Mutually exclusive with inline mode fields (`channel`, `campaign_content`).
+        - By default, the server sends one test per platform, locale, and variation defined in the draft.
+        - Use `test_campaign_meta.platform`, `locale_name`, or `variation` to narrow the send.
       required: [draft_id, test_campaign_meta]
       properties:
         request_id:
@@ -965,7 +971,7 @@ components:
     PushBasicDetailsV5:
       type: object
       description: |
-        Identifying metadata for the Push campaign — name, team, tags, and platform targeting.
+        Identifying metadata for the Push campaign, including name, team, tags, and platform targeting.
 
         For field-by-field rules, conditional requirements, and platform-specific delivery flags (Android `push_amp_plus_enabled`, iOS provisional-push audience flags), refer to [Push campaign metadata](/api/campaigns/campaign-content-reference#push-campaign-metadata).
       properties:
@@ -1012,7 +1018,7 @@ components:
     EmailBasicDetailsV5:
       type: object
       description: |
-        Identifying metadata for the Email campaign — name, team, tags, and subscription category.
+        Identifying metadata for the Email campaign, including name, team, tags, and subscription category.
 
         For field-by-field rules and conditional requirements (`content_type: PROMOTIONAL` requires `subscription_category`), refer to [Email campaign metadata](/api/campaigns/campaign-content-reference#email-campaign-metadata).
       properties:
@@ -1267,8 +1273,8 @@ components:
           description: |
             The campaign message payload. Two shapes are accepted:
 
-            - **Flat shape (no locales or variations)** — pass a flat `push` object directly under `content`.
-            - **Locale-keyed and variation-keyed shape** — key by locale name, then by variation name: `content[locale_name][variation_name] = { push: { ... } }`. The `"default"` locale key is always required and serves as the fallback. Additional locale keys must match values listed in `locales`.
+            - **Flat shape (no locales or variations):** Pass a flat `push` object directly under `content`.
+            - **Locale-keyed and variation-keyed shape:** Key by locale name, then by variation name: `content[locale_name][variation_name] = { push: { ... } }`. The `"default"` locale key is always required and serves as the fallback. Additional locale keys must match values listed in `locales`.
 
             For runnable payloads for both shapes, refer to [Content payload structure](/api/campaigns/campaign-content-reference#content-payload-structure).
           properties:
@@ -1288,7 +1294,7 @@ components:
 
         For full `POST /v5/campaigns` request examples that include `campaign_content`, refer to `campaign_delivery_type` on `EmailCampaignCreateV5Request`, `VariationDetails`, and the Create Campaign Draft code samples.
 
-        For Email content variants — `html_content` versus `custom_template_id`, CC/BCC, attachments, and editor selection (`Froala Editor` versus `Ace Editor`) — refer to [Email content](/api/campaigns/campaign-content-reference#email-content).
+        For Email content variants, including `html_content` versus `custom_template_id`, CC/BCC, attachments, and editor selection (`Froala Editor` versus `Ace Editor`), refer to [Email content](/api/campaigns/campaign-content-reference#email-content).
       properties:
         locales: 
           type: array
@@ -1302,8 +1308,8 @@ components:
           description: |
             The campaign message payload. Two shapes are accepted:
 
-            - **Flat shape (no locales or variations)** — pass a flat `email` object directly under `content`.
-            - **Locale-keyed and variation-keyed shape** — key by locale name, then by variation name: `content[locale_name][variation_name] = { email: { ... } }`. The `"default"` locale key is always required and serves as the fallback. Additional locale keys must match values listed in `locales`.
+            - **Flat shape (no locales or variations):** Pass a flat `email` object directly under `content`.
+            - **Locale-keyed and variation-keyed shape:** Key by locale name, then by variation name: `content[locale_name][variation_name] = { email: { ... } }`. The `"default"` locale key is always required and serves as the fallback. Additional locale keys must match values listed in `locales`.
 
             For runnable payloads for both shapes, refer to [Content payload structure](/api/campaigns/campaign-content-reference#content-payload-structure).
           properties:
@@ -2443,7 +2449,7 @@ components:
     AdvancedDetails:
       type: object
       description: |
-        Advanced Push delivery settings — notification expiration and per-platform priority.
+        Advanced Push delivery settings, including notification expiration and per-platform priority.
 
         For runnable iOS APNS priority and Android priority examples, refer to [Advanced Push settings](/api/campaigns/audience-scheduling-delivery-reference#advanced-push-settings).
       properties:
@@ -2740,13 +2746,11 @@ components:
         Detailed information about a campaign returned by GET `/v5/campaigns/{campaign_id}` and
         POST `/v5/campaigns/search`.
 
-        In V1, the campaign identifier was returned as `campaign_id`. In V5, it is returned as `id`.
-        The legacy `campaign_id` field may also be present alongside `id` for backward compatibility,
-        but `id` is the canonical V5 identifier.
+        **Identifier change from V1 to V5:**
+        - In V1, the campaign identifier was returned as `campaign_id`. In V5, it is returned as `id`.
+        - The legacy `campaign_id` field may also be present alongside `id` for backward compatibility, but `id` is the canonical V5 identifier.
 
-        All other V1 response fields (`created_by`, `updated_by`, `created_at`, `updated_at`,
-        `sent_time`, `flow_id`, `flow_name`, `parent_id`, `connector`, `utm_params`,
-        `campaign_audience_limit`) are preserved in V5 under the same names.
+        **V1 fields preserved in V5 under the same names:** `created_by`, `updated_by`, `created_at`, `updated_at`, `sent_time`, `flow_id`, `flow_name`, `parent_id`, `connector`, `utm_params`, `campaign_audience_limit`.
       properties:
         id:
           type: string
@@ -2880,12 +2884,11 @@ components:
       type: object
       description: |
         Campaign metadata including basic information and reachability details.
-        
-        **V1 compatibility:** All field names are preserved from the V1 Get Campaign Meta response
-        (`campaign_id`, `campaign_name`, `campaign_status`, `campaign_delivery_type`, `campaign_team`,
-        `campaign_tags`, `campaign_start_time`). No field has been renamed in V5.
-        
-        V5 adds one new field: `version_number` (present only when campaign versioning is enabled).
+
+        **V1 compatibility:**
+        - All field names are preserved from the V1 Get Campaign Meta response: `campaign_id`, `campaign_name`, `campaign_status`, `campaign_delivery_type`, `campaign_team`, `campaign_tags`, `campaign_start_time`.
+        - No field has been renamed in V5.
+        - V5 adds one new field: `version_number` (present only when campaign versioning is enabled).
       properties:
         campaign_id: 
           type: string
@@ -2980,10 +2983,9 @@ components:
     V5ValidateResponse:
       type: object
       description: |
-        When `valid` is `true`, only `valid` is returned. When `valid` is `false`, `errors` lists one or more field-level issues found during publish-time validation (`DRAFT_PUBLISH`).
-
-
-        Note: `Idempotency-Key` is not required for validate requests.
+        - When `valid` is `true`, only `valid` is returned.
+        - When `valid` is `false`, `errors` lists one or more field-level issues found during publish-time validation (`DRAFT_PUBLISH`).
+        - `Idempotency-Key` is not required for validate requests.
       properties:
         valid:
           type: boolean
@@ -3191,7 +3193,7 @@ paths:
       description: |
         Creates a Push or Email campaign draft. Content, audience, and delivery settings can be included at the time of creation, or added later via `PATCH /v5/campaigns/{campaign_id}`.
 
-        Only `channel`, `campaign_delivery_type`, and `created_by` are required at creation. All other components — `basic_details`, `campaign_content`, `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, and `advanced` — are optional.
+        Only `channel`, `campaign_delivery_type`, and `created_by` are required at creation. All other components, including `basic_details`, `campaign_content`, `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, and `advanced`, are optional.
 
         **Component reference pages:**
         - For the full schema of `basic_details` and `campaign_content` per channel, platform, and template type (Android `BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `IMAGE_BANNER_WITH_TEXT` / `TIMER` / `TIMER_WITH_PROGRESS_BAR` / `Custom`; iOS `BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `Custom`; Web `BASIC`; Email `html_content` and `custom_template_id`), see [Campaign content reference](/api/campaigns/campaign-content-reference).
@@ -3755,14 +3757,15 @@ paths:
       description: |
         Returns the full configuration and current status of a single campaign by its ID.
 
-        In V1, a specific campaign was retrieved using `POST /v1/campaigns/search` with
-        `campaign_fields.id`. In V5, use this `GET` endpoint for single-campaign retrieval.
-        Use `POST /v5/campaigns/search` only when filtering across multiple campaigns.
+        **Migration from V1:**
+        - In V1, a specific campaign was retrieved using `POST /v1/campaigns/search` with `campaign_fields.id`.
+        - In V5, use this `GET` endpoint for single-campaign retrieval.
+        - Use `POST /v5/campaigns/search` only when filtering across multiple campaigns.
 
-        **SMS campaigns:** SMS campaigns are returned by this endpoint. The response `channel`
-        field will be `SMS` and the `connector` / `sender_name` fields carry SMS-specific details.
-        SMS campaigns can be retrieved but must be created and managed through the MoEngage dashboard or V1 APIs in
-        the interim.
+        **SMS campaigns:**
+        - SMS campaigns are returned by this endpoint; the response `channel` field will be `SMS`.
+        - The `connector` and `sender_name` fields carry SMS-specific details.
+        - SMS campaigns can be retrieved but must be created and managed through the MoEngage dashboard or V1 APIs in the interim.
       x-mint:
         content: |
           <Info>
@@ -3978,7 +3981,7 @@ paths:
           </Tabs>
 
           <Warning>
-          **Status and component fields are mutually exclusive:** You cannot combine `status: PUBLISH` with any other component fields in the same request body — doing so returns `400 Bad Request`. Send either a component update or a publish action, never both in a single request.
+          **Status and component fields are mutually exclusive:** You cannot combine `status: PUBLISH` with any other component fields in the same request body, as doing so returns `400 Bad Request`. Send either a component update or a publish action, never both in a single request.
           </Warning>
 
           #### Update restrictions by campaign state
@@ -3986,8 +3989,8 @@ paths:
           | Campaign state | Editable fields | Non-editable fields |
           | :--- | :--- | :--- |
           | **DRAFT** | All fields | — |
-          | **SCHEDULED** — One-time (no instance sent) | All fields | `scheduling_type` |
-          | **SCHEDULED** — Periodic or Event-triggered (no instance sent) | All fields | `scheduling_type` |
+          | **SCHEDULED:** One-time (no instance sent) | All fields | `scheduling_type` |
+          | **SCHEDULED:** Periodic or Event-triggered (no instance sent) | All fields | `scheduling_type` |
           | **ACTIVE** | All fields except those listed as non-editable | `trigger_condition`, `segmentation_details`, `conversion_goal_details`, `scheduling_type`, `scheduling_start_date` |
           | **STOPPED** or **ARCHIVED** | — | All fields (no updates allowed) |
 
@@ -4515,9 +4518,10 @@ paths:
       description: |
         Applies a state transition to a published campaign.
 
-        `POST /v1/campaigns/status` accepted a `campaign_ids` array of up to 10 IDs per request.
-        In V5, the campaign ID is a path parameter and only one campaign can be transitioned per
-        request. To perform bulk status changes, call this endpoint once per campaign ID.
+        **Migration from V1:**
+        - `POST /v1/campaigns/status` accepted a `campaign_ids` array of up to 10 IDs per request.
+        - In V5, the campaign ID is a path parameter and only one campaign can be transitioned per request.
+        - To perform bulk status changes, call this endpoint once per campaign ID.
       x-mint:
         content: |
           #### Action reference
@@ -4690,7 +4694,9 @@ paths:
 
           All other V1 filter fields (`channels`, `created_by`, `created_date`, `name`, `status`, `tags`) are unchanged.
 
-          **`request_id` is now optional.** In V1, `request_id` was required on every search call. In V5, it is optional. Providing it is still recommended for traceability, MoEngage support can use it to locate the specific request in server logs.
+          **`request_id` is now optional:**
+          - In V1, `request_id` was required on every search call. In V5, it is optional.
+          - Providing it is still recommended for traceability. MoEngage support can use it to locate the specific request in server logs.
 
           **Response changes**
 
@@ -4970,9 +4976,8 @@ paths:
           #### Reachability Information
           - Available only for **scheduled** campaigns (one-time, business event-triggered, and event-triggered).
           - Provides estimated user count that will receive the campaign.
-          - Calculated once daily and cached for 24 hours.
+          - Calculated once daily and cached for 24 hours. Multiple API calls within the same day return the cached value.
           - May vary due to app installations/uninstalls or subscription changes.
-          - Reachability is an estimated value and may vary over time. It is calculated once per day and cached for 24 hours. Multiple API calls within the same day will return the cached value.
            
           #### Rate Limits
 
