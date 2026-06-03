@@ -281,7 +281,10 @@ components:
         campaign_delivery_type:
           type: string
           enum: [ONE_TIME, PERIODIC, EVENT_TRIGGERED, BUSINESS_EVENT_TRIGGERED, DEVICE_TRIGGERED, LOCATION_TRIGGERED, BROADCAST_LIVE_ACTIVITY]
-          description: The delivery type of the campaign being updated.
+          description: |
+            The delivery type of the campaign being updated.
+
+            **Note:** `BROADCAST_LIVE_ACTIVITY` is included in this enum for campaigns created via the V1 API or legacy paths. Draft creation via `POST /v5/campaigns` does not support `BROADCAST_LIVE_ACTIVITY`. A draft cannot be transitioned to a Live Activity campaign through V5.
         updated_by:
           type: string
           format: email
@@ -3674,6 +3677,128 @@ paths:
                   "expiry_time": "{{expiry_time}}"
                 }
               }'
+        - lang: Shell
+          label: Push - Web ONE_TIME
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "PUSH",
+                "campaign_delivery_type": "ONE_TIME",
+                "created_by": "{{user_email}}",
+                "basic_details": {
+                  "name": "{{campaign_name}}",
+                  "platforms": ["WEB"]
+                },
+                "campaign_content": {
+                  "content": {
+                    "push": {
+                      "web": {
+                        "template_type": "BASIC",
+                        "basic_details": {
+                          "title": "{{title}}",
+                          "message": "{{message}}",
+                          "redirect_url": "{{redirect_url}}",
+                          "image_url": "{{image_url}}"
+                        },
+                        "buttons": [
+                          {
+                            "title": "{{button_label}}",
+                            "url": "{{button_url}}"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "scheduling_details": { "delivery_type": "ASAP" }
+              }'
+        - lang: Shell
+          label: Push - Multi-locale with A/B variation
+          source: |
+            curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "PUSH",
+                "campaign_delivery_type": "ONE_TIME",
+                "created_by": "{{user_email}}",
+                "basic_details": {
+                  "name": "{{campaign_name}}",
+                  "platforms": ["ANDROID"]
+                },
+                "campaign_content": {
+                  "locales": ["es-ES"],
+                  "variation_details": {
+                    "distribution_type": "MANUAL",
+                    "no_of_variations": 2,
+                    "manual_distribution_percentage": {
+                      "variation_1": 50,
+                      "variation_2": 50
+                    }
+                  },
+                  "content": {
+                    "default": {
+                      "variation_1": {
+                        "push": {
+                          "android": {
+                            "template_type": "BASIC",
+                            "basic_details": {
+                              "title": "{{title_v1}}",
+                              "message": "{{message_v1}}"
+                            }
+                          }
+                        }
+                      },
+                      "variation_2": {
+                        "push": {
+                          "android": {
+                            "template_type": "BASIC",
+                            "basic_details": {
+                              "title": "{{title_v2}}",
+                              "message": "{{message_v2}}"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "es-ES": {
+                      "variation_1": {
+                        "push": {
+                          "android": {
+                            "template_type": "BASIC",
+                            "basic_details": {
+                              "title": "{{title_es_v1}}",
+                              "message": "{{message_es_v1}}"
+                            }
+                          }
+                        }
+                      },
+                      "variation_2": {
+                        "push": {
+                          "android": {
+                            "template_type": "BASIC",
+                            "basic_details": {
+                              "title": "{{title_es_v2}}",
+                              "message": "{{message_es_v2}}"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "scheduling_details": { "delivery_type": "ASAP" }
+              }'
       x-mint:
         content: |
           **Required fields:**
@@ -4225,9 +4350,10 @@ paths:
                 "request_id": "{{request_id}}",
                 "updated_by": "{{user_email}}",
                 "campaign_audience_limit": {
-                  "enabled": true,
-                  "max_count": {{max_user_count}},
-                  "frequency": "TOTAL"
+                  "is_campaign_audience_limit_enabled": true,
+                  "metric": "SENT",
+                  "frequency": "TOTAL",
+                  "limit": {{max_user_count}}
                 }
               }'
         - lang: Shell
@@ -4243,8 +4369,14 @@ paths:
                 "request_id": "{{request_id}}",
                 "updated_by": "{{user_email}}",
                 "conversion_goal_details": {
-                  "conversion_event": "{{conversion_event_name}}",
-                  "conversion_deadline_hours": 24
+                  "attribution_window_in_hours": 36,
+                  "goals": [
+                    {
+                      "goal_name": "Goal 1",
+                      "goal_event_name": "{{conversion_event_name}}",
+                      "is_primary_goal": true
+                    }
+                  ]
                 }
               }'
         - lang: Shell
@@ -4316,6 +4448,212 @@ paths:
                   "utm_source": "{{utm_source}}",
                   "utm_medium": "email",
                   "utm_campaign": "{{utm_campaign}}"
+                }
+              }'
+        - lang: Shell
+          label: Push - Update advanced (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "updated_by": "{{user_email}}",
+                "advanced": {
+                  "expiration_settings": {
+                    "expire_notification_after_value": 24,
+                    "expire_notification_after_type": "HOUR"
+                  },
+                  "platform_level_priority": {
+                    "ios_specific_priority": {
+                      "apns_priority": "10",
+                      "interruption_level": "Active"
+                    },
+                    "android_specific_priority": {
+                      "send_with_priority": true
+                    }
+                  }
+                }
+              }'
+        - lang: Shell
+          label: Push - Update control_group_details (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "updated_by": "{{user_email}}",
+                "control_group_details": {
+                  "is_campaign_control_group_enabled": true,
+                  "campaign_control_group_percentage": 10
+                }
+              }'
+        - lang: Shell
+          label: Push - Update basic_details.geofences (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "updated_by": "{{user_email}}",
+                "basic_details": {
+                  "geofences": {
+                    "name": "{{geofence_name}}",
+                    "latitude": "{{latitude}}",
+                    "longitude": "{{longitude}}",
+                    "radius": "{{radius_meters}}",
+                    "response_time_value": "5",
+                    "response_time_granularity": "MINUTES",
+                    "triggered_at": "ENTRY"
+                  }
+                }
+              }'
+        - lang: Shell
+          label: Push - Update platform_specific_details (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "updated_by": "{{user_email}}",
+                "basic_details": {
+                  "platform_specific_details": {
+                    "android": {
+                      "push_amp_plus_enabled": true
+                    },
+                    "ios": {
+                      "send_to_all_eligible_device": true
+                    }
+                  }
+                }
+              }'
+        - lang: Shell
+          label: Email - Update segmentation_details (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "EMAIL",
+                "campaign_delivery_type": "{{campaign_delivery_type}}",
+                "updated_by": "{{user_email}}",
+                "segmentation_details": {
+                  "included_filters": {
+                    "filter_operator": "and",
+                    "filters": [
+                      {
+                        "filter_type": "user_attributes",
+                        "data_type": "string",
+                        "name": "city",
+                        "operator": "in",
+                        "value": "{{city_value}}"
+                      }
+                    ]
+                  }
+                }
+              }'
+        - lang: Shell
+          label: Email - Update delivery_controls (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "EMAIL",
+                "campaign_delivery_type": "{{campaign_delivery_type}}",
+                "updated_by": "{{user_email}}",
+                "delivery_controls": {
+                  "bypass_dnd": false,
+                  "campaign_throttle_rpm": 2000,
+                  "count_for_frequency_capping": true
+                }
+              }'
+        - lang: Shell
+          label: Email - Update conversion_goal_details (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "EMAIL",
+                "campaign_delivery_type": "{{campaign_delivery_type}}",
+                "updated_by": "{{user_email}}",
+                "conversion_goal_details": {
+                  "attribution_window_in_hours": 36,
+                  "goals": [
+                    {
+                      "goal_name": "Goal 1",
+                      "goal_event_name": "{{conversion_event_name}}",
+                      "is_primary_goal": true
+                    }
+                  ]
+                }
+              }'
+        - lang: Shell
+          label: Email - Update control_group_details (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "EMAIL",
+                "campaign_delivery_type": "{{campaign_delivery_type}}",
+                "updated_by": "{{user_email}}",
+                "control_group_details": {
+                  "is_campaign_control_group_enabled": true,
+                  "campaign_control_group_percentage": 10
+                }
+              }'
+        - lang: Shell
+          label: Email - Update campaign_audience_limit (cURL)
+          source: |
+            curl -X PATCH 'https://api-0X.moengage.com/v5/campaigns/{{campaign_id}}' \
+              -H 'Authorization: Basic {{auth_token}}' \
+              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
+              -H 'X-MOE-Request-Id: {{request_id}}' \
+              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'Content-Type: application/json' \
+              -d '{
+                "request_id": "{{request_id}}",
+                "channel": "EMAIL",
+                "campaign_delivery_type": "{{campaign_delivery_type}}",
+                "updated_by": "{{user_email}}",
+                "campaign_audience_limit": {
+                  "is_campaign_audience_limit_enabled": true,
+                  "metric": "SENT",
+                  "frequency": "TOTAL",
+                  "limit": {{max_user_count}}
                 }
               }'
       parameters:

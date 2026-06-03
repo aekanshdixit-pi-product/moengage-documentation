@@ -2,10 +2,10 @@
 title: "Campaign content reference"
 description: "Reference for basic_details and campaign_content per channel, platform, and template type. Used by the Create Campaign and Update Campaign endpoints."
 keywords: ["campaign content", "basic_details", "Android push template", "iOS push template", "web push template", "email content", "html_content", "custom_template_id", "A/B variation", "locale"]
-icon: "swatch-book"
+icon: "layout-template"
 ---
 
-This reference covers the request-body components that define campaign content for Push and Email campaigns: `basic_details` (identifying metadata, platform targeting, and platform-specific flags) and `campaign_content` (the message payload per channel, platform, and template type, with locale and A/B variations). Used by [Create Campaign](/api/v5/create-campaigns/create-campaign) and [Update Campaign](/api/v5/update-campaigns/update-campaign).
+Use this reference to configure the request-body components that define campaign content for Push and Email campaigns. It covers `basic_details`, which carries identifying metadata, platform targeting, and platform-specific delivery flags, and `campaign_content`, which defines the message payload per channel, platform, and template type, including multi-locale and A/B variation support. Both components are used by [Create Campaign](/api/v5/create-campaigns/create-campaign) and [Update Campaign](/api/v5/update-campaigns/update-campaign).
 
 For audience targeting, scheduling, and delivery controls, see [Audience and delivery reference](/api/campaigns/audience-scheduling-delivery-reference).
 
@@ -272,7 +272,9 @@ When locales or A/B test variations are configured, `content` is keyed first by 
 - Additional locale keys must each match a value listed in `campaign_content.locales` (for example, `"en-US"`, `"es-ES"`). The `"default"` locale is implicitly present and must not be listed in `campaign_content.locales`.
 - The variation key (for example, `"variation_1"`) corresponds to the count in `variation_details.no_of_variations`. When no A/B test is configured, `"variation_1"` is used as the only key.
 
-```json
+<CodeGroup>
+
+```json Component only
 {
   "campaign_content": {
     "locales": ["es-ES"],
@@ -297,6 +299,90 @@ When locales or A/B test variations are configured, `content` is keyed first by 
   }
 }
 ```
+
+```json Create request body (ONE_TIME, multi-locale A/B)
+{
+  "channel": "PUSH",
+  "campaign_delivery_type": "ONE_TIME",
+  "created_by": "{{user_email}}",
+  "basic_details": {
+    "name": "{{campaign_name}}",
+    "platforms": ["ANDROID"]
+  },
+  "campaign_content": {
+    "locales": ["es-ES"],
+    "variation_details": {
+      "distribution_type": "MANUAL",
+      "no_of_variations": 2,
+      "manual_distribution_percentage": {
+        "variation_1": 50,
+        "variation_2": 50
+      }
+    },
+    "content": {
+      "default": {
+        "variation_1": {
+          "push": {
+            "android": {
+              "template_type": "BASIC",
+              "basic_details": {
+                "title": "{{title_default_v1}}",
+                "message": "{{message_default_v1}}",
+                "default_click_action": "DEEPLINKING",
+                "default_click_action_value": "{{url}}"
+              }
+            }
+          }
+        },
+        "variation_2": {
+          "push": {
+            "android": {
+              "template_type": "BASIC",
+              "basic_details": {
+                "title": "{{title_default_v2}}",
+                "message": "{{message_default_v2}}",
+                "default_click_action": "DEEPLINKING",
+                "default_click_action_value": "{{url}}"
+              }
+            }
+          }
+        }
+      },
+      "es-ES": {
+        "variation_1": {
+          "push": {
+            "android": {
+              "template_type": "BASIC",
+              "basic_details": {
+                "title": "{{title_es_v1}}",
+                "message": "{{message_es_v1}}",
+                "default_click_action": "DEEPLINKING",
+                "default_click_action_value": "{{url}}"
+              }
+            }
+          }
+        },
+        "variation_2": {
+          "push": {
+            "android": {
+              "template_type": "BASIC",
+              "basic_details": {
+                "title": "{{title_es_v2}}",
+                "message": "{{message_es_v2}}",
+                "default_click_action": "DEEPLINKING",
+                "default_click_action_value": "{{url}}"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "scheduling_details": { "delivery_type": "ASAP" }
+}
+```
+
+</CodeGroup>
 
 ## Android push content
 
@@ -851,7 +937,9 @@ Required for `STYLIZED_BASIC` and `SIMPLE_IMAGE_CAROUSEL`.
 
 `campaign_content.content.push.web`. Web push currently supports only `template_type: BASIC`.
 
-```json
+<CodeGroup>
+
+```json Component only
 {
   "campaign_content": {
     "content": {
@@ -878,6 +966,39 @@ Required for `STYLIZED_BASIC` and `SIMPLE_IMAGE_CAROUSEL`.
   }
 }
 ```
+
+```json Create request body (ONE_TIME)
+{
+  "channel": "PUSH",
+  "campaign_delivery_type": "ONE_TIME",
+  "created_by": "{{user_email}}",
+  "basic_details": {
+    "name": "{{campaign_name}}",
+    "platforms": ["WEB"]
+  },
+  "campaign_content": {
+    "content": {
+      "push": {
+        "web": {
+          "template_type": "BASIC",
+          "basic_details": {
+            "title": "{{title}}",
+            "message": "{{message}}",
+            "redirect_url": "{{redirect_url}}",
+            "image_url": "{{image_url}}"
+          },
+          "buttons": [
+            { "title": "{{button_label}}", "url": "{{button_url}}" }
+          ]
+        }
+      }
+    }
+  },
+  "scheduling_details": { "delivery_type": "ASAP" }
+}
+```
+
+</CodeGroup>
 
 ### Web basic details fields
 
@@ -1175,10 +1296,110 @@ The following rules span multiple sub-objects on this page. Each is enforced at 
 - Updates to `campaign_content` on event-triggered campaigns can take up to 30 minutes to propagate due to content caching.
 - The Update Push schema accepts `BROADCAST_LIVE_ACTIVITY` as a `campaign_delivery_type` value, but draft creation does not. A draft cannot be transitioned to a Live Activity campaign through V5.
 
+<Tabs>
+<Tab title="campaign_content (Push)">
+
+```json
+{
+  "channel": "PUSH",
+  "campaign_delivery_type": "{{campaign_delivery_type}}",
+  "updated_by": "{{user_email}}",
+  "campaign_content": {
+    "content": {
+      "push": {
+        "android": {
+          "template_type": "BASIC",
+          "basic_details": {
+            "title": "{{notification_title}}",
+            "message": "{{notification_message}}"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+</Tab>
+<Tab title="campaign_content (Email)">
+
+```json
+{
+  "channel": "EMAIL",
+  "campaign_delivery_type": "{{campaign_delivery_type}}",
+  "updated_by": "{{user_email}}",
+  "campaign_content": {
+    "content": {
+      "email": {
+        "subject": "{{email_subject}}",
+        "sender_name": "{{sender_name}}",
+        "from_address": "{{from_email}}",
+        "html_content": "{{html_body}}"
+      }
+    }
+  }
+}
+```
+
+</Tab>
+<Tab title="platform_specific_details">
+
+```json
+{
+  "channel": "PUSH",
+  "campaign_delivery_type": "{{campaign_delivery_type}}",
+  "updated_by": "{{user_email}}",
+  "basic_details": {
+    "platform_specific_details": {
+      "android": {
+        "push_amp_plus_enabled": true
+      },
+      "ios": {
+        "send_to_all_eligible_device": true
+      }
+    }
+  }
+}
+```
+
+</Tab>
+<Tab title="control_group_details (Push)">
+
+```json
+{
+  "channel": "PUSH",
+  "campaign_delivery_type": "{{campaign_delivery_type}}",
+  "updated_by": "{{user_email}}",
+  "control_group_details": {
+    "is_campaign_control_group_enabled": true,
+    "campaign_control_group_percentage": 10
+  }
+}
+```
+
+</Tab>
+<Tab title="control_group_details (Email)">
+
+```json
+{
+  "channel": "EMAIL",
+  "campaign_delivery_type": "{{campaign_delivery_type}}",
+  "updated_by": "{{user_email}}",
+  "control_group_details": {
+    "is_campaign_control_group_enabled": true,
+    "campaign_control_group_percentage": 10
+  }
+}
+```
+
+</Tab>
+</Tabs>
+
 ## See also
 
 - [Audience and delivery reference](/api/campaigns/audience-scheduling-delivery-reference) — `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, `advanced`, and `geofences`.
 - [Create Campaign](/api/v5/create-campaigns/create-campaign) — required fields, happy-path cURLs, error responses.
 - [Update Campaign](/api/v5/update-campaigns/update-campaign) — per-state edit restrictions, publish action.
+- [Update Campaign Status](/api/v5/update-campaigns/update-campaign-status) — `STOP`, `PAUSE`, `RESUME` transitions.
 - [Validate Campaign](/api/v5/create-campaigns/validate-campaign) — pre-publish validation check.
 - [Campaign drafts overview](/api/campaigns/campaign-draft-overview) — lifecycle, channels, supported delivery types.
