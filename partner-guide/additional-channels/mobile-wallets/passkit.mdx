@@ -52,8 +52,7 @@ From the MoEngage Dashboard, make a note of your Workspace ID and Data API Key.
    - Enter API key (copied from Step 1)
    - Enter Workspace ID (copied from Step 1)
    - Provide a name to identify your MoEngage account
-   - Select data center- [Read more](/user-guide/data/key-concepts/data-centers-in-moengage) about MoEngage data centers\\
-     ![Screenshot\_2022-06-24\_at\_12.19.43\_AM.png](/images/partner_7267126076052.png)
+   - Select data center- [Read more](/user-guide/data/key-concepts/data-centers-in-moengage) about MoEngage data centers\\ <img src="/images/partner_7267126076052.png" alt="Screenshot_2022-06-24_at_12.19.43_AM.png" />
 5. Enable Integration toggle
 6. Select the Pass events what you can to use in MoEngage to trigger or personalize your campaigns with.
 7. Click "Save".
@@ -80,13 +79,15 @@ In order to build your SmartPass Links, you will need the following:
 
 Your Passkit Program/Project URL will be on the distribution tab of your Passkit project. Make a new variable with the value being this URL:
 
-`{% set projectUrl = "[https://pub1.pskt.io/c/a4hrop](https://pub1.pskt.io/c/a4hrop)" %}`
+`{% set projectUrl = "https://pub1.pskt.io/c/a4hrop" %}`
 
 ### Step 2: Generate your payload
 
 The payload can contain the coupon / member, PII & meta data that needs to go into the pass record:
 
-```json
+<CodeGroup>
+
+```json JSON wrap
 { 
     "person.externalId": "UserAttribute['MoEngage_ID']",
     "person.forename": "UserAttribute['First Name']", 
@@ -97,15 +98,19 @@ The payload can contain the coupon / member, PII & meta data that needs to go in
 }
 ```
 
+</CodeGroup>
+
 _For a full list of supported fields have a look here:[https://github.com/PassKit/smart-pass-link-from-csv-generator#available-field-names](https://github.com/PassKit/smart-pass-link-from-csv-generator#available-field-names)_
 
 For this tutorial, we will use the above payload. We now need to convert this payload into the JINJA -compatible format and store it inside a separate variable:
 
-JINJA
+<CodeGroup>
 
-```text
-{% set passData = "{"person.externalId": "" + UserAttribute['MoEngage_ID']|default('12345') + "","person.surname": "" + UserAttribute['Last Name'] + "","person.forename": "" + UserAttribute['First Name'] + "","person.emailAddress": "" + UserAttribute['Email (Standard)'] + "","person.displayName":"" + UserAttribute['First Name'] + " " + UserAttribute['Last Name'] + "","person.mobileNumber":"" + UserAttribute['Mobile Number (Standard)'] + "",}"" %}
+```jinja JINJA wrap
+{% set passData = "{\"person.externalId\": \"" + UserAttribute['MoEngage_ID']|default('12345') + "\",\"person.surname\": \"" + UserAttribute['Last Name'] + "\",\"person.forename\": \"" + UserAttribute['First Name'] + "\",\"person.emailAddress\": \"" + UserAttribute['Email (Standard)'] + "\",\"person.displayName\":\"" + UserAttribute['First Name'] + " " + UserAttribute['Last Name'] + "\",\"person.mobileNumber\":\"" + UserAttribute['Mobile Number (Standard)'] + "\",}\"" %}
 ```
+
+</CodeGroup>
 
 Double-check the quotation marks as well as the syntax to ensure the email is correctly parsed.
 
@@ -121,7 +126,7 @@ The next step is to encode your payload into a base64 format:
 
 Once you have the encoded payload, your final URL string should be in this format:
 
-```text
+```text wrap
 https://pub1.pskt.io/c/&#123;programId or campaignId}?data={base64JsonPayload}&sig={signatureHash}
 ```
 
@@ -147,7 +152,7 @@ For the above sample let's create a SHA256 HMAC of the sample link:
 
 Now all you need to do is stitch all the above variables together to form the SmartPass URL:
 
-```text
+```text wrap
 {% set longURL = projectUrl + "?data=" + base64JsonPayload + "&sig=" + sig %}
 ```
 
@@ -155,29 +160,35 @@ Now all you need to do is stitch all the above variables together to form the Sm
 
 Your final code will look something like this:
 
-JINJA
+<CodeGroup>
 
-```text
-{% set projectUrl = "https://pub1.pskt.io/c/a4hrop" %} |     {% set passData = "{"person.externalId": "" + UserAttribute['MoEngage_ID']|default('12345') + "","person.surname": "" + UserAttribute['Last Name'] + "","person.forename": "" + UserAttribute['First Name'] + "","person.emailAddress": "" + UserAttribute['Email (Standard)'] + "","person.displayName":"" + UserAttribute['First Name'] + " " + UserAttribute['Last Name'] + "","person.mobileNumber":"" + UserAttribute['Mobile Number (Standard)'] + "",}"" %} |     {% set base64JsonPayload = passData|base64encode %} {% set url = projectUrl + "?data=" + base64JsonPayload %} |     {% set sig = url|convertToSHA256('0WfoVtZ7MrJSfrHVuiESxZ') %} {% set longURL = projectUrl + "?data=" + base64JsonPayload + "&sig=" + sig %}
+```jinja JINJA wrap
+{% set projectUrl = "https://pub1.pskt.io/c/a4hrop" %}
+{% set passData = "{\"person.externalId\": \"" + UserAttribute['MoEngage_ID']|default('12345') + "\",\"person.surname\": \"" + UserAttribute['Last Name'] + "\",\"person.forename\": \"" + UserAttribute['First Name'] + "\",\"person.emailAddress\": \"" + UserAttribute['Email (Standard)'] + "\",\"person.displayName\":\"" + UserAttribute['First Name'] + " " + UserAttribute['Last Name'] + "\",\"person.mobileNumber\":\"" + UserAttribute['Mobile Number (Standard)'] + "\",}\"" %}
+{% set base64JsonPayload = passData|base64encode %}
+{% set url = projectUrl + "?data=" + base64JsonPayload %}
+{% set sig = url|convertToSHA256('0WfoVtZ7MrJSfrHVuiESxZ') %}
+{% set longURL = projectUrl + "?data=" + base64JsonPayload + "&sig=" + sig %}
 ```
+
+</CodeGroup>
 
 Add a Save Pass Button according to your design specifications from [Google](https://developers.google.com/pay/passes/guides/get-started/api-guidelines/button-guidelines) (Android) and [Apple](https://developer.apple.com/wallet/Add-to-Apple-Wallet-Guidelines.pdf) (iOS) respectively.
 
 1. Insert a new image inside your template.
-2. In our File Manager, click on "Import" and then select URL.\\
-   ![importimage.png](/images/partner_22017212132628.png)
+2. In our File Manager, click on "Import" and then select URL.\\ <img src="/images/partner_22017212132628.png" alt="importimage.png" />
 
 For your reference, here are the URLs:
 
 For Android,
 
-```text
+```text wrap
 https://messagecontent-public.s3.amazonaws.com/wallet/add-to-wallet-buttons/Save_to_Google_Pay.svg
 ```
 
 For Apple,
 
-```text
+```text wrap
 https://messagecontent-public.s3.amazonaws.com/wallet/add-to-wallet-buttons/Add_to_Apple_Wallet.svg
 ```
 
