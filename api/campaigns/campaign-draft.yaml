@@ -3289,19 +3289,24 @@ paths:
         - lang: Shell
           label: Push - EVENT_TRIGGERED
           source: |
-            curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
+            # Cart-abandonment push: fires 1 hour after cart_abandoned is tracked.
+            # trigger_condition defines when the campaign fires per user.
+            # scheduling_details.start_time / expiry_time define the campaign's
+            # active window — only triggers that occur within this window are sent.
+            # delivery_controls.bypass_dnd is required for event-triggered Push campaigns.
+            curl -X POST 'https://api-01.moengage.com/v5/campaigns' \
               -H 'Authorization: Basic {{auth_token}}' \
               -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'X-MOE-Request-Id: a1b2c3d4-e5f6-7890-abcd-ef1234567890' \
+              -H 'Idempotency-Key: f47ac10b-58cc-4372-a567-0e02b2c3d479' \
               -H 'Content-Type: application/json' \
               -d '{
-                "request_id": "{{request_id}}",
+                "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                 "channel": "PUSH",
                 "campaign_delivery_type": "EVENT_TRIGGERED",
-                "created_by": "{{user_email}}",
+                "created_by": "marketer@example.com",
                 "basic_details": {
-                  "name": "{{campaign_name}}",
+                  "name": "Cart Abandonment - Push",
                   "platforms": ["ANDROID", "IOS"]
                 },
                 "trigger_condition": {
@@ -3310,7 +3315,7 @@ paths:
                     "filters": [
                       {
                         "filter_type": "actions",
-                        "action_name": "{{trigger_event_name}}",
+                        "action_name": "cart_abandoned",
                         "execution": { "type": "atleast", "count": 1 },
                         "executed": true
                       }
@@ -3327,8 +3332,19 @@ paths:
                       "android": {
                         "template_type": "BASIC",
                         "basic_details": {
-                          "title": "{{title}}",
-                          "message": "{{message}}"
+                          "title": "Items in your cart",
+                          "message": "You left something behind. Complete your purchase before it sells out.",
+                          "default_click_action": "DEEPLINKING",
+                          "default_click_action_value": "myapp://cart"
+                        }
+                      },
+                      "ios": {
+                        "template_type": "BASIC",
+                        "basic_details": {
+                          "title": "Items in your cart",
+                          "message": "You left something behind. Complete your purchase before it sells out.",
+                          "default_click_action": "DEEPLINKING",
+                          "default_click_action_value": "myapp://cart"
                         }
                       }
                     }
@@ -3336,10 +3352,14 @@ paths:
                 },
                 "scheduling_details": {
                   "delivery_type": "AT_FIXED_TIME",
-                  "start_time": "{{start_time}}",
-                  "expiry_time": "{{expiry_time}}"
+                  "start_time": "2026-07-01T00:00:00",
+                  "expiry_time": "2026-12-31T23:59:59"
                 },
-                "delivery_controls": { "bypass_dnd": false }
+                "delivery_controls": {
+                  "bypass_dnd": false,
+                  "minimum_delay_between_two_notification_in_hour": 24,
+                  "ignore_global_minimum_delay": false
+                }
               }'
         - lang: Shell
           label: Push - BUSINESS_EVENT_TRIGGERED
@@ -3592,24 +3612,28 @@ paths:
         - lang: Shell
           label: Email - EVENT_TRIGGERED
           source: |
-            curl -X POST 'https://api-0X.moengage.com/v5/campaigns' \
+            # Order-confirmation email: fires immediately (ASAP) when order_placed is tracked.
+            # trigger_condition defines when the campaign fires per user.
+            # scheduling_details.start_time / expiry_time define the campaign's
+            # active window — only triggers that occur within this window are sent.
+            curl -X POST 'https://api-01.moengage.com/v5/campaigns' \
               -H 'Authorization: Basic {{auth_token}}' \
               -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
+              -H 'X-MOE-Request-Id: b2c3d4e5-f6a7-8901-bcde-f12345678901' \
+              -H 'Idempotency-Key: a1b2c3d4-58cc-4372-b678-1e13c3d4e580' \
               -H 'Content-Type: application/json' \
               -d '{
-                "request_id": "{{request_id}}",
+                "request_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
                 "channel": "EMAIL",
                 "campaign_delivery_type": "EVENT_TRIGGERED",
-                "created_by": "{{user_email}}",
+                "created_by": "marketer@example.com",
                 "basic_details": {
-                  "name": "{{campaign_name}}",
+                  "name": "Order Confirmation - Email",
                   "content_type": "TRANSACTIONAL"
                 },
                 "connector": {
-                  "connector_type": "{{connector_type}}",
-                  "connector_name": "{{connector_name}}"
+                  "connector_type": "sendgrid",
+                  "connector_name": "SendGrid Production"
                 },
                 "trigger_condition": {
                   "included_filters": {
@@ -3617,7 +3641,7 @@ paths:
                     "filters": [
                       {
                         "filter_type": "actions",
-                        "action_name": "{{trigger_event_name}}",
+                        "action_name": "order_placed",
                         "execution": { "type": "atleast", "count": 1 },
                         "executed": true
                       }
@@ -3628,17 +3652,17 @@ paths:
                 "campaign_content": {
                   "content": {
                     "email": {
-                      "subject": "{{email_subject}}",
-                      "sender_name": "{{sender_name}}",
-                      "from_address": "{{from_email}}",
-                      "html_content": "{{html_body}}"
+                      "subject": "Your order has been placed",
+                      "sender_name": "Example Store",
+                      "from_address": "orders@example.com",
+                      "html_content": "<p>Hi {{UserAttribute['\''First Name'\'']}}, your order has been confirmed. We will send a shipping update soon.</p>"
                     }
                   }
                 },
                 "scheduling_details": {
                   "delivery_type": "AT_FIXED_TIME",
-                  "start_time": "{{start_time}}",
-                  "expiry_time": "{{expiry_time}}"
+                  "start_time": "2026-07-01T00:00:00",
+                  "expiry_time": "2026-12-31T23:59:59"
                 }
               }'
         - lang: Shell
