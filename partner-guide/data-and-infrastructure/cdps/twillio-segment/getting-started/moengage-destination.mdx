@@ -182,6 +182,44 @@ After your sources are successfully configured, you must establish MoEngage as a
     6. Scroll to the end of the page to optionally test your connection. <img src="/images/partner_38197516377620.png" />
     7. After the configuration, click **Save**. Ensure these values remain unchanged.
 
+    <Info>
+      The Twilio Segment integration supports the MoEngage Portfolio. You can route events to specific projects within a Portfolio-enabled workspace by using the Project Name attribute.
+    </Info>
+
+    ## Portfolio Support
+
+    If Portfolio is enabled in your MoEngage workspace, you can route events to specific projects by providing the project name in your Segment payload according to the following requirements:
+
+    - Map the Project Name attribute in Segment to your MoEngage project name.
+    - Ensure the value for this field exactly matches the project names configured in your MoEngage Portfolio.
+
+    ### Event Route to Projects
+
+    For Portfolio-enabled workspaces, MoEngage uses attribute-based routing. This allows you to send events from Segment to specific projects. To route events, you must map the project identifier from your Segment properties to the dedicated MoEngage attribute: Project Name (`moe_project_name`).
+
+    ### Event Ingestion Rules
+
+    The following behavior describes how MoEngage handles event ingestion based on the Project Name mapping:
+
+    - **Attribute mapping**: Map your source property (for example, brand_name or app_id in Segment) to the MoEngage attribute Project Name. When this mapping is present, MoEngage identifies the target project based on the attribute value.
+    - **Exact name matching**: The value passed in the source column must exactly match the Project Name configured in your MoEngage portfolio settings.
+    - **Fallback behavior (mismatched or blank)**: If the Project Name field is left blank, the mapping is missing, or the value does not exactly match a configured project, the event is ingested at the global portfolio level.
+
+    <Warning>
+      Data ingested at the portfolio level is not associated with any specific project and cannot be used for project-specific analysis, segmentation, or targeting.
+    </Warning>
+
+    For more information, refer to [Portfolio](/user-guide/settings/account/portfolio/portfolio) and [Portfolio: Data Ingestion and Management](https://www.moengage.com/docs/user-guide/data/key-concepts/portfolio-data-ingestion-and-management#event-attributes-project-level).
+
+    <Warning>
+      **Limitations**
+
+      Project-level routing for Segment is only available for events. The following features are managed at the global portfolio level:
+
+      - **User sync**: Not supported at the project level. Users are tracked at the global portfolio level by default during outbound user syncs.
+      - **Cohort sync**: Not supported at the project level.
+    </Warning>
+
     ### Update Existing Users Only
 
     When making an Identity call, you can create new users in MoEngage. If you select the **Update existing users only** option and the forwarded user is not already present in MoEngage, a new user will not be created; only the properties of existing users will be updated. If the setting to create new users is set to **Yes** , only the properties of existing users will be updated. (The value true is implied by **Yes**.)
@@ -234,3 +272,35 @@ Using Segment Engage, you can create segments of users based on data you have al
 The existing Segment-to-MoEngage integration **remains unchanged** and **requires no configuration updates** on your MoEngage destination.
 
 Segment Unify works upstream to ensure the `Identify` calls sent to MoEngage contain the most accurate, stitched customer profile. Your MoEngage setup will automatically leverage the new, unified user traits and event data flowing from Segment's Unify layer.
+
+# Rate Limits
+
+To maintain platform stability, MoEngage limits ingestion of Segment data to a maximum of 500 requests per second (RPS) per workspace. If your workspace exceeds this limit, MoEngage returns an HTTP `429 (Too Many Requests)` status code.
+
+Segment typically handles rate-limiting instances automatically. Refer to Segment's default retry policy to understand how rate limiting affects your data flow. For more information, see the Segment documentation.
+
+**Retry Exhaustion**: If Segment exhausts all retry attempts for a batch of data, you must contact the Segment Support Team to replay the failed requests.
+
+# Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="Does Data Exports guarantee the latest user attributes?">
+    No, Data Exports is primarily built to export your Events in near real-time and user attributes in MoEngage are updated asynchronously so it is currently not possible to guarantee the latest values of user attributes in the exports.
+  </Accordion>
+
+  <Accordion title="How soon will I start getting the data?">
+    It typically takes up to 30 minutes for the automated data exports to be set up for your account and for you to start seeing data there.
+  </Accordion>
+
+  <Accordion title="Can I export additional events at a later time?">
+    Yes, if you need to export new events at a later time, you can always edit your configuration on the App Marketplace and get the new events added to your exports.
+  </Accordion>
+
+  <Accordion title="Can I export historical data using Automated Data Exports?">
+    As of now, you cannot export historical data using Automated Data Exports. Once configured, you will start seeing data for each event from the time you enabled your exports.
+  </Accordion>
+
+  <Accordion title="Is there any pricing involved for Automated Data Exports?">
+    If your billing plan does not cover this already and you need to get this enabled at a later time, you would need to work with your Customer Success Manager to get this included in your billing plan. Based on the amount of data that MoEngage will place in your Data warehouse/Partner/API on a monthly basis, this could lead to additional charges.
+  </Accordion>
+</AccordionGroup>
