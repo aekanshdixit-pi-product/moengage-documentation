@@ -31,69 +31,76 @@ Within MoEngage campaigns, you can set up a Pass Issuance link to generate a uni
 ### Step 1: Create a new Pass Issuance Link on Skycore
 
 1. Please follow the steps here to [Create a New Pass Issuance Link](https://www.skycore.com/help/pass-issuance-links-2/).
-2. Once created, the link will show up on _Pass Issuance Links_ tab.\
-   _Note- MoEngage only supports SHA256 (with and without salt) encryptions._
+2. Once created, the link shows up on the _Pass Issuance Links_ tab.
+
+   _Note: MoEngage only supports SHA256 (with and without salt) encryptions._
+
+   ![Pass Issuance Links tab on the Skycore dashboard](/images/partner_6842607624468.png)
 3. Click _Get Link_. Your link will look like this:
 
-<img src="/images/partner_6842607624468.png" alt="PassLinks.png" /> 
-
-[h](https://d2c.skycore.com/wallet/gc/&#123;Unique-Link-ID&#125;?&#123;Paramater-1&#125;=&#123;Value-1&#125;&&#123;Paramater-2&#125;=&#123;Value-2&#125)hkl
+   ```
+   https://d2c.skycore.com/wallet/gc/{Unique-Link-ID}?{Paramater-1}={Value-1}&{Paramater-2}={Value-2} ... &checksum={Hashed-Value}
+   ```
 
 ### Step 2: Create and encode payload variable
 
-1. Go to step 2 of your campaign creation
+1. Go to step 2 of your campaign creation.
 
-![Template.png](/images/partner_6844420416020.png)
-
+   ![Campaign content editor in MoEngage](/images/partner_6844420416020.png)
 2. Inside your template, create a passlink (using the link copied in Step 1) within an HTML Block:
 
 ```django
-&#123;% set passLink = "https://d2c.skycore.com/wallet/gc/7c59b26bcxxxxxxxxxxxxa5043bf033?user-email=" + &#123;&#123;UserAttribute['Email (Standard)']
+{% set passLink = "https://d2c.skycore.com/wallet/gc/7c59b26bcxxxxxxxxxxxxa5043bf033?user-email=" + {{UserAttribute['Email (Standard)']|default('MOE_NOT_SEND')}} + "&user-phone=" + {{UserAttribute['Mobile Number (Standard)']|default('MOE_NOT_SEND')}} + "&pass-id=MOED" + {{UserAttribute['First Name']|default('MOE_NOT_SEND')}} + "2022&barcode-value=MOED" + {{UserAttribute['First Name']|default('MOE_NOT_SEND')}} + "2022&message4=Enter this coupon code while checking out." %}
 ```
 
-|default('MOE\_NOT\_SEND')}} \+ "&user-phone=" \+ {{UserAttribute\['Mobile Number (Standard)'\]|default('MOE\_NOT\_SEND')}} \+ "&pass-id=MOED" \+ {{UserAttribute\['First Name'\]|default('MOE\_NOT\_SEND')}} \+ "2022&barcode-value=MOED" \+ {{UserAttribute\['First Name'\] |
+Hash the passlink using SHA256 (no salt):
 
-default('MOE\_NOT\_SEND')}} \+ "2022&message4=Enter this coupon code while checking out." %}
-
-Hash the passlink this using SHA256 (no salt):
-
-|     {% set hash = passLink|convertToSHA256NoSalt() %}
+```django
+{% set hash = passLink|convertToSHA256NoSalt() %}
+```
 
 Append this hash as a **checksum** parameter in the **passLink** variable:
 
-{% set finalPassLink = passLink \+ "&checksum=" \+ hash %}
+```django
+{% set finalPassLink = passLink + "&checksum=" + hash %}
+```
 
 ### Step 3: Preview your URL
 
 You can print the variables in the template or use the [Personalized Previews](/user-guide/campaigns-and-channels/getting-started/message-personalization/personalized-preview) to preview and validate
 
-![preview.png](/images/partner_6844480370452.png)
+![Personalized preview of the pass link in the template](/images/partner_6844480370452.png)
 
 ### Step 4: Add Save Pass option in your MoEngage campaigns
 
 Add a Save Pass Button according to your design specifications from [Google](https://developers.google.com/pay/passes/guides/get-started/api-guidelines/button-guidelines) (Android) and [Apple](https://developer.apple.com/wallet/Add-to-Apple-Wallet-Guidelines.pdf) (iOS) respectively.
 
 1. Insert a new image inside your template.
-2. In our File Manager, click on "Import" and then select URL.\
-   <img src="/images/partner_6844860412948.png" alt="importimage.png" />
+2. In your File Manager, click **Import** and then select **URL**.
 
-For your reference, here are the URLs:
+   ![Import an image by URL in the Skycore File Manager](/images/partner_6844860412948.png)
 
-For Android,
+   For your reference, here are the URLs.
 
-[https://messagecontent-public.s3.amazonaws.com/wallet/add-to-wallet-buttons/Save\_to\_Google\_Pay.svg](https://messagecontent-public.s3.amazonaws.com/wallet/add-to-wallet-buttons/Save_to_Google_Pay.svg)
+   For Android:
 
-For Apple,
+   ```
+   https://messagecontent-public.s3.amazonaws.com/wallet/add-to-wallet-buttons/Save_to_Google_Pay.svg
+   ```
 
-[https://messagecontent-public.s3.amazonaws.com/wallet/add-to-wallet-buttons/Add\_to\_Apple\_Wallet.svg](https://messagecontent-public.s3.amazonaws.com/wallet/add-to-wallet-buttons/Add_to_Apple_Wallet.svg)
+   For Apple:
 
+   ```
+   https://messagecontent-public.s3.amazonaws.com/wallet/add-to-wallet-buttons/Add_to_Apple_Wallet.svg
+   ```
 3. Select the appropriate image to show.
-
 4. In the URL section, type:
 
-{{finalPassLink}}
+   ```
+   {{finalPassLink}}
+   ```
 
-![buttonpreview.png](/images/partner_6844964322196.png)
+   ![Save Pass button preview in the template](/images/partner_6844964322196.png)
 
 Now you are all set. You can test the campaign and verify.
 
@@ -113,45 +120,57 @@ Your payload varies depending on the type of pass and template that you want to 
 
 Let's consider the following use-case: _A marketer wants to mark the pass as void, if the user uninstalls the app._ So, we will be working with _Coupon APIs_. And will need to update the pass that was generated by the campaign earlier.
 
-#### API endpoint:
+#### API endpoint
 
-POST [https://api.skycore.com/API/http/v3/](https://api.skycore.com/API/http/v3/)
+```
+POST https://api.skycore.com/API/http/v3/
+```
 
 #### Payload
 
 ```json
-&#123;
-      "action":"updatepassdata",
+{
+  "action": "updatepassdata",
+  "pass-id": "MOED{{UserAttribute['First Name']|default('MOE_NOT_SEND')}}2022",
+  "pass-template-id": "d5144e25f17*************************beaa",
+  "pass-data": {
+    "pass-status": "voided",
+    "pass-update-notification": "Your pass has expired."
+  }
+}
 ```
-
-|           "pass-id":"MOED{{UserAttribute\['First Name'\]|default('MOE\_NOT\_SEND')}}2022", "pass-template-id": "d5144e25f17\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*beaa", "pass-data": { "pass-status":"voided", "pass-update-notification":"Your pass has expired." } }
 
 ### Step 2: Create a connector campaign on MoEngage
 
-To create a connector campaign on MoEngage,
+To create a connector campaign on MoEngage:
 
-1. Navigate to Create Campaign \>\> Connectors \>\> Custom \>\> Event triggered\
-   <img src="/images/partner_45965949042452.png" alt="Screenshot_2022-02-21_at_10.48.46_PM.png" />
-2. On step 2 of the campaign,
-   - Select method as POST
-   - Add Webhook URL as:
-     [https://api.skycore.com/API/http/v3/](https://api.skycore.com/API/http/v3/)
-   - In Headers, add
-     1. "X-Api-Key" as the API key you copied from the Skycore Settings page.
-     2. "Content-Type" as "application/json".
-   - In Body, choose Raw and type your customised payload. You can type "@" to add personalised content. For our above example our payload looks like this:
+1. Navigate to **Create Campaign** > **Connectors** > **Custom** > **Event triggered**.
 
-```json
-&#123;
-    "action":"updatepassdata",
-```
+   ![Create a custom event-triggered connector campaign](/images/partner_45965949042452.png)
+2. On step 2 of the campaign:
+   - Select the method as **POST**.
+   - Add the Webhook URL as: `https://api.skycore.com/API/http/v3/`
+   - In Headers, add:
+     - `X-Api-Key` as the API key you copied from the Skycore Settings page.
+     - `Content-Type` as `application/json`.
+   - In Body, choose **Raw** and type your customised payload. You can type "@" to add personalised content. For the example above, the payload looks like this:
 
-|                "pass-id":"MOED{{UserAttribute\['First Name'\]|default('MOE\_NOT\_SEND')}}2022", "pass-template-id": "d5144e25f17\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*beaa", "pass-data": {\
-"pass-status":"voided", "pass-update-notification":"Your pass has expired." } }
+   ```json
+   {
+     "action": "updatepassdata",
+     "pass-id": "MOED{{UserAttribute['First Name']|default('MOE_NOT_SEND')}}2022",
+     "pass-template-id": "d5144e25f17*************************beaa",
+     "pass-data": {
+       "pass-status": "voided",
+       "pass-update-notification": "Your pass has expired."
+     }
+   }
+   ```
 
-<img src="/images/partner_6878528076308.png" alt="connector-2.png" /> 3. At this point, your campaign should be ready to test and send. You can also test your connector configuration using the Test functionality available on Step 2 of Create Connector Campaign.
+   ![Connector campaign body configuration](/images/partner_6878528076308.png)
+3. At this point, your campaign should be ready to test and send. You can also test your connector configuration using the Test functionality available on step 2 of Create Connector Campaign.
 
-![Screen\_Shot\_2022-02-22\_at\_11.12.42\_AM.png](/images/partner_45965930473620.png)
+   ![Test the connector campaign configuration](/images/partner_45965930473620.png)
 
 If your test pass is successfully updated, your set-up is good to go. You can go ahead and Publish the campaign.
 
