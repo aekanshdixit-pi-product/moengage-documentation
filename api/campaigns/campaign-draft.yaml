@@ -5888,43 +5888,8 @@ paths:
 
         No message is sent. This endpoint is a read-only inspection tool.
 
-        **Supported channels:** Push, Email, SMS
-
-        **Personalization sources:** User attributes, event attributes, custom templates, content blocks, content APIs, product sets
-
       x-mint:
         content: |
-          #### V1 equivalent
-
-          The V1 equivalent endpoint for reference:
-
-          ```shell
-          curl -X POST 'https://api-0X.moengage.com/core-services/v1/personalization/preview' \
-            -H 'Authorization: Basic {{auth_token}}' \
-            -H 'MOE-APPKEY: {{workspace_id}}' \
-            -H 'Content-Type: application/json' \
-            -d '{
-              "request_id": "{{request_id}}",
-              "channel": "PUSH",
-              "user_identification": {
-                "type": "USER_ATTRIBUTE_UNIQUE_ID",
-                "value": "{{user_id}}"
-              },
-              "campaign_content": {
-                "content": {
-                  "push": {
-                    "android": {
-                      "template_type": "BASIC",
-                      "basic_details": {
-                        "title": "Hello, {{ user.first_name }}!",
-                        "message": "{{ user.last_order_item }} is waiting for you."
-                      }
-                    }
-                  }
-                }
-              }
-            }'
-          ```
 
           #### Rate Limits
 
@@ -6104,27 +6069,13 @@ paths:
       description: |
         Retrieves the execution history of a Periodic or Business Event-triggered campaign. Each execution (child campaign) represents one run of the parent campaign and returns the child's ID, send time, status, and the total number of executions to date.
 
-        **Supported campaign types:** Periodic, Business Event-triggered
-
-        **Supported channels:** Push, Email
 
       x-mint:
         content: |
-          #### V1 equivalent
+         
+          **Supported campaign types:** Periodic, Business Event-triggered
 
-          The V1 equivalent endpoint for reference:
-
-          ```shell
-          curl -X POST 'https://api-0X.moengage.com/core-services/v1/campaigns/{{parent_campaign_id}}/executions' \
-            -H 'Authorization: Basic {{auth_token}}' \
-            -H 'MOE-APPKEY: {{workspace_id}}' \
-            -H 'Content-Type: application/json' \
-            -d '{
-              "request_id": "{{request_id}}",
-              "limit": 15,
-              "page": 1
-            }'
-          ```
+          **Supported channels:** Push, Email
 
           #### Rate Limits
 
@@ -6260,38 +6211,25 @@ paths:
       description: |
         Adds or removes users from the Global Control Group (GCG) in bulk via a CSV file. The CSV must contain a single `uid` column. Once submitted, MoEngage processes the file asynchronously and sends an email summary to the `updated_by` address with counts of successfully processed and failed users.
 
-        **File requirements:** Single `uid` column, under 300 MB, publicly accessible Amazon S3 URL
-
-        **Note:** The GCG must already be initialised using the **Upload Users** option in the MoEngage dashboard. The **Random allocation** option is not supported by this API.
 
       x-mint:
         content: |
-          #### V1 equivalent
+          
+           **File requirements:** Single `uid` column, under 300 MB, publicly accessible Amazon S3 URL
 
-          The V1 equivalent endpoint for reference:
+           <Info>
+           The GCG must already be initialised using the **Upload Users** option in the MoEngage dashboard. The **Random allocation** option is not supported by this API.
+           </Info>
+           
+           #### Rate Limits
 
-          ```shell
-          curl -X PUT 'https://api-0X.moengage.com/core-services/v1/global-control-group/users' \
-            -H 'Authorization: Basic {{auth_token}}' \
-            -H 'MOE-APPKEY: {{workspace_id}}' \
-            -H 'Content-Type: application/json' \
-            -d '{
-              "request_id": "{{request_id}}",
-              "file_url": "https://s3.amazonaws.com/{{bucket}}/gcg_users.csv",
-              "action_type": "add",
-              "updated_by": "{{user_email}}"
-            }'
-          ```
+           | Rate Limit Name | Rate Limit |
+           | :--- | :--- |
+           | Update GCG per minute | 10 requests per minute |
 
-          #### Rate Limits
-
-          | Rate Limit Name | Rate Limit |
-          | :--- | :--- |
-          | Update GCG per minute | 10 requests per minute |
-
-          <Note>
-          Each file-processing request must complete before the next one is submitted. Submitting a second request while the first is still processing returns `429`.
-          </Note>
+           <Note>
+           Each file-processing request must complete before the next one is submitted. Submitting a second request while the first is still processing returns `429`.
+           </Note>
 
       x-codeSamples:
         - lang: Shell
