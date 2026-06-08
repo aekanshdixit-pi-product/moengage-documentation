@@ -4998,63 +4998,7 @@ paths:
         type, and creator.
       x-mint:
         content: |
-          **Migration notes from V1**
-
-          In V1, `POST /v1/campaigns/search` handled both single-campaign retrieval and
-          multi-campaign filtering through a single endpoint. V5 separates these into two
-          distinct endpoints:
-
-          - Single-campaign retrieval by ID: `GET /v5/campaigns/{campaign_id}`
-          - Search and filtering across multiple campaigns: `POST /v5/campaigns/search`
-
-          Two filter keys under `campaign_fields` were renamed between V1 and V5. Refer to
-          the `campaign_fields` schema for the updated key names.
-
-          **SMS campaigns**
-
-          SMS campaigns are included in search results when `"SMS"` is passed in the `channels`
-          array. The `channel` field in each matching result returns `SMS`. Full SMS campaign
-          creation and update operations are not supported in V5.
-
-          **Child campaign executions**
-
-          To retrieve the execution history of Periodic and Business Event-triggered campaigns,
-          including child campaign IDs, sent times, statuses, and total instance count, use
-          `POST /v5/campaigns/{parent_campaign_id}/executions`. This endpoint is the V5
-          equivalent of `POST /v1/campaigns/{parent_id}/executions`.
-
-          Review these breaking changes before sending a V5 request.
-
-          **Request changes (filter fields renamed)**
-
-          | V1 field | V5 field | Change |
-          | :--- | :--- | :--- |
-          | `campaign_fields.id` (string) | `campaign_fields.ids` (array of strings) | Renamed and type changed. Pass a single-element array to replicate V1 single-ID filtering: `"ids": ["<campaign_id>"]`. |
-          | `campaign_fields.delivery_type` | `campaign_fields.campaign_delivery_type` | Renamed. Sending the V1 key returns zero results with no error. |
-
-          All other V1 filter fields (`channels`, `created_by`, `created_date`, `name`, `status`, `tags`) are unchanged.
-
-          **`request_id` is now optional:**
-          - In V1, `request_id` was required on every search call. In V5, it is optional.
-          - Providing it is still recommended for traceability. MoEngage support can use it to locate the specific request in server logs.
-
-          **Response changes**
-
-          The campaign identifier field was renamed. V1 returned it as `campaign_id`; V5 returns it as `id`.
-
-          **Draft behavior:**
-          Drafts are included only when `DRAFT` is explicitly added to `campaign_fields.status`.
-          Otherwise, draft rows are omitted.
-
-          **Versioning behavior:**
-          When campaign versioning is enabled, responses include `version_number` and you can
-          filter by it. Each published revision is a separate document linked by the same
-          canonical `campaign_id`.
-
-          **Pagination:**
-          Results are paginated up to 15 per page. The response does not include a `total_count`
-          field. To determine the total number of pages, keep paginating until a page returns
-          fewer results than `limit`.
+          If you are migrating from V1, see [Search Campaigns V5: Migration Guide](/api/campaigns/search-campaigns-v5-migration) for a full list of renamed fields, request and response changes, and breaking changes.
 
           #### Rate Limits
 
