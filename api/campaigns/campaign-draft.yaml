@@ -40,7 +40,7 @@ info:
     url: https://developers.moengage.com
 
 servers:
-  - url: 'https://api-{dc}.moengage.com'
+  - url: 'https://api-{dc}.moengage.com/'
     description: MoEngage Campaigns API Server
     variables:
       dc:
@@ -3205,626 +3205,17 @@ paths:
       summary: Create Campaign Draft
       description: |
         Creates a Push or Email campaign draft. Content, audience, and delivery settings can be included at the time of creation, or added later via `PATCH /v5/campaigns/{campaign_id}`.
-      x-codeSamples:
-        - lang: Shell
-          label: Push - ONE_TIME
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "campaign_delivery_type": "ONE_TIME",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "platforms": ["ANDROID"]
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "android": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "notification_channel": "{{notification_channel}}",
-                          "title": "{{title}}",
-                          "message": "{{message}}",
-                          "default_click_action": "DEEPLINKING",
-                          "default_click_action_value": "{{deep_link_url}}"
-                        }
-                      }
-                    }
-                  }
-                },
-                "scheduling_details": { "delivery_type": "ASAP" }
-              }'
-        - lang: Shell
-          label: Push - PERIODIC
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "campaign_delivery_type": "PERIODIC",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "platforms": ["ANDROID", "IOS"]
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "android": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "{{title}}",
-                          "message": "{{message}}"
-                        }
-                      }
-                    }
-                  }
-                },
-                "scheduling_details": {
-                  "delivery_type": "AT_FIXED_TIME",
-                  "start_time": "{{start_time}}",
-                  "periodic_details": {
-                    "sending_frequency": "WEEKLY",
-                    "repeat_frequency": 1,
-                    "repeat_on_days_of_week": ["MONDAY"]
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Push - EVENT_TRIGGERED
-          source: |
-            curl -X POST 'https://api-01.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: a1b2c3d4-e5f6-7890-abcd-ef1234567890' \
-              -H 'Idempotency-Key: f47ac10b-58cc-4372-a567-0e02b2c3d479' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                "channel": "PUSH",
-                "campaign_delivery_type": "EVENT_TRIGGERED",
-                "created_by": "marketer@example.com",
-                "basic_details": {
-                  "name": "Cart Abandonment - Push",
-                  "platforms": ["ANDROID", "IOS"]
-                },
-                "trigger_condition": {
-                  "included_filters": {
-                    "filter_operator": "and",
-                    "filters": [
-                      {
-                        "filter_type": "actions",
-                        "action_name": "cart_abandoned",
-                        "execution": { "type": "atleast", "count": 1 },
-                        "executed": true
-                      }
-                    ]
-                  },
-                  "trigger_delay_type": "DELAY",
-                  "trigger_delay_value": 1,
-                  "trigger_delay_granularity": "HOURS",
-                  "trigger_relation": "AFTER"
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "android": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "Items in your cart",
-                          "message": "You left something behind. Complete your purchase before it sells out.",
-                          "default_click_action": "DEEPLINKING",
-                          "default_click_action_value": "myapp://cart"
-                        }
-                      },
-                      "ios": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "Items in your cart",
-                          "message": "You left something behind. Complete your purchase before it sells out.",
-                          "default_click_action": "DEEPLINKING",
-                          "default_click_action_value": "myapp://cart"
-                        }
-                      }
-                    }
-                  }
-                },
-                "scheduling_details": {
-                  "delivery_type": "AT_FIXED_TIME",
-                  "start_time": "2026-07-01T00:00:00",
-                  "expiry_time": "2026-12-31T23:59:59"
-                },
-                "delivery_controls": {
-                  "bypass_dnd": false,
-                  "minimum_delay_between_two_notification_in_hour": 24,
-                  "ignore_global_minimum_delay": false
-                }
-              }'
-        - lang: Shell
-          label: Push - BUSINESS_EVENT_TRIGGERED
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "campaign_delivery_type": "BUSINESS_EVENT_TRIGGERED",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "business_event": "{{business_event_name}}",
-                  "platforms": ["ANDROID"]
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "android": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "{{title}}",
-                          "message": "{{message}}"
-                        }
-                      }
-                    }
-                  }
-                },
-                "scheduling_details": {
-                  "delivery_type": "AT_FIXED_TIME",
-                  "start_time": "{{start_time}}",
-                  "expiry_time": "{{expiry_time}}"
-                }
-              }'
-        - lang: Shell
-          label: Push - DEVICE_TRIGGERED
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "campaign_delivery_type": "DEVICE_TRIGGERED",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "platforms": ["ANDROID"]
-                },
-                "trigger_condition": {
-                  "included_filters": {
-                    "filter_operator": "and",
-                    "filters": [
-                      {
-                        "filter_type": "actions",
-                        "action_name": "{{device_trigger_event_name}}",
-                        "execution": { "type": "atleast", "count": 1 },
-                        "executed": true
-                      }
-                    ]
-                  },
-                  "trigger_delay_type": "ASAP"
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "android": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "{{title}}",
-                          "message": "{{message}}"
-                        }
-                      }
-                    }
-                  }
-                },
-                "delivery_controls": {
-                  "max_time_to_show_message_of_same_camapign": "{{max_display_hours}}",
-                  "expiry_time_of_sync_data_in_hour": "{{sync_expiry_hours}}",
-                  "send_message_in_offline_mode": true
-                }
-              }'
-        - lang: Shell
-          label: Push - LOCATION_TRIGGERED
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "campaign_delivery_type": "LOCATION_TRIGGERED",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "platforms": ["ANDROID", "IOS"],
-                  "geofences": {
-                    "name": "{{geofence_name}}",
-                    "latitude": "{{latitude}}",
-                    "longitude": "{{longitude}}",
-                    "radius": "{{radius_meters}}",
-                    "response_time_value": "5",
-                    "response_time_granularity": "MINUTES",
-                    "triggered_at": "ENTRY"
-                  }
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "android": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "{{title}}",
-                          "message": "{{message}}"
-                        }
-                      }
-                    }
-                  }
-                },
-                "delivery_controls": {
-                  "send_limit_value": "{{max_sends_per_user}}",
-                  "send_limit_granularity_in_hours": "{{send_limit_window_hours}}"
-                }
-              }'
-        - lang: Shell
-          label: Email - ONE_TIME promotional
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "ONE_TIME",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "content_type": "PROMOTIONAL",
-                  "user_attribute_identifier": "Email (Standard)",
-                  "subscription_category": "{{subscription_category}}"
-                },
-                "connector": {
-                  "connector_type": "SENDGRID",
-                  "connector_name": "{{connector_name}}"
-                },
-                "campaign_content": {
-                  "content": {
-                    "email": {
-                      "subject": "{{email_subject}}",
-                      "sender_name": "{{sender_name}}",
-                      "from_address": "{{from_email}}",
-                      "html_content": "{{html_body}}"
-                    }
-                  }
-                },
-                "scheduling_details": { "delivery_type": "ASAP" }
-              }'
-        - lang: Shell
-          label: Email - ONE_TIME transactional
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "ONE_TIME",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "content_type": "TRANSACTIONAL",
-                  "user_attribute_identifier": "Email (Standard)"
-                },
-                "connector": {
-                  "connector_type": "{{connector_type}}",
-                  "connector_name": "{{connector_name}}"
-                },
-                "campaign_content": {
-                  "content": {
-                    "email": {
-                      "subject": "{{email_subject}}",
-                      "sender_name": "{{sender_name}}",
-                      "from_address": "{{from_email}}",
-                      "html_content": "{{html_body}}"
-                    }
-                  }
-                },
-                "scheduling_details": { "delivery_type": "ASAP" }
-              }'
-        - lang: Shell
-          label: Email - PERIODIC
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "PERIODIC",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "content_type": "PROMOTIONAL",
-                  "subscription_category": "{{subscription_category}}"
-                },
-                "connector": {
-                  "connector_type": "{{connector_type}}",
-                  "connector_name": "{{connector_name}}"
-                },
-                "campaign_content": {
-                  "content": {
-                    "email": {
-                      "subject": "{{email_subject}}",
-                      "sender_name": "{{sender_name}}",
-                      "from_address": "{{from_email}}",
-                      "html_content": "{{html_body}}"
-                    }
-                  }
-                },
-                "scheduling_details": {
-                  "delivery_type": "AT_FIXED_TIME",
-                  "start_time": "{{start_time}}",
-                  "periodic_details": {
-                    "sending_frequency": "WEEKLY",
-                    "repeat_frequency": 1,
-                    "repeat_on_days_of_week": ["TUESDAY"]
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Email - EVENT_TRIGGERED
-          source: |
-            curl -X POST 'https://api-01.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: b2c3d4e5-f6a7-8901-bcde-f12345678901' \
-              -H 'Idempotency-Key: a1b2c3d4-58cc-4372-b678-1e13c3d4e580' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "EVENT_TRIGGERED",
-                "created_by": "marketer@example.com",
-                "basic_details": {
-                  "name": "Order Confirmation - Email",
-                  "content_type": "TRANSACTIONAL"
-                },
-                "connector": {
-                  "connector_type": "sendgrid",
-                  "connector_name": "SendGrid Production"
-                },
-                "trigger_condition": {
-                  "included_filters": {
-                    "filter_operator": "and",
-                    "filters": [
-                      {
-                        "filter_type": "actions",
-                        "action_name": "order_placed",
-                        "execution": { "type": "atleast", "count": 1 },
-                        "executed": true
-                      }
-                    ]
-                  },
-                  "trigger_delay_type": "ASAP"
-                },
-                "campaign_content": {
-                  "content": {
-                    "email": {
-                      "subject": "Your order has been placed",
-                      "sender_name": "Example Store",
-                      "from_address": "orders@example.com",
-                      "html_content": "<p>Hi {{UserAttribute['\''First Name'\'']}}, your order has been confirmed. We will send a shipping update soon.</p>"
-                    }
-                  }
-                },
-                "scheduling_details": {
-                  "delivery_type": "AT_FIXED_TIME",
-                  "start_time": "2026-07-01T00:00:00",
-                  "expiry_time": "2026-12-31T23:59:59"
-                }
-              }'
-        - lang: Shell
-          label: Email - BUSINESS_EVENT_TRIGGERED
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "BUSINESS_EVENT_TRIGGERED",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "business_event": "{{business_event_name}}",
-                  "content_type": "TRANSACTIONAL"
-                },
-                "connector": {
-                  "connector_type": "{{connector_type}}",
-                  "connector_name": "{{connector_name}}"
-                },
-                "campaign_content": {
-                  "content": {
-                    "email": {
-                      "subject": "{{email_subject}}",
-                      "sender_name": "{{sender_name}}",
-                      "from_address": "{{from_email}}",
-                      "html_content": "{{html_body}}"
-                    }
-                  }
-                },
-                "scheduling_details": {
-                  "delivery_type": "AT_FIXED_TIME",
-                  "start_time": "{{start_time}}",
-                  "expiry_time": "{{expiry_time}}"
-                }
-              }'
-        - lang: Shell
-          label: Push - Web ONE_TIME
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "campaign_delivery_type": "ONE_TIME",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "platforms": ["WEB"]
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "web": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "{{title}}",
-                          "message": "{{message}}",
-                          "redirect_url": "{{redirect_url}}",
-                          "image_url": "{{image_url}}"
-                        },
-                        "buttons": [
-                          {
-                            "title": "{{button_label}}",
-                            "url": "{{button_url}}"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                },
-                "scheduling_details": { "delivery_type": "ASAP" }
-              }'
-        - lang: Shell
-          label: Push - Multi-locale with A/B variation
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "campaign_delivery_type": "ONE_TIME",
-                "created_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "platforms": ["ANDROID"]
-                },
-                "campaign_content": {
-                  "locales": ["es-ES"],
-                  "variation_details": {
-                    "distribution_type": "MANUAL",
-                    "no_of_variations": 2,
-                    "manual_distribution_percentage": {
-                      "variation_1": 50,
-                      "variation_2": 50
-                    }
-                  },
-                  "content": {
-                    "default": {
-                      "variation_1": {
-                        "push": {
-                          "android": {
-                            "template_type": "BASIC",
-                            "basic_details": {
-                              "title": "{{title_v1}}",
-                              "message": "{{message_v1}}"
-                            }
-                          }
-                        }
-                      },
-                      "variation_2": {
-                        "push": {
-                          "android": {
-                            "template_type": "BASIC",
-                            "basic_details": {
-                              "title": "{{title_v2}}",
-                              "message": "{{message_v2}}"
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "es-ES": {
-                      "variation_1": {
-                        "push": {
-                          "android": {
-                            "template_type": "BASIC",
-                            "basic_details": {
-                              "title": "{{title_es_v1}}",
-                              "message": "{{message_es_v1}}"
-                            }
-                          }
-                        }
-                      },
-                      "variation_2": {
-                        "push": {
-                          "android": {
-                            "template_type": "BASIC",
-                            "basic_details": {
-                              "title": "{{title_es_v2}}",
-                              "message": "{{message_es_v2}}"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "scheduling_details": { "delivery_type": "ASAP" }
-              }'
       x-mint:
         content: |
-      
+
           <Info>
           **Component reference pages:**
-           - For the full schema of `basic_details` and `campaign_content` per channel, platform, and template type :
-              - Android (`BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `IMAGE_BANNER_WITH_TEXT` / `TIMER` / `TIMER_WITH_PROGRESS_BAR` / `Custom`)
-              - iOS (`BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `Custom`)
-              - Web `BASIC`
-              - Email (`html_content` and `custom_template_id`), see [Campaign content reference](/api/campaigns/campaign-content-reference).
-           - For the full schema of `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, `advanced`, and `geofences`, see [Audience and delivery reference](/api/campaigns/audience-scheduling-delivery-reference).
+          - For the full schema of `basic_details` and `campaign_content` per channel, platform, and template type :
+            - Android (`BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `IMAGE_BANNER_WITH_TEXT` / `TIMER` / `TIMER_WITH_PROGRESS_BAR` / `Custom`)
+            - iOS (`BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `Custom`)
+            - Web `BASIC`
+            - Email (`html_content` and `custom_template_id`), see [Campaign content reference](/api/campaigns/campaign-content-reference).
+          - For the full schema of `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, `advanced`, and `geofences`, see [Audience and delivery reference](/api/campaigns/audience-scheduling-delivery-reference).
           </Info>
 
           #### Rate Limits
@@ -3839,28 +3230,440 @@ paths:
           You can create 5 campaigns per minute, 25 campaigns per hour, and 100 campaigns per day.
 
           <Note>
-            **Notes**
-            * Higher limit (Total Calls): The system permits a higher volume of total API calls (for example, 120 calls) to accommodate potential failures or retries.
-            * Minimum limit (Campaign Creation Limits): The system maintains a stricter quota for actual successful creations (100 campaigns per day).
-              
-              Example: If a client submits 120 requests and 20 fail, they successfully generate exactly 100 campaigns. Because the system applies the most restrictive threshold, the 100 successful operations trigger the quota limit, and the system issues a rate limit breach warning regardless of the total API calls made.
-            * Breaching the limits will reject the request.
-            * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
+          **Notes**
+          * Higher limit (Total Calls): The system permits a higher volume of total API calls (for example, 120 calls) to accommodate potential failures or retries.
+          * Minimum limit (Campaign Creation Limits): The system maintains a stricter quota for actual successful creations (100 campaigns per day).
+
+          Example: If a client submits 120 requests and 20 fail, they successfully generate exactly 100 campaigns.
+          Because the system applies the most restrictive threshold, the 100 successful operations trigger the quota limit, and the system issues a rate limit breach warning regardless of the total API calls made.
+          * Breaching the limits will reject the request.
+          * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
           </Note>
-      tags: [Create Campaigns]
+      tags:
+        - Create Campaigns
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
         - $ref: '#/components/parameters/Idempotency-Key-Required'
       requestBody:
         description: >-
-          Campaign payload. Required top-level fields are `channel`, `campaign_delivery_type`, and `created_by`. Optional sections (`basic_details`, `campaign_content`, audience, scheduling, and so on) can be omitted or supplied in full.
+          Campaign payload. Required top-level fields are `channel`, `campaign_delivery_type`, and `created_by`.
+          Optional sections (`basic_details`, `campaign_content`, audience, scheduling, and so on) can be omitted or supplied in full.
 
           **Note:** Use the tabs below to select your campaign type. The schema adapts based on the selected channel.
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CampaignCreateV5Request' }
+            schema:
+              $ref: '#/components/schemas/CampaignCreateV5Request'
+            examples:
+              push_one_time:
+                summary: Push - ONE_TIME
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  campaign_delivery_type: "ONE_TIME"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    platforms:
+                      - "ANDROID"
+                  campaign_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            notification_channel: "{{notification_channel}}"
+                            title: "{{title}}"
+                            message: "{{message}}"
+                            default_click_action: "DEEPLINKING"
+                            default_click_action_value: "{{deep_link_url}}"
+                  scheduling_details:
+                    delivery_type: "ASAP"
+              push_periodic:
+                summary: Push - PERIODIC
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  campaign_delivery_type: "PERIODIC"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    platforms:
+                      - "ANDROID"
+                      - "IOS"
+                  campaign_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "{{title}}"
+                            message: "{{message}}"
+                  scheduling_details:
+                    delivery_type: "AT_FIXED_TIME"
+                    start_time: "{{start_time}}"
+                    periodic_details:
+                      sending_frequency: "WEEKLY"
+                      repeat_frequency: 1
+                      repeat_on_days_of_week:
+                        - "MONDAY"
+              push_event_triggered:
+                summary: Push - EVENT_TRIGGERED
+                value:
+                  request_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  channel: "PUSH"
+                  campaign_delivery_type: "EVENT_TRIGGERED"
+                  created_by: "marketer@example.com"
+                  basic_details:
+                    name: "Cart Abandonment - Push"
+                    platforms:
+                      - "ANDROID"
+                      - "IOS"
+                  trigger_condition:
+                    included_filters:
+                      filter_operator: "and"
+                      filters:
+                        - filter_type: "actions"
+                          action_name: "cart_abandoned"
+                          execution:
+                            type: "atleast"
+                            count: 1
+                          executed: true
+                    trigger_delay_type: "DELAY"
+                    trigger_delay_value: 1
+                    trigger_delay_granularity: "HOURS"
+                    trigger_relation: "AFTER"
+                  campaign_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "Items in your cart"
+                            message: "You left something behind. Complete your purchase before it sells out."
+                            default_click_action: "DEEPLINKING"
+                            default_click_action_value: "myapp://cart"
+                        ios:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "Items in your cart"
+                            message: "You left something behind. Complete your purchase before it sells out."
+                            default_click_action: "DEEPLINKING"
+                            default_click_action_value: "myapp://cart"
+                  scheduling_details:
+                    delivery_type: "AT_FIXED_TIME"
+                    start_time: "2026-07-01T00:00:00"
+                    expiry_time: "2026-12-31T23:59:59"
+                  delivery_controls:
+                    bypass_dnd: false
+                    minimum_delay_between_two_notification_in_hour: 24
+                    ignore_global_minimum_delay: false
+              push_business_event_triggered:
+                summary: Push - BUSINESS_EVENT_TRIGGERED
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  campaign_delivery_type: "BUSINESS_EVENT_TRIGGERED"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    business_event: "{{business_event_name}}"
+                    platforms:
+                      - "ANDROID"
+                  campaign_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "{{title}}"
+                            message: "{{message}}"
+                  scheduling_details:
+                    delivery_type: "AT_FIXED_TIME"
+                    start_time: "{{start_time}}"
+                    expiry_time: "{{expiry_time}}"
+              push_device_triggered:
+                summary: Push - DEVICE_TRIGGERED
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  campaign_delivery_type: "DEVICE_TRIGGERED"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    platforms:
+                      - "ANDROID"
+                  trigger_condition:
+                    included_filters:
+                      filter_operator: "and"
+                      filters:
+                        - filter_type: "actions"
+                          action_name: "{{device_trigger_event_name}}"
+                          execution:
+                            type: "atleast"
+                            count: 1
+                          executed: true
+                    trigger_delay_type: "ASAP"
+                  campaign_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "{{title}}"
+                            message: "{{message}}"
+                  delivery_controls:
+                    max_time_to_show_message_of_same_camapign: "{{max_display_hours}}"
+                    expiry_time_of_sync_data_in_hour: "{{sync_expiry_hours}}"
+                    send_message_in_offline_mode: true
+              push_location_triggered:
+                summary: Push - LOCATION_TRIGGERED
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  campaign_delivery_type: "LOCATION_TRIGGERED"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    platforms:
+                      - "ANDROID"
+                      - "IOS"
+                    geofences:
+                      name: "{{geofence_name}}"
+                      latitude: "{{latitude}}"
+                      longitude: "{{longitude}}"
+                      radius: "{{radius_meters}}"
+                      response_time_value: "5"
+                      response_time_granularity: "MINUTES"
+                      triggered_at: "ENTRY"
+                  campaign_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "{{title}}"
+                            message: "{{message}}"
+                  delivery_controls:
+                    send_limit_value: "{{max_sends_per_user}}"
+                    send_limit_granularity_in_hours: "{{send_limit_window_hours}}"
+              email_one_time_promotional:
+                summary: Email - ONE_TIME promotional
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "ONE_TIME"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    content_type: "PROMOTIONAL"
+                    user_attribute_identifier: "Email (Standard)"
+                    subscription_category: "{{subscription_category}}"
+                  connector:
+                    connector_type: "SENDGRID"
+                    connector_name: "{{connector_name}}"
+                  campaign_content:
+                    content:
+                      email:
+                        subject: "{{email_subject}}"
+                        sender_name: "{{sender_name}}"
+                        from_address: "{{from_email}}"
+                        html_content: "{{html_body}}"
+                  scheduling_details:
+                    delivery_type: "ASAP"
+              email_one_time_transactional:
+                summary: Email - ONE_TIME transactional
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "ONE_TIME"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    content_type: "TRANSACTIONAL"
+                    user_attribute_identifier: "Email (Standard)"
+                  connector:
+                    connector_type: "{{connector_type}}"
+                    connector_name: "{{connector_name}}"
+                  campaign_content:
+                    content:
+                      email:
+                        subject: "{{email_subject}}"
+                        sender_name: "{{sender_name}}"
+                        from_address: "{{from_email}}"
+                        html_content: "{{html_body}}"
+                  scheduling_details:
+                    delivery_type: "ASAP"
+              email_periodic:
+                summary: Email - PERIODIC
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "PERIODIC"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    content_type: "PROMOTIONAL"
+                    subscription_category: "{{subscription_category}}"
+                  connector:
+                    connector_type: "{{connector_type}}"
+                    connector_name: "{{connector_name}}"
+                  campaign_content:
+                    content:
+                      email:
+                        subject: "{{email_subject}}"
+                        sender_name: "{{sender_name}}"
+                        from_address: "{{from_email}}"
+                        html_content: "{{html_body}}"
+                  scheduling_details:
+                    delivery_type: "AT_FIXED_TIME"
+                    start_time: "{{start_time}}"
+                    periodic_details:
+                      sending_frequency: "WEEKLY"
+                      repeat_frequency: 1
+                      repeat_on_days_of_week:
+                        - "TUESDAY"
+              email_event_triggered:
+                summary: Email - EVENT_TRIGGERED
+                value:
+                  request_id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "EVENT_TRIGGERED"
+                  created_by: "marketer@example.com"
+                  basic_details:
+                    name: "Order Confirmation - Email"
+                    content_type: "TRANSACTIONAL"
+                  connector:
+                    connector_type: "sendgrid"
+                    connector_name: "SendGrid Production"
+                  trigger_condition:
+                    included_filters:
+                      filter_operator: "and"
+                      filters:
+                        - filter_type: "actions"
+                          action_name: "order_placed"
+                          execution:
+                            type: "atleast"
+                            count: 1
+                          executed: true
+                    trigger_delay_type: "ASAP"
+                  campaign_content:
+                    content:
+                      email:
+                        subject: "Your order has been placed"
+                        sender_name: "Example Store"
+                        from_address: "orders@example.com"
+                        html_content: "<p>Hi {{UserAttribute['First Name']}}, your order has been confirmed. We will send a shipping update soon.</p>"
+                  scheduling_details:
+                    delivery_type: "AT_FIXED_TIME"
+                    start_time: "2026-07-01T00:00:00"
+                    expiry_time: "2026-12-31T23:59:59"
+              email_business_event_triggered:
+                summary: Email - BUSINESS_EVENT_TRIGGERED
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "BUSINESS_EVENT_TRIGGERED"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    business_event: "{{business_event_name}}"
+                    content_type: "TRANSACTIONAL"
+                  connector:
+                    connector_type: "{{connector_type}}"
+                    connector_name: "{{connector_name}}"
+                  campaign_content:
+                    content:
+                      email:
+                        subject: "{{email_subject}}"
+                        sender_name: "{{sender_name}}"
+                        from_address: "{{from_email}}"
+                        html_content: "{{html_body}}"
+                  scheduling_details:
+                    delivery_type: "AT_FIXED_TIME"
+                    start_time: "{{start_time}}"
+                    expiry_time: "{{expiry_time}}"
+              push_web_one_time:
+                summary: Push - Web ONE_TIME
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  campaign_delivery_type: "ONE_TIME"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    platforms:
+                      - "WEB"
+                  campaign_content:
+                    content:
+                      push:
+                        web:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "{{title}}"
+                            message: "{{message}}"
+                            redirect_url: "{{redirect_url}}"
+                            image_url: "{{image_url}}"
+                          buttons:
+                            - title: "{{button_label}}"
+                              url: "{{button_url}}"
+                  scheduling_details:
+                    delivery_type: "ASAP"
+              push_multi_locale_ab_variation:
+                summary: Push - Multi-locale with A/B variation
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  campaign_delivery_type: "ONE_TIME"
+                  created_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    platforms:
+                      - "ANDROID"
+                  campaign_content:
+                    locales:
+                      - "es-ES"
+                    variation_details:
+                      distribution_type: "MANUAL"
+                      no_of_variations: 2
+                      manual_distribution_percentage:
+                        variation_1: 50
+                        variation_2: 50
+                    content:
+                      default:
+                        variation_1:
+                          push:
+                            android:
+                              template_type: "BASIC"
+                              basic_details:
+                                title: "{{title_v1}}"
+                                message: "{{message_v1}}"
+                        variation_2:
+                          push:
+                            android:
+                              template_type: "BASIC"
+                              basic_details:
+                                title: "{{title_v2}}"
+                                message: "{{message_v2}}"
+                      es-ES:
+                        variation_1:
+                          push:
+                            android:
+                              template_type: "BASIC"
+                              basic_details:
+                                title: "{{title_es_v1}}"
+                                message: "{{message_es_v1}}"
+                        variation_2:
+                          push:
+                            android:
+                              template_type: "BASIC"
+                              basic_details:
+                                title: "{{title_es_v2}}"
+                                message: "{{message_es_v2}}"
+                  scheduling_details:
+                    delivery_type: "ASAP"
       responses:
         '201':
           description: Draft created
@@ -3896,7 +3699,8 @@ paths:
       x-mint:
         content: |
           <Info>
-          The campaign identifier field has been renamed in V5. V1 returned it as `campaign_id`; V5 returns it as `id`. Update your integration to read `id` from the response instead of `campaign_id`.
+          The campaign identifier field has been renamed in V5. V1 returned it as `campaign_id`; V5 returns it as `id`.
+          Update your integration to read `id` from the response instead of `campaign_id`.
           </Info>
 
           **Migration from V1:**
@@ -3918,9 +3722,9 @@ paths:
           | Get campaign per hour | The total number of get campaign requests per hour per client allowed is 6000. |
 
           <Note>
-            **Notes**
-            * Breaching the limits will reject the request.
-            * Per-hour limits use a rolling window of the last 1 hour.
+          **Notes**
+          * Breaching the limits will reject the request.
+          * Per-hour limits use a rolling window of the last 1 hour.
           </Note>
       x-codeSamples:
         - lang: Shell
@@ -3936,8 +3740,9 @@ paths:
             curl -X GET 'https://api-{dc}.moengage.com/v5/campaigns/{{sms_campaign_id}}' \
               -H 'Authorization: Basic {{auth_token}}' \
               -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}'
-      tags: [Get Campaign Details]
+              -H 'X-MOE-Request-Id: {{request_id}}'    
+      tags:
+        - Get Campaign Details
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -3945,7 +3750,15 @@ paths:
           in: path
           required: true
           description: Raw 24-char ObjectId of the campaign to retrieve.
-          schema: { type: string }
+          schema:
+            type: string
+          examples:
+            get_campaign_by_id:
+              summary: Get campaign by ID
+              value: "{{campaign_id}}"
+            get_sms_campaign:
+              summary: Get an SMS campaign
+              value: "{{sms_campaign_id}}"
       responses:
         '200':
           description: Campaign details retrieved successfully.
@@ -4080,41 +3893,46 @@ paths:
           The request body determines which flow runs.
 
           <Warning>
-          V1 (`PATCH /v1/campaigns/{campaign_id}`) returns `204 No Content` with no response body on success. V5 returns `200 OK` with a response body containing `response_id`, `type`, and `data.id`. Update any integration that asserts a `204` status code to expect `200`.
+          V1 (`PATCH /v1/campaigns/{campaign_id}`) returns `204 No Content` with no response body on success.
+          V5 returns `200 OK` with a response body containing `response_id`, `type`, and `data.id`.
+          Update any integration that asserts a `204` status code to expect `200`.
           </Warning>
 
           <Tabs>
-            <Tab title="Update draft campaign">
-              Send a `PATCH` request without a `status` key in the body.
+          <Tab title="Update draft campaign">
+          Send a `PATCH` request without a `status` key in the body.
 
-              The API merges each submitted component into the existing draft, then validates the full merged state (`DRAFT_PATCH`). After all individual components pass validation, cross-component checks run on the combined result.
+          The API merges each submitted component into the existing draft, then validates the full merged state (`DRAFT_PATCH`).
+          After all individual components pass validation, cross-component checks run on the combined result.
 
-              Only the fields you include in the request body are updated. Fields you omit retain their current values. For the full field reference per delivery type, see the [Create Campaign API](/api/campaigns/create-campaign).
+          Only the fields you include in the request body are updated. Fields you omit retain their current values.
+          For the full field reference per delivery type, see the [Create Campaign API](/api/campaigns/create-campaign).
 
-              ```json
-              {
-                "request_id": "{{request_id}}",
-                "campaign_content": { }
-              }
-              ```
-            </Tab>
+          ```json
+          {
+            "request_id": "{{request_id}}",
+            "campaign_content": { }
+          }
+          ```
+          </Tab>
 
-            <Tab title="Publish campaign">
-              Send a `PATCH` request with **only** the `status` field set to `PUBLISH` - no other fields.
+          <Tab title="Publish campaign">
+          Send a `PATCH` request with **only** the `status` field set to `PUBLISH` - no other fields.
 
-              The API validates the fully merged draft state (`DRAFT_PUBLISH`) and, if all checks pass, transitions the campaign from `DRAFT` to `ACTIVE` (or `SCHEDULED` for future-dated campaigns).
+          The API validates the fully merged draft state (`DRAFT_PUBLISH`) and, if all checks pass, transitions the campaign from `DRAFT` to `ACTIVE` (or `SCHEDULED` for future-dated campaigns).
 
-              ```json
-              {
-                "request_id": "{{request_id}}",
-                "status": "PUBLISH"
-              }
-              ```
-            </Tab>
+          ```json
+          {
+            "request_id": "{{request_id}}",
+            "status": "PUBLISH"
+          }
+          ```
+          </Tab>
           </Tabs>
 
           <Warning>
-          **Status and component fields are mutually exclusive:** You cannot combine `status: PUBLISH` with any other component fields in the same request body, as doing so returns `400 Bad Request`. Send either a component update or a publish action, never both in a single request.
+          **Status and component fields are mutually exclusive:** You cannot combine `status: PUBLISH` with any other component fields in the same request body, as doing so returns `400 Bad Request`.
+          Send either a component update or a publish action, never both in a single request.
           </Warning>
 
           #### Update restrictions by campaign state
@@ -4139,527 +3957,12 @@ paths:
           | Update campaign per hour | The total number of update campaign requests per hour per client allowed is 6000. |
 
           <Note>
-           **Notes**
-           * Breaching the limits will reject the request.
-           * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
+          **Notes**
+          * Breaching the limits will reject the request.
+          * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
           </Note>
-
-      tags: [Update Campaigns]
-      x-codeSamples:
-        - lang: Shell
-          label: Push - Update campaign_content (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "campaign_delivery_type": "{{campaign_delivery_type}}",
-                "updated_by": "{{user_email}}",
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "android": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "{{notification_title}}",
-                          "message": "{{notification_message}}"
-                        }
-                      }
-                    }
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Email - Update campaign_content (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "{{campaign_delivery_type}}",
-                "updated_by": "{{user_email}}",
-                "campaign_content": {
-                  "content": {
-                    "email": {
-                      "subject": "{{email_subject}}",
-                      "sender_name": "{{sender_name}}",
-                      "from_address": "{{from_email}}",
-                      "html_content": "{{html_body}}"
-                    }
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Publish campaign (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "status": "PUBLISH"
-              }'
-        - lang: Shell
-          label: Push - Update basic_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "platforms": ["ANDROID", "IOS"],
-                  "tags": ["{{tag}}"],
-                  "team": "{{team_name}}"
-                }
-              }'
-        - lang: Shell
-          label: Push - Update segmentation_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "segmentation_details": {
-                  "included_filters": {
-                    "filter_operator": "and",
-                    "filters": [
-                      {
-                        "filter_type": "actions",
-                        "action_name": "{{event_name}}",
-                        "execution": { "type": "atleast", "count": 1 },
-                        "executed": true
-                      }
-                    ]
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Push - Update scheduling_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "scheduling_details": {
-                  "delivery_type": "AT_FIXED_TIME",
-                  "start_time": "{{start_time}}",
-                  "expiry_time": "{{expiry_time}}"
-                }
-              }'
-        - lang: Shell
-          label: Push - Update trigger_condition (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "trigger_condition": {
-                  "included_filters": {
-                    "filter_operator": "and",
-                    "filters": [
-                      {
-                        "filter_type": "actions",
-                        "action_name": "{{trigger_event_name}}",
-                        "execution": { "type": "atleast", "count": 1 },
-                        "executed": true
-                      }
-                    ]
-                  },
-                  "trigger_delay_type": "DELAY",
-                  "trigger_delay_value": 30,
-                  "trigger_delay_granularity": "MINUTES",
-                  "trigger_relation": "AFTER"
-                }
-              }'
-        - lang: Shell
-          label: Push - Update delivery_controls (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "delivery_controls": {
-                  "bypass_dnd": false,
-                  "send_limit_value": "{{max_sends_per_user}}",
-                  "send_limit_granularity_in_hours": "{{send_limit_window_hours}}"
-                }
-              }'
-        - lang: Shell
-          label: Push - Update utm_params (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "utm_params": {
-                  "utm_source": "{{utm_source}}",
-                  "utm_medium": "push",
-                  "utm_campaign": "{{utm_campaign}}"
-                }
-              }'
-        - lang: Shell
-          label: Push - Update campaign_audience_limit (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "campaign_audience_limit": {
-                  "is_campaign_audience_limit_enabled": true,
-                  "metric": "SENT",
-                  "frequency": "TOTAL",
-                  "limit": {{max_user_count}}
-                }
-              }'
-        - lang: Shell
-          label: Push - Update conversion_goal_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "conversion_goal_details": {
-                  "attribution_window_in_hours": 36,
-                  "goals": [
-                    {
-                      "goal_name": "Goal 1",
-                      "goal_event_name": "{{conversion_event_name}}",
-                      "is_primary_goal": true
-                    }
-                  ]
-                }
-              }'
-        - lang: Shell
-          label: Email - Update basic_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "content_type": "PROMOTIONAL",
-                  "subscription_category": "{{subscription_category}}",
-                  "tags": ["{{tag}}"]
-                }
-              }'
-        - lang: Shell
-          label: Email - Update connector (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "connector": {
-                  "connector_type": "{{connector_type}}",
-                  "connector_name": "{{connector_name}}"
-                }
-              }'
-        - lang: Shell
-          label: Email - Update scheduling_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "scheduling_details": {
-                  "delivery_type": "AT_FIXED_TIME",
-                  "start_time": "{{start_time}}"
-                }
-              }'
-        - lang: Shell
-          label: Email - Update utm_params (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "utm_params": {
-                  "utm_source": "{{utm_source}}",
-                  "utm_medium": "email",
-                  "utm_campaign": "{{utm_campaign}}"
-                }
-              }'
-        - lang: Shell
-          label: Push - Update advanced (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "advanced": {
-                  "expiration_settings": {
-                    "expire_notification_after_value": 24,
-                    "expire_notification_after_type": "HOUR"
-                  },
-                  "platform_level_priority": {
-                    "ios_specific_priority": {
-                      "apns_priority": "10",
-                      "interruption_level": "Active"
-                    },
-                    "android_specific_priority": {
-                      "send_with_priority": true
-                    }
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Push - Update control_group_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "control_group_details": {
-                  "is_campaign_control_group_enabled": true,
-                  "campaign_control_group_percentage": 10
-                }
-              }'
-        - lang: Shell
-          label: Push - Update basic_details.geofences (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "basic_details": {
-                  "geofences": {
-                    "name": "{{geofence_name}}",
-                    "latitude": "{{latitude}}",
-                    "longitude": "{{longitude}}",
-                    "radius": "{{radius_meters}}",
-                    "response_time_value": "5",
-                    "response_time_granularity": "MINUTES",
-                    "triggered_at": "ENTRY"
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Push - Update platform_specific_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "updated_by": "{{user_email}}",
-                "basic_details": {
-                  "platform_specific_details": {
-                    "android": {
-                      "push_amp_plus_enabled": true
-                    },
-                    "ios": {
-                      "send_to_all_eligible_device": true
-                    }
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Email - Update segmentation_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "{{campaign_delivery_type}}",
-                "updated_by": "{{user_email}}",
-                "segmentation_details": {
-                  "included_filters": {
-                    "filter_operator": "and",
-                    "filters": [
-                      {
-                        "filter_type": "user_attributes",
-                        "data_type": "string",
-                        "name": "city",
-                        "operator": "in",
-                        "value": "{{city_value}}"
-                      }
-                    ]
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Email - Update delivery_controls (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "{{campaign_delivery_type}}",
-                "updated_by": "{{user_email}}",
-                "delivery_controls": {
-                  "bypass_dnd": false,
-                  "campaign_throttle_rpm": 2000,
-                  "count_for_frequency_capping": true
-                }
-              }'
-        - lang: Shell
-          label: Email - Update conversion_goal_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "{{campaign_delivery_type}}",
-                "updated_by": "{{user_email}}",
-                "conversion_goal_details": {
-                  "attribution_window_in_hours": 36,
-                  "goals": [
-                    {
-                      "goal_name": "Goal 1",
-                      "goal_event_name": "{{conversion_event_name}}",
-                      "is_primary_goal": true
-                    }
-                  ]
-                }
-              }'
-        - lang: Shell
-          label: Email - Update control_group_details (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "{{campaign_delivery_type}}",
-                "updated_by": "{{user_email}}",
-                "control_group_details": {
-                  "is_campaign_control_group_enabled": true,
-                  "campaign_control_group_percentage": 10
-                }
-              }'
-        - lang: Shell
-          label: Email - Update campaign_audience_limit (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "campaign_delivery_type": "{{campaign_delivery_type}}",
-                "updated_by": "{{user_email}}",
-                "campaign_audience_limit": {
-                  "is_campaign_audience_limit_enabled": true,
-                  "metric": "SENT",
-                  "frequency": "TOTAL",
-                  "limit": {{max_user_count}}
-                }
-              }'
+      tags:
+        - Update Campaigns
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -4670,20 +3973,299 @@ paths:
             The unique ID of the campaign to update.
 
             You can fetch the campaign ID using the [Get Campaign Details API](/api/get-campaign-details/search-campaigns) by filtering with campaign name, channel, or other criteria.
-          schema: { type: string }
+          schema:
+            type: string
         - $ref: '#/components/parameters/Idempotency-Key-Required'
       requestBody:
         description: |
           In this payload, you can include the fields you want to update.
-          
+
           **Notes:** - Pass only the fields you want to update. You don't need to send the complete payload.
           - If updating a field within an object, you must pass the complete object.
-          - If updating a nested field, you must pass the complete parent object. For example, to update the title of a Push notification, pass the complete campaign_content object.
+          - If updating a nested field, you must pass the complete parent object.
+          For example, to update the title of a Push notification, pass the complete campaign_content object.
           - Use the tabs below to select your campaign type. The schema will adapt based on the selected channel.
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CampaignPatchV5Request' }
+            schema:
+              $ref: '#/components/schemas/CampaignPatchV5Request'
+            examples:
+              push_update_campaign_content:
+                summary: Push - Update campaign_content
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  campaign_delivery_type: "{{campaign_delivery_type}}"
+                  updated_by: "{{user_email}}"
+                  campaign_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "{{notification_title}}"
+                            message: "{{notification_message}}"
+              email_update_campaign_content:
+                summary: Email - Update campaign_content
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "{{campaign_delivery_type}}"
+                  updated_by: "{{user_email}}"
+                  campaign_content:
+                    content:
+                      email:
+                        subject: "{{email_subject}}"
+                        sender_name: "{{sender_name}}"
+                        from_address: "{{from_email}}"
+                        html_content: "{{html_body}}"
+              publish_campaign:
+                summary: Publish campaign
+                value:
+                  request_id: "{{request_id}}"
+                  status: "PUBLISH"
+              push_update_basic_details:
+                summary: Push - Update basic_details
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    platforms:
+                      - "ANDROID"
+                      - "IOS"
+                    tags:
+                      - "{{tag}}"
+                    team: "{{team_name}}"
+              push_update_segmentation_details:
+                summary: Push - Update segmentation_details
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  segmentation_details:
+                    included_filters:
+                      filter_operator: "and"
+                      filters:
+                        - filter_type: "actions"
+                          action_name: "{{event_name}}"
+                          execution:
+                            type: "atleast"
+                            count: 1
+                          executed: true
+              push_update_scheduling_details:
+                summary: Push - Update scheduling_details
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  scheduling_details:
+                    delivery_type: "AT_FIXED_TIME"
+                    start_time: "{{start_time}}"
+                    expiry_time: "{{expiry_time}}"
+              push_update_trigger_condition:
+                summary: Push - Update trigger_condition
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  trigger_condition:
+                    included_filters:
+                      filter_operator: "and"
+                      filters:
+                        - filter_type: "actions"
+                          action_name: "{{trigger_event_name}}"
+                          execution:
+                            type: "atleast"
+                            count: 1
+                          executed: true
+                    trigger_delay_type: "DELAY"
+                    trigger_delay_value: 30
+                    trigger_delay_granularity: "MINUTES"
+                    trigger_relation: "AFTER"
+              push_update_delivery_controls:
+                summary: Push - Update delivery_controls
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  delivery_controls:
+                    bypass_dnd: false
+                    send_limit_value: "{{max_sends_per_user}}"
+                    send_limit_granularity_in_hours: "{{send_limit_window_hours}}"
+              push_update_utm_params:
+                summary: Push - Update utm_params
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  utm_params:
+                    utm_source: "{{utm_source}}"
+                    utm_medium: "push"
+                    utm_campaign: "{{utm_campaign}}"
+              push_update_campaign_audience_limit:
+                summary: Push - Update campaign_audience_limit
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  campaign_audience_limit:
+                    is_campaign_audience_limit_enabled: true
+                    metric: "SENT"
+                    frequency: "TOTAL"
+                    limit: "{{max_user_count}}"
+              push_update_conversion_goal_details:
+                summary: Push - Update conversion_goal_details
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  conversion_goal_details:
+                    attribution_window_in_hours: 36
+                    goals:
+                      - goal_name: "Goal 1"
+                        goal_event_name: "{{conversion_event_name}}"
+                        is_primary_goal: true
+              email_update_basic_details:
+                summary: Email - Update basic_details
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    content_type: "PROMOTIONAL"
+                    subscription_category: "{{subscription_category}}"
+                    tags:
+                      - "{{tag}}"
+              email_update_connector:
+                summary: Email - Update connector
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  connector:
+                    connector_type: "{{connector_type}}"
+                    connector_name: "{{connector_name}}"
+              email_update_scheduling_details:
+                summary: Email - Update scheduling_details
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  scheduling_details:
+                    delivery_type: "AT_FIXED_TIME"
+                    start_time: "{{start_time}}"
+              email_update_utm_params:
+                summary: Email - Update utm_params
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  utm_params:
+                    utm_source: "{{utm_source}}"
+                    utm_medium: "email"
+                    utm_campaign: "{{utm_campaign}}"
+              push_update_advanced:
+                summary: Push - Update advanced
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  advanced:
+                    expiration_settings:
+                      expire_notification_after_value: 24
+                      expire_notification_after_type: "HOUR"
+                    platform_level_priority:
+                      ios_specific_priority:
+                        apns_priority: "10"
+                        interruption_level: "Active"
+                      android_specific_priority:
+                        send_with_priority: true
+              push_update_control_group_details:
+                summary: Push - Update control_group_details
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  control_group_details:
+                    is_campaign_control_group_enabled: true
+                    campaign_control_group_percentage: 10
+              push_update_basic_details_geofences:
+                summary: Push - Update basic_details.geofences
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  basic_details:
+                    geofences:
+                      name: "{{geofence_name}}"
+                      latitude: "{{latitude}}"
+                      longitude: "{{longitude}}"
+                      radius: "{{radius_meters}}"
+                      response_time_value: "5"
+                      response_time_granularity: "MINUTES"
+                      triggered_at: "ENTRY"
+              push_update_platform_specific_details:
+                summary: Push - Update platform_specific_details
+                value:
+                  request_id: "{{request_id}}"
+                  updated_by: "{{user_email}}"
+                  basic_details:
+                    platform_specific_details:
+                      android:
+                        push_amp_plus_enabled: true
+                      ios:
+                        send_to_all_eligible_device: true
+              email_update_segmentation_details:
+                summary: Email - Update segmentation_details
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "{{campaign_delivery_type}}"
+                  updated_by: "{{user_email}}"
+                  segmentation_details:
+                    included_filters:
+                      filter_operator: "and"
+                      filters:
+                        - filter_type: "user_attributes"
+                          data_type: "string"
+                          name: "city"
+                          operator: "in"
+                          value: "{{city_value}}"
+              email_update_delivery_controls:
+                summary: Email - Update delivery_controls
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "{{campaign_delivery_type}}"
+                  updated_by: "{{user_email}}"
+                  delivery_controls:
+                    bypass_dnd: false
+                    campaign_throttle_rpm: 2000
+                    count_for_frequency_capping: true
+              email_update_conversion_goal_details:
+                summary: Email - Update conversion_goal_details
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "{{campaign_delivery_type}}"
+                  updated_by: "{{user_email}}"
+                  conversion_goal_details:
+                    attribution_window_in_hours: 36
+                    goals:
+                      - goal_name: "Goal 1"
+                        goal_event_name: "{{conversion_event_name}}"
+                        is_primary_goal: true
+              email_update_control_group_details:
+                summary: Email - Update control_group_details
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "{{campaign_delivery_type}}"
+                  updated_by: "{{user_email}}"
+                  control_group_details:
+                    is_campaign_control_group_enabled: true
+                    campaign_control_group_percentage: 10
+              email_update_campaign_audience_limit:
+                summary: Email - Update campaign_audience_limit
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "{{campaign_delivery_type}}"
+                  updated_by: "{{user_email}}"
+                  campaign_audience_limit:
+                    is_campaign_audience_limit_enabled: true
+                    metric: "SENT"
+                    frequency: "TOTAL"
+                    limit: "{{max_user_count}}"
       responses:
         '200':
           description: |
@@ -4768,35 +4350,13 @@ paths:
       summary: Validate Campaign
       description: |
         Validates whether a draft would pass publish-time checks (`DRAFT_PUBLISH`) without making any changes to the draft.
-      x-codeSamples:
-        - lang: Shell
-          label: Push (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}/validate' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}"
-              }'
-        - lang: Shell
-          label: Email (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}/validate' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}"
-              }'
       x-mint:
         content: >
           <Info>
           You do not need an idempotency key for this endpoint.
           </Info>
-      tags: [Create Campaigns]
+      tags:
+        - Create Campaigns
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -4804,7 +4364,8 @@ paths:
           in: path
           required: true
           description: Raw 24-char ObjectId of the campaign to validate.
-          schema: { type: string }
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -4815,8 +4376,18 @@ paths:
                 request_id:
                   type: string
                   description: >-
-                    Optional string (UUID v4 recommended) used to identify this validation call. Unlike other POST endpoints, this field is not required and does not enforce deduplication - the validate endpoint is read-only and safe to retry freely.
+                    Optional string (UUID v4 recommended) used to identify this validation call.
+                    Unlike other POST endpoints, this field is not required and does not enforce deduplication - the validate endpoint is read-only and safe to retry freely.
                   example: "{{request_id}}"
+            examples:
+              push_validation:
+                summary: Push
+                value:
+                  request_id: "{{request_id}}"
+              email_validation:
+                summary: Email
+                value:
+                  request_id: "{{request_id}}"
       responses:
         '200':
           description: Validation result - always returned regardless of whether the campaign passes or fails validation.
@@ -4861,14 +4432,14 @@ paths:
       summary: Update Campaign Status
       description: |
         Applies a state transition to a published campaign.
-
       x-mint:
         content: |
-         
-         <Info>
-          - **Migration from V1:** In V1, `POST /v1/campaigns/status` accepted a `campaign_ids` array of up to 10 IDs per request. In V5, the campaign ID is a path parameter and only one campaign can be transitioned per request. To perform bulk status changes, call this endpoint once per campaign ID.
+          <Info>
+          - **Migration from V1:** In V1, `POST /v1/campaigns/status` accepted a `campaign_ids` array of up to 10 IDs per request.
+          In V5, the campaign ID is a path parameter and only one campaign can be transitioned per request.
+          To perform bulk status changes, call this endpoint once per campaign ID.
           - `PUBLISH` is not accepted on this endpoint. To publish a draft, use `PATCH /v5/campaigns/{campaign_id}` with `{ "status": "PUBLISH" }`.
-         </Info>
+          </Info>
 
           #### Rate Limits
 
@@ -4879,51 +4450,12 @@ paths:
           | change campaign status per hour | The total number of change campaign status requests per hour per client allowed is 6000. |
 
           <Note>
-            **Notes**
-            * Breaching the limits will reject the request.
-            * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
+          **Notes**
+          * Breaching the limits will reject the request.
+          * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
           </Note>
-      x-codeSamples:
-        - lang: Shell
-          label: Stop a campaign (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}/status' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "action": "STOP"
-              }'
-        - lang: Shell
-          label: Pause a campaign (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}/status' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "action": "PAUSE"
-              }'
-        - lang: Shell
-          label: Resume a campaign (cURL)
-          source: |
-            curl -X PATCH 'https://api-{dc}.moengage.com/v5/campaigns/{{campaign_id}}/status' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "action": "RESUME"
-              }'
-      tags: [Update Campaigns]
+      tags:
+        - Update Campaigns
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -4931,14 +4463,32 @@ paths:
           in: path
           required: true
           description: Raw 24-char ObjectId of the published campaign to transition.
-          schema: { type: string }
+          schema:
+            type: string
         - $ref: '#/components/parameters/Idempotency-Key-Required'
       requestBody:
         description: Send campaign status change request with action.
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CampaignStatusV5Request' }
+            schema:
+              $ref: '#/components/schemas/CampaignStatusV5Request'
+            examples:
+              stop_campaign:
+                summary: Stop a campaign
+                value:
+                  request_id: "{{request_id}}"
+                  action: "STOP"
+              pause_campaign:
+                summary: Pause a campaign
+                value:
+                  request_id: "{{request_id}}"
+                  action: "PAUSE"
+              resume_campaign:
+                summary: Resume a campaign
+                value:
+                  request_id: "{{request_id}}"
+                  action: "RESUME"
       responses:
         '200':
           description: Transition accepted.
@@ -5000,160 +4550,12 @@ paths:
           | Search campaign per hour | The total number of search campaign requests per hour per client allowed is 6000. |
 
           <Note>
-            **Notes**
-            * Breaching the limits will reject the request.
-            * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
+          **Notes**
+          * Breaching the limits will reject the request.
+          * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
           </Note>
-      x-codeSamples:
-        - lang: Shell
-          label: Filter by channel (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/search' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "channels": ["EMAIL"]
-                }
-              }'
-        - lang: Shell
-          label: Filter by delivery type (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/search' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "campaign_delivery_type": ["ONE_TIME"]
-                }
-              }'
-        - lang: Shell
-          label: Filter by creation date range (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/search' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "created_date": {
-                    "from_date": "{{from_date}}",
-                    "to_date": "{{to_date}}"
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Filter by campaign ID (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/search' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 1,
-                "page": 1,
-                "campaign_fields": {
-                  "ids": ["{{campaign_id}}"]
-                }
-              }'
-        - lang: Shell
-          label: Filter by campaign name (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/search' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "name": "{{campaign_name_partial}}"
-                }
-              }'
-        - lang: Shell
-          label: Filter by creator (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/search' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "created_by": ["{{creator_email}}"]
-                }
-              }'
-        - lang: Shell
-          label: Filter with multiple fields combined (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/search' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "channels": ["PUSH"],
-                  "campaign_delivery_type": ["ONE_TIME"],
-                  "status": ["ACTIVE", "SCHEDULED"],
-                  "created_by": ["{{creator_email}}"],
-                  "created_date": {
-                    "from_date": "{{from_date}}",
-                    "to_date": "{{to_date}}"
-                  },
-                  "tags": ["{{tag_name}}"]
-                }
-              }'
-        - lang: Shell
-          label: Include archived campaigns (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/search' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "channels": ["PUSH", "EMAIL"]
-                },
-                "include_archive_campaigns": true
-              }'
-      tags: [Get Campaign Details]
+      tags:
+        - Get Campaign Details
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -5164,7 +4566,95 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/SearchV5Request' }
+            schema:
+              $ref: '#/components/schemas/SearchV5Request'
+            examples:
+              filter_by_channel:
+                summary: Filter by channel
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    channels:
+                      - "EMAIL"
+              filter_by_delivery_type:
+                summary: Filter by delivery type
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    campaign_delivery_type:
+                      - "ONE_TIME"
+              filter_by_creation_date_range:
+                summary: Filter by creation date range
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    created_date:
+                      from_date: "{{from_date}}"
+                      to_date: "{{to_date}}"
+              filter_by_campaign_id:
+                summary: Filter by campaign ID
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 1
+                  page: 1
+                  campaign_fields:
+                    ids:
+                      - "{{campaign_id}}"
+              filter_by_campaign_name:
+                summary: Filter by campaign name
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    name: "{{campaign_name_partial}}"
+              filter_by_creator:
+                summary: Filter by creator
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    created_by:
+                      - "{{creator_email}}"
+              filter_multiple:
+                summary: Filter with multiple fields combined
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    channels:
+                      - "PUSH"
+                    campaign_delivery_type:
+                      - "ONE_TIME"
+                    status:
+                      - "ACTIVE"
+                      - "SCHEDULED"
+                    created_by:
+                      - "{{creator_email}}"
+                    created_date:
+                      from_date: "{{from_date}}"
+                      to_date: "{{to_date}}"
+                    tags:
+                      - "{{tag_name}}"
+              include_archived:
+                summary: Include archived campaigns
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    channels:
+                      - "PUSH"
+                      - "EMAIL"
+                  include_archive_campaigns: true
       responses:
         '200':
           description: Campaigns matching the filter criteria.
@@ -5236,157 +4726,41 @@ paths:
         Returns lightweight metadata for one or more campaigns without loading their full configuration.
       x-mint:
         content: |
-          
           <Info>
-            - After a rejection, the `rejection_comment` field may appear while the campaign remains in **DRAFT**.
-            - For scheduled campaigns, reachability fields may be populated as described in the schema.
-          </Info>  
+          - After a rejection, the `rejection_comment` field may appear while the campaign remains in **DRAFT**.
+          - For scheduled campaigns, reachability fields may be populated as described in the schema.
+          </Info>
 
           #### Supported Channels
-          - Email 
-          - Push 
-          - SMS 
-          - WhatsApp 
-          - Facebook 
-          - Google Ads 
+          - Email
+          - Push
+          - SMS
+          - WhatsApp
+          - Facebook
+          - Google Ads
           - Connectors
-         
+
           #### Reachability Information
           - Available only for **scheduled** campaigns (one-time, business event-triggered, and event-triggered).
           - Provides estimated user count that will receive the campaign.
           - Calculated once daily and cached for 24 hours. Multiple API calls within the same day return the cached value.
           - May vary due to app installations/uninstalls or subscription changes.
-           
+
           #### Rate Limits
 
           | Rate Limit Name | Rate Limit |
           | :--- | :--- |
           | get campaign meta per second | The total number of get campaign meta requests per second per client allowed is 10. |
           | get campaign meta per minute | The total number of get campaign meta requests per minute per client allowed is 100. |
-          | get campaign meta per hour | The total number of get campaign meta requests per hour per client allowed is 6000. | 
+          | get campaign meta per hour | The total number of get campaign meta requests per hour per client allowed is 6000. |
 
-            <Note>
-              **Notes**
-              * Breaching the limits will reject the request.
-              * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
-              </Note>
-      tags: [Get Campaign Details]
-      x-codeSamples:
-        - lang: Shell
-          label: Filter by ID and status (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/meta' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "id": "{{campaign_id}}",
-                  "status": ["SCHEDULED", "ACTIVE", "PAUSED", "DRAFT"]
-                }
-              }'
-        - lang: Shell
-          label: Filter by channel and date range (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/meta' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "channels": ["PUSH", "EMAIL"],
-                  "created_date": {
-                    "from_date": "2024-01-01T00:00:00",
-                    "to_date": "2024-12-31T23:59:59"
-                  }
-                }
-              }'
-        - lang: Shell
-          label: Filter by delivery type and creator (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/meta' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "delivery_type": "ONE_TIME",
-                  "created_by": ["{{creator_email}}"],
-                  "name": "{{campaign_name_partial}}",
-                  "tags": ["promotional"]
-                },
-                "include_child_campaigns": false
-              }'
-        - lang: Shell
-          label: With child campaign counts (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/meta' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "channels": ["PUSH", "EMAIL"],
-                  "campaign_delivery_type": ["PERIODIC", "BUSINESS_EVENT_TRIGGERED"]
-                },
-                "include_child_campaigns": true
-              }'
-        - lang: Shell
-          label: Reachability for a scheduled campaign (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/meta' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 1,
-                "page": 1,
-                "campaign_fields": {
-                  "id": "{{campaign_id}}",
-                  "status": ["SCHEDULED"]
-                }
-              }'
-        - lang: Shell
-          label: Filter SMS and WhatsApp (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/meta' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1,
-                "campaign_fields": {
-                  "channels": ["SMS", "WHATSAPP"],
-                  "status": ["ACTIVE"]
-                }
-              }'
+          <Note>
+          **Notes**
+          * Breaching the limits will reject the request.
+          * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
+          </Note>
+      tags:
+        - Get Campaign Details
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -5397,7 +4771,85 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/MetaV5Request' }
+            schema:
+              $ref: '#/components/schemas/MetaV5Request'
+            examples:
+              filter_by_id_and_status:
+                summary: Filter by ID and status
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    id: "{{campaign_id}}"
+                    status:
+                      - "SCHEDULED"
+                      - "ACTIVE"
+                      - "PAUSED"
+                      - "DRAFT"
+              filter_by_channel_and_date:
+                summary: Filter by channel and date range
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    channels:
+                      - "PUSH"
+                      - "EMAIL"
+                    created_date:
+                      from_date: "2024-01-01T00:00:00"
+                      to_date: "2024-12-31T23:59:59"
+              filter_by_delivery_type_and_creator:
+                summary: Filter by delivery type and creator
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    delivery_type: "ONE_TIME"
+                    created_by:
+                      - "{{creator_email}}"
+                    name: "{{campaign_name_partial}}"
+                    tags:
+                      - "promotional"
+                  include_child_campaigns: false
+              with_child_counts:
+                summary: With child campaign counts
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    channels:
+                      - "PUSH"
+                      - "EMAIL"
+                    campaign_delivery_type:
+                      - "PERIODIC"
+                      - "BUSINESS_EVENT_TRIGGERED"
+                  include_child_campaigns: true
+              reachability:
+                summary: Reachability for a scheduled campaign
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 1
+                  page: 1
+                  campaign_fields:
+                    id: "{{campaign_id}}"
+                    status:
+                      - "SCHEDULED"
+              filter_sms_whatsapp:
+                summary: Filter SMS and WhatsApp
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+                  campaign_fields:
+                    channels:
+                      - "SMS"
+                      - "WHATSAPP"
+                    status:
+                      - "ACTIVE"
       responses:
         '200':
           description: Campaign meta rows
@@ -5508,218 +4960,6 @@ paths:
       summary: Test Campaign
       description: |
         Sends a test Push or Email message to specific users or device identifiers before publishing the campaign.
-      x-codeSamples:
-        - lang: Shell
-          label: Push - Inline (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/test' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "platforms": ["ANDROID"]
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "android": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "{{title}}",
-                          "message": "{{message}}"
-                        }
-                      }
-                    }
-                  }
-                },
-                "test_campaign_meta": {
-                  "identifier": "USER_ATTRIBUTE_UNIQUE_ID",
-                  "identifier_values": ["{{identifier_value}}"]
-                }
-              }'
-        - lang: Shell
-          label: Email - Inline (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/test' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "content_type": "PROMOTIONAL",
-                  "user_attribute_identifier": "Email (Standard)",
-                  "subscription_category": "{{subscription_category}}"
-                },
-                "connector": {
-                  "connector_type": "SENDGRID",
-                  "connector_name": "{{connector_name}}"
-                },
-                "campaign_content": {
-                  "content": {
-                    "email": {
-                      "subject": "{{email_subject}}",
-                      "sender_name": "{{sender_name}}",
-                      "from_address": "{{from_email}}",
-                      "html_content": "{{html_body}}"
-                    }
-                  }
-                },
-                "test_campaign_meta": {
-                  "identifier": "EMAIL",
-                  "identifier_values": ["{{recipient_email}}"]
-                }
-              }'
-        - lang: Shell
-          label: Push - Draft mode (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/test' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "draft_id": "{{campaign_id}}",
-                "test_campaign_meta": {
-                  "identifier": "USER_ATTRIBUTE_UNIQUE_ID",
-                  "identifier_values": ["{{identifier_value}}"],
-                  "platform": "ANDROID"
-                }
-              }'
-        - lang: Shell
-          label: Push - Inline iOS (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/test' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "platforms": ["IOS"]
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "ios": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "{{title}}",
-                          "message": "{{message}}"
-                        }
-                      }
-                    }
-                  }
-                },
-                "test_campaign_meta": {
-                  "identifier": "USER_ATTRIBUTE_UNIQUE_ID",
-                  "identifier_values": ["{{identifier_value}}"]
-                }
-              }'
-        - lang: Shell
-          label: Push - Inline Web (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/test' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "basic_details": {
-                  "name": "{{campaign_name}}",
-                  "platforms": ["WEB"]
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "web": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "{{title}}",
-                          "message": "{{message}}",
-                          "redirect_url": "{{redirect_url}}"
-                        }
-                      }
-                    }
-                  }
-                },
-                "test_campaign_meta": {
-                  "identifier": "USER_ATTRIBUTE_UNIQUE_ID",
-                  "identifier_values": ["{{identifier_value}}"]
-                }
-              }'
-        - lang: Shell
-          label: Email - Draft mode (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/test' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "draft_id": "{{campaign_id}}",
-                "test_campaign_meta": {
-                  "identifier": "EMAIL",
-                  "identifier_values": ["{{recipient_email}}"]
-                }
-              }'
-        - lang: Shell
-          label: Push - Draft mode iOS (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/test' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "draft_id": "{{campaign_id}}",
-                "test_campaign_meta": {
-                  "identifier": "USER_ATTRIBUTE_UNIQUE_ID",
-                  "identifier_values": ["{{identifier_value}}"],
-                  "platform": "IOS"
-                }
-              }'
-        - lang: Shell
-          label: Push - Draft mode Web (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/test' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Idempotency-Key: {{idempotency_key}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "draft_id": "{{campaign_id}}",
-                "test_campaign_meta": {
-                  "identifier": "USER_ATTRIBUTE_UNIQUE_ID",
-                  "identifier_values": ["{{identifier_value}}"],
-                  "platform": "WEB"
-                }
-              }'
       x-mint:
         content: |
           The endpoint supports two modes:
@@ -5743,11 +4983,12 @@ paths:
           | Test campaign per hour | The total number of test campaign requests per hour per client allowed is 6000. |
 
           <Note>
-            **Notes**
-            * Breaching the limits will reject the request.
-            * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
+          **Notes**
+          * Breaching the limits will reject the request.
+          * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
           </Note>
-      tags: [Test Campaigns]
+      tags:
+        - Test Campaigns
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -5760,7 +5001,136 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/TestV5Request' }
+            schema:
+              $ref: '#/components/schemas/TestV5Request'
+            examples:
+              push_inline:
+                summary: Push - Inline
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    platforms:
+                      - "ANDROID"
+                  campaign_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "{{title}}"
+                            message: "{{message}}"
+                  test_campaign_meta:
+                    identifier: "USER_ATTRIBUTE_UNIQUE_ID"
+                    identifier_values:
+                      - "{{identifier_value}}"
+              email_inline:
+                summary: Email - Inline
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    content_type: "PROMOTIONAL"
+                    user_attribute_identifier: "Email (Standard)"
+                    subscription_category: "{{subscription_category}}"
+                  connector:
+                    connector_type: "SENDGRID"
+                    connector_name: "{{connector_name}}"
+                  campaign_content:
+                    content:
+                      email:
+                        subject: "{{email_subject}}"
+                        sender_name: "{{sender_name}}"
+                        from_address: "{{from_email}}"
+                        html_content: "{{html_body}}"
+                  test_campaign_meta:
+                    identifier: "EMAIL"
+                    identifier_values:
+                      - "{{recipient_email}}"
+              push_draft:
+                summary: Push - Draft mode
+                value:
+                  request_id: "{{request_id}}"
+                  draft_id: "{{campaign_id}}"
+                  test_campaign_meta:
+                    identifier: "USER_ATTRIBUTE_UNIQUE_ID"
+                    identifier_values:
+                      - "{{identifier_value}}"
+                    platform: "ANDROID"
+              push_inline_ios:
+                summary: Push - Inline iOS
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    platforms:
+                      - "IOS"
+                  campaign_content:
+                    content:
+                      push:
+                        ios:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "{{title}}"
+                            message: "{{message}}"
+                  test_campaign_meta:
+                    identifier: "USER_ATTRIBUTE_UNIQUE_ID"
+                    identifier_values:
+                      - "{{identifier_value}}"
+              push_inline_web:
+                summary: Push - Inline Web
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  basic_details:
+                    name: "{{campaign_name}}"
+                    platforms:
+                      - "WEB"
+                  campaign_content:
+                    content:
+                      push:
+                        web:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "{{title}}"
+                            message: "{{message}}"
+                            redirect_url: "{{redirect_url}}"
+                  test_campaign_meta:
+                    identifier: "USER_ATTRIBUTE_UNIQUE_ID"
+                    identifier_values:
+                      - "{{identifier_value}}"
+              email_draft:
+                summary: Email - Draft mode
+                value:
+                  request_id: "{{request_id}}"
+                  draft_id: "{{campaign_id}}"
+                  test_campaign_meta:
+                    identifier: "EMAIL"
+                    identifier_values:
+                      - "{{recipient_email}}"
+              push_draft_ios:
+                summary: Push - Draft mode iOS
+                value:
+                  request_id: "{{request_id}}"
+                  draft_id: "{{campaign_id}}"
+                  test_campaign_meta:
+                    identifier: "USER_ATTRIBUTE_UNIQUE_ID"
+                    identifier_values:
+                      - "{{identifier_value}}"
+                    platform: "IOS"
+              push_draft_web:
+                summary: Push - Draft mode Web
+                value:
+                  request_id: "{{request_id}}"
+                  draft_id: "{{campaign_id}}"
+                  test_campaign_meta:
+                    identifier: "USER_ATTRIBUTE_UNIQUE_ID"
+                    identifier_values:
+                      - "{{identifier_value}}"
+                    platform: "WEB"
       responses:
         '200':
           description: Test send result
@@ -5782,7 +5152,7 @@ paths:
                       data:
                         ANDROID_default_variation_1:
                           status: "SENT"
-                      message: "Test campaign processed"
+                          message: "Test campaign processed"
                 push_failed:
                   summary: Push test with one failed send
                   value:
@@ -5793,7 +5163,7 @@ paths:
                         ANDROID_default_variation_1:
                           status: "FAILED"
                           failure_reason: "Invalid push token"
-                      message: "Test campaign processed"
+                          message: "Test campaign processed"
         '400':
           $ref: '#/components/responses/V5ValidationError'
         '401':
@@ -5822,77 +5192,15 @@ paths:
         Returns a fully resolved preview of personalised campaign content for a specific user - all user attributes, event attributes, content blocks, content APIs, product sets, and custom templates are rendered exactly as they would appear to that user at send time.
 
         No message is sent. This endpoint is a read-only inspection tool.
-
       x-mint:
         content: |
-
           #### Rate Limits
 
           | Rate Limit Name | Rate Limit |
           | :--- | :--- |
           | Personalized preview per minute | 10,000 requests per minute |
-
-      x-codeSamples:
-        - lang: Shell
-          label: Push personalized preview (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/personalization/preview' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "PUSH",
-                "user_identification": {
-                  "type": "USER_ATTRIBUTE_UNIQUE_ID",
-                  "value": "{{user_id}}"
-                },
-                "campaign_content": {
-                  "content": {
-                    "push": {
-                      "android": {
-                        "template_type": "BASIC",
-                        "basic_details": {
-                          "title": "Hello, {{ user.first_name }}!",
-                          "message": "{{ event.product_name }} is waiting for you."
-                        }
-                      }
-                    }
-                  }
-                },
-                "event_attributes": {
-                  "product_name": "{{product_name}}"
-                }
-              }'
-        - lang: Shell
-          label: Email personalized preview (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/personalization/preview' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "channel": "EMAIL",
-                "user_identification": {
-                  "type": "EMAIL",
-                  "value": "{{user_email}}"
-                },
-                "campaign_content": {
-                  "content": {
-                    "email": {
-                      "subject": "Hello, {{ user.first_name }}!",
-                      "html_content": "<p>Your order {{ event.order_id }} has shipped.</p>"
-                    }
-                  }
-                },
-                "event_attributes": {
-                  "order_id": "{{order_id}}"
-                }
-              }'
-      tags: [Personalized Preview]
+      tags:
+        - Personalized Preview
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -5938,23 +5246,57 @@ paths:
                   description: >-
                     The campaign content to resolve. Follows the same `campaign_content` structure as the
                     Create Campaign request. Only the content sent here is evaluated - no saved draft is loaded.
-            example:
-              request_id: "preview-001"
-              channel: "PUSH"
-              user_identification:
-                type: "USER_ATTRIBUTE_UNIQUE_ID"
-                value: "user_abc123"
-              event_attributes:
-                product_name: "Running Shoes"
-                product_price: "4999"
-              campaign_content:
-                content:
-                  push:
-                    android:
-                      template_type: "BASIC"
-                      basic_details:
-                        title: "Hello, {{ user.first_name }}!"
-                        message: "{{ event.product_name }} is waiting for you."
+                  example:
+                    request_id: "preview-001"
+                    channel: "PUSH"
+                    user_identification:
+                      type: "USER_ATTRIBUTE_UNIQUE_ID"
+                      value: "user_abc123"
+                    event_attributes:
+                      product_name: "Running Shoes"
+                      product_price: "4999"
+                    campaign_content:
+                      content:
+                        push:
+                          android:
+                            template_type: "BASIC"
+                            basic_details:
+                              title: "Hello, {{ user.first_name }}!"
+                              message: "{{ event.product_name }} is waiting for you."
+            examples:
+              push_preview:
+                summary: Push personalized preview
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "PUSH"
+                  user_identification:
+                    type: "USER_ATTRIBUTE_UNIQUE_ID"
+                    value: "{{user_id}}"
+                  campaign_content:
+                    content:
+                      push:
+                        android:
+                          template_type: "BASIC"
+                          basic_details:
+                            title: "Hello, {{ user.first_name }}!"
+                            message: "{{ event.product_name }} is waiting for you."
+                  event_attributes:
+                    product_name: "{{product_name}}"
+              email_preview:
+                summary: Email personalized preview
+                value:
+                  request_id: "{{request_id}}"
+                  channel: "EMAIL"
+                  user_identification:
+                    type: "EMAIL"
+                    value: "{{user_email}}"
+                  campaign_content:
+                    content:
+                      email:
+                        subject: "Hello, {{ user.first_name }}!"
+                        html_content: "<p>Your order {{ event.order_id }} has shipped.</p>"
+                  event_attributes:
+                    order_id: "{{order_id}}"
       responses:
         '200':
           description: Preview resolved successfully. Returns the fully rendered content for the specified user.
@@ -5976,18 +5318,18 @@ paths:
                         description: >-
                           The resolved campaign content with all Jinja expressions, user attributes,
                           event attributes, and dynamic sources substituted.
-              example:
-                response_id: "preview-001"
-                type: "personalization"
-                data:
-                  personalized_content:
-                    content:
-                      push:
-                        android:
-                          template_type: "BASIC"
-                          basic_details:
-                            title: "Hello, Jane!"
-                            message: "Running Shoes is waiting for you."
+                        example:
+                          response_id: "preview-001"
+                          type: "personalization"
+                          data:
+                            personalized_content:
+                              content:
+                                push:
+                                  android:
+                                    template_type: "BASIC"
+                                    basic_details:
+                                      title: "Hello, Jane!"
+                                      message: "Running Shoes is waiting for you."
         '400':
           $ref: '#/components/responses/V5ValidationError'
         '401':
@@ -6002,12 +5344,10 @@ paths:
       operationId: get_child_campaigns_v5
       summary: Get Child Campaigns
       description: |
-        Retrieves the execution history of a Periodic or Business Event-triggered campaign. Each execution (child campaign) represents one run of the parent campaign and returns the child's ID, send time, status, and the total number of executions to date.
-
-
+        Retrieves the execution history of a Periodic or Business Event-triggered campaign.
+        Each execution (child campaign) represents one run of the parent campaign and returns the child's ID, send time, status, and the total number of executions to date.
       x-mint:
         content: |
-         
           **Supported campaign types:** Periodic, Business Event-triggered
 
           **Supported channels:** Push, Email
@@ -6019,35 +5359,8 @@ paths:
           | Get child campaigns per second | 10 requests per second per client |
           | Get child campaigns per minute | 100 requests per minute per client |
           | Get child campaigns per hour | 6,000 requests per hour per client |
-
-      x-codeSamples:
-        - lang: Shell
-          label: First page of executions (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/{{parent_campaign_id}}/executions' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 1
-              }'
-        - lang: Shell
-          label: Next page of executions (cURL)
-          source: |
-            curl -X POST 'https://api-{dc}.moengage.com/v5/campaigns/{{parent_campaign_id}}/executions' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "limit": 15,
-                "page": 2
-              }'
-      tags: [Get Campaign Details]
+      tags:
+        - Get Campaign Details
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -6057,7 +5370,7 @@ paths:
           description: The `campaign_id` of the parent Periodic or Business Event-triggered campaign.
           schema:
             type: string
-          example: "64a1b2c3d4e5f6a7b8c9d0e1"
+            example: "64a1b2c3d4e5f6a7b8c9d0e1"
       requestBody:
         description: Pagination parameters for the executions list.
         required: true
@@ -6081,10 +5394,29 @@ paths:
                   minimum: 1
                   default: 1
                   description: Page number for pagination (1-indexed).
-            example:
-              request_id: "exec-001"
-              limit: 15
-              page: 1
+              example:
+                request_id: "exec-001"
+                limit: 15
+                page: 1
+            examples:
+              get_periodic_children:
+                summary: Get periodic children
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+              get_business_event_children:
+                summary: Get business event children
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 1
+              get_second_page:
+                summary: Get second page
+                value:
+                  request_id: "{{request_id}}"
+                  limit: 15
+                  page: 2
       responses:
         '200':
           description: Execution history retrieved successfully.
@@ -6120,18 +5452,18 @@ paths:
                               type: string
                               enum: [SENT, SENDING, FAILED]
                               description: Status of this child campaign execution.
-              example:
-                response_id: "exec-001"
-                type: "campaign"
-                data:
-                  total_instances: 4
-                  executions:
-                    - campaign_id: "64b2c3d4e5f6a7b8c9d0e1f2"
-                      sent_time: "2024-11-25T08:00:00Z"
-                      status: "SENT"
-                    - campaign_id: "64b2c3d4e5f6a7b8c9d0e2f3"
-                      sent_time: "2024-11-18T08:00:00Z"
-                      status: "SENT"
+                    example:
+                      response_id: "exec-001"
+                      type: "campaign"
+                      data:
+                        total_instances: 4
+                        executions:
+                          - campaign_id: "64b2c3d4e5f6a7b8c9d0e1f2"
+                            sent_time: "2024-11-25T08:00:00Z"
+                            status: "SENT"
+                          - campaign_id: "64b2c3d4e5f6a7b8c9d0e2f3"
+                            sent_time: "2024-11-18T08:00:00Z"
+                            status: "SENT"
         '400':
           $ref: '#/components/responses/V5ValidationError'
         '401':
@@ -6144,58 +5476,29 @@ paths:
       operationId: update_global_control_group_v5
       summary: Update Global Control Group
       description: |
-        Adds or removes users from the Global Control Group (GCG) in bulk via a CSV file. The CSV must contain a single `uid` column. Once submitted, MoEngage processes the file asynchronously and sends an email summary to the `updated_by` address with counts of successfully processed and failed users.
-
-
+        Adds or removes users from the Global Control Group (GCG) in bulk via a CSV file.
+        The CSV must contain a single `uid` column. Once submitted, MoEngage processes the file asynchronously and sends an email summary to the `updated_by` address with counts of successfully processed and failed users.
       x-mint:
         content: |
-          
-           **File requirements:** Single `uid` column, under 300 MB, publicly accessible Amazon S3 URL
+          **File requirements:** Single `uid` column, under 300 MB, publicly accessible Amazon S3 URL
 
-           <Info>
-           The GCG must already be initialised using the **Upload Users** option in the MoEngage dashboard. The **Random allocation** option is not supported by this API.
-           </Info>
-           
-           #### Rate Limits
+          <Info>
+          The GCG must already be initialised using the **Upload Users** option in the MoEngage dashboard.
+          The **Random allocation** option is not supported by this API.
+          </Info>
 
-           | Rate Limit Name | Rate Limit |
-           | :--- | :--- |
-           | Update GCG per minute | 10 requests per minute |
+          #### Rate Limits
 
-           <Note>
-           Each file-processing request must complete before the next one is submitted. Submitting a second request while the first is still processing returns `429`.
-           </Note>
+          | Rate Limit Name | Rate Limit |
+          | :--- | :--- |
+          | Update GCG per minute | 10 requests per minute |
 
-      x-codeSamples:
-        - lang: Shell
-          label: Add users to GCG (cURL)
-          source: |
-            curl -X PUT 'https://api-{dc}.moengage.com/v5/global-control-group/users' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "file_url": "{{s3_csv_url}}",
-                "action_type": "add",
-                "updated_by": "{{user_email}}"
-              }'
-        - lang: Shell
-          label: Remove users from GCG (cURL)
-          source: |
-            curl -X PUT 'https://api-{dc}.moengage.com/v5/global-control-group/users' \
-              -H 'Authorization: Basic {{auth_token}}' \
-              -H 'X-MOE-Tenant-ID: {{workspace_id}}' \
-              -H 'X-MOE-Request-Id: {{request_id}}' \
-              -H 'Content-Type: application/json' \
-              -d '{
-                "request_id": "{{request_id}}",
-                "file_url": "{{s3_csv_url}}",
-                "action_type": "remove",
-                "updated_by": "{{user_email}}"
-              }'
-      tags: [Global Control Group]
+          <Note>
+          Each file-processing request must complete before the next one is submitted.
+          Submitting a second request while the first is still processing returns `429`.
+          </Note>
+      tags:
+        - Global Control Group
       parameters:
         - $ref: '#/components/parameters/X-MOE-Tenant-ID'
         - $ref: '#/components/parameters/X-MOE-Request-Id'
@@ -6229,11 +5532,26 @@ paths:
                     Email address of the user initiating the update. An email summary with processed
                     and failed user counts is sent to this address once processing completes.
                   example: "marketer@example.com"
-            example:
-              request_id: "gcg-001"
-              file_url: "https://s3.amazonaws.com/my-bucket/gcg_users.csv"
-              action_type: "add"
-              updated_by: "marketer@example.com"
+              example:
+                request_id: "gcg-001"
+                file_url: "https://s3.amazonaws.com/my-bucket/gcg_users.csv"
+                action_type: "add"
+                updated_by: "marketer@example.com"
+            examples:
+              add_users:
+                summary: Add users to GCG
+                value:
+                  request_id: "{{request_id}}"
+                  file_url: "{{s3_csv_url}}"
+                  action_type: "add"
+                  updated_by: "{{user_email}}"
+              remove_users:
+                summary: Remove users from GCG
+                value:
+                  request_id: "{{request_id}}"
+                  file_url: "{{s3_csv_url}}"
+                  action_type: "remove"
+                  updated_by: "{{user_email}}"
       responses:
         '204':
           description: >-
