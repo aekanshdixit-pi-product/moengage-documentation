@@ -339,63 +339,38 @@ To create a campaign on MoEngage, perform the following steps:
 
     | Field | Required | Description |
     | --- | --- | --- |
-    |  |  |  |
-    |  |  |  |
-    |  |  |  |
-    |  |  |  |
-    |  |  |  |
-    |  |  |  |
+    | **Recipient Mobile Number** | Yes | Enter the recipient's mobile number in the E.164 international format. The number must include the country code (for example, 14155552671). |
+    | **Message Text** | No | This is the text content of the message. You can combine it with the image and/or a CTA button. |
+    | **Media URL** | Yes | This is the public HTTPS URL for the image. This field is required if the **Content Type** is set to **Image**. |
+    | **Video Content Details** | No | Leave this blank (not applicable for Image message). |
+    | **Button Caption** | Conditional | This is the title to display on the CTA button (for example, **Shop Now**). Required if **Button Action URL** is provided. |
+    | **Button Action URL** | Conditional | This is the destination HTTPS URL that the user will be redirected to when they tap the button. Required if **Button Caption** is provided. |
   </Tab>
   <Tab title="Video Message">
     If you select **Video**, enter the following fields:
 
     | Field | Required | Description |
     | --- | --- | --- |
-    |  |  |  |
-    |  |  |  |
+    | **Recipient Mobile Number** | Yes | Enter the recipient's mobile number in the E.164 international format. The number must include the country code (for example, 14155552671). |
+    | **Message Text** | No | This is the text content of the message. You can combine it with the video and/or a CTA button |
+    | **Media URL** | Yes | This is the public HTTPS URL for the video. This field is required if the **Content Type** is set to **Video**. |
+    | **Video Content Details** | Yes | This is required only when the Content Type is 'Video'. You must provide a JSON object with the following keys: <ul><li>`filesize`: (Integer). The size of the video file in bytes.</li><li>`duration`: (Integer) The duration of the video in seconds.</li><li>`thumbnail`: (String) A public HTTPS URL for the video's thumbnail image.</li></ul> For more information, refer [here](https://developer.8x8.com/connect/docs/usage-samples-viber/#video-only). |
+    | **Button Caption** | Conditional | This is the title to display on the CTA button (for example, **Shop Now**). Required if **Button Action URL** is provided. |
+    | **Button Action URL** | ConditionalNo | This is the destination HTTPS URL that the user will be redirected to when they tap the button. Required if **Button Caption** is provided. |
   </Tab>
   <Tab title="File Message">
     If you select **File**, enter the following fields:
 
     | Field | Required | Description |
     | --- | --- | --- |
-    |  |  |  |
-    |  |  |  |
+    | **Recipient Mobile Number** | Yes | Enter the recipient's mobile number in the E.164 international format. The number must include the country code (for example, 14155552671). |
+    | **Message Text** | No | Leave this blank (not applicable for File message). |
+    | **Media URL** | Yes | This is the public HTTPS URL for the file. This field is required if the **Content Type** is set to **File**. |
+    | **Video Content Details** | No | Leave this blank (not applicable for File message). |
+    | **Button Caption** | No | Leave this blank (Button is not supported for File message on this platform). |
+    | **Button Action URL** | No | Leave this blank (Button is not supported for File message on this platform). |
   </Tab>
 </Tabs>
-
-#### 8x8 text message
-
-| Field | Required | Description |
-| --- | --- | --- |
-| **Recipient Mobile Number** | Yes | Mobile number in E.164 format including country code (for example, `14155552671`). |
-| **Message Text** | Yes | Text content. Can be combined with a CTA button. |
-| **Media URL** | No | Leave blank for text messages. |
-| **Video Content Details** | No | Leave blank for text messages. |
-| **Button Caption** | Conditional | CTA button title (for example, **Shop Now**). Required if **Button Action URL** is provided. |
-| **Button Action URL** | Conditional | HTTPS destination when the user taps the button. Required if **Button Caption** is provided. |
-
-#### 8x8 image message
-
-| Field | Required | Description |
-| --- | --- | --- |
-| **Recipient Mobile Number** | Yes | E.164 format with country code. |
-| **Message Text** | No | Optional text with the image and/or CTA button. |
-| **Media URL** | Yes | Public HTTPS URL for the image when **Content Type** is **Image**. |
-| **Video Content Details** | No | Leave blank. |
-| **Button Caption** | Conditional | Required if **Button Action URL** is provided. |
-| **Button Action URL** | Conditional | Required if **Button Caption** is provided. |
-
-#### 8x8 video message
-
-| Field | Required | Description |
-| --- | --- | --- |
-| **Recipient Mobile Number** | Yes | E.164 format with country code. |
-| **Message Text** | No | Optional text with the video and/or CTA button. |
-| **Media URL** | Yes | Public HTTPS URL for the video when **Content Type** is **Video**. |
-| **Video Content Details** | Yes | Required when **Content Type** is **Video**. JSON object with `filesize` (integer, bytes), `duration` (integer, seconds), and `thumbnail` (string, HTTPS URL). See example below. |
-| **Button Caption** | Conditional | Required if **Button Action URL** is provided. |
-| **Button Action URL** | Conditional | Required if **Button Caption** is provided. |
 
 Example **Video Content Details** JSON:
 
@@ -406,3 +381,37 @@ Example **Video Content Details** JSON:
   "thumbnail": "https://example.com/thumb.jpg"
 }
 ```
+
+### **Message Combinations**
+
+The connector intelligently handles different combinations of content:
+
+- **Text \+ Button**: Sends a text message with a CTA button.
+- **Image \+ Button**: Sends a message containing an image and a CTA button.
+- **Video \+ Button**: Sends a video or file message that also includes a CTA button.
+- **Media Only**: To send a message with only an **Image**, **Video**, or **File**, select the **Content Type** and provide the **Media URL** (and Video Content Details, if applicable).
+
+### **Analytics and Delivery Tracking**
+
+The 8x8 Connector automatically tracks the delivery status of your campaigns. The following MoEngage events are created based on the API response from 8x8:
+
+- **Connected App Campaign Sent**: This event is triggered when the 8x8 API successfully accepts the message request (receives a 200 OK response).
+- **Connected App Campaign Failed**: This event is triggered if the 8x8 API returns any error (a response code other than 200), indicating the message could not be sent.
+
+You can use these events to build analytics dashboards, track campaign performance, and set up follow-up actions.
+
+# **Send a Viber Message to the Channel or Groups**
+
+1. Create a new user in MoEngage to message a channel or group. Ensure the Viber ID here is your Channel or group ID.
+2. Select the user by creating a segment for it. Ensure only one user is included in the segment. When multiple users are selected for the campaign, the message gets sent to the channel or group many times.
+3. In Step 2 of Create Campaign, enter the Viber ID of your channel or group. You can also use personalization here.
+
+# **Campaign Analytics**
+
+MoEngage campaigns provide powerful analytics that allow you to analyze your campaign performances. Each channel in MoEngage provides in-depth metrics that help you quantify your campaign goals. For more information on the MoEngage Analytics functionalities, refer to [Campaign Analytics](/user-guide/campaigns-and-channels/connected-apps/analyze/connected-apps-campaign-analytics).
+
+By default, we provide the following metrics for Viber campaigns:
+
+- **Attempted**: After removing the users who breached the frequency capping (FC), _Attempted_ is calculated as the number of users who qualified for the Viber campaigns and to whom we attempted to send messages.
+- **Failed:** Number of users for whom Viber did not send any message or the users for whom we failed to find any value against the user or event attributes used in the campaign.
+- **Successfully sent**: The campaign is marked as successful when Viber APIs accept the request to send the message to users/groups/rooms (with a 200 status code). For more information on Viber Message API responses, refer to their help documentation.
