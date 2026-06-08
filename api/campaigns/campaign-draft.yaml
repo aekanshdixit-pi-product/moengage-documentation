@@ -405,6 +405,10 @@ components:
             | `PAUSE` | `PERIODIC`, `EVENT_TRIGGERED` | `ACTIVE`, `SCHEDULED`, `SENDING` |
             | `RESUME` | `PERIODIC`, `EVENT_TRIGGERED` | `PAUSED` |
 
+            <Note>
+             `STOP` cannot be used on Periodic campaigns. `PAUSE` and `RESUME` cannot be used on One-time campaigns.
+            </Note>
+
 
     SearchV5Request:
       type: object
@@ -4858,26 +4862,13 @@ paths:
       description: |
         Applies a state transition to a published campaign.
 
-        **Migration from V1:**
-        - `POST /v1/campaigns/status` accepted a `campaign_ids` array of up to 10 IDs per request.
-        - In V5, the campaign ID is a path parameter and only one campaign can be transitioned per request.
-        - To perform bulk status changes, call this endpoint once per campaign ID.
       x-mint:
         content: |
-          #### Action reference
-
-          The following table maps each action to its supported delivery types and valid source states.
-
-          | Action | Supported delivery types | Valid source states |
-          | :--- | :--- | :--- |
-          | **STOP** | One-time (Email and Push) | `SCHEDULED`, `ACTIVE`, `PAUSED`, `SENDING` |
-          | **PAUSE** | Periodic and Event-triggered (Email); Periodic, Event-triggered, Device-triggered, Location-triggered (Push) | `ACTIVE`, `SCHEDULED`, `SENDING` |
-          | **RESUME** | Same delivery types as PAUSE | `PAUSED` |
-
-          <Note>
-          `STOP` cannot be used on Periodic campaigns. `PAUSE` and `RESUME` cannot be used on One-time campaigns.
-          `PUBLISH` is not accepted on this endpoint - to publish a draft, use `PATCH /v5/campaigns/{campaign_id}` with `{ "status": "PUBLISH" }`.
-          </Note>
+         
+         <Info>
+          - **Migration from V1:** In V1, `POST /v1/campaigns/status` accepted a `campaign_ids` array of up to 10 IDs per request. In V5, the campaign ID is a path parameter and only one campaign can be transitioned per request. To perform bulk status changes, call this endpoint once per campaign ID.
+          - `PUBLISH` is not accepted on this endpoint. To publish a draft, use `PATCH /v5/campaigns/{campaign_id}` with `{ "status": "PUBLISH" }`.
+         </Info>
 
           #### Rate Limits
 
