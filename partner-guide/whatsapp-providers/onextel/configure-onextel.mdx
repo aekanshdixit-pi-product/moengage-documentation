@@ -12,73 +12,84 @@ MoEngage natively integrates with OneXtel to send WhatsApp templates directly fr
   Before integration, ensure you have the following:
 
   - An active MoEngage account
-  - An active OneXtel WhatsApp account on 365cx.io
   - A WABA Number (WhatsApp Business API number)
 </Info>
 
 ## Step 1: Sender Configuration
 
-To configure a sender from OneXtel, perform the following steps:
+To configure a sender from OneXtel WhatsApp, perform the following steps:
 
-### Step 1.1 Create a Channel in 365cx.io (OneXtel)
+### **Step 1.2 Obtain the API Key from OneXtel**
 
-1. Log in to your 365cx.io account.
-2. Navigate to the channel creation section.
-3. Create a new channel by entering the following:
-   - **WABA number**: The valid WhatsApp Business Account number.
-   - **Credentials**: Enter your authentication details as required.\\
-     ![](/images/partner_42821009807636.png)
+Before configuring MoEngage, generate the API key from the OneXtel portal.
 
-### Step 1.2 Create a Submission URL
+1. Log in to your OneXtel portal account.
+2. Navigate to the **API** section.
+3. Click **Show API Key** to view your existing key.
+4. If no key is available, click **Generate API Key** to create a new one.  
+   <Frame>
+     ![Generate](/images/generate.png)
+   </Frame>
 
-After creating the channel in OneXtel, you will receive the Channel ID. Use this ID to construct the Submission URL for the MoEngage Custom Connector by replacing the placeholder in the following URL structure: [https://365cx.io/relaybridge/webhook/whatsapp/moengage/\<CHANNEL\_ID\>](https://365cx.io/relaybridge/webhook/whatsapp/moengage/<CHANNEL_ID>).
+### **Step 1.3 Configure WhatsApp Outbound Sender in MoEngage**
 
-**Example**
+To configure a sender from OneXtel on the MoEngage dashboard, perform the following steps:
 
-If your Channel ID is `665815084ebe71d4bfe6a950`, your Submission URL is:
+1. On the MoEngage dashboard, navigate to **Settings** \> **WhatsApp** \> **Sender Configuration**.
+2. On the left navigation menu, click **OneXtel**, and then click **\+ Sender**.
+3. Enter the following details in the sender configuration window:\
+   | **Field** | **Required Input Value / Action** |
+   | --- | --- |
+   | **URL** | Enter `https://mo.onexaura.com/moengage/whatsapp/outbound` |
+   | **WABA ID** | Obtain this from the OneXtel dashboard under **Channel** \> **WhatsApp**. |
+   | **Authorization** | Paste the API key generated in Step 1. |
+   | **WABA Number** | Enter the registered WhatsApp Business API number (retrieved from your OneXtel Dashboard). |
+4. Click **Save** to complete and store the configuration. 
+   <Frame>
+     ![Save](/images/save.png)
+   </Frame>
+   <Frame>
+     ![Complete](/images/complete.png)
+   </Frame>
 
-[https://365cx.io/relaybridge/webhook/whatsapp/moengage/665815084ebe71d4bfe6a950](https://365cx.io/relaybridge/webhook/whatsapp/moengage/665815084ebe71d4bfe6a950).
+## **Step 2: Callback and Inbound Configuration**
 
-### Step 1.3 Create a WhatsApp Channel in MoEngage
+### **Step 2.1 Configure Callback in OneXtel**
 
-1. On the left navigation menu in the MoEngage UI, click **Settings** \> **Channels** \> **WhatsApp**.
-2. On the **Sender configuration** tab, click the **\+ Add connector** from the left pane.
-3. Select **Dev** from the list.
+To configure delivery status tracking callbacks on OneXtel:
 
-![](/images/partner_42820998719892.png)
+1. In your OneXtel dashboard, navigate to the **Configuration** section, and click **Add New Callback**.
+2. In the **Title** field, enter an appropriate title.
+3. In the **Channel** dropdown list, select **WhatsApp**, and in the **Callback Format Type** dropdown, select **MoEngage**.
+4. Ensure that the same API Key used in your MoEngage configuration is selected.
+5. Under the **Request Configuration** section, select **Delivery Notification** as the type, and select **POST** as the HTTP Method.
+6. In the **URL** field, paste the callback URL you copied from your MoEngage dashboard, and then click **Save**. 
 
-## Step 2: Delivery Tracking
+<Frame>
+  ![Url](/images/url.png)
+</Frame>
 
-To enable delivery tracking for your WhatsApp messages within MoEngage, perform the following steps:
+### **Step 2.2 Configure Inbound Messages and Button Clicks in OneXtel**
 
-1. On the left navigation menu in the MoEngage UI, click **Settings** \> **Channels** \> **WhatsApp**.
-2. On the **Sender configuration** tab, under **Enable delivery tracking** , copy the delivery report callback URL.
-3. Share this URL with the OneXtel Support Team for final setup and delivery monitoring.
+To receive inbound customer messages and quick reply button click events:
 
-### Step 2.1: Create a WhatsApp Template
+1. In your OneXtel dashboard, navigate to the **Configuration** section, and click **Add New Callback**.
+2. Enter a title, select **WhatsApp** as the channel, and select **MoEngage** as the callback format type.
+3. Under the **Request Configuration** section, select **Incoming** as the type, and select **POST** as the HTTP Method.
+4. In the **URL** field, enter `https://mo.onexaura.com/moengage/whatsapp/inbound`.
+5. Scroll down to the **Header** section and add the following attributes:
+   - **Key**: `callback_url`
+   - **Value**: The Delivery Report (DLR) URL of your MoEngage dashboard.
+6. Click **Save** to complete the configuration. 
+   <Frame>
+     ![Configuration](/images/configuration.png)
+   </Frame>
+   <Note>
+     **Note: Supporting Quick Reply Button Clicks**
+     Apply the same steps outlined in Step 4 to support Quick Reply button clicks. However, under the **Request Configuration** section, set the **Type** to **Button Click** (the HTTP Method remains **POST**).
+     The Inbound URL and Button Click URL are identical, and the Header key and value remain unchanged.
+   </Note>
 
-To create a WhatsApp template, perform the following steps:
-
-1. On the left navigation menu in the MoEngage UI, click **Settings** \> **Channels** \> **WhatsApp**.
-2. On the **WhatsApp integration settings** page, click the **Approved templates** tab.\\
-   ![](/images/partner_42820996760468.png)
-3. In the upper-right corner, click **\+ Template**.
-4. On the template creation page, provide the required details:
-
-| Field | Description |
-| --- | --- |
-| **Enter Template Name** | Enter a name for the template |
-| **Service Provider** | Select the appropriate provider |
-| **Sender profile** | Select a registered sender profile |
-| **Language** | Select the language for the template body |
-| **Category** | Select the template category |
-| **Template type** | Select the required format |
-| **Body** | Enter the text content for the message |
-
-5. Click **Save** to submit the template for approval.
-
-![](/images/partner_42820998720148.png)
-
-# Next Steps
+## Next Steps
 
 After the templates are added, navigate to **Engage** \> **Campaigns** to [create and launch a WhatsApp campaign](/user-guide/campaigns-and-channels/whatsapp/create/create-a-whatsapp-campaign).
