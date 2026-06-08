@@ -1278,6 +1278,9 @@ components:
 
             - **Flat shape (no locales or variations):** Pass a flat `push` object directly under `content`.
             - **Locale-keyed and variation-keyed shape:** Key by locale name, then by variation name: `content[locale_name][variation_name] = { push: { ... } }`. The `"default"` locale key is always required and serves as the fallback. Additional locale keys must match values listed in `locales`.
+            <Warning>
+            If your V1 integration used locale-variation wrapping, you must continue using that structure in V5. The flat format is only valid when no locales or A/B variations are configured on the campaign.
+            </Warning>
 
             For runnable payloads for both shapes, refer to [Content payload structure](/api/campaigns/campaign-content-reference#content-payload-structure).
           properties:
@@ -3198,16 +3201,6 @@ paths:
       summary: Create Campaign Draft
       description: |
         Creates a Push or Email campaign draft. Content, audience, and delivery settings can be included at the time of creation, or added later via `PATCH /v5/campaigns/{campaign_id}`.
-
-        Only `channel`, `campaign_delivery_type`, and `created_by` are required at creation. All other components, including `basic_details`, `campaign_content`, `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, and `advanced`, are optional.
-
-        **Component reference pages:**
-        - For the full schema of `basic_details` and `campaign_content` per channel, platform, and template type :
-            - Android (`BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `IMAGE_BANNER_WITH_TEXT` / `TIMER` / `TIMER_WITH_PROGRESS_BAR` / `Custom`)
-            - iOS (`BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `Custom`)
-            - Web `BASIC`
-            - Email (`html_content` and `custom_template_id`), see [Campaign content reference](/api/campaigns/campaign-content-reference).
-        - For the full schema of `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, `advanced`, and `geofences`, see [Audience and delivery reference](/api/campaigns/audience-scheduling-delivery-reference).
       x-codeSamples:
         - lang: Shell
           label: Push - ONE_TIME
@@ -3819,23 +3812,16 @@ paths:
               }'
       x-mint:
         content: |
-          **Required fields:**
-          - `channel`
-          - `campaign_delivery_type`
-          - `created_by`
-
-          All other components are optional, so you can build your campaign progressively. Any components included during creation must meet the `DRAFT_CREATE` validation standards.
-
-          **Content structure - flat vs locale-variation:**
-          The `campaign_content.content` object supports two structures:
-
-          - **Flat (no locales or A/B test):** Pass the channel object directly under `content` - for example, `content.push` or `content.email`. The curl examples below use this structure.
-          - **Locale-variation (multi-language or A/B test):** Wrap content by locale name, then by variation name - `content["default"]["variation_1"] = { push: {...} }`. See the `PushCampaignContent` and `EmailCampaignContent` schema descriptions for full examples.
-
-          <Warning>
-          If your V1 integration used locale-variation wrapping, you must continue using that structure in V5. The flat format is only valid when no locales or A/B variations are configured on the campaign.
-          </Warning>
-
+      
+          <Info>
+          **Component reference pages:**
+           - For the full schema of `basic_details` and `campaign_content` per channel, platform, and template type :
+              - Android (`BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `IMAGE_BANNER_WITH_TEXT` / `TIMER` / `TIMER_WITH_PROGRESS_BAR` / `Custom`)
+              - iOS (`BASIC` / `STYLIZED_BASIC` / `SIMPLE_IMAGE_CAROUSEL` / `Custom`)
+              - Web `BASIC`
+              - Email (`html_content` and `custom_template_id`), see [Campaign content reference](/api/campaigns/campaign-content-reference).
+           - For the full schema of `trigger_condition`, `segmentation_details`, `scheduling_details`, `delivery_controls`, `conversion_goal_details`, `control_group_details`, `utm_params`, `campaign_audience_limit`, `advanced`, and `geofences`, see [Audience and delivery reference](/api/campaigns/audience-scheduling-delivery-reference).
+          </Info>
 
           #### Rate Limits
           | Rate Limit Name | Rate Limit |
