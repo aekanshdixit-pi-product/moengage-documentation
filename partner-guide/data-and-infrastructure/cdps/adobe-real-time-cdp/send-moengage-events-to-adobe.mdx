@@ -71,6 +71,16 @@ To review existing identity namespaces, perform the following steps:
 | **Secondary Identities** | Optional but recommended | Email, Phone, Adobe ECID | Use standard Adobe namespaces (`Email`, `Phone`, `ECID`) when possible. |
 | **MoEngage User ID** | Recommended | MoEngage User ID | If you want to track MoEngage's internal user ID, create a custom namespace with the symbol `moengageUserId`. |
 
+<Info>
+  You must share the following identity namespace details with MoEngage when requesting Streams setup:
+
+  - Primary Identity Symbol: for example, lumaCrmId, loyaltyId
+  - Secondary Identity Symbols: for example, Email, Phone
+  - MoEngage User ID Symbol (if created): moengageUserId
+
+  MoEngage configures Streams to map your MoEngage user attributes to these identity namespaces in the identityMap.
+</Info>
+
 ## Step 2: Create an XDM Schema
 
 The XDM schema defines the structure of MoEngage event data in AEP. You can use the recommended schema structure or customize it based on your requirements.
@@ -91,17 +101,17 @@ Create an XDM ExperienceEvent schema with the following field structure:
 | `eventMergeId` | String |
 | `producedBy` | String |
 | `identityMap` | Map |
-| `_&#123;tenant&#125;.source` | String |
-| `_&#123;tenant&#125;.eventName` | String |
-| `_&#123;tenant&#125;.eventCode` | String |
-| `_&#123;tenant&#125;.appName` | String |
-| `_&#123;tenant&#125;.campaignId` | String |
-| `_&#123;tenant&#125;.campaignName` | String |
-| `_&#123;tenant&#125;.campaignType` | String |
-| `_&#123;tenant&#125;.campaignChannel` | String |
-| `_&#123;tenant&#125;.eventAttributesJson` | Map |
-| `_&#123;tenant&#125;.userAttributesJson` | Map |
-| `_&#123;tenant&#125;.deviceAttributesJson` | Map |
+| `_{tenant}.source` | String |
+| `_{tenant}.eventName` | String |
+| `_{tenant}.eventCode` | String |
+| `_{tenant}.appName` | String |
+| `_{tenant}.campaignId` | String |
+| `_{tenant}.campaignName` | String |
+| `_{tenant}.campaignType` | String |
+| `_{tenant}.campaignChannel` | String |
+| `_{tenant}.eventAttributesJson` | Map |
+| `_{tenant}.userAttributesJson` | Map |
+| `_{tenant}.deviceAttributesJson` | Map |
 
 **Note**: `_{tenant}` represents your organization's tenant namespace (for example, `_yourorgname`).
 
@@ -119,7 +129,7 @@ To create the schema in AEP, perform the following steps:
 6. Add the fields listed in the table above under your tenant namespace.
 7. To enable the schema for profiles, turn the **Profile** toggle on.
 8. Click **Save**.\
-   ![Step2 2](/images/step2.2.png)
+   <img src="/images/step2.2.png" alt="Step2 2" />
 
 ### Step 2.4: Download Schema JSON
 
@@ -149,7 +159,7 @@ Datasets store data that conforms to your XDM schema. To create a dataset, perfo
    - **Description**: Campaign events and user actions from the MoEngage Streams API.
 5. Click **Finish**.
 6. Open the new dataset and turn the **Profile** toggle on to enable it for the Real-Time Customer Profile.\
-   ![Step3](/images/step3.png)
+   <img src="/images/step3.png" alt="Step3" />
 
 **Save the Dataset ID**: This is required for the HTTP API configuration (locate  in the dataset details, for example, `690da33230e4cd0adff86e57`).
 
@@ -175,8 +185,7 @@ To create the HTTP API source connection, perform the following steps:
    - **Account name**: MoEngage Streams Connection.
    - **Description**: HTTP API endpoint for streaming MoEngage events.
    - **Authentication**: Choose the method you had selected earlier.
-5. Click **Connect** to source.
-   ![Step4 1](/images/step4.1.png)
+5. Click **Connect** to source. <img src="/images/step4.1.png" alt="Step4 1" />
 
 ### Step 4.3: Set Up OAuth 2.0 Credentials (If Selected)
 
@@ -215,8 +224,7 @@ To configure the dataflow, perform the following steps:
    - Description: Streams MoEngage campaign and user events to AEP.\
      **Note**: Do NOT select **XDM compatible**.
 2. **Select dataset**: `MoEngage Event Data`
-3. Click **Next** to proceed to mapping.
-   ![Step 4 4](/images/step-4.4.png)
+3. Click **Next** to proceed to mapping. <img src="/images/step-4.4.png" alt="Step 4 4" />
 
 <Info>
   **Limitations of XDM compatible mode**
@@ -314,7 +322,7 @@ Generate a sample payload based on your schema structure to validate the mapping
 After configuring the dataflow, you'll receive a streaming endpoint URL that looks like:
 
 ```text Endpoint URL wrap
-[https://dcs.adobedc.net/collection/](https://dcs.adobedc.net/collection/){UNIQUE_COLLECTION_ID}
+https://dcs.adobedc.net/collection/{UNIQUE_COLLECTION_ID}
 ```
 
 **Copy and save this URL** - you must share it with MoEngage for Streams configuration.
