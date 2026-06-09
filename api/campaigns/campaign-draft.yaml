@@ -1171,7 +1171,7 @@ components:
             - trigger_delay_granularity
             - trigger_relation
         trigger_delay_value: 
-          type: integer
+          type: string
           description: The numeric value of the triggered delay.
         trigger_delay_granularity: 
           type: string
@@ -1186,7 +1186,7 @@ components:
             **Required** when trigger_delay_type is DELAY.
 
         trigger_attr: 
-          type: object
+          type: string
           description: The attribute value of the trigger.
         intelligent_delay_optimization:
           type: object
@@ -1236,7 +1236,7 @@ components:
             - trigger_delay_granularity
             - trigger_relation
         trigger_delay_value: 
-          type: integer
+          type: string
           description: The numeric value of the triggered delay.
         trigger_delay_granularity: 
           type: string
@@ -1251,7 +1251,7 @@ components:
             **Required** when trigger_delay_type is DELAY.
 
         trigger_attr: 
-          type: object
+          type: string
           description: The attribute value of the trigger.
 
     PushCampaignContent:
@@ -2209,7 +2209,7 @@ components:
         attributes: { $ref: '#/components/schemas/FilterGroup' }
         condition: 
           type: string
-          description: The condition type (e.g., "IF").
+          description: The condition type. Must be passed as the string "IF".
 
     CustomSegmentFilter:
       type: object
@@ -2704,7 +2704,11 @@ components:
 
         When `is_campaign_audience_limit_enabled` is `true`, the fields `metric`, `frequency`, and
         `limit` are all required. When set to `false`, those three fields must not be provided.
-
+        
+        <Warning>
+        For `ONE_TIME` campaigns, only `limit` and `is_campaign_audience_limit_enabled` are supported. Do not pass `metric` or `frequency`, they are only valid for `PERIODIC` and `EVENT_TRIGGERED` campaigns. 
+        Passing them for a ONE_TIME campaign will cause the validate API to permanently fail. 
+        </Warning>
 
       properties:
         is_campaign_audience_limit_enabled:
@@ -3300,6 +3304,71 @@ paths:
                       repeat_frequency: 1
                       repeat_on_days_of_week:
                         - "MONDAY"
+              email_one_time:
+                summary: Email - ONE_TIME
+                value:
+                  request_id: "<request_id>"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "ONE_TIME"
+                  created_by: "<user_email>"
+                  basic_details:
+                    name: "<campaign_name>"
+                    content_type: "PROMOTIONAL"
+                    user_attribute_identifier: "Email (Standard)"
+                    subscription_category: "<subscription_category>"
+                  connector:
+                    connector_type: "<connector_type>"
+                    connector_name: "<connector_name>"
+                  campaign_content:
+                    content:
+                      email:
+                        subject: "<subject>"
+                        sender_name: "<sender_name>"
+                        from_address: "<from_address>"
+                        html_content: "<html_content>"
+                        email_editor: "Froala Editor"
+                  scheduling_details:
+                    delivery_type: "ASAP"
+              email_event_triggered:
+                summary: Email - EVENT_TRIGGERED
+                value:
+                  request_id: "<request_id>"
+                  channel: "EMAIL"
+                  campaign_delivery_type: "EVENT_TRIGGERED"
+                  created_by: "<user_email>"
+                  basic_details:
+                    name: "Order Confirmation - Email"
+                    content_type: "TRANSACTIONAL"
+                  connector:
+                    connector_type: "sendgrid"
+                    connector_name: "SendGrid Production"
+                  trigger_condition:
+                    included_filters:
+                      filter_operator: "and"
+                      filters:
+                        - filter_type: "actions"
+                          action_name: "order_placed"
+                          execution:
+                            type: "atleast"
+                            count: 1
+                          executed: true
+                          condition: "IF"
+                    trigger_delay_type: "DELAY"
+                    trigger_delay_value: "1"
+                    trigger_delay_granularity: "HOURS"
+                    trigger_relation: "AFTER"
+                    trigger_attr: "If Action"
+                  campaign_content:
+                    content:
+                      email:
+                        subject: "Your order has been placed"
+                        sender_name: "Example Store"
+                        from_address: "orders@example.com"
+                        html_content: "<p>Hi {{UserAttribute['First Name']}}, your order has been confirmed.</p>"
+                  scheduling_details:
+                    delivery_type: "AT_FIXED_TIME"
+                    start_time: "2026-07-01T00:00:00"
+                    expiry_time: "2026-12-31T23:59:59"
               push_event_triggered:
                 summary: Push - EVENT_TRIGGERED
                 value:
@@ -4946,7 +5015,6 @@ paths:
           $ref: '#/components/responses/V5InternalError'
 
   /v5/campaigns/test:
-    /v5/campaigns/test:
     post:
       operationId: test_campaign_v5
       summary: Test Campaign
