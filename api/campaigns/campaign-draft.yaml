@@ -651,17 +651,23 @@ components:
 
     TestV5Request:
       oneOf:
-        - $ref: '#/components/schemas/TestV5PushInlineRequest'
-        - $ref: '#/components/schemas/TestV5EmailInlineRequest'
-        - $ref: '#/components/schemas/TestV5DraftIdRequest'
+        - $ref: '#/components/schemas/TestV5PushRequest'
+        - $ref: '#/components/schemas/TestV5EmailRequest'
+      discriminator:
+        propertyName: channel
+        mapping:
+          PUSH: '#/components/schemas/TestV5PushRequest'
+          EMAIL: '#/components/schemas/TestV5EmailRequest'
 
-    TestV5PushInlineRequest:
-      title: Push - Inline mode
+    TestV5PushRequest:
+      title: Push
       type: object
-      description: >-
-        Inline Push test. Supply `channel` and `campaign_content` directly - nothing is stored on the server.
-        Mutually exclusive with draft mode (`draft_id`).
-      required: [channel, campaign_content, test_campaign_meta]
+      description: |
+        Push test request. Supports two modes:
+
+        - **Inline mode**: Supply `channel` and `campaign_content` directly. Nothing is stored on the server.
+        - **Draft mode**: Supply `draft_id` to load content from a saved DRAFT campaign. By default, the server sends one test per platform, locale, and variation defined in the draft. Use `test_campaign_meta.platform`, `locale_name`, or `variation` to narrow the send.
+      required: [test_campaign_meta]
       properties:
         request_id:
           type: string
@@ -670,7 +676,13 @@ components:
         channel:
           type: string
           enum: [PUSH]
-          description: Must be `PUSH` for a Push inline test.
+          description: Required for inline mode. Must be `PUSH`.
+        draft_id:
+          type: string
+          description: >-
+            Required for draft mode. Raw 24-character ObjectId of the saved DRAFT campaign to test.
+            Obtain this value from the `id` returned when the draft was created. Mutually exclusive with `channel` and `campaign_content`.
+          example: "{{campaign_id}}"
         basic_details:
           $ref: '#/components/schemas/PushBasicDetailsV5'
         campaign_content:
@@ -680,13 +692,15 @@ components:
         test_campaign_meta:
           $ref: '#/components/schemas/TestCampaignMetaV5'
 
-    TestV5EmailInlineRequest:
-      title: Email - Inline mode
+    TestV5EmailRequest:
+      title: Email
       type: object
-      description: >-
-        Inline Email test. Supply `channel`, `basic_details`, `connector`, and `campaign_content` directly - nothing is stored on the server.
-        Mutually exclusive with draft mode (`draft_id`).
-      required: [channel, basic_details, connector, campaign_content, test_campaign_meta]
+      description: |
+        Email test request. Supports two modes:
+
+        - **Inline mode**: Supply `channel`, `basic_details`, `connector`, and `campaign_content` directly. Nothing is stored on the server.
+        - **Draft mode**: Supply `draft_id` to load content from a saved DRAFT campaign. By default, the server sends one test per locale and variation defined in the draft. Use `test_campaign_meta.locale_name` or `variation` to narrow the send.
+      required: [test_campaign_meta]
       properties:
         request_id:
           type: string
@@ -695,39 +709,19 @@ components:
         channel:
           type: string
           enum: [EMAIL]
-          description: Must be `EMAIL` for an Email inline test.
+          description: Required for inline mode. Must be `EMAIL`.
+        draft_id:
+          type: string
+          description: >-
+            Required for draft mode. Raw 24-character ObjectId of the saved DRAFT campaign to test.
+            Obtain this value from the `id` returned when the draft was created. Mutually exclusive with `channel` and `campaign_content`.
+          example: "{{campaign_id}}"
         basic_details:
           $ref: '#/components/schemas/EmailBasicDetailsV5'
         connector:
           $ref: '#/components/schemas/Connector'
         campaign_content:
           $ref: '#/components/schemas/EmailCampaignContent'
-        personalization_details:
-          $ref: '#/components/schemas/PersonalizationDetails'
-        test_campaign_meta:
-          $ref: '#/components/schemas/TestCampaignMetaV5'
-
-    TestV5DraftIdRequest:
-      title: Draft mode
-      type: object
-      description: |
-        Draft mode test. Pass `draft_id` to load content from a saved DRAFT campaign.
-
-        - Mutually exclusive with inline mode fields (`channel`, `campaign_content`).
-        - By default, the server sends one test per platform, locale, and variation defined in the draft.
-        - Use `test_campaign_meta.platform`, `locale_name`, or `variation` to narrow the send.
-      required: [draft_id, test_campaign_meta]
-      properties:
-        request_id:
-          type: string
-          description: Optional unique identifier for this test request (UUID v4 recommended). Used for idempotency.
-          example: "{{request_id}}"
-        draft_id:
-          type: string
-          description: >-
-            Raw 24-character ObjectId of the saved DRAFT campaign to test. Obtain this value from the `campaign_id`
-            returned when the draft was created. Mutually exclusive with `channel` and `campaign_content`.
-          example: "64a1b2c3d4e5f6a7b8c9d0e1"
         personalization_details:
           $ref: '#/components/schemas/PersonalizationDetails'
         test_campaign_meta:
@@ -5110,6 +5104,7 @@ paths:
                 summary: Push - Draft mode
                 value:
                   request_id: "{{request_id}}"
+                  channel: "PUSH"
                   draft_id: "{{campaign_id}}"
                   test_campaign_meta:
                     identifier: "USER_ATTRIBUTE_UNIQUE_ID"
@@ -5120,6 +5115,7 @@ paths:
                 summary: Email - Draft mode
                 value:
                   request_id: "{{request_id}}"
+                  channel: "EMAIL"
                   draft_id: "{{campaign_id}}"
                   test_campaign_meta:
                     identifier: "EMAIL"
