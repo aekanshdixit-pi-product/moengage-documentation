@@ -209,7 +209,7 @@ components:
       description: |
         Request body for creating an Email campaign draft via `POST /v5/campaigns`.
 
-        Only `channel`, `campaign_delivery_type`, and `created_by` are required. `connector` and `campaign_content` are added when the send configuration and message content are ready.
+        Required fields are `channel`, `campaign_delivery_type`, `created_by`, and `connector`. `campaign_content` can be added when the message content is ready.
 
 
         For the component-level schemas with conditional rules:
@@ -1028,7 +1028,7 @@ components:
         Identifying metadata for the Email campaign, including name, team, tags, and subscription category.
 
         **Note for Inline Testing:** When using the `/v5/campaigns/test` endpoint in inline mode, `name`, `content_type`, `user_attribute_identifier`, and `subscription_category` are strictly required.
-      required: [name, content_type, user_attribute_identifier]
+      required: [name, content_type, user_attribute_identifier, subscription_category]
       properties:
         name: 
           type: string
@@ -1185,9 +1185,9 @@ components:
             
             **Required** when trigger_delay_type is DELAY.
 
-        trigger_attr: 
+        trigger_attr:
           type: string
-          description: The attribute value of the trigger.
+          description: The attribute value of the trigger. Pass the string `"If Action"` for event-triggered campaigns.
         intelligent_delay_optimization:
           type: object
           description: |
@@ -1250,9 +1250,9 @@ components:
             
             **Required** when trigger_delay_type is DELAY.
 
-        trigger_attr: 
+        trigger_attr:
           type: string
-          description: The attribute value of the trigger.
+          description: The attribute value of the trigger. Pass the string `"If Action"` for event-triggered campaigns.
 
     PushCampaignContent:
       type: object
@@ -4160,7 +4160,7 @@ paths:
                     utm_medium: "push"
                     utm_campaign: "{{utm_campaign}}"
               push_update_campaign_audience_limit:
-                summary: Push - Update campaign_audience_limit
+                summary: Push - Update campaign_audience_limit (PERIODIC or EVENT_TRIGGERED)
                 value:
                   request_id: "{{request_id}}"
                   updated_by: "{{user_email}}"
@@ -4168,7 +4168,7 @@ paths:
                     is_campaign_audience_limit_enabled: true
                     metric: "SENT"
                     frequency: "TOTAL"
-                    limit: "{{max_user_count}}"
+                    limit: 100000
               push_update_conversion_goal_details:
                 summary: Push - Update conversion_goal_details
                 value:
@@ -4315,7 +4315,7 @@ paths:
                     is_campaign_control_group_enabled: true
                     campaign_control_group_percentage: 10
               email_update_campaign_audience_limit:
-                summary: Email - Update campaign_audience_limit
+                summary: Email - Update campaign_audience_limit (PERIODIC or EVENT_TRIGGERED)
                 value:
                   request_id: "{{request_id}}"
                   channel: "EMAIL"
@@ -4325,7 +4325,7 @@ paths:
                     is_campaign_audience_limit_enabled: true
                     metric: "SENT"
                     frequency: "TOTAL"
-                    limit: "{{max_user_count}}"
+                    limit: 100000
       responses:
         '200':
           description: |
