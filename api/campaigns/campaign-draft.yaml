@@ -684,9 +684,9 @@ components:
       title: Email - Inline mode
       type: object
       description: >-
-        Inline Email test. Supply `channel`, `connector`, and `campaign_content` directly - nothing is stored on the server.
+        Inline Email test. Supply `channel`, `basic_details`, `connector`, and `campaign_content` directly - nothing is stored on the server.
         Mutually exclusive with draft mode (`draft_id`).
-      required: [channel, connector, campaign_content, test_campaign_meta]
+      required: [channel, basic_details, connector, campaign_content, test_campaign_meta]
       properties:
         request_id:
           type: string
@@ -1027,31 +1027,28 @@ components:
       description: |
         Identifying metadata for the Email campaign, including name, team, tags, and subscription category.
 
-        For field-by-field rules and conditional requirements (`content_type: PROMOTIONAL` requires `subscription_category`), refer to [Email campaign metadata](/api/campaigns/campaign-content-reference#email-campaign-metadata).
+        **Note for Inline Testing:** When using the `/v5/campaigns/test` endpoint in inline mode, `name`, `content_type`, `user_attribute_identifier`, and `subscription_category` are strictly required.
+      required: [name, content_type, user_attribute_identifier]
       properties:
         name: 
           type: string
-          description: The name of the campaign.
+          description: Any string name for the test or campaign.
           example: "Summer Sale Email"
         business_event: 
           type: string
-          description: |
-            The business event to be mapped to the campaign.
-            
-            **Required** for BUSINESS_EVENT_TRIGGERED campaigns.
+          description: The business event to be mapped to the campaign.
           example: "user_signup"
         content_type: 
           type: string
           enum: [PROMOTIONAL, TRANSACTIONAL]
-          description: The type of content in the campaign.
+          description: The type of content in the campaign. "PROMOTIONAL" or "TRANSACTIONAL".
         subscription_category: 
           type: string
           description: |
-            The subscription category for promotional email campaigns.
-            This targets only users who have opted-in to receive communication about this category.
+            The subscription category for promotional email campaigns. **Must match a valid category configured in your workspace.**
             
-            **Required** for PROMOTIONAL email campaigns.
-          example: "music"
+            **Required** for PROMOTIONAL email campaigns and inline tests.
+          example: "marketing"
         tags: 
           type: array
           items: { type: string }
@@ -1059,15 +1056,13 @@ components:
           example: ["activation", "summer_sale"]
         team: 
           type: string
-          description: |
-            The name of the team collaborating on this campaign.
-            For more information, refer to [Teams in MoEngage](https://help.moengage.com/hc/en-us/articles/360028586211-Teams-in-MoEngage).
+          description: The name of the team collaborating on this campaign.
           example: "marketing_team"
         user_attribute_identifier: 
           type: string
           default: "Email (Standard)"
           description: |
-            The user attribute that stores the recipient email address. Use the attribute's display name as it appears in the MoEngage dashboard (for example, `"Email (Standard)"`). The internal system identifier `MOE_EMAIL_ID` is also accepted.
+            The user attribute that stores the recipient email address. Use "Email (Standard)" for email channels.
           example: "Email (Standard)"
 
     PlatformSpecificDetails:
@@ -4955,6 +4950,7 @@ paths:
           $ref: '#/components/responses/V5InternalError'
 
   /v5/campaigns/test:
+    /v5/campaigns/test:
     post:
       operationId: test_campaign_v5
       summary: Test Campaign
@@ -4966,7 +4962,7 @@ paths:
 
           **Inline mode**
           - Send `channel` and `campaign_content` in the request.
-          - For **EMAIL** campaigns, also include `connector`.
+          - For **EMAIL** campaigns, also include `basic_details` and `connector`.
           - Nothing is stored on the server.
 
           **Draft mode**
@@ -4981,12 +4977,6 @@ paths:
           | Test campaign per second | The total number of test campaign requests per second per client allowed is 10. |
           | Test campaign per minute | The total number of test campaign requests per minute per client allowed is 100. |
           | Test campaign per hour | The total number of test campaign requests per hour per client allowed is 6000. |
-
-          <Note>
-          **Notes**
-          * Breaching the limits will reject the request.
-          * Per-hour and per-day limits use a rolling window of the last 1 hour and last 24 hours respectively.
-          </Note>
       tags:
         - Test Campaigns
       parameters:
@@ -5028,27 +5018,30 @@ paths:
               email_inline:
                 summary: Email - Inline
                 value:
-                  request_id: "{{request_id}}"
+                  request_id: "<request_id>"
                   channel: "EMAIL"
                   basic_details:
-                    name: "{{campaign_name}}"
+                    name: "<test_name>"
                     content_type: "PROMOTIONAL"
                     user_attribute_identifier: "Email (Standard)"
-                    subscription_category: "{{subscription_category}}"
+                    subscription_category: "<subscription_category>"
                   connector:
-                    connector_type: "SENDGRID"
-                    connector_name: "{{connector_name}}"
+                    connector_type: "<connector_type>"
+                    connector_name: "<connector_name>"
                   campaign_content:
                     content:
                       email:
-                        subject: "{{email_subject}}"
-                        sender_name: "{{sender_name}}"
-                        from_address: "{{from_email}}"
-                        html_content: "{{html_body}}"
+                        subject: "<email_subject>"
+                        sender_name: "<sender_name>"
+                        preview_text: "<preview_text>"
+                        from_address: "<from_address>"
+                        reply_to_address: "<reply_to_address>"
+                        html_content: "<html_content>"
+                        email_editor: "Froala Editor"
                   test_campaign_meta:
                     identifier: "EMAIL"
                     identifier_values:
-                      - "{{recipient_email}}"
+                      - "<test_email_address>"
               push_draft:
                 summary: Push - Draft mode
                 value:
@@ -5059,78 +5052,15 @@ paths:
                     identifier_values:
                       - "{{identifier_value}}"
                     platform: "ANDROID"
-              push_inline_ios:
-                summary: Push - Inline iOS
-                value:
-                  request_id: "{{request_id}}"
-                  channel: "PUSH"
-                  basic_details:
-                    name: "{{campaign_name}}"
-                    platforms:
-                      - "IOS"
-                  campaign_content:
-                    content:
-                      push:
-                        ios:
-                          template_type: "BASIC"
-                          basic_details:
-                            title: "{{title}}"
-                            message: "{{message}}"
-                  test_campaign_meta:
-                    identifier: "USER_ATTRIBUTE_UNIQUE_ID"
-                    identifier_values:
-                      - "{{identifier_value}}"
-              push_inline_web:
-                summary: Push - Inline Web
-                value:
-                  request_id: "{{request_id}}"
-                  channel: "PUSH"
-                  basic_details:
-                    name: "{{campaign_name}}"
-                    platforms:
-                      - "WEB"
-                  campaign_content:
-                    content:
-                      push:
-                        web:
-                          template_type: "BASIC"
-                          basic_details:
-                            title: "{{title}}"
-                            message: "{{message}}"
-                            redirect_url: "{{redirect_url}}"
-                  test_campaign_meta:
-                    identifier: "USER_ATTRIBUTE_UNIQUE_ID"
-                    identifier_values:
-                      - "{{identifier_value}}"
               email_draft:
                 summary: Email - Draft mode
                 value:
-                  request_id: "{{request_id}}"
-                  draft_id: "{{campaign_id}}"
+                  request_id: "<request_id>"
+                  draft_id: "<campaign_id>"
                   test_campaign_meta:
                     identifier: "EMAIL"
                     identifier_values:
-                      - "{{recipient_email}}"
-              push_draft_ios:
-                summary: Push - Draft mode iOS
-                value:
-                  request_id: "{{request_id}}"
-                  draft_id: "{{campaign_id}}"
-                  test_campaign_meta:
-                    identifier: "USER_ATTRIBUTE_UNIQUE_ID"
-                    identifier_values:
-                      - "{{identifier_value}}"
-                    platform: "IOS"
-              push_draft_web:
-                summary: Push - Draft mode Web
-                value:
-                  request_id: "{{request_id}}"
-                  draft_id: "{{campaign_id}}"
-                  test_campaign_meta:
-                    identifier: "USER_ATTRIBUTE_UNIQUE_ID"
-                    identifier_values:
-                      - "{{identifier_value}}"
-                    platform: "WEB"
+                      - "<test_email_address>"
       responses:
         '200':
           description: Test send result
@@ -5152,7 +5082,17 @@ paths:
                       data:
                         ANDROID_default_variation_1:
                           status: "SENT"
-                          message: "Test campaign processed"
+                      message: "Test campaign processed"
+                email_sent:
+                  summary: Email test sent successfully
+                  value:
+                    response_id: "<request_id>"
+                    type: "campaign"
+                    data:
+                      data:
+                        EMAIL_default_variation_1:
+                          status: "SENT"
+                      message: "Test campaign processed"
                 push_failed:
                   summary: Push test with one failed send
                   value:
@@ -5163,7 +5103,7 @@ paths:
                         ANDROID_default_variation_1:
                           status: "FAILED"
                           failure_reason: "Invalid push token"
-                          message: "Test campaign processed"
+                      message: "Test campaign processed"
         '400':
           $ref: '#/components/responses/V5ValidationError'
         '401':
