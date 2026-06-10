@@ -1360,7 +1360,7 @@ components:
             **Required** when `distribution_type` is `SHERPA`.
         sherpa_distribution_metric: 
           type: string
-          enum: ['OPEN RATE', 'CLICK RATE', BOTH]
+          enum: [OPEN_RATE, CLICK_RATE, BOTH]
           description: |
             The engagement metric Sherpa uses to evaluate and rank variations.
 
@@ -1524,7 +1524,7 @@ components:
       properties:
         slider_transition: 
           type: string
-          enum: [manual, automatic]
+          enum: [MANUAL, AUTOMATIC]
           description: The transition type for the carousel slides.
         slide_data:
           type: array
@@ -2169,11 +2169,17 @@ components:
         negate: 
           type: boolean
           description: Whether to negate the filter condition.
-        project_name: 
+        is_dynamic_value:
+          type: boolean
+          description: |
+            When `true`, the filter value is a dynamic expression resolved at send time rather than a literal value.
+
+            Use this for Business Event-triggered campaigns where the filter value references a Business Event attribute — for example, `{{BusinessEventAttribute['season']}}`.
+        project_name:
           type: string
           description: |
             The name of the project associated with the user attributes.
-            
+
             **Required** if the Portfolio feature is enabled in your workspace.
 
     ActionFilter:
@@ -2249,6 +2255,36 @@ components:
         periodic_details: { $ref: '#/components/schemas/PeriodicDetails' }
         bts_details: { $ref: '#/components/schemas/BTSDetails' }
         user_timezone_details: { $ref: '#/components/schemas/UserTimezoneDetails' }
+        geo_fence_timelimit:
+          type: object
+          description: |
+            Time window for location-triggered campaigns. When set, notifications are only delivered within the specified bounds.
+
+            **Applicable for:** `LOCATION_TRIGGERED` campaigns.
+          properties:
+            notification_schedule:
+              type: string
+              enum: [ALWAYS, LIMITED_TIME]
+              description: Whether to send at any time (`ALWAYS`) or only within a defined time window (`LIMITED_TIME`).
+            timebounds:
+              type: array
+              description: |
+                One or more start/end time windows during which delivery is permitted.
+
+                **Required** when `notification_schedule` is `LIMITED_TIME`.
+              items:
+                type: object
+                properties:
+                  start_time:
+                    type: string
+                    format: date-time
+                    description: Start of the delivery window in ISO 8601 format.
+                    example: "2027-06-19T11:02:00"
+                  end_time:
+                    type: string
+                    format: date-time
+                    description: End of the delivery window in ISO 8601 format.
+                    example: "2029-06-20T13:55:00"
 
     PeriodicDetails:
       type: object
@@ -2491,7 +2527,7 @@ components:
                   description: The priority of notification delivery for APNS.
                 interruption_level: 
                   type: string
-                  enum: [Passive, Active, 'Time sensitive', Critical]
+                  enum: [PASSIVE, ACTIVE, TIME_SENSITIVE, CRITICAL]
                   description: The interruption level for iOS notifications.
                 relevance_score: 
                   type: number
@@ -4205,7 +4241,7 @@ paths:
                     platform_level_priority:
                       ios_specific_priority:
                         apns_priority: "10"
-                        interruption_level: "Active"
+                        interruption_level: "ACTIVE"
                       android_specific_priority:
                         send_with_priority: true
               push_update_control_group_details:
