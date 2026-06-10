@@ -43,7 +43,7 @@ The integration with MoEngage helps you with the following advantages:
 
 ## Part A: Set Up Authentication
 
-To securely connect MoEngage to your Databricks SQL warehouse, we recommend configuring a **Databricks service principal (SP)** by using **OAuth 2.0 Machine-to-Machine (M2M) authentication**. This security framework implements a least-privilege structure, meaning your service principal does not require workspace administrator privileges or full catalog ownership.
+To securely connect MoEngage to your Databricks SQL warehouse, MoEngage recommends configuring a **Databricks service principal (SP)** by using **OAuth 2.0 Machine-to-Machine (M2M) authentication**. This approach does not require workspace administrator privileges or full catalog ownership.
 
 <AccordionGroup>
   <Accordion title="Method 1: Service Principal with OAuth (Recommended)">
@@ -55,74 +55,65 @@ To securely connect MoEngage to your Databricks SQL warehouse, we recommend conf
 
     **Add a Service Principal in Databricks**
 
-    To add a service principal in Databricks, perform the following steps:
-
     1. Sign in to your account console in Databricks as an admin.
     2. In the sidebar, click **User Management**.
     3. On the **Service principals** tab, click **Add Service principal**.
     4. Enter a name for the service principal (for example, `moengage-pi-sp`).
     5. Click **Add**.
 
-    **Generate an OAuth Secret for the Service Principal**
-
-    To generate an OAuth secret for the service principal, perform the following steps:
+    **Generate an OAuth secret for the service principal**
 
     1. In the service principals management dashboard, click your newly registered principal (for example, `moengage-pi`).
     2. Click the **Secrets** tab.
-    3. Click **Generate secret**. <img src="/images/Auth1.png" alt="Auth1" />
-       {/* Image placeholder: Generate secret button in Databricks service principals Secrets tab */}
-       The **Generate OAuth secret** dialog box appears.
+    3. Click **Generate secret**. The **Generate OAuth secret** dialog box appears. <img src="/images/Auth1.png" alt="Generate secret button in Databricks service principals Secrets tab" />
     4. In the **Lifetime (days)** box, type a lifetime (you must specify a value between 1 and 730 days; the default setting is 365 days).
-    5. Click **Generate**. <img src="/images/Auth2.png" alt="Auth2" />
-       {/* Image placeholder: Generate OAuth secret dialog with Lifetime field */}
-       <Info>
-         Copy the generated `client_id` and `client_secret` immediately and save them in a secure location. Databricks does not display the secret value again. Use these values during the OAuth authentication setup on MoEngage.
-       </Info>
-       {/* Image placeholder: Generated client_id and client_secret confirmation screen */}
+    5. Click **Generate**. <img src="/images/Auth2.png" alt="Generate OAuth secret dialog with Lifetime field" />
 
     <Frame>
-      ![Auth3](/images/Auth3.png)
+      ![Generated client_id and client_secret confirmation screen](/images/Auth3.png)
     </Frame>
 
     <Info>
-      **Cloud-Specific Notes**
-
-      - **Azure**: If you are using a Microsoft Entra ID app, sync it to the Databricks workspace as a service principal first, and then generate a Databricks-managed OAuth secret on it. The client ID to be pasted into MoEngage is the Databricks-side ID, not the Azure Active Directory (AAD) app ID.
-      - **GCP**: Google service-account IAM constraints are managed independently. MoEngage only consumes the Databricks OAuth credentials.
-      - **Private Deployments / Custom Domains**: If your workspace uses a custom OAuth token endpoint that differs from the workspace host, locate and copy the custom endpoint URL. Enter it in the optional **OAuth Token Endpoint** field on MoEngage.
+      Copy the generated `client_id` and `client_secret` immediately and save them in a secure location. Databricks does not display the secret value again. Use these values during the OAuth authentication setup on MoEngage.
     </Info>
+
+    Note the following cloud-specific considerations:
+
+    - **Azure**: If you are using a Microsoft Entra ID app, sync it to the Databricks workspace as a service principal first, and then generate a Databricks-managed OAuth secret on it. The client ID to be pasted into MoEngage is the Databricks-side ID, not the Azure Active Directory (AAD) app ID.
+    - **GCP**: Google service-account IAM constraints are managed independently. MoEngage only consumes the Databricks OAuth credentials.
+    - **Private Deployments / Custom Domains**: If your workspace uses a custom OAuth token endpoint that differs from the workspace host, locate and copy the custom endpoint URL. Enter it in the optional **OAuth Token Endpoint** field on MoEngage.
   </Accordion>
 
   <Accordion title="Method 2: Personal Access Token (PAT)">
     A personal access token (PAT) inherits all the privileges of the identity that issues it. You can generate a PAT for either a dedicated service principal or a dedicated user.
 
-    **Enable Personal Access Tokens (One-Time Setup)**
-
-    To ensure personal access tokens are enabled, perform the following steps:
+    **Enable personal access tokens (one-time setup)**
 
     1. Sign in to Databricks as a workspace administrator.
     2. Go to **Settings** \> **Advanced** \> **Personal Access Tokens** and ensure the feature is enabled.
     3. (Optional but recommended) Under **Permission settings**, restrict which users or service principals can create tokens.
 
-    **Choose the Identity for the Token**
+    **Choose the identity for the token**
 
-    To choose the identity for the token, select one of the following options:
-
-    - **Dedicated service principal (recommended)**: This identity is not tied to a specific person, utilizes least-privilege principles, and survives employee turnover. You must generate service-principal tokens by using the Databricks CLI or the Token Management API, because service principals cannot sign in to the user interface.
-    - **Dedicated user**: This is the simplest method and is generated in the user interface. However, the token carries that user's full permissions and stops working if the user is deactivated.
+    - **Dedicated service principal (recommended)**: This identity is not tied to a specific person, uses least-privilege principles, and survives employee turnover. You must generate service-principal tokens by using the Databricks CLI or the Token Management API, because service principals cannot sign in to the user interface.
+    - **Dedicated user**: This method is generated in the user interface. However, the token carries that user's full permissions and stops working if the user is deactivated.
 
     **Generate the Token**
 
-    To generate the token, perform the following steps:
-
-    - **User Token via the User Interface:**
+    - **User token via the user interface:**
       1. In your Databricks workspace, select your Databricks username in the title bar, and then select **Settings** from the list.
       2. On the **Access Tokens** tab, select **Generate New Token**.
       3. Enter a comment to identify this token, and change the token's lifetime to no lifetime by leaving the Lifetime box empty.
       4. Click **Generate** and copy the generated token.
-      5. Click **Done**. <img src="/images/partner_35794647020308.png" alt="Screenshot 2025-02-25 at 6.03.21 PM.png" />
-    - **Service-principal token via the Databricks CLI:** Run the following command in your terminal:
-      ```shellscript Databricks CLI Token Creation
+      5. Click **Done**.
+
+      ![Screenshot 2025-02-25 at 6.03.21 PM.png](/images/partner_35794647020308.png)
+
+    - **Service-principal token via the Databricks CLI:**
+
+      Run the following command in your terminal:
+
+      ```bash Databricks CLI Token Creation
       databricks tokens create \
         --lifetime-seconds <lifetime-seconds> \
         --comment "<token-description>" \
@@ -218,12 +209,10 @@ You must assign the **Can use** permission on the SQL warehouse referenced in yo
 
 To maintain a secure connection, use the following procedures to manage and rotate your authentication credentials.
 
-### Personal Access Token (PAT) Lifetime and Rotation
+### Personal Access Token (PAT) lifetime and rotation
 
 <Info>
-  **Lifetime Note**
-
-  Unlike OAuth credentials, PATs are static and do not refresh automatically. When a token expires or is revoked, the MoEngage connection will stop working until you update it. Set a token lifetime that aligns with your corporate security policy and avoid using no-expiry tokens.
+  Unlike OAuth credentials, PATs are static and do not refresh automatically. When a token expires or is revoked, the MoEngage connection stops working until you update it. Set a token lifetime that aligns with your corporate security policy and avoid using no-expiry tokens.
 </Info>
 
 To rotate an expiring or compromised PAT, perform the following steps:
@@ -249,10 +238,10 @@ To rotate the service principal client secret, perform the following steps:
   Active jobs that run during the secret rotation continue to use the old token until the token expires (typically one hour or less). These jobs might experience brief, temporary token refresh failures during the rotation window, but the next scheduled run completes successfully.
 </Info>
 
-### Switch Between a Personal Access Token (PAT) and OAuth
+### Switch between a Personal Access Token (PAT) and OAuth
 
 <Warning>
-  If you change your authentication type, your existing credentials will be lost. For example, switching from a Personal Access Token (PAT) to OAuth permanently deletes the existing token. If you want to switch back later, you must generate and paste a new PAT into MoEngage. The updated connection details take effect starting with the next scheduled job. Any active jobs will continue to use the credentials retrieved at startup.
+  If you change your authentication type, your existing credentials will be lost. For example, switching from a Personal Access Token (PAT) to OAuth permanently deletes the existing token. If you want to switch back later, you must generate and paste a new PAT into MoEngage. The updated connection details take effect starting with the next scheduled job. Active jobs continue to use the credentials retrieved at startup.
 </Warning>
 
 ## Step 2: Obtain Databricks Credentials for App Marketplace Integration
@@ -330,18 +319,16 @@ After you have set up a Databricks connection, you can use it to set up various 
 If your Databricks workspace restricts network access or uses IP access lists, you must explicitly add the egress IP blocks allocated to MoEngage to your allowlist, based on your data center (DC) geography.
 
 <Info>
-  **IP Access List Allowlisting**
-
-  Because Databricks routing for database execution traffic resolves through your workspace host URL, a single allowlist entry covering the workspace host encompasses database and query traffic. Reach out to your MoEngage Support Team to obtain the regional egress IP blocks corresponding to your workspace data center.
+  Because Databricks routing for database execution traffic resolves through your workspace host URL, a single allowlist entry covering the workspace host encompasses database and query traffic. Contact MoEngage Support to obtain the regional egress IP blocks corresponding to your workspace data center.
 </Info>
 
 ## Step 5: Connection Verification and Troubleshooting
 
-After the service principal and grants are configured, navigate to the MoEngage **App marketplace** tab and test your connection. A successful test confirms that the OAuth flow and service principal permissions are configured correctly.
+After the service principal and grants are configured, navigate to the MoEngage **App marketplace** tab and test your connection. A successful test confirms that authentication and service principal permissions are configured correctly.
 
 If the verification step fails, use the following diagnostics guide to resolve common issues:
 
-| Observed Connection Error | Likely Root Cause and Mitigation Strategy |
+| Observed Connection Error | Cause and Resolution |
 | --- | --- |
 | **Invalid OAuth client credentials** | The `client_id` or `client_secret` contains a typo, or the active secret was rotated or deleted in Databricks. Verify the credentials and try again. |
 | **Service principal lacks workspace permissions** | The service principal is missing the _Can use_ permission on the designated SQL warehouse, or is missing _USE CATALOG_ privileges on the catalog. |
