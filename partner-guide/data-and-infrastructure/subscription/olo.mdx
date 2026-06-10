@@ -4,22 +4,22 @@ description: "Learn how to integrate Olo with MoEngage using Olo's self-service 
 keywords: ["Olo", "restaurant webhooks", "guest data", "order events", "webhook integration"]
 ---
 
-## Introduction
+# Introduction
 
 [Olo](https://www.olo.com/) is a restaurant technology platform for multi-unit restaurant brands. Through its self-service webhook framework, Olo emits near-real-time event data — including orders, guest sign-ups, and opt-in preferences — that you can stream directly into MoEngage to power personalized, lifecycle-driven campaigns.
 
-## MoEngage and Olo
+# MoEngage × Olo
 
-With this integration, you can:
+The integration of MoEngage and Olo enables restaurant brands to unify their guest data and activate it across every owned channel. With this integration, you can:
 
 - Ingest order events (placed, cancelled, picked up) as MoEngage behavioral events in near real time.
 - Sync guest sign-up and opt-in data to create and enrich MoEngage user profiles.
 - Capture loyalty check-ins and vendor-level events for advanced segmentation.
 - Trigger personalized campaigns immediately after an order is placed or a guest churns.
 
-## Use cases
+## Use Cases
 
-The following use cases illustrate how to activate Olo data in MoEngage:
+Integrating Olo with MoEngage helps you solve the following use cases:
 
 - **Re-order campaigns**: Trigger personalized push or email campaigns when a guest's last order crosses a defined recency threshold.
 - **New guest onboarding**: Welcome guests who sign up via Olo ordering flows and deliver first-order incentive campaigns.
@@ -27,9 +27,9 @@ The following use cases illustrate how to activate Olo data in MoEngage:
 - **Order milestone rewards**: Detect guests reaching their 5th or 10th lifetime order and trigger loyalty reward messages automatically.
 - **Post-purchase feedback**: Send automated review prompts or satisfaction surveys within minutes of an **Order Picked Up** event.
 
-The following table lists the main Olo webhook events. Additional events can be configured based on your use case.
+The following table outlines some of the Olo webhook events. Additional events can be configured based on your use case.
 
-| Olo event type | Description |
+| Olo Event Type | Description |
 |---|---|
 | `UserSignedUp` | Guest signs up via Olo. Profile attributes and subscription preferences are captured. |
 | `OrderPlaced` | Guest places an order. Basket contents, location, totals, and delivery method are captured. |
@@ -37,20 +37,24 @@ The following table lists the main Olo webhook events. Additional events can be 
 | `OrderPickedUp` | Guest collects their order. Triggers post-purchase flows. |
 | `GuestOptIn` | Guest updates their communication preferences. Email and SMS subscription state is captured. |
 
-## Prerequisites
-
-Before you begin, ensure you have the following:
-
-- **Brand Manager** permission (or higher) with access to **Dev Tools > Webhooks** in the Olo Dashboard.
-- Your MoEngage **Workspace ID** and **Data API Key**, available under **Settings > Account > APIs**.
-
 <Info>
+**Before You Begin**
+
 Olo allows only one Destination URL per brand environment. All event types are routed to the same MoEngage endpoint and differentiated using the `X-Olo-Event-Type` header.
 </Info>
 
-## Step 1: Get your MoEngage endpoint
+<Info>
+**Prerequisites**
 
-MoEngage provides a dedicated webhook ingestion endpoint for this integration. Use this URL as the **Destination URL** in the Olo webhook configuration.
+Ensure you have the following before proceeding:
+
+- **Brand Manager** permission (or higher) with access to **Dev Tools > Webhooks** in the Olo Dashboard.
+- Your MoEngage **Workspace ID** and **Data API Key**, available under **Settings > Account > APIs**.
+</Info>
+
+## Step 1: Get Your MoEngage Endpoint
+
+MoEngage provides a dedicated webhook ingestion endpoint for this integration. You will use this URL as the **Destination URL** in the Olo webhook configuration.
 
 The MoEngage endpoint follows this format:
 
@@ -58,88 +62,115 @@ The MoEngage endpoint follows this format:
 https://api-0X.moengage.com/v1/partner/olo/{events|user}/?configName={config_name}
 ```
 
-## Step 2: Configure the webhook in the Olo Dashboard
+## Step 2: Configure the Webhook in the Olo Dashboard
 
-<Steps>
-<Step title="Open the Webhooks section">
-In the Olo Dashboard, navigate to **Dev Tools > Webhooks** in the left navigation.
+To set up a webhook in Olo, perform the following steps:
 
-<Note>MFA must be enabled on your Olo account to access this section.</Note>
-</Step>
+- In the Olo Dashboard, navigate to **Dev Tools > Webhooks** in the left navigation.
 
-<Step title="Add a webhook">
-Click **Add Webhook** in the top-right corner.
+  <Note>MFA must be enabled on your Olo account to access this section.</Note>
+
+- Click **Add Webhook** in the top-right corner.
 
 {/* TODO: Replace with a MoEngage-hosted screenshot. The image below is from a third-party site and may break. */}
 <Frame>
   <img src="https://docs.bluedot.io/assets/images/Add-webhook-from-olo-1024x155-1470439a688550ea01034b79caeeac6c.png" alt="Olo Dashboard showing the Add Webhook button in the top-right corner" />
 </Frame>
-</Step>
 
-<Step title="Configure the webhook settings">
-Fill in the following fields:
+- In the **Webhook Name** field, enter a descriptive name, for example: `MoEngage {{Your Workspace Name}}`.
+- In the **Destination URL** field, paste the MoEngage endpoint URL from Step 1.
+- In the **Developer Partner** dropdown, select **MoEngage** from the list of approved partners.
+- Under **Headers**, add the following:
 
-- **Webhook Name**: Enter a descriptive name, for example: `MoEngage - Your Workspace Name`.
-- **Destination URL**: Paste the MoEngage endpoint URL from Step 1.
-- **Developer Partner**: Select **MoEngage** from the dropdown.
-</Step>
+<table>
+  <thead>
+    <tr>
+      <th>Header</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Authorization</strong></td>
+      <td>
+        Generate a Basic Authentication Token using an online <a href="https://www.debugbear.com/basic-auth-header-generator" target="_blank" rel="noopener noreferrer">Basic Auth Header Generator tool</a>. Enter your <strong>Workspace ID</strong> as username and your <strong>Data API Key</strong> as password. To find your credentials, perform the following steps:
+        <ol>
+          <li>On the MoEngage UI, navigate to <strong>Settings &gt; Account &gt; APIs</strong>.</li>
+          <li>Copy the ID under <strong>Workspace ID</strong> (<strong>earlier app id</strong>).</li>
+          <li>Copy the <strong>Data</strong> value under <strong>API keys</strong>.</li>
+        </ol>
+        Your Basic Authentication Token is a combination of <strong>Workspace ID</strong> and <strong>Data API Key</strong>. For example: <code>Basic Qk5CR1NNNUR4eHh4eHhWQ1hSRFJEWTdSOlFsWHVoTHVaeHh4eHh4QWQrQnBYUEotNw==</code><br/><br/>
+        <strong>Note</strong>: Ensure the token is copied completely without extra spaces.
+      </td>
+    </tr>
+  </tbody>
+</table>
 
-<Step title="Add the Authorization header">
-Under **Headers**, add an `Authorization` header with a Basic Authentication token.
-
-To generate the token:
-
-1. Navigate to **Settings > Account > APIs** in MoEngage.
-2. Copy your **Workspace ID** (also labeled as **app id** in older workspaces).
-3. Copy the **Data** value under **API keys**.
-4. Encode the credentials using the format `WorkspaceID:DataAPIKey` in Base64. For example: `Basic Qk5CR1NNNUR4eHh4eHhWQ1hSRFJEWTdSOlFsWHVoTHVaeHh4eHh4QWQrQnBYUEotNw==`
-
-<Note>Copy the token without leading or trailing spaces.</Note>
-</Step>
-
-<Step title="Select events">
-Under the **Order Events** and **User Events** sections, enable the event types you want to forward to MoEngage.
+- Under the **Order Events** and **User Events** sections, enable the event types you want to forward to MoEngage.
 
 <Frame>
   <img src="/guide-media/01KTR68WQRC31JQHEBGD4RRASV" alt="Olo Dashboard showing Order Events and User Events sections for webhook configuration" />
 </Frame>
-</Step>
 
-<Step title="Save the Shared Secret">
-During webhook creation, Olo displays a 64-character **Shared Secret**. Copy and store it securely — Olo displays it only once.
+- After selecting events, click **Test Webhook** to send a test payload to your MoEngage endpoint.
 
 <Warning>
-Provide the Shared Secret to your MoEngage contact. MoEngage uses it to verify the `X-Olo-Signature` header on incoming payloads.
+**Shared Secret**
+
+During the webhook creation flow, Olo displays a 64-character **Shared Secret**. This is used to compute the `X-Olo-Signature` header for payload verification. Copy and store it securely — Olo displays it only once. Provide this value to your MoEngage contact to configure.
 </Warning>
 
 {/* TODO: Replace with a MoEngage-hosted screenshot. The image below uses an expiring signed URL and will stop loading. */}
 <Frame>
   <img src="https://solink.intercom-attachments-7.com/i/o/874789018/b40997ea1135b81d8edf4015/moUrTi0qcptsb4CTz3DsLYHT9h4EPpTzIR-JFJW1tpqjwMrW8YC0xhrHzJyvmMr-DVMUGI0Bs373eeOray0T8tgDG7q3ZY7djUDniSIfDSb6j71aRvDOoeSr-gN2SAyf0rp26Eo2FgzOo7fOXrN30Qs?expires=1781072100&signature=f5618b1cf453a3a1e9d0060b76bd4178d0da89fc1a1b87b11a2349263a51bd84&req=fCcjEcF3nYBXFb4f3HP0gCvSw393Dv%2B2yK639fop2vP8D0QEcMdNjEcRuEd1%0AdiU%3D%0A" alt="Olo Dashboard showing the Shared Secret field during webhook creation" />
 </Frame>
-</Step>
-
-<Step title="Test and publish the webhook">
-Click **Test Webhook** to send a test payload to your MoEngage endpoint.
 
 <Warning>
-The **Publish Webhook** button remains inactive until the MoEngage endpoint returns a `200` response. If the test fails, verify your Destination URL and Authorization header before retrying.
+**Test Event Required**
+
+Olo requires a successful response from the test event before the webhook can be published. This is a mandatory gate — the **Publish Webhook** button will remain inactive until a `200` response is received from the MoEngage endpoint.
+
+If the test fails, verify your Destination URL and Authorization header before retrying.
 </Warning>
 
-Once the test succeeds, click **Publish Webhook** to activate.
-</Step>
-</Steps>
+- Once the test succeeds, click **Publish Webhook** to activate.
 
 <Note>
-**Unique identifier**
+**Unique Identifier (Customer ID)**
 
 MoEngage uses Olo's `customerId` as the unique identifier. This value is immutable, ensuring accurate profile resolution and preventing duplicates. To use a different identifier, contact the MoEngage team before configuring your webhook.
 </Note>
 
-## Rate limits and reliability
+## Rate Limits & Reliability
 
-| Topic | Details |
-|---|---|
-| **Rate limits** | MoEngage limits ingestion of Olo webhook data to a maximum of **500 requests per second (RPS)** per workspace. If your workspace exceeds this limit, MoEngage returns an HTTP `429 (Too Many Requests)` status code. |
-| **Retries** | Olo's built-in retry policy handles `429` and `5xx` responses automatically, retrying up to **50 times over a 24-hour period** before dropping the request. |
-| **Retry exhaustion** | If Olo exhausts all retry attempts, contact Olo Developer Support at [developersupport@olo.com](mailto:developersupport@olo.com) to replay the failed requests. |
-| **Deduplication** | Olo guarantees at-least-once delivery, meaning the same event may arrive more than once under retry conditions. MoEngage uses the `X-Olo-Message-Id` header to deduplicate incoming events automatically. |
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Topic</th>
+      <th>Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><Icon icon="gauge" size={20} /></td>
+      <td><strong>Rate Limits</strong></td>
+      <td>MoEngage limits ingestion of Olo webhook data to a maximum of <strong>500 requests per second (RPS)</strong> per workspace. If your workspace exceeds this limit, MoEngage returns an HTTP <code>429 (Too Many Requests)</code> status code.</td>
+    </tr>
+    <tr>
+      <td><Icon icon="refresh-cw" size={20} /></td>
+      <td><strong>Retries</strong></td>
+      <td>Olo's built-in retry policy handles <code>429</code> and <code>5xx</code> responses automatically, retrying up to <strong>50 times over a 24-hour period</strong> before dropping the request.</td>
+    </tr>
+    <tr>
+      <td><Icon icon="alert-triangle" size={20} /></td>
+      <td><strong>Retry Exhaustion</strong></td>
+      <td>If Olo exhausts all retry attempts, contact Olo Developer Support at <a href="mailto:developersupport@olo.com">developersupport@olo.com</a> to replay the failed requests.</td>
+    </tr>
+    <tr>
+      <td><Icon icon="copy" size={20} /></td>
+      <td><strong>Deduplication</strong></td>
+      <td>Olo guarantees at-least-once delivery, meaning the same event may be received more than once under retry conditions. MoEngage uses the <code>X-Olo-Message-Id</code> header to deduplicate incoming events automatically.</td>
+    </tr>
+  </tbody>
+</table>
