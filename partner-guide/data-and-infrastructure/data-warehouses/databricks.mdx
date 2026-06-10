@@ -1,5 +1,6 @@
 ---
 title: "Databricks"
+description: "Set up the MoEngage and Databricks integration to sync, import, and export data between your Databricks instance and MoEngage."
 ---
 
 [Databricks](https://www.databricks.com/resources/ebook/maximize-your-organizations-potential-data-and-ai?scid=7018Y000001Fi1AQAS&utm_medium=paid+search&utm_source=google&utm_campaign=15418435374&utm_adgroup=130717555576&utm_content=ebook&utm_offer=maximize-your-organizations-potential-data-and-ai&utm_ad=703594935116&utm_term=databricks&gad_source=1&gclid=CjwKCAjwvr--BhB5EiwAd5YbXpGh4ugWZyyOwJrqbfr-c5cZhP9HVrGMKQmBuZRlVcC_BRLco-zKVxoCmZkQAvD_BwE) is a platform that allows organizations to store, analyze, and process large volumes of structured and semi-structured data in a highly scalable and efficient manner. With its unique architecture, Databricks allows organizations to consolidate their data, perform quick analytics, and gain valuable data-driven insights accessible to all users.
@@ -29,7 +30,7 @@ The integration with MoEngage helps you with the following advantages:
 ### Faster Data Processing
 
 - The power of the Databricks infrastructure enables us to store, process, and query massive amounts of data in near real-time.
-- Any changes in the original schema are propagated immediately without having to change any configuration on MoEngage’s end, which is a significant advantage over the traditional ETL pipelines.
+- Any changes in the original schema are propagated immediately without having to change any configuration on MoEngage's end, which is a significant advantage over the traditional ETL pipelines.
 - Since there is no need for ETL tools and external cloud providers, the cost of import is significantly lower than traditional data pipelines.
 
 # Integration
@@ -37,175 +38,245 @@ The integration with MoEngage helps you with the following advantages:
 <Info>
   **Prerequisites**
 
-  Ensure you have a Databricks account with permission to create new users, schemas, or tables.
+  Ensure you have a Databricks account with administrative workspace privileges to create service principals, generate secrets, and grant permissions on catalogs and schemas.
 </Info>
 
-## Step 1: Grant Permissions to MoEngage
+## Part A: Set Up Authentication
 
-<Tabs>
-  <Tab title="Audience Sync and Imports">
-    To run queries on data from Databricks or Import data into MoEngage, you must connect to your Databricks warehouse. Ensure you have administrative privileges on the Databricks platform and that your PAT does not expire. Steps to grant read access to MoEnagage:
+To securely connect MoEngage to your Databricks SQL warehouse, we recommend configuring a **Databricks service principal (SP)** by using **OAuth 2.0 Machine-to-Machine (M2M) authentication**. This security framework implements a least-privilege structure, meaning your service principal does not require workspace administrator privileges or full catalog ownership.
 
-    - Add a service principal in Databricks
-    - Assign a service principal to Databricks workspace
-    - Provide data reader access to the service principal
-    - Provide compute permissions on SQL warehouses to service principal
-    - Create a personal access token (PAT)
-    - Fetch the HTTP path and Hostname
-    - Share details with MoEngage
+<AccordionGroup>
+  <Accordion title="Method 1: Service Principal with OAuth (Recommended)">
+    <Info>
+      Warehouse Segments currently does not support the OAuth method.
+    </Info>
+
+    To set up a Databricks service principal (SP) using OAuth 2.0 M2M authentication, perform the following steps:
 
     **Add a Service Principal in Databricks**
 
-    Account admins can add service principals to the Databricks account using the account console. For more information, refer here.
+    To add a service principal in Databricks, perform the following steps:
 
-    Perform the following steps to add a service principal:
+    1. Sign in to your account console in Databricks as an admin.
+    2. In the sidebar, click **User Management**.
+    3. On the **Service principals** tab, click **Add Service principal**.
+    4. Enter a name for the service principal (for example, `moengage-pi-sp`).
+    5. Click **Add**.
 
-    1. Log in to your account console in Databricks as an admin.
-    2. In the sidebar, click User Management.
-    3. On the Service principals tab, click Add Service principal.
-    4. Enter a name for the service principal.
-    5. Click Add.
+    **Generate an OAuth Secret for the Service Principal**
 
-    **Assign a Service Principal to Databricks Workspace**
+    To generate an OAuth secret for the service principal, perform the following steps:
 
-    An admin can assign a service principal to a workspace using the account console. For more information, refer here.
+    1. In the service principals management dashboard, click your newly registered principal (for example, `moengage-pi`).
+    2. Click the **Secrets** tab.
+    3. Click **Generate secret**.
+       {/* Image placeholder: Generate secret button in Databricks service principals Secrets tab */}
+       The **Generate OAuth secret** dialog box appears.
+    4. In the **Lifetime (days)** box, type a lifetime (you must specify a value between 1 and 730 days; the default setting is 365 days).
+    5. Click **Generate**.
+       {/* Image placeholder: Generate OAuth secret dialog with Lifetime field */}
 
-    Perform the following steps to assign permissions:
+       <Info>
+         Copy the generated `client_id` and `client_secret` immediately and save them in a secure location. Databricks does not display the secret value again. Use these values during the OAuth authentication setup on MoEngage.
+       </Info>
 
-    1. Log in to your account console in Databricks as an admin.
-    2. In the sidebar, click Workspaces.
-    3. Click your workspace name.
-    4. On the Permissions tab, click Add permissions.
-    5. Search for and select the service principal, and assign the permission level (Workspace User). You can assign the workspace admin role on the workspace admin settings page.
-    6. Click Save.
+       {/* Image placeholder: Generated client_id and client_secret confirmation screen */}
+
+    <Info>
+      **Cloud-Specific Notes**
+
+      - **Azure**: If you are using a Microsoft Entra ID app, sync it to the Databricks workspace as a service principal first, and then generate a Databricks-managed OAuth secret on it. The client ID to be pasted into MoEngage is the Databricks-side ID, not the Azure Active Directory (AAD) app ID.
+      - **GCP**: Google service-account IAM constraints are managed independently. MoEngage only consumes the Databricks OAuth credentials.
+      - **Private Deployments / Custom Domains**: If your workspace uses a custom OAuth token endpoint that differs from the workspace host, locate and copy the custom endpoint URL. Enter it in the optional **OAuth Token Endpoint** field on MoEngage.
+    </Info>
+  </Accordion>
+
+  <Accordion title="Method 2: Personal Access Token (PAT)">
+    A personal access token (PAT) inherits all the privileges of the identity that issues it. You can generate a PAT for either a dedicated service principal or a dedicated user.
+
+    **Enable Personal Access Tokens (One-Time Setup)**
+
+    To ensure personal access tokens are enabled, perform the following steps:
+
+    1. Sign in to Databricks as a workspace administrator.
+    2. Go to **Settings** > **Advanced** > **Personal Access Tokens** and ensure the feature is enabled.
+    3. (Optional but recommended) Under **Permission settings**, restrict which users or service principals can create tokens.
+
+    **Choose the Identity for the Token**
+
+    To choose the identity for the token, select one of the following options:
+
+    - **Dedicated service principal (recommended)**: This identity is not tied to a specific person, utilizes least-privilege principles, and survives employee turnover. You must generate service-principal tokens by using the Databricks CLI or the Token Management API, because service principals cannot sign in to the user interface.
+    - **Dedicated user**: This is the simplest method and is generated in the user interface. However, the token carries that user's full permissions and stops working if the user is deactivated.
+
+    **Generate the Token**
+
+    To generate the token, perform the following steps:
+
+    - **User Token via the User Interface:**
+      1. In your Databricks workspace, select your Databricks username in the title bar, and then select **Settings** from the list.
+      2. On the **Access Tokens** tab, select **Generate New Token**.
+      3. Enter a comment to identify this token, and change the token's lifetime to no lifetime by leaving the Lifetime box empty.
+      4. Click **Generate** and copy the generated token.
+      5. Click **Done**.
+
+      ![Screenshot 2025-02-25 at 6.03.21 PM.png](/images/partner_35794647020308.png)
+
+    - **Service-principal token via the Databricks CLI:**
+
+      Run the following command in your terminal:
+
+      ```bash Databricks CLI Token Creation
+      databricks tokens create \
+        --lifetime-seconds <lifetime-seconds> \
+        --comment "<token-description>" \
+        -p <profile-name>
+      ```
+
+      <Info>
+        Copy the returned `token_value` immediately, because it is displayed only once.
+      </Info>
+  </Accordion>
+</AccordionGroup>
+
+## Part B: Grant Permissions
+
+The required data permissions remain the same regardless of your chosen authentication method. Throughout this section, `<grantee>` represents either:
+
+- The service principal's application ID (if using OAuth or a Service Principal PAT).
+- The user's email address (if using a User PAT).
+
+You must assign the **Can use** permission on the SQL warehouse referenced in your connection path. To set this in the Databricks user interface, go to **SQL Warehouses** > **\<warehouse\>** > **Permissions**, and then add the `<grantee>` with the **Can use** permission.
+
+<Tabs>
+  <Tab title="Imports and Warehouse Segments">
+    To run queries on data from Databricks, import data into MoEngage, or use the Warehouse Segments feature, you must connect to your Databricks warehouse. Ensure you have administrative privileges on the Databricks platform and that your credentials do not expire.
 
     **Provide Data Reader Access to the Service Principal**
 
-    Provide data reader access, as shown below, to the entire workspace or individual schemas to the service principal, ensuring that the tables you want to query in MoEngage are available in the schema:
+    To provide data reader access to the service principal, execute the following SQL query in Databricks:
 
-    1. Go to your Databricks Dashboard Catalog.
-    2. Select your desired Catalog.
-    3. On the Permissions tab, click Add permissions.
-    4. Click on "Grant" and select the following permissions:
+    ```sql Catalog SQL Permission
+    GRANT USE CATALOG ON CATALOG <catalog> TO `<sp_application_id>`;
+    ```
 
-    ![Screenshot 2025-02-25 at 5.37.34 PM.png](/images/partner_35794662935444.png)
+    ![Screenshot 2025-02-25 at 5.37.34 PM.png](/images/partner_35794662935444.png)
 
-    **Provide Permissions to the Service Principal to Compute on SQL Warehouses**
+    **Bare Minimum Grants (One Source Table)**
 
-    Perform the following steps to provide compute permissions:
+    To grant bare minimum permissions for one source table, execute the following SQL queries in Databricks:
 
-    1. In the Databricks dashboard, Click Settings Compute SQL warehouses.
-    2. Select the warehouse that needs to be accessed by the service principal.
-    3. Click Permissions. In the list, select Can use for the service principal.
+    ```sql
+    GRANT USE SCHEMA ON SCHEMA <catalog>.<source_schema> TO `<sp_application_id>`;
+    GRANT SELECT ON TABLE <catalog>.<source_schema>.<source_table> TO `<sp_application_id>`;
+    ```
 
-    ![](/images/partner_35794647019796.png)
+    The service principal does not require `MODIFY`, `CREATE TABLE`, or any write permissions for imports.
 
-    **Create a Personal Access Token (PAT)**
+    **Optional Convenience Grant for All Current and Future Tables**
 
-    You can create a PAT for a service principal using Databricks CLI. For more information, refer [here](https://docs.databricks.com/aws/en/dev-tools/auth/pat#databricks-personal-access-tokens-for-service-principals).
+    To grant schema-wide access to avoid setting permissions manually for each new source table, execute the following SQL query in Databricks:
+
+    ```sql
+    GRANT SELECT ON SCHEMA <catalog>.<source_schema> TO `<sp_application_id>`;
+    ```
+
+    This schema-wide authorization is broader than the single-table approach. You can choose either the table-level approach or the schema-level approach, but do not configure both.
   </Tab>
   <Tab title="Exports">
-    To export data from MoEngage to Databricks, you must connect MoEngage to your Databricks warehouse. Ensure you have administrative privileges on the Databricks platform and that your PAT has no expiry. Steps to grant write access to MoEnagage:
-
-    - Add a service principal in Databricks
-    - Assign a service principal to Databricks workspace
-    - Provide Write Access to the Service Principal
-    - Provide compute permissions on SQL warehouses to service principal
-    - Create a personal access token (PAT)
-    - Fetch the HTTP path and Hostname
-    - Share details with MoEngage
-
-    **Add a Service Principal in Databricks**
-
-    Account admins can add service principals to the Databricks account using the account console. For more information, refer here.
-
-    Perform the following steps to add a service principal:
-
-    1. Log in to your account console in Databricks as an admin.
-    2. In the sidebar, click User Management.
-    3. On the Service principals tab, click Add Service principal.
-    4. Enter a name for the service principal.
-    5. Click Add.
-
-    **Assign a Service Principal to Databricks Workspace**
-
-    An admin can assign a service principal to a workspace using the account console. For more information, refer here.
-
-    Perform the following steps to assign permissions:
-
-    1. Log in to your account console in Databricks as an admin.
-    2. In the sidebar, click Workspaces.
-    3. Click your workspace name.
-    4. On the Permissions tab, click Add permissions.
-    5. Search for and select the service principal, and assign the permission level (Workspace User). You can assign the workspace admin role on the workspace admin settings page.
-    6. Click Save.
+    To export data from MoEngage to Databricks, you must connect MoEngage to your Databricks warehouse. Ensure you have administrative privileges on the Databricks platform and that your credentials do not expire.
 
     **Provide Write Access to the Service Principal**
 
-    Provide Writer Access, as shown below, to the entire workspace or individual schemas to the service principal, ensuring that MoEngage has sufficient permissions to create tables and write data into them:
+    To provide write access to the service principal, execute the following SQL query in Databricks:
 
-    1. Go to your Databricks Dashboard Catalog.
-    2. Select your desired Catalog.
-    3. On the Permissions tab, click Add permissions.
-    4. Click on "Grant" and select the following permissions:
+    ```sql Catalog SQL Permission
+    GRANT USE CATALOG ON CATALOG <catalog> TO `<sp_application_id>`;
+    ```
 
     ![](/images/partner_37121905945748.png)
 
-    **Provide Permissions to the Service Principal to Compute on SQL Warehouses**
+    **Bare Minimum Grants (MoEngage Creates the Table)**
 
-    Perform the following steps to provide compute permissions:
+    To authorize MoEngage to create and write to the target table automatically, execute the following SQL commands to grant schema-level permissions:
 
-    1. In the Databricks dashboard, Click Settings Compute SQL warehouses.
-    2. Select the warehouse that needs to be accessed by the service principal.
-    3. Click Permissions. In the list, select Can use for the service principal.
+    ```sql Export SQL Permissions
+    GRANT USE SCHEMA ON SCHEMA <catalog>.<target_schema> TO `<sp_application_id>`;
+    GRANT CREATE TABLE ON SCHEMA <catalog>.<target_schema> TO `<sp_application_id>`;
+    ```
 
-    ![](/images/partner_35794647019796.png)
+    Unity Catalog automatically assigns ownership of the new table to the service principal that runs the `CREATE TABLE` command. This ownership implicitly grants the service principal the necessary `MODIFY`, `SELECT`, and `DROP` privileges required for subsequent bulk inserts and updates.
 
-    **Create a Personal Access Token (PAT)**
+    **Optional Convenience Grant for All Current and Future Tables**
 
-    You can create a PAT for a service principal using Databricks CLI. For more information, refer [here](https://docs.databricks.com/aws/en/dev-tools/auth/pat#databricks-personal-access-tokens-for-service-principals).
+    To grant schema-wide write permissions, execute the following SQL query in Databricks:
+
+    ```sql
+    GRANT MODIFY ON SCHEMA <catalog>.<target_schema> TO `<sp_application_id>`;
+    ```
+
+    This schema-level grant is broader than the single-table approach. You can choose either the table-level or the schema-level approach, but do not configure both.
   </Tab>
 </Tabs>
 
-<Accordion title="Create a PAT for a user (optional)">
-  You can also create a user, assign appropriate access to the user, and allow MoEngage to access your warehouse from that user’s role. However, Databricks recommends the service principal approach. If you want to create a personal access token for a user, please follow the steps below. Alternatively, you can follow the steps mentioned here (From 6 through 12).
+## Part C: Token and Secret Management
 
-  1. In your Databricks workspace, select your Databricks username in the title bar, and then select **Settings** from the list.
-  2. On the **Access Tokens** tab, select **Generate New Token.**
-  3. Enter a comment to identify this token, and change the token’s lifetime to no lifetime by leaving the Lifetime box empty.
-  4. Click **Generate** and copy the generated token.
-  5. Click **Done**.
+To maintain a secure connection, use the following procedures to manage and rotate your authentication credentials.
 
-  ![Screenshot 2025-02-25 at 6.03.21 PM.png](/images/partner_35794647020308.png)
-</Accordion>
+### Personal Access Token (PAT) Lifetime and Rotation
+
+<Info>
+  **Lifetime Note**
+
+  Unlike OAuth credentials, PATs are static and do not refresh automatically. When a token expires or is revoked, the MoEngage connection will stop working until you update it. Set a token lifetime that aligns with your corporate security policy and avoid using no-expiry tokens.
+</Info>
+
+To rotate an expiring or compromised PAT, perform the following steps:
+
+1. Generate a new token in Databricks (see Method 2: Personal Access Token (PAT) for detailed generation steps).
+2. Copy the newly generated token.
+3. Sign in to your MoEngage dashboard, go to the active connection, click **Edit**, and then paste the new token in the **Access token** box.
+4. Click **Save**.
+5. Revoke the old token in the Databricks workspace immediately to terminate outdated access.
+
+### Rotate the Client Secret
+
+To rotate the service principal client secret, perform the following steps:
+
+1. In Databricks, generate a new secret for the service principal (click **Service principals** > **Secrets** > **Generate secret**).
+2. Copy the newly generated `client_secret`.
+3. In the MoEngage dashboard, open the active connection, click **Edit**, paste the new `client_secret`, and then click **Save**.
+4. (Optional) After you verify that the new secret works correctly, revoke the old secret in Databricks.
+
+<Info>
+  MoEngage does not poll for secret changes. The next scheduled MoEngage sync job that starts after you save the configuration automatically uses the new secret.
+
+  Active jobs that run during the secret rotation continue to use the old token until the token expires (typically one hour or less). These jobs might experience brief, temporary token refresh failures during the rotation window, but the next scheduled run completes successfully.
+</Info>
+
+### Switch Between a Personal Access Token (PAT) and OAuth
+
+<Warning>
+  If you change your authentication type, your existing credentials will be lost. For example, switching from a Personal Access Token (PAT) to OAuth permanently deletes the existing token. If you want to switch back later, you must generate and paste a new PAT into MoEngage. The updated connection details take effect starting with the next scheduled job. Any active jobs will continue to use the credentials retrieved at startup.
+</Warning>
 
 ## Step 2: Obtain Databricks Credentials for App Marketplace Integration
 
-To obtain Databricks credentials for the App marketplace, perform the following steps:
+To obtain Databricks credentials for the App Marketplace, perform the following steps:
 
-1. Login to your Databricks account.
+1. Sign in to your Databricks account.
 2. On the left navigation menu, click the **SQL Warehouses** tab.
 3. Click **Serverless Starter Warehouse**. <img src="/images/partner_36367580709652.png" />
 4. On the **Serverless Starter Warehouse** page, click the **Connection details** tab. <img src="/images/partner_36367580712212.png" />
-5. Copy the **Server hostname** and **HTTP path** credentials to paste into the MoEngage App marketplace. <img src="/images/partner_36367580713108.png" />
+5. Copy the **Server hostname** and **HTTP path** credentials to paste into the MoEngage App Marketplace. <img src="/images/partner_36367580713108.png" />
+
    <Info>
-     To create a generated access token, you can also follow the steps mentioned in the **Create a Personal Access Token (PAT)** section.
+     To create a generated access token, you can also follow the steps described in the **Method 2: Personal Access Token (PAT)** section in Part A.
    </Info>
-6. Click **Create a personal access token** at the upper-right corner. <img src="/images/partner_36367541202068.png" />
-7. On the Access tokens page, click **Generate new token**. <img src="/images/partner_36367580715668.png" />
-8. On the **Generate new token** pop-up window:
-   1. In the **Comment** box, type the token name.
-   2. In the **Lifetime** box, type the token's lifespan.
-   3. Click **Generate**. <img src="/images/partner_36367541204372.png" /> Your token is now generated successfully.
-9. Copy the token to paste into the MoEngage App marketplace.
-10. Click **Done**. <img src="/images/partner_36645238283540.png" /> <img src="/images/partner_36367580721812.png" /> The generated token is available on the **Access tokens** page.
-    <Info>
-      The generated token is only visible once.
-    </Info>
 
 ## Step 3: Connect Databricks on the App Marketplace
 
-To connect Databricks on the App marketplace, perform the following steps:
+To connect Databricks on the App Marketplace, perform the following steps:
 
 1. On the left navigation menu in the MoEngage dashboard, click **App marketplace**.
 2. On the App Marketplace page, search for **Databricks**.
@@ -213,19 +284,21 @@ To connect Databricks on the App marketplace, perform the following steps:
 ![](/images/partner_36367541210132.png)
 
 3. Click the **Databricks** tile.
-4. On the Databricks page, go to the **Integrate** tab and click \+**Add Connection**.
+4. On the Databricks page, go to the **Integrate** tab and click **+Add Connection**.
 5. Enter the following details:
 
 | Field | Required | Description |
 | --- | --- | --- |
-| Connection name | Yes | Type a name for the Databricks connection. |
-| Host name | Yes | This refers to the unique identifier assigned to a specific cluster. Type the hostname that you want to connect. To find your server hostname, visit the Databricks web console and locate your cluster. Then, click to reveal **Advanced options** and navigate to the **JDBC/ODBC** tab. |
-| Port | Optional | Type the port to which you want to connect your Databricks server. It defaults to 443. |
-| HTTP path | Yes | Type the HTTP path of your compute resource on Databricks. To find your HTTP path, go to your Databricks workspace, locate your warehouse, and then get your HTTP path from the connection details tab. |
-| Access token | Yes | This is an authentication token used to access Databricks APIs securely. Type the Access token, which helps you make authorized requests to the Databricks server with the necessary permissions. On your Databricks workspace, go to **Settings** \> **Developer** \> **Access tokens** \> **Manage tokens**. |
-| Catalog | Yes | Type the Databricks Catalog name to which MoEngage will have access. |
+| **Connection name** | Yes | Type a name for the Databricks connection. |
+| **Host name** | Yes | This refers to the unique identifier assigned to a specific cluster. Type the hostname that you want to connect to. To find your server hostname, sign in to the Databricks web console, and then navigate to **SQL Warehouses** > **Connection details**. |
+| **Port** | Optional | Type the port to which you want to connect your Databricks server. The default is 443. |
+| **HTTP path** | Yes | Type the HTTP path of your compute resource on Databricks. To find your HTTP path, navigate to **SQL Warehouses** > **Connection details**. |
+| **Authentication method** | Yes | Select the authentication method to connect MoEngage with Databricks: **OAuth** (uses secure OAuth 2.0 M2M credential verification; requires a client ID and client secret) or **Access Token** (uses your Personal Access Token). |
+| **Client ID** | Conditional | Type the client identifier (Application ID) of your registered service principal on Databricks. Required only when you select OAuth as the authentication method. |
+| **Client Secret** | Conditional | Type the client secret corresponding to your client ID. Required only when you select OAuth as the authentication method. |
+| **Catalog** | Yes | Type the Databricks catalog name to which MoEngage will have access. Displayed for both authentication methods. |
 
-![Databricks connection form](/images/partner_35794647020948.png)
+{/* Image placeholder: Databricks Add Connection form showing all fields including OAuth/Access Token authentication method */}
 
 6. Click **Connect**. Your Databricks connection is now integrated.
 
@@ -254,6 +327,28 @@ After you have set up a Databricks connection, you can use it to set up various 
 | `"datetime_format": "YYYY-MM-DDThh:mm:ss.sTZD"` | <ul><li>2019-02-22T17:54:14.957Z</li><li>2019-02-22T17:54:14.957299-08:00</li><li>2019-02-22T17:54:14.957299\+08:00</li></ul> |
 | `"datetime_format": "YYYY/MM/DDThh:mm:ss.sTZD"` | <ul><li>2019/02/22T17:54:14.957Z</li><li>2019/02/22T17:54:14.957299-08:00</li><li>2019/02/22T17:54:14.957299\+08:00</li></ul> |
 
+## Step 4: Network Security and IP Allowlisting
+
+If your Databricks workspace restricts network access or uses IP access lists, you must explicitly add the egress IP blocks allocated to MoEngage to your allowlist, based on your data center (DC) geography.
+
+<Info>
+  **IP Access List Allowlisting**
+
+  Because Databricks routing for database execution traffic resolves through your workspace host URL, a single allowlist entry covering the workspace host encompasses database and query traffic. Reach out to your MoEngage Support Team to obtain the regional egress IP blocks corresponding to your workspace data center.
+</Info>
+
+## Step 5: Connection Verification and Troubleshooting
+
+After the service principal and grants are configured, navigate to the MoEngage **App marketplace** tab and test your connection. A successful test confirms that the OAuth flow and service principal permissions are configured correctly.
+
+If the verification step fails, use the following diagnostics guide to resolve common issues:
+
+| Observed Connection Error | Likely Root Cause and Mitigation Strategy |
+| --- | --- |
+| **Invalid OAuth client credentials** | The `client_id` or `client_secret` contains a typo, or the active secret was rotated or deleted in Databricks. Verify the credentials and try again. |
+| **Service principal lacks workspace permissions** | The service principal is missing the *Can use* permission on the designated SQL warehouse, or is missing *USE CATALOG* privileges on the catalog. |
+| **Invalid Catalog** | The catalog name specified in MoEngage is incorrect, or the service principal has catalog-level traversal permissions but is missing underlying schema or table permissions. |
+
 ## Warehouse Segments Using Databricks
 
 Databricks is available in our Warehouse Segments. For more information, refer to [Warehouse Segments](https://www.moengage.com/docs/user-guide/segment/segment-operations/warehouse-segments).
@@ -265,3 +360,10 @@ To set up MoEngage × Databricks imports for your account, refer to the [Databri
 ## Export Events from MoEngage to Databricks
 
 You can export events from MoEngage to your Databricks tables. To set up an export, refer to the [Databricks Exports guide](https://www.moengage.com/docs/user-guide/data/exports/events/data-warehouse/databricks-exports).
+
+## Reference Documents
+
+- [Databricks: OAuth machine-to-machine (M2M) authentication](https://docs.databricks.com/en/dev-tools/auth/oauth-m2m.html)
+- [Databricks: Manage service principals](https://docs.databricks.com/en/admin/users-groups/service-principals.html)
+- [Databricks: SQL warehouse permissions](https://docs.databricks.com/en/admin/users-groups/permissions.html)
+- [Databricks: Cluster-level access control permissions](https://docs.databricks.com/en/security/auth-authz/access-control/index.html)
