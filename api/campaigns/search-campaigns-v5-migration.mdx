@@ -1,48 +1,54 @@
 ---
-title: "Search Campaigns V5: Migration Guide"
-description: "Breaking changes, renamed fields, and behavior differences when migrating from the V1 Search Campaigns API to V5."
+title: "V1 vs. V5 Search Campaigns: Behavioral Differences"
+description: "A comparison of behavioral, structural, and field-level differences between the V1 and V5 Search Campaigns APIs to help you understand what has changed."
 ---
 
-## Migration notes from V1
+The V5 Search Campaigns API introduces meaningful improvements in how campaigns are retrieved and filtered. This page covers the behavioral differences between V1 and V5 to help you understand what has changed and why.
 
-In V1, `POST /v1/campaigns/search` handled both single-campaign retrieval and multi-campaign filtering through a single endpoint. V5 separates these into two distinct endpoints:
+For the full V5 Search Campaigns API reference, see [POST /v5/campaigns/search](/api/campaigns/POST-v5-campaigns-search).
 
-- **Single-campaign retrieval by ID:** `GET /v5/campaigns/{campaign_id}`
-- **Search and filtering across multiple campaigns:** `POST /v5/campaigns/search`
+## Endpoint structure
 
-Two filter keys under `campaign_fields` were renamed between V1 and V5. Refer to the `campaign_fields` schema for the updated key names.
+In V1, a single endpoint — `POST /v1/campaigns/search` — handled both single-campaign retrieval by ID and multi-campaign filtering. V5 separates these into two distinct endpoints to make each operation explicit:
 
-## SMS campaigns
-
-SMS campaigns are included in search results when `"SMS"` is passed in the `channels` array. The `channel` field in each matching result returns `SMS`. Full SMS campaign creation and update operations are not supported in V5.
-
-## Child campaign executions
-
-To retrieve the execution history of Periodic and Business Event-triggered campaigns, including child campaign IDs, sent times, statuses, and total instance count, use `POST /v5/campaigns/{parent_campaign_id}/executions`. This endpoint is the V5 equivalent of `POST /v1/campaigns/{parent_id}/executions`.
-
-## Breaking changes
-
-Review these breaking changes before sending a V5 request.
-
-### Request changes (filter fields renamed)
-
-| V1 field | V5 field | Change |
+| Use case | V1 endpoint | V5 endpoint |
 | :--- | :--- | :--- |
-| `campaign_fields.id` (string) | `campaign_fields.ids` (array of strings) | Renamed and type changed. Pass a single-element array to replicate V1 single-ID filtering: `"ids": ["<campaign_id>"]`. |
-| `campaign_fields.delivery_type` | `campaign_fields.campaign_delivery_type` | Renamed. Sending the V1 key returns zero results with no error. |
+| Retrieve a single campaign by ID | `POST /v1/campaigns/search` (with `campaign_fields.id`) | `GET /v5/campaigns/{campaign_id}` |
+| Search and filter across multiple campaigns | `POST /v1/campaigns/search` | `POST /v5/campaigns/search` |
 
-All other V1 filter fields (`channels`, `created_by`, `created_date`, `name`, `status`, `tags`) are unchanged.
+## Request field changes
 
-### `request_id` is now optional
+Two filter keys under `campaign_fields` were renamed between V1 and V5. All other V1 filter fields — `channels`, `created_by`, `created_date`, `name`, `status`, and `tags` — are unchanged.
 
-In V1, `request_id` was required on every search call. In V5, it is optional. Providing it is still recommended for traceability — MoEngage support can use it to locate the specific request in server logs.
+| V1 field | V5 field | What changed |
+| :--- | :--- | :--- |
+| `campaign_fields.id` (string) | `campaign_fields.ids` (array of strings) | Renamed and type changed from string to array. To replicate V1 single-ID behavior, pass a single-element array: `"ids": ["<campaign_id>"]`. |
+| `campaign_fields.delivery_type` | `campaign_fields.campaign_delivery_type` | Renamed. Sending the V1 key name returns zero results with no error. |
 
-### Response changes
+## `request_id` is now optional
+
+In V1, `request_id` was required on every search request. In V5, it is optional. Providing it is still recommended for traceability — MoEngage Support can use it to locate specific requests in server logs when troubleshooting.
+
+## Response field changes
 
 The campaign identifier field was renamed. V1 returned it as `campaign_id`; V5 returns it as `id`.
 
-**Draft behavior:** Drafts are included only when `DRAFT` is explicitly added to `campaign_fields.status`. Otherwise, draft rows are omitted.
+## Draft visibility
 
-**Versioning behavior:** When campaign versioning is enabled, responses include `version_number` and you can filter by it. Each published revision is a separate document linked by the same canonical `campaign_id`.
+In V5, draft campaigns are excluded from search results by default. Drafts appear only when `DRAFT` is explicitly included in `campaign_fields.status`. In V1, this behavior was not enforced the same way, so you may notice fewer results in V5 if your integration does not include `DRAFT` in status filters.
 
-**Pagination:** Results are paginated up to 15 per page. The response does not include a `total_count` field. To determine the total number of pages, keep paginating until a page returns fewer results than `limit`.
+## Campaign versioning
+
+When campaign versioning is enabled in V5, responses include a `version_number` field and you can filter by it. Each published revision is a separate document linked by the same canonical `campaign_id`. V1 did not support versioning.
+
+## Pagination behavior
+
+V5 search results are paginated up to 15 campaigns per page. Unlike V1, V5 responses do not include a `total_count` field. To determine the total number of pages, continue paginating until a page returns fewer results than the value specified in `limit`.
+
+## SMS campaign support
+
+SMS campaigns are included in V5 search results when `"SMS"` is passed in the `channels` array. The `channel` field in each matching result returns `SMS`. Full SMS campaign creation and update operations are not supported in V5.
+
+## Child campaign executions
+
+To retrieve the execution history of Periodic and Business Event-triggered campaigns — including child campaign IDs, sent times, statuses, and total instance count — use `POST /v5/campaigns/{parent_campaign_id}/executions`. This is the V5 equivalent of `POST /v1/campaigns/{parent_id}/executions`.
