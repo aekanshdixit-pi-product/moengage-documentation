@@ -3533,6 +3533,14 @@ paths:
         This API updates an existing Push or Email campaign in MoEngage. You can only update campaigns created via the API, not campaigns created through the MoEngage dashboard.
       x-mint:
         content: |        
+          <Note>
+          **Differences in V5**
+
+          `PATCH /v5/campaigns/{campaign_id}` returns `200 OK` with a response body containing `response_id`, `type`, and `data.id`. V1 returns `204 No Content` with no response body on success. Update any integration that asserts a `204` status code before adopting V5.
+
+          See [Update Campaign (V5)](/api/update-campaigns/patch-draft-campaign-v5).
+          </Note>
+
           <Warning>
           **Update Restrictions**
         
@@ -3663,6 +3671,20 @@ paths:
           - Include child campaigns (flow nodes, periodic children)
           - Include archived campaigns
           - Paginated results (max 15 per page)
+
+          <Note>
+          **Differences in V5**
+
+          The V5 Search Campaigns API (`POST /v5/campaigns/search`) introduces the following behavioral changes:
+
+          - **Single-campaign retrieval** is no longer handled by the search endpoint. Use `GET /v5/campaigns/{campaign_id}` instead.
+          - The `campaign_fields.id` field (string) is renamed to `campaign_fields.ids` (array of strings) in V5.
+          - The `campaign_fields.delivery_type` field is renamed to `campaign_fields.campaign_delivery_type` in V5. Sending the V1 field name returns zero results with no error.
+          - `request_id` is required in V1. In V5, it is optional.
+          - The response identifier field `campaign_id` is renamed to `id` in V5.
+
+          For a full comparison, see [V1 vs. V5 Search Campaigns: Behavioral Differences](/api/campaigns/search-campaigns-v5-migration).
+          </Note>
         
 
            #### Rate Limits
@@ -4324,6 +4346,14 @@ paths:
 
       x-mint:
         content: |
+          <Note>
+          **Differences in V5**
+
+          `PATCH /v5/campaigns/{campaign_id}/status` accepts one campaign ID as a path parameter per request. V1 accepts a `campaign_ids` array of up to 10 IDs per request. To perform bulk status changes in V5, call the endpoint once per campaign ID.
+
+          See [Change Campaign Status (V5)](/api/update-campaigns/change-campaign-status-v5).
+          </Note>
+
           <Note>
             Currently, you can use this API to change the status of Email and Push campaigns. You can update the following statuses of the campaigns:
               - Stop a scheduled One-time campaign (Email and Push)
