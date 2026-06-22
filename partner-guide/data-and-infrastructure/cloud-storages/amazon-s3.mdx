@@ -5,33 +5,29 @@ description: "Set up the MoEngage and Amazon S3 integration through the App Mark
 
 [Amazon Simple Storage Service (Amazon S3)](https://aws.amazon.com/s3/) is an object storage service on the Amazon Web Services (AWS) platform. Use Amazon S3 to store, organize, and retrieve structured or unstructured data from any location on the web.
 
-# MoEngage and Amazon S3
+# MoEngage × Amazon S3
 
 Integrate MoEngage with Amazon S3 by using the App Marketplace to establish a direct connection between your S3 bucket and your MoEngage workspace. After you establish this connection, MoEngage uses this centralized connection to transfer files for automated data imports and exports.
 
-## Use cases
+## Use Cases
 
-You can use the Amazon S3 integration to perform the following tasks:
+Amazon S3 integration with MoEngage helps you with the following use cases:
 
 - Synchronize real-time behavioral segments.
 - Import users and events.
 - Export campaign interaction events.
 
-## Benefits
+## Advantages
 
-This integration offers the following benefits:
+The integration with MoEngage helps you with the following advantages:
 
-### Reduced Integration Time
-
-Integrating with Amazon S3 helps you reduce setup and development time in the following ways:
+### Reduce Integration Time
 
 - Eliminates the need for external Extract, Transform, and Load (ETL) tools.
 - Replaces complex data pipelines with a one-time configuration process.
 - Minimizes reliance on development and technology teams.
 
 ### Faster Data Processing
-
-This integration also enables faster, more cost-effective data workflows in the following ways:
 
 - Processes and queries high-volume data in near real time.
 - Propagates schema updates automatically without manual reconfigurations in MoEngage.
@@ -40,24 +36,73 @@ This integration also enables faster, more cost-effective data workflows in the 
 # Integration
 
 <Info>
-  **Important**
+  **Prerequisites**
 
-  Verify that you have an AWS account with administrative Identity and Access Management (IAM) privileges. You must be able to create roles, manage bucket access policies, and generate programmatic access credentials for your target Amazon S3 bucket.
+  Ensure you have an AWS account with administrative Identity and Access Management (IAM) privileges. You must be able to create roles, manage bucket access policies, and generate programmatic access credentials for your target Amazon S3 bucket.
 </Info>
 
-## Step 1: Grant permissions to MoEngage
+MoEngage connects to Amazon S3 using multiple methods.
 
-<Tabs>
-  <Tab title="S3 imports">
-    To configure S3 imports, grant MoEngage read access to your S3 bucket. This access allows MoEngage to locate, list, and download CSV or JSON files. This task requires administrative privileges in the **AWS Management Console**.
+## Step 1: Set Up Authentication
 
-    **Create an IAM policy and assign permissions**
+Select the authentication method that matches how you plan to use the connection. MoEngage recommends the cross-account role method because it supports both imports and exports and avoids storing long-term credentials.
 
-    To set up your policy and credentials:
+<AccordionGroup>
+  <Accordion title="Cross-account role (Recommended)">
+    The cross-account role method lets MoEngage access your S3 bucket for imports and exports by assuming an IAM role in your AWS account. This option increases security by eliminating long-term credential storage.
+
+    **Step 1: Create the cross-account role**
 
     1. Sign in to the **AWS Management Console**.
-    2. In the **IAM Console**, click **Policies**, and then click **Create Policy**.
-    3. Click the **JSON** tab, and then paste the following policy code:
+    2. In the **IAM Console**, click **Roles**, and then click **Create role**.
+    3. Select **Another AWS account** as the trusted entity.
+    4. Enter the MoEngage AWS Account ID (`582272135730`) and the MoEngage External ID (`moe-external-46116bf0a0`). You can retrieve both values from the App Marketplace connection setup.
+    5. Attach the S3 permissions policy to the role (see [Step 2: Grant Permissions](#step-2-grant-permissions)).
+    6. Copy the role's Amazon Resource Name (ARN) to paste into the App Marketplace connection.
+
+    **Step 2: Add the trust policy**
+
+    The role's trust relationship authorizes the MoEngage AWS account (`582272135730`) to assume the role using the External ID (`moe-external-46116bf0a0`). Confirm that the role's **Trust relationships** tab references these values before you save the role.
+  </Accordion>
+
+  <Accordion title="Access key (Imports)">
+    <Info>
+      This authentication method supports imports only.
+    </Info>
+
+    The access key method authenticates imports using static programmatic AWS credentials (Access Key ID and Secret Key).
+
+    1. Sign in to the **AWS Management Console**.
+    2. In the **IAM Console**, click **Users**, and then click **Add users** to create a programmatic user.
+    3. Attach the import permissions policy to the user (see [Step 2: Grant Permissions](#step-2-grant-permissions)).
+    4. Generate the **Access Key ID** and **Secret Key** for the user, and copy both values to paste into the App Marketplace connection.
+  </Accordion>
+
+  <Accordion title="IAM policy (Exports)">
+    <Info>
+      This authentication method supports exports only.
+    </Info>
+
+    The IAM policy method uses resource-level S3 bucket policies to authorize automated exports from MoEngage.
+
+    1. Sign in to the **AWS Management Console**.
+    2. Configure an AWS bucket policy or IAM role that grants `s3:PutObject` and `s3:PutObjectAcl` permissions to the MoEngage AWS account (see [Step 2: Grant Permissions](#step-2-grant-permissions)).
+    3. Define the trust boundaries in your App Marketplace connection settings.
+  </Accordion>
+</AccordionGroup>
+
+## Step 2: Grant Permissions
+
+Grant MoEngage the permissions that match your use case. Use the **Imports** tab to allow MoEngage to read files from your bucket, and the **Exports** tab to allow MoEngage to write files to your bucket.
+
+<Tabs>
+  <Tab title="Imports">
+    To configure S3 imports, grant MoEngage read access to your S3 bucket. This access allows MoEngage to locate, list, and download CSV or JSON files. This task requires administrative privileges in the **AWS Management Console**.
+
+    To create the IAM policy:
+
+    1. In the **IAM Console**, click **Policies**, and then click **Create Policy**.
+    2. Click the **JSON** tab, and then paste the following policy code:
 
        ```json
        {
@@ -79,19 +124,18 @@ This integration also enables faster, more cost-effective data workflows in the 
        }
        ```
 
-    4. Replace `*your-bucket-name*` with your S3 bucket name, type a policy name (such as `MoEngageS3ImportPolicy`), and then click **Create policy**.
-    5. If you use the Access key method, click **Users**, click **Add users** to create a programmatic user, and then attach this policy to the user.
-    6. If you use the Cross-Account Role method, click **Roles**, and then click **Create role**. Select **Another AWS account**, type the MoEngage account ID and external ID retrieved during the App Marketplace setup, and then attach this policy to the role.
+    3. Replace `*your-bucket-name*` with your S3 bucket name, type a policy name (such as `MoEngageS3ImportPolicy`), and then click **Create policy**.
+    4. Attach this policy to the cross-account role or the programmatic user you created in [Step 1: Set Up Authentication](#step-1-set-up-authentication).
   </Tab>
-  <Tab title="S3 exports">
-    To configure S3 exports, grant MoEngage write access to your S3 bucket. This task requires write permissions to allow automated campaigns to deliver exports directly to your target folders. Verify your AWS privileges allow role and bucket policy configuration:
+  <Tab title="Exports">
+    To configure S3 exports, grant MoEngage write access to your S3 bucket. This task requires write permissions to allow automated campaigns to deliver exports directly to your target folders. Verify your AWS privileges allow role and bucket policy configuration.
 
     - **Create a connection**: Configure an AWS bucket policy or IAM role that grants `s3:PutObject` and `s3:PutObjectAcl` permissions to the MoEngage AWS account.
-    - **Run exports with cross-account roles**: Define trust boundaries in your App Marketplace connection settings. For more information, see the *S3 Data Exports Guide*.
+    - **Run exports with cross-account roles**: Define trust boundaries in your App Marketplace connection settings. For more information, see the [S3 Data Exports Guide](/user-guide/data/exports/events/data-warehouse/s3-exports).
   </Tab>
 </Tabs>
 
-## Step 2: Connect Amazon S3 in the App Marketplace
+## Step 3: Connect Amazon S3 on the App Marketplace
 
 To connect your S3 bucket in the MoEngage dashboard:
 
@@ -119,14 +163,16 @@ To connect your S3 bucket in the MoEngage dashboard:
 
    ![Test and Connect buttons for the Amazon S3 integration](/images/s3-test-connect.png)
 
-   **Note**: Configuration changes can take up to 15 minutes to propagate to your active campaigns and connections.
+   <Info>
+     Configuration changes can take up to 15 minutes to propagate to your active campaigns and connections.
+   </Info>
 
 After you connect, you can use the active integration to schedule automated imports and exports.
 
-## Import users and events
+## Import Users and Events
 
 To configure user and event data imports using this connection, see the [S3 Data Imports Guide](/user-guide/data/imports/file-based-imports/s3-imports).
 
-## Export events
+## Export Events
 
 To route campaign interaction logs to your Amazon S3 bucket, configure automated exports using the [S3 Data Exports Guide](/user-guide/data/exports/events/data-warehouse/s3-exports).
