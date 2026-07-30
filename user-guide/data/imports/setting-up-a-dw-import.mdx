@@ -41,6 +41,76 @@ MoEngage does not require a specific table schema. Every column can be mapped or
 
 Importing datetime attributes requires a few extra steps. For more information, see [Import Datetime Attributes](/user-guide/data/imports/data-warehouses-imports/import-datetime-attributes).
 
+## How Periodic Sync Detects Changed Rows
+
+For **periodic** imports, MoEngage syncs each run over a fixed time window `[last_run_time, next_run_time)` — half-open and non-overlapping, advancing on a fixed wall-clock cadence (for an hourly import, `last_run_time + 1 hour`), never derived from the data seen. A row is included in a run only if its mapped reference timestamp (`Updated At` for users; `Updated At`, or `Event Time` when not mapped separately, for events) falls inside that window.
+
+Because windows only ever move forward, **a row whose reference timestamp is earlier than the current `last_run_time` is permanently missed** — not delayed, and not caught up on a later run. This applies no matter why the timestamp is early: upstream pipeline delay, an intentional backfill, a missing `Updated At` mapping, or a timezone conversion that shifts the value backward. The first, historic run has no lower bound, which is why it never loses data this way — see the note in [Step 3](#step-3-select-the-import-frequency).
+
+<Accordion title="Deep dive: entity behavior, timezone pitfalls, and a worked example">
+  ### Users vs Events
+
+  **Users** — a single `Updated At` column drives both *what changed* and *when it changed*; the two cannot be decoupled. To avoid permanent misses, ensure `Updated At` reflects **table write-time**, not business or event time. This is commonly done with a view whose column defaults to `CURRENT_TIMESTAMP` on insert, so even late-arriving writes get a current, ever-advancing timestamp.
+
+  **Events** — two separate mappable columns:
+
+  - `Event Time` — the true, possibly-backdated business timestamp, used for analytics.
+  - `Updated At` — drives the delta filter; defaults to `Event Time` if not mapped separately.
+
+  Mapping `Updated At` to table write-time lets genuinely backdated events still import via periodic sync without corrupting `Event Time` for analysis. If you leave `Updated At` defaulted to `Event Time`, backdated events carry the same permanent-miss risk as users. Events are immutable in MoEngage once imported — there is no update-in-place for a previously synced event.
+
+  ### The Reference Column Must Be Genuine UTC
+
+  Across all three warehouses, the mapped reference column's values must be genuine UTC. What MoEngage does with that column differs:
+
+  <Tabs>
+    <Tab title="Snowflake">
+      MoEngage converts the column using `CONVERT_TIMEZONE('UTC', col)`. For a `TIMESTAMP_NTZ` column, the conversion first interprets the naive value using the session's effective timezone (session → user → account, in that precedence). If that timezone isn't actually UTC, an already-correct value is double-shifted. Check it with `SHOW PARAMETERS LIKE 'TIMEZONE'` and, if needed, set it at the user level for the MoEngage connection user.
+    </Tab>
+    <Tab title="BigQuery">
+      MoEngage applies no conversion — the raw column value is compared directly. The risk is specific to `DATETIME`-typed columns (naive, no timezone) holding non-UTC values. `TIMESTAMP`-typed columns are safe by construction, because BigQuery stores them as true UTC instants.
+    </Tab>
+    <Tab title="Databricks">
+      MoEngage applies no conversion and reads only `TIMESTAMP`-typed columns over its connector. (Databricks' `TIMESTAMP_NTZ` type isn't supported over JDBC/ODBC, so it isn't a path here.) Since `TIMESTAMP` is already UTC-normalized, the only realistic failure mode is your own pipeline writing local-time values into a UTC-typed column — a data-hygiene issue.
+    </Tab>
+  </Tabs>
+
+  An import can run in a timezone different from your workspace timezone, but schedule run times are always computed and stored in UTC. Choosing a non-UTC import timezone only changes the time the schedule appears to run in the UI — it does not change the window mechanics above.
+
+  ### Worked Example (Hourly Import)
+
+  Suppose you create an hourly import at `10:07 UTC`. The first `next_run_time` fast-forwards to the next hour boundary, `11:00 UTC`. The **historic run** has no lower bound and catches every matching row up to `11:00`.
+
+  **Run 1 (`11:00`–`12:00`)** — the source table has one new row:
+
+  | user_id | updated_at (UTC) | Imported in |
+  | --- | --- | --- |
+  | u_101 | 11:30 | Run 1 |
+
+  The `11:30` row falls inside `[11:00, 12:00)`, so it is caught cleanly in Run 1.
+
+  **Run 2 (`12:00`–`13:00`)** — two more rows have landed:
+
+  | user_id | updated_at (UTC) | Imported in |
+  | --- | --- | --- |
+  | u_102 | 12:00:00 | Run 2 |
+  | u_103 | 09:15 *(written to the table at 12:45)* | never |
+
+  `u_102` at exactly `12:00:00` was excluded from Run 1 (`< 12:00` fails there) and is caught in Run 2 (`>= 12:00` passes) — no gap, no double-count. `u_103` was physically written at `12:45` wall-clock but carries a reference timestamp of `09:15` — already `< 11:00`, so it missed Run 1's window and is `< last_run_time` for every future window.
+
+  **Run 3 (`13:00`–`14:00`)** — the source table still contains `u_103`:
+
+  | user_id | updated_at (UTC) | Imported in |
+  | --- | --- | --- |
+  | u_103 | 09:15 | never |
+
+  `u_103` does not appear in Run 3 — or any later run — because its `09:15` reference timestamp is earlier than every future `last_run_time`. The row is permanently missed by periodic sync, even though it was added to the table only moments before Run 3.
+
+  ### Recovering Missed or Backdated Data
+
+  Once data is already missed, periodic sync will not pick it up. To recover it — or to intentionally backfill — build a one-time view containing the corrected or missed records and run a **one-time import** against it. One-time imports have no lower-bound filter, so they capture every matching row regardless of reference timestamp. Alternatively, duplicate the import (which triggers a fresh historic run) or edit the schedule's start time backward to force `last_run_time` to recompute.
+</Accordion>
+
 # Required Access Permissions
 
 MoEngage requires `READ` access to your warehouse. Grant the permissions below to an existing database user or a dedicated MoEngage user.
@@ -329,7 +399,7 @@ To monitor your imports, understand import statuses, or trigger a run manually o
       MoEngage imports `STRUCT` columns as Object data types, pulling in the struct's schema and creating a corresponding set of fields. You cannot cherry-pick or rename individual fields within a struct during import.
     </Accordion>
     <Accordion title="How does MoEngage handle BigQuery TIMESTAMP columns with local time zones instead of UTC?">
-      MoEngage interprets stored time as UTC. BigQuery advises storing timestamps in UTC.
+      MoEngage applies no timezone conversion to your reference column — it compares the raw value directly. `TIMESTAMP`-typed columns are safe, because BigQuery stores them as true UTC instants. The risk is with `DATETIME`-typed columns, which are naive (no timezone): if they hold non-UTC values, the delta filter uses those values as-is. Store UTC values in `DATETIME` columns, or use the `TIMESTAMP` type.
     </Accordion>
   </Tab>
   <Tab title="Databricks">
@@ -343,7 +413,7 @@ To monitor your imports, understand import statuses, or trigger a run manually o
       Databricks requires the column type to be `VARIANT` at table creation.
     </Accordion>
     <Accordion title="How does MoEngage handle Databricks TIMESTAMP columns with local time zones instead of UTC?">
-      MoEngage interprets stored time as UTC, as Databricks has no local time concept. Databricks advises storing timestamps in UTC.
+      MoEngage applies no timezone conversion and reads only `TIMESTAMP`-typed columns over its JDBC/ODBC connector. `TIMESTAMP` is UTC-normalized, so the only realistic issue is your own pipeline writing local-time values into a UTC-typed column — a data-hygiene problem, not a type choice. (Databricks' naive `TIMESTAMP_NTZ` type isn't supported over the driver, so it isn't a path here.)
     </Accordion>
   </Tab>
 </Tabs>
