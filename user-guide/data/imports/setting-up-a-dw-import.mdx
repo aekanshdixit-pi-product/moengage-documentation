@@ -77,34 +77,99 @@ Because windows only ever move forward, **a row whose reference timestamp is ear
 
   An import can run in a timezone different from your workspace timezone, but schedule run times are always computed and stored in UTC. Choosing a non-UTC import timezone only changes the time the schedule appears to run in the UI — it does not change the window mechanics above.
 
-  ### Worked Example (Hourly Import)
+  ### Worked Example
 
-  Suppose you create an hourly import at `10:07 UTC`. The first `next_run_time` fast-forwards to the next hour boundary, `11:00 UTC`. The **historic run** has no lower bound and catches every matching row up to `11:00`.
+  <Tabs>
+    <Tab title="User Imports">
 
-  **Run 1 (`11:00`–`12:00`)** — the source table has one new row:
+  Suppose you create an hourly Users import at `10:07 UTC`. The first `next_run_time` fast-forwards to the next hour boundary, `11:00 UTC`, and the **historic run** imports every matching row up to `11:00`. Each table below shows the full source table state after a run, along with the run that imported each row.
+
+  After the historic run (imports everything with `Updated At < 11:00`):
 
   | user_id | updated_at (UTC) | Imported in |
   | --- | --- | --- |
+  | u_100 | 10:50 | Historic run |
+
+  Before Run 1, `u_101` is written with `Updated At = 11:30`. Run 1 covers the window `[11:00, 12:00)`:
+
+  | user_id | updated_at (UTC) | Imported in |
+  | --- | --- | --- |
+  | u_100 | 10:50 | Historic run |
   | u_101 | 11:30 | Run 1 |
 
-  The `11:30` row falls inside `[11:00, 12:00)`, so it is caught cleanly in Run 1.
+  `u_101` (`11:30`) falls inside `[11:00, 12:00)`, so Run 1 imports it cleanly.
 
-  **Run 2 (`12:00`–`13:00`)** — two more rows have landed:
+  Before Run 2, two more rows land: `u_102` with `Updated At = 12:00:00`, and `u_103` — physically written to the table at `12:45` but carrying a backdated `Updated At = 09:15`. Run 2 covers `[12:00, 13:00)`:
 
   | user_id | updated_at (UTC) | Imported in |
   | --- | --- | --- |
+  | u_100 | 10:50 | Historic run |
+  | u_101 | 11:30 | Run 1 |
   | u_102 | 12:00:00 | Run 2 |
-  | u_103 | 09:15 *(written to the table at 12:45)* | never |
+  | u_103 | 09:15 | Not imported |
 
-  `u_102` at exactly `12:00:00` was excluded from Run 1 (`< 12:00` fails there) and is caught in Run 2 (`>= 12:00` passes) — no gap, no double-count. `u_103` was physically written at `12:45` wall-clock but carries a reference timestamp of `09:15` — already `< 11:00`, so it missed Run 1's window and is `< last_run_time` for every future window.
+  `u_102` sits exactly on the boundary: it was excluded from Run 1 (`< 12:00` fails there) and imported by Run 2 (`>= 12:00` passes) — no gap, no double-count. `u_103` carries `Updated At = 09:15`, already earlier than Run 2's lower bound of `12:00` — and earlier than the `11:00` historic cutoff too — so no run's window contains it.
 
-  **Run 3 (`13:00`–`14:00`)** — the source table still contains `u_103`:
+  Run 3 covers `[13:00, 14:00)`. No new rows have landed, and `u_103` is still sitting in the table:
 
   | user_id | updated_at (UTC) | Imported in |
   | --- | --- | --- |
-  | u_103 | 09:15 | never |
+  | u_100 | 10:50 | Historic run |
+  | u_101 | 11:30 | Run 1 |
+  | u_102 | 12:00:00 | Run 2 |
+  | u_103 | 09:15 | Not imported |
 
-  `u_103` does not appear in Run 3 — or any later run — because its `09:15` reference timestamp is earlier than every future `last_run_time`. The row is permanently missed by periodic sync, even though it was added to the table only moments before Run 3.
+  `u_103` never appears in any run, because `09:15` is earlier than every future `last_run_time`. It is permanently missed — even though it was added to the table only moments before Run 3.
+
+    </Tab>
+    <Tab title="Event Imports">
+
+  Events expose two mappable columns — `Event Time` (the true business timestamp, kept for analytics) and `Updated At` (drives the delta filter). This example uses the same hourly cadence (created `10:07 UTC`, historic cutoff `11:00`) and imports on `2024-01-16 UTC`. As before, each table shows the full source table state after a run.
+
+  After the historic run (imports everything with `Updated At < 11:00`):
+
+  | event | user_id | event_time (UTC) | updated_at (UTC) | Imported in |
+  | --- | --- | --- | --- | --- |
+  | purchase | u_200 | 2024-01-16 10:40 | 2024-01-16 10:40 | Historic run |
+
+  `u_200`'s `Updated At` (`10:40`) is before the `11:00` cutoff, so the historic run imports it.
+
+  Before Run 1, two events are written. `u_201`'s event happened in real time at `11:45`. `u_202`'s event happened *yesterday* (`2024-01-15 18:00`) but only landed in the table today, with `Updated At` set to its true write-time (`11:20`). Run 1 covers `[11:00, 12:00)`:
+
+  | event | user_id | event_time (UTC) | updated_at (UTC) | Imported in |
+  | --- | --- | --- | --- | --- |
+  | purchase | u_200 | 2024-01-16 10:40 | 2024-01-16 10:40 | Historic run |
+  | purchase | u_201 | 2024-01-16 11:45 | 2024-01-16 11:45 | Run 1 |
+  | purchase | u_202 | 2024-01-15 18:00 | 2024-01-16 11:20 | Run 1 |
+
+  `u_201` (`Updated At = 11:45`) falls inside `[11:00, 12:00)` and imports cleanly. `u_202` also imports, even though its `Event Time` is a day old — the delta filter reads `Updated At` (write-time `11:20`, inside the window), not `Event Time`. MoEngage stores the event at its real `Event Time` (`2024-01-15 18:00`), so analytics still reflect when it actually happened.
+
+  Before Run 2, two more events are written. `u_203`'s `Updated At` is exactly `12:00:00`. `u_204` is a backdated event whose customer left `Updated At` **defaulted to `Event Time`** (`09:30`), so the two columns aren't decoupled. Run 2 covers `[12:00, 13:00)`:
+
+  | event | user_id | event_time (UTC) | updated_at (UTC) | Imported in |
+  | --- | --- | --- | --- | --- |
+  | purchase | u_200 | 2024-01-16 10:40 | 2024-01-16 10:40 | Historic run |
+  | purchase | u_201 | 2024-01-16 11:45 | 2024-01-16 11:45 | Run 1 |
+  | purchase | u_202 | 2024-01-15 18:00 | 2024-01-16 11:20 | Run 1 |
+  | purchase | u_203 | 2024-01-16 12:00:00 | 2024-01-16 12:00:00 | Run 2 |
+  | refund | u_204 | 2024-01-16 09:30 | 2024-01-16 09:30 | Not imported |
+
+  `u_203`'s `Updated At` sits exactly on the boundary: it was excluded from Run 1 (`< 12:00` fails there) and imported by Run 2 (`>= 12:00` passes) — no gap, no double-count. `u_204`'s `Updated At` is `09:30` — earlier than Run 2's lower bound of `12:00` and the `11:00` historic cutoff — so no window contains it, and it is missed. The only difference from `u_202`, which imported successfully, is that `u_202` mapped `Updated At` to write-time while `u_204` left it defaulted to `Event Time`.
+
+  Run 3 covers `[13:00, 14:00)`. No new events have landed, and `u_204` is still in the table:
+
+  | event | user_id | event_time (UTC) | updated_at (UTC) | Imported in |
+  | --- | --- | --- | --- | --- |
+  | purchase | u_200 | 2024-01-16 10:40 | 2024-01-16 10:40 | Historic run |
+  | purchase | u_201 | 2024-01-16 11:45 | 2024-01-16 11:45 | Run 1 |
+  | purchase | u_202 | 2024-01-15 18:00 | 2024-01-16 11:20 | Run 1 |
+  | purchase | u_203 | 2024-01-16 12:00:00 | 2024-01-16 12:00:00 | Run 2 |
+  | refund | u_204 | 2024-01-16 09:30 | 2024-01-16 09:30 | Not imported |
+
+  `u_204` still does not import — `09:30` is earlier than every future `last_run_time`, so the miss does not self-correct. Because events are immutable once imported, there is no update-in-place to fix `u_204` later — recovery requires a one-time import (see below).
+
+    </Tab>
+  </Tabs>
 
   ### Recovering Missed or Backdated Data
 
